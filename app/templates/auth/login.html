@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Sign In</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/ethics-shell.css', v=asset_version('css/ethics-shell.css')) }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css', v=asset_version('css/app.css')) }}">
+  </head>
+  <body class="login-page">
+    <main class="auth-panel login-bg" id="main-content">
+      <div class="auth-card">
+        <img src="{{ url_for('static', filename='img/uj_logo.png') }}" alt="UJ" class="auth-logo">
+        <h1 class="login-heading">Welcome to MBA &amp; Ethics Portal</h1>
+        <p class="login-subheading">Sign in to access your dashboard</p>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <div class="flash-stack">
+              {% for category, message in messages %}
+                <div class="flash flash--{{ category }}">{{ message }}</div>
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% endwith %}
+
+        <form method="post" class="form-stack" autocomplete="on">
+          <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+          <label>
+            <span>System</span>
+            <select name="system">
+              <option value="mba" {% if system != 'ethics' %}selected{% endif %}>MBA App</option>
+              <option value="ethics" {% if system == 'ethics' %}selected{% endif %}>Ethics</option>
+            </select>
+          </label>
+          <label>
+            <span>Email</span>
+            <input type="email" name="email" value="{{ email or '' }}" required autocomplete="email" placeholder="you@email.com">
+          </label>
+          <label>
+            <span>Password</span>
+            <input type="password" name="password" required autocomplete="current-password" placeholder="Password">
+          </label>
+          <button type="submit" class="primary-button login-btn">Sign in</button>
+        </form>
+
+        <button type="button" class="forgot-password-button" id="forgot-password-open">Forgot Password?</button>
+
+        {% if microsoft_login_enabled %}
+          <a href="{{ url_for('auth.microsoft_login', system=system or 'mba') }}" class="secondary-button login-microsoft">Sign in with Microsoft</a>
+        {% endif %}
+
+        <div class="auth-links">
+          <a href="{{ url_for('auth.register', system='mba') }}">Register MBA student</a>
+        </div>
+      </div>
+    </main>
+
+    <dialog class="auth-dialog" id="forgot-password-dialog" aria-labelledby="forgot-password-title">
+      <form method="post" action="{{ url_for('auth.forgot_password') }}" class="auth-dialog__form">
+        <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+        <div class="auth-dialog__header">
+          <div>
+            <h2 id="forgot-password-title">Reset Your Password</h2>
+          </div>
+          <button type="button" class="auth-dialog__close" id="forgot-password-close" aria-label="Close password reset dialog">&times;</button>
+        </div>
+        <div class="auth-dialog__body">
+          <label>
+            <span>Enter your email address</span>
+            <input type="email" name="reset_email" required autocomplete="email" placeholder="you@email.com">
+          </label>
+        </div>
+        <div class="auth-dialog__actions">
+          <button type="submit" class="primary-button">Send</button>
+          <button type="button" class="secondary-button" id="forgot-password-cancel">Cancel</button>
+        </div>
+      </form>
+    </dialog>
+
+    <script>
+      (function () {
+        const dialog = document.getElementById("forgot-password-dialog");
+        const openButton = document.getElementById("forgot-password-open");
+        const cancelButton = document.getElementById("forgot-password-cancel");
+        const closeButton = document.getElementById("forgot-password-close");
+        const emailInput = dialog ? dialog.querySelector('input[name="reset_email"]') : null;
+
+        function openDialog() {
+          if (!dialog) return;
+          if (typeof dialog.showModal === "function") {
+            dialog.showModal();
+          } else {
+            dialog.setAttribute("open", "");
+          }
+          if (emailInput) {
+            emailInput.focus();
+          }
+        }
+
+        function closeDialog() {
+          if (!dialog) return;
+          if (typeof dialog.close === "function") {
+            dialog.close();
+          } else {
+            dialog.removeAttribute("open");
+          }
+        }
+
+        openButton?.addEventListener("click", openDialog);
+        cancelButton?.addEventListener("click", closeDialog);
+        closeButton?.addEventListener("click", closeDialog);
+
+        dialog?.addEventListener("click", function (event) {
+          const bounds = dialog.getBoundingClientRect();
+          const clickedOutside =
+            event.clientX < bounds.left ||
+            event.clientX > bounds.right ||
+            event.clientY < bounds.top ||
+            event.clientY > bounds.bottom;
+          if (clickedOutside) {
+            closeDialog();
+          }
+        });
+      })();
+    </script>
+  </body>
+</html>
