@@ -688,6 +688,42 @@ def admin_dashboard():
             updated_auto_assignments = True
         if apply_assessor_suggestions_if_ready(project):
             updated_auto_assignments = True
+        if accepted_assessor_count(project) >= len(PRIMARY_ASSESSOR_SLOTS) and all_assessor_acceptance_packs_complete(project):
+            nomination_form = external_examiner_nomination_form(project)
+            nomination_payload = nomination_form.payload if nomination_form and isinstance(nomination_form.payload, dict) else {}
+            expected_assessor_ids = {
+                f"_{slot}_id": str(getattr(project, f"{slot}_id", "") or "")
+                for slot in PRIMARY_ASSESSOR_SLOTS
+            }
+            nomination_lineup_changed = any(
+                nomination_payload.get(key) and str(nomination_payload.get(key)) != value
+                for key, value in expected_assessor_ids.items()
+            )
+            if (
+                nomination_lineup_changed
+                or nomination_payload.get("_external_examiner_nomination_render_version") != EXTERNAL_EXAMINER_NOMINATION_RENDER_VERSION
+                or not nomination_form
+                or not uploaded_doc_for(project, external_examiner_nomination_doc_type())
+            ):
+                from . import routes_forms as _routes_forms
+
+                if _routes_forms.refresh_external_examiner_nomination_if_ready(project):
+                    updated_auto_assignments = True
+        if all_assessment_results_received(project):
+            summary_form = MbaForm.query.filter_by(
+                project_id=project.id,
+                form_type=assessment_summary_doc_type(),
+            ).first()
+            summary_payload = summary_form.payload if summary_form and isinstance(summary_form.payload, dict) else {}
+            if (
+                not summary_form
+                or not uploaded_doc_for(project, assessment_summary_doc_type())
+                or summary_payload.get("_assessment_summary_render_version") != ASSESSMENT_SUMMARY_RENDER_VERSION
+            ):
+                from . import routes_forms as _routes_forms
+
+                if _routes_forms.refresh_assessment_summary_if_ready(project):
+                    updated_auto_assignments = True
     if updated_auto_assignments:
         db.session.commit()
 
@@ -733,6 +769,8 @@ def admin_dashboard():
         additional_assessment_status_label=additional_assessment_status_label,
         additional_assessment_blocks_hdc_submission=additional_assessment_blocks_hdc_submission,
         assessment_results_forwarded_to_supervisor=assessment_results_forwarded_to_supervisor,
+        assessment_summary_supervisor_signed=assessment_summary_supervisor_signed,
+        assessment_summary_supervisor_signing_block_reason=assessment_summary_supervisor_signing_block_reason,
         module_completion_status_label=module_completion_status_label,
         module_completion_allows_hdc_submission=module_completion_allows_hdc_submission,
         can_request_moodle_manuscript_submission=can_request_moodle_manuscript_submission,
@@ -742,6 +780,15 @@ def admin_dashboard():
         assessor_hdc_decision_alert_label=assessor_hdc_decision_alert_label,
         hdc_declined_assessor_slots=hdc_declined_assessor_slots,
         hdc_rejection_without_slot_decisions_requires_replacement=hdc_rejection_without_slot_decisions_requires_replacement,
+        external_examiner_nomination_doc_type=external_examiner_nomination_doc_type,
+        external_examiner_nomination_supervisor_signed=external_examiner_nomination_supervisor_signed,
+        jbs10_supervisor_signed=jbs10_supervisor_signed,
+        jbs10_supervisor_return_pending=jbs10_supervisor_return_pending,
+        intent_to_submit_supervisor_signed=intent_to_submit_supervisor_signed,
+        jbs1_supervisor_signed=jbs1_supervisor_signed,
+        jbs1_program_manager_signed=jbs1_program_manager_signed,
+        assessor_hr_documents_sent=assessor_hr_documents_sent,
+        assessor_hr_documents_sent_to=assessor_hr_documents_sent_to,
         supervisor_pool_release_count=len(supervisor_pool_release_candidates),
         supervisor_pool_available_count=len(supervisor_pool_available_projects),
     )
@@ -1053,44 +1100,35 @@ def _reminder_student_detail_text(project):
 
 def _module_completion_reminder_message(item):
     project = item["project"]
-    yes_url = url_for(
+    form_url = url_for(
         "mba.module_completion_verification_response",
         token=project.module_completion_verification_token,
-        decision="yes",
-        _external=True,
-    )
-    no_url = url_for(
-        "mba.module_completion_verification_response",
-        token=project.module_completion_verification_token,
-        decision="no",
         _external=True,
     )
     text_body = (
-        "Reminder: please confirm whether this student has passed all required modules.\n\n"
+        "Reminder: please complete the coursework marks section of the Summary Assessment Report.\n\n"
         f"{_reminder_student_detail_text(project)}\n\n"
-        f"Yes, modules passed: {yes_url}\n"
-        f"No, modules not passed: {no_url}\n\n"
-        "These links are single-use. Once a response is recorded, both options become invalid."
+        f"Open the form: {form_url}\n\n"
+        "This link is single-use. Once the marks are submitted, it becomes invalid."
     )
     button_style = (
         "display:inline-block;padding:10px 14px;border-radius:6px;text-decoration:none;"
-        "font-weight:700;margin-right:8px;"
+        "font-weight:700;margin-right:8px;background:#1f7a3a;color:#fff;"
     )
     details_html = "".join(
         f"<li>{html_escape(line)}</li>" for line in _reminder_student_detail_text(project).splitlines()
     )
     html_body = (
-        "<p>Reminder: please confirm whether this student has passed all required modules.</p>"
+        "<p>Reminder: please complete the coursework marks section of the Summary Assessment Report.</p>"
         f"<ul>{details_html}</ul>"
         "<p>"
-        f"<a href=\"{html_escape(yes_url)}\" style=\"{button_style}background:#1f7a3a;color:#fff;\">Yes</a>"
-        f"<a href=\"{html_escape(no_url)}\" style=\"{button_style}background:#b42318;color:#fff;\">No</a>"
+        f"<a href=\"{html_escape(form_url)}\" style=\"{button_style}\">Open Summary Assessment Form</a>"
         "</p>"
-        "<p>These links are single-use. Once a response is recorded, both options become invalid.</p>"
+        "<p>This link is single-use. Once the marks are submitted, it becomes invalid.</p>"
     )
     return {
         "recipient": item["recipient_email"],
-        "subject": f"Reminder: Module Completion Verification: {project.project_title}",
+        "subject": f"Reminder: Coursework Marks Required: {project.project_title}",
         "body": {"text": text_body, "html": html_body},
     }
 
@@ -1106,7 +1144,7 @@ def admin_reminder_email_message(item):
     if kind == "supervisor_invitation":
         action_text = "Please sign in to the MBA system to accept or decline the supervisor invitation."
     elif kind == "assessor_invitation":
-        action_text = "Please sign in to the MBA system to accept or decline the assessor invitation and submit the required acceptance pack."
+        action_text = "Please sign in to the MBA system to accept or decline the assessor invitation and submit the required acceptance documents."
     elif kind == "moodle_manuscript_submission":
         action_text = (
             "Please submit the Capstone Manuscript through Moodle. Do not upload the Capstone Manuscript "
@@ -1244,7 +1282,7 @@ def admin_additional_assessment():
     if not require_mba_role(MbaRole.ADMIN.value, MbaRole.MAIN_ADMIN.value):
         return redirect(role_landing_url())
     assessment_status = (request.args.get("assessment_status") or "all").strip().lower()
-    allowed_statuses = {"all", "needs_assignment", "awaiting_acceptance", "awaiting_result"}
+    allowed_statuses = {"all", "needs_assignment", "awaiting_nomination", "awaiting_acceptance", "awaiting_result"}
     if assessment_status not in allowed_statuses:
         assessment_status = "all"
     student_number = (request.args.get("student_number") or "").strip()
@@ -1272,6 +1310,34 @@ def admin_additional_assessment():
     for form in forms:
         forms_by_project.setdefault(form.project_id, {})[form.form_type] = form
 
+    updated_additional_nomination_docs = False
+    for project in projects:
+        if not additional_external_examiner_nomination_can_generate(project):
+            continue
+        nomination_form = MbaForm.query.filter_by(
+            project_id=project.id,
+            form_type=additional_external_examiner_nomination_doc_type(),
+        ).first()
+        nomination_payload = nomination_form.payload if nomination_form and isinstance(nomination_form.payload, dict) else {}
+        current_assessor_id = str(getattr(project, f"{ADDITIONAL_ASSESSOR_SLOT}_id", "") or "")
+        additional_nomination_changed = bool(
+            nomination_payload.get("_assessor_3_id")
+            and str(nomination_payload.get("_assessor_3_id")) != current_assessor_id
+        )
+        if (
+            additional_nomination_changed
+            or nomination_payload.get("_additional_external_examiner_nomination_render_version")
+            != ADDITIONAL_EXTERNAL_EXAMINER_NOMINATION_RENDER_VERSION
+            or not nomination_form
+            or not uploaded_doc_for(project, additional_external_examiner_nomination_doc_type())
+        ):
+            from . import routes_forms as _routes_forms
+
+            if _routes_forms.refresh_additional_external_examiner_nomination_if_ready(project):
+                updated_additional_nomination_docs = True
+    if updated_additional_nomination_docs:
+        db.session.commit()
+
     def project_student_number_matches(project, search_value):
         if not search_value:
             return True
@@ -1298,6 +1364,11 @@ def admin_additional_assessment():
             1
             for project in filtered_projects
             if additional_assessment_stage(project, forms_by_project=forms_by_project) == "needs_assignment"
+        ),
+        "awaiting_nomination": sum(
+            1
+            for project in filtered_projects
+            if additional_assessment_stage(project, forms_by_project=forms_by_project) == "awaiting_nomination"
         ),
         "awaiting_acceptance": sum(
             1
@@ -1328,6 +1399,9 @@ def admin_additional_assessment():
         additional_assessment_status_label=additional_assessment_status_label,
         additional_assessment_required=additional_assessment_required,
         additional_assessment_blocks_hdc_submission=additional_assessment_blocks_hdc_submission,
+        additional_external_examiner_nomination_doc_type=additional_external_examiner_nomination_doc_type,
+        additional_external_examiner_nomination_supervisor_signed=additional_external_examiner_nomination_supervisor_signed,
+        hdc_additional_external_examiner_nomination_signature_complete=hdc_additional_external_examiner_nomination_signature_complete,
         assessment_result_pack_complete=assessment_result_pack_complete,
         assessor_grade_for_slot=assessor_grade_for_slot,
         uploaded_doc_for=uploaded_doc_for,
@@ -1336,7 +1410,6 @@ def admin_additional_assessment():
         examiners=examiners,
         assessment_doc_type=assessment_doc_type,
         assessor_report_doc_type=assessor_report_doc_type,
-        assessor_narrative_doc_type=assessor_narrative_doc_type,
         kpis=mba_kpis(),
     )
 
@@ -1351,16 +1424,16 @@ def admin_discipline_action():
         name = " ".join((request.form.get("name") or "").strip().split())
         if not name:
             flash("Discipline name is required.", "error")
-            return redirect(url_for("mba.admin_dashboard"))
+            return redirect(url_for("mba.admin_dashboard", panel="disciplines"))
         existing = MbaDiscipline.query.filter(db.func.lower(MbaDiscipline.name) == name.lower()).first()
         if existing:
             flash("That discipline already exists.", "error")
-            return redirect(url_for("mba.admin_dashboard"))
+            return redirect(url_for("mba.admin_dashboard", panel="disciplines"))
         max_sort_order = db.session.query(db.func.max(MbaDiscipline.sort_order)).scalar()
         db.session.add(MbaDiscipline(name=name, sort_order=(max_sort_order or 0) + 1))
         db.session.commit()
         flash("Discipline added.", "success")
-        return redirect(url_for("mba.admin_dashboard"))
+        return redirect(url_for("mba.admin_dashboard", panel="disciplines"))
     if action == "toggle":
         discipline_id = request.form.get("discipline_id", type=int)
         discipline = db.session.get(MbaDiscipline, discipline_id)
@@ -1369,9 +1442,9 @@ def admin_discipline_action():
         discipline.is_active = not discipline.is_active
         db.session.commit()
         flash(f"Discipline {'activated' if discipline.is_active else 'hidden'}.", "success")
-        return redirect(url_for("mba.admin_dashboard"))
+        return redirect(url_for("mba.admin_dashboard", panel="disciplines"))
     flash("Unknown discipline action.", "error")
-    return redirect(url_for("mba.admin_dashboard"))
+    return redirect(url_for("mba.admin_dashboard", panel="disciplines"))
 
 
 @mba_bp.route("/admin/assessors/import", methods=["POST"])

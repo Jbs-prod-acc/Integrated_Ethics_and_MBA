@@ -1,5 +1,6 @@
 import os
 import uuid
+from html import escape as html_escape
 from io import BytesIO
 
 from flask import abort, current_app, flash, redirect, request, send_file, send_from_directory, url_for
@@ -11,31 +12,217 @@ from ..models import MbaForm, MbaProject, MbaProjectDocument, MbaRole, ProjectSt
 from .route_support import *  # noqa: F403
 from .route_support import (
     _project_has_document,
+    _render_html_to_pdf_bytes,
     _store_project_document,
     _uploads_dir,
     _validate_uploaded_pdf,
 )
 
 
+def _looks_like_html_document(doc):
+    mime_type = str(getattr(doc, "mime_type", "") or "").split(";", 1)[0].strip().lower()
+    names = [
+        str(getattr(doc, "original_name", "") or "").lower(),
+        str(getattr(doc, "stored_name", "") or "").lower(),
+    ]
+    return (
+        mime_type == "text/html"
+        or any(name.endswith((".html", ".htm")) for name in names)
+        or _bytes_look_like_html(getattr(doc, "file_data", None))
+    )
+
+
+def _bytes_look_like_html(data):
+    if not data:
+        return False
+    if isinstance(data, str):
+        head = data[:512].lstrip().lower()
+        return head.startswith(("<!doctype html", "<html", "<body", "<div"))
+    head = bytes(data[:512]).lstrip().lower()
+    return head.startswith((b"<!doctype html", b"<html", b"<body", b"<div"))
+
+
+def _file_looks_like_html(path):
+    try:
+        with open(path, "rb") as fh:
+            return _bytes_look_like_html(fh.read(512))
+    except OSError:
+        return False
+
+
+def _download_name_with_extension(doc, extension):
+    extension = str(extension or "").lstrip(".") or "doc"
+    filename = str(getattr(doc, "original_name", "") or getattr(doc, "stored_name", "") or "").strip()
+    if not filename:
+        filename = f"{getattr(doc, 'doc_type', 'document')}_form.{extension}"
+    stem, ext = os.path.splitext(filename)
+    base = stem if ext else filename
+    return f"{base or getattr(doc, 'doc_type', 'document')}.{extension}"
+
+
+def _pdf_download_name(doc):
+    return _download_name_with_extension(doc, "pdf")
+
+
+def _word_download_name(doc):
+    return _download_name_with_extension(doc, FORM_WORD_EXTENSION)
+
+
+def _pdf_bytes_response(pdf_bytes, *, download_name, as_attachment=True):
+    if not pdf_bytes or not pdf_bytes.startswith(b"%PDF-"):
+        return None
+    return send_file(
+        BytesIO(pdf_bytes),
+        mimetype="application/pdf",
+        as_attachment=as_attachment,
+        download_name=download_name,
+    )
+
+
+def _word_bytes_response(word_bytes, *, download_name, as_attachment=True):
+    if not word_bytes:
+        return None
+    if isinstance(word_bytes, str):
+        word_bytes = word_bytes.encode("utf-8")
+    return send_file(
+        BytesIO(word_bytes),
+        mimetype=FORM_WORD_MIME_TYPE,
+        as_attachment=as_attachment,
+        download_name=download_name,
+    )
+
+
+def _html_bytes_pdf_response(html_bytes, doc, *, as_attachment=True):
+    if not html_bytes:
+        return None
+    try:
+        html = html_bytes.decode("utf-8", errors="replace")
+        pdf_bytes = _render_html_to_pdf_bytes(html)
+    except Exception:
+        current_app.logger.exception("Unable to convert stored HTML document %s to PDF", getattr(doc, "id", None))
+        return None
+    return _pdf_bytes_response(pdf_bytes, download_name=_pdf_download_name(doc), as_attachment=as_attachment)
+
+
+def _html_file_pdf_response(path, doc, *, as_attachment=True):
+    try:
+        with open(path, "rb") as fh:
+            return _html_bytes_pdf_response(fh.read(), doc, as_attachment=as_attachment)
+    except OSError:
+        return None
+
+
+def _html_bytes_word_response(html_bytes, doc, *, as_attachment=True):
+    if not html_bytes:
+        return None
+    try:
+        html = html_bytes.decode("utf-8", errors="replace") if isinstance(html_bytes, bytes) else str(html_bytes)
+        word_bytes = html_to_word_document_bytes(html, title=document_label(doc.doc_type))
+    except Exception:
+        current_app.logger.exception("Unable to convert stored HTML document %s to Word", getattr(doc, "id", None))
+        return None
+    return _word_bytes_response(word_bytes, download_name=_word_download_name(doc), as_attachment=as_attachment)
+
+
+def _html_file_word_response(path, doc, *, as_attachment=True):
+    try:
+        with open(path, "rb") as fh:
+            return _html_bytes_word_response(fh.read(), doc, as_attachment=as_attachment)
+    except OSError:
+        return None
+
+
 def _project_document_db_response(doc, *, as_attachment):
     if not getattr(doc, "file_data", None):
         return None
+    if not as_attachment and sensitive_document_type(doc.doc_type):
+        return None
+    try:
+        file_data = decrypt_sensitive_document_bytes(doc.file_data)
+    except RuntimeError as exc:
+        current_app.logger.exception("Unable to decrypt sensitive project document %s", getattr(doc, "id", None))
+        return current_app.response_class(str(exc), status=503, mimetype="text/plain")
+    if file_data.startswith(b"%PDF-"):
+        download_name = doc.original_name
+        if as_attachment and not str(doc.original_name or "").lower().endswith(".pdf"):
+            download_name = _pdf_download_name(doc)
+        return send_file(
+            BytesIO(file_data),
+            mimetype="application/pdf",
+            as_attachment=as_attachment,
+            download_name=download_name,
+        )
+    if as_attachment and _looks_like_html_document(doc):
+        pdf_response = _html_bytes_pdf_response(file_data, doc, as_attachment=True)
+        if pdf_response:
+            return pdf_response
+        return _html_bytes_word_response(file_data, doc, as_attachment=True)
     return send_file(
-        BytesIO(doc.file_data),
+        BytesIO(file_data),
         mimetype=doc.mime_type or document_mime_type(doc.original_name, "application/pdf"),
         as_attachment=as_attachment,
         download_name=doc.original_name,
     )
 
 
-def _payload_for_live_form_render(project, doc, form):
+def _download_only_view_response(project, doc):
+    download_url = url_for("mba.download_project_document", project_id=project.id, doc_id=doc.id)
+    document_name = html_escape(str(doc.original_name or document_label(doc.doc_type)))
+    document_label_text = html_escape(document_label(doc.doc_type))
+    safe_download_url = html_escape(download_url, quote=True)
+    html = f"""<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{document_label_text}</title>
+  <style>
+    body {{ margin:0; font-family: Arial, sans-serif; background:#f8fafc; color:#111827; }}
+    main {{ max-width: 720px; margin: 56px auto; padding: 28px; background:#fff; border:1px solid #e5e7eb; border-radius:12px; box-shadow:0 12px 30px rgba(15,23,42,.08); }}
+    h1 {{ margin:0 0 8px; font-size:1.35rem; }}
+    p {{ margin:0 0 18px; color:#4b5563; line-height:1.5; }}
+    a {{ display:inline-flex; align-items:center; justify-content:center; min-height:38px; padding:0 16px; border-radius:8px; background:#ef820d; color:#fff; text-decoration:none; font-weight:700; }}
+    .filename {{ margin-top:10px; font-size:.9rem; color:#6b7280; word-break:break-word; }}
+  </style>
+</head>
+<body>
+  <main>
+    <h1>{document_label_text}</h1>
+    <p>This document is a native Word file so the exact template formatting is preserved in the downloaded document.</p>
+    <a href="{safe_download_url}">Download Word Document</a>
+    <div class="filename">{document_name}</div>
+  </main>
+</body>
+</html>"""
+    return current_app.response_class(html, mimetype="text/html")
+
+
+def _payload_for_live_form_render(project, doc, form, *, mask_sensitive=False):
     payload = dict(form.payload or {})
+    if doc.doc_type == external_examiner_nomination_doc_type():
+        refreshed = build_external_examiner_nomination_payload(project, payload)
+        for key, existing_value in payload.items():
+            if str(existing_value or "").strip() and not str(refreshed.get(key) or "").strip():
+                refreshed[key] = existing_value
+        payload = refreshed
+    elif doc.doc_type == additional_external_examiner_nomination_doc_type():
+        refreshed = build_additional_external_examiner_nomination_payload(project, payload)
+        for key, existing_value in payload.items():
+            if str(existing_value or "").strip() and not str(refreshed.get(key) or "").strip():
+                refreshed[key] = existing_value
+        payload = refreshed
+    elif doc.doc_type == assessment_summary_doc_type():
+        refreshed = build_assessment_summary_payload(project, payload)
+        for key, existing_value in payload.items():
+            if str(existing_value or "").strip() and not str(refreshed.get(key) or "").strip():
+                refreshed[key] = existing_value
+        payload = refreshed
     if doc.doc_type == "supervisor_agreement" and doc.uploaded_by_id == project.student_id:
         payload["_student_acceptance"] = "1"
-    return payload
+    return decrypt_sensitive_payload_fields(payload, mask=mask_sensitive)
 
 
-def _live_form_html_response(project, doc, as_attachment=False):
+def _live_form_html_response(project, doc):
     if not supports_exact_form_render(doc.doc_type):
         return None
     form = MbaForm.query.filter_by(project_id=project.id, form_type=doc.doc_type).first()
@@ -44,47 +231,81 @@ def _live_form_html_response(project, doc, as_attachment=False):
     html = build_form_display_html(
         project,
         doc.doc_type,
-        _payload_for_live_form_render(project, doc, form),
+        _payload_for_live_form_render(project, doc, form, mask_sensitive=True),
     )
     if not html:
         return None
-    if as_attachment:
-        return send_file(
-            BytesIO(html.encode("utf-8")),
-            mimetype="text/html; charset=utf-8",
-            as_attachment=True,
-            download_name=f"{doc.doc_type}_form.html",
-        )
     return current_app.response_class(html, mimetype="text/html")
 
 
-def _live_form_pdf_response(project, doc):
+def _live_form_download_response(project, doc):
     if not supports_exact_form_render(doc.doc_type):
         return None
     form = MbaForm.query.filter_by(project_id=project.id, form_type=doc.doc_type).first()
     if not form or not isinstance(form.payload, dict):
         return None
+    payload = _payload_for_live_form_render(project, doc, form, mask_sensitive=False)
     try:
-        pdf_bytes = generate_exact_html_pdf_bytes(
-            project,
-            doc.doc_type,
-            _payload_for_live_form_render(project, doc, form),
-        )
+        file_bytes, file_extension, mime_type = generate_form_submission_download_bytes(project, doc.doc_type, payload)
     except Exception:
-        current_app.logger.exception("Unable to generate exact PDF for document %s", doc.id)
-        pdf_bytes = None
-    if not pdf_bytes:
+        current_app.logger.exception("Unable to generate downloadable form document %s", doc.id)
         return current_app.response_class(
-            "Unable to generate a PDF from the submitted form HTML right now.",
+            "Unable to generate a downloadable document from the submitted form HTML right now.",
             status=503,
             mimetype="text/plain",
         )
+    if file_extension == "pdf":
+        return _pdf_bytes_response(file_bytes, download_name=f"{doc.doc_type}_form.pdf", as_attachment=True)
     return send_file(
-        BytesIO(pdf_bytes),
-        mimetype="application/pdf",
+        BytesIO(file_bytes),
+        mimetype=mime_type,
         as_attachment=True,
-        download_name=f"{doc.doc_type}_form.pdf",
+        download_name=f"{doc.doc_type}_form.{file_extension}",
     )
+
+
+@mba_bp.route("/projects/<int:project_id>/generated-form/<form_type>/download")
+@login_required
+def download_generated_project_form(project_id, form_type):
+    """Download a generated form that still needs an external wet signature/stamp."""
+    if form_type != "affidavit":
+        abort(404)
+
+    project = db.session.get(MbaProject, project_id)
+    if not project:
+        abort(404)
+
+    is_student_owner = current_user.role == MbaRole.STUDENT.value and project.student_id == current_user.id
+    is_admin = current_user.role in {MbaRole.ADMIN.value, MbaRole.MAIN_ADMIN.value}
+    if not (is_student_owner or is_admin):
+        abort(403)
+
+    form = MbaForm.query.filter_by(project_id=project.id, form_type=form_type).first()
+    if not form or not isinstance(form.payload, dict):
+        flash("Complete the JBS 2 Affidavit form before downloading it for stamping.", "error")
+        return redirect(url_for("mba.student_dashboard"))
+
+    try:
+        file_bytes, file_extension, mime_type = generate_form_submission_download_bytes(
+            project,
+            form_type,
+            dict(form.payload or {}),
+        )
+    except Exception:
+        current_app.logger.exception("Unable to generate %s for project %s", form_type, project.id)
+        return current_app.response_class(
+            "Unable to generate the affidavit document right now.",
+            status=503,
+            mimetype="text/plain",
+        )
+
+    return send_file(
+        BytesIO(file_bytes),
+        mimetype=mime_type,
+        as_attachment=True,
+        download_name=f"{form_type}_for_commissioner.{file_extension}",
+    )
+
 
 MBA_FORM_TEMPLATES = {
     "supervisor_agreement": {"label": document_label("supervisor_agreement")},
@@ -95,6 +316,7 @@ MBA_FORM_TEMPLATES = {
     "dissertation": {"label": document_label("dissertation")},
     "global_document": {"label": document_label("global_document")},
     "combined_turnitin_ai_report": {"label": document_label("combined_turnitin_ai_report")},
+    "affidavit_stamped": {"label": document_label("affidavit_stamped")},
 }
 
 MOODLE_CAPSTONE_SUBMISSION_MESSAGE = (
@@ -133,7 +355,7 @@ def dissertation_assessor_email_messages(project, dissertation_doc, assessor_use
                     f"Discipline: {project.discipline_name}\n"
                     f"File: {dissertation_doc.original_name}\n\n"
                     "Please sign in to the MBA system to download the Capstone Manuscript. "
-                    "Assessor pack submission opens after HDC verifies the assessor nominations."
+                    "Assessor result submission opens after HDC verifies the assessor nominations."
                 ),
             }
         )
@@ -266,11 +488,31 @@ def _is_current_form_pdf(path):
     return marker in _pdf_head(path, 512)
 
 
+def _is_current_form_pdf_bytes(data):
+    if not data:
+        return False
+    marker = f"% MBA formatted web form {FORM_RENDER_VERSION}:".encode("utf-8")
+    return marker in bytes(data[:512])
+
+
+def _has_current_db_generated_document(doc):
+    data = getattr(doc, "file_data", None)
+    if not data:
+        return False
+    if encrypted_document_bytes(data):
+        return True
+    filename = f"{getattr(doc, 'original_name', '')} {getattr(doc, 'stored_name', '')}".lower()
+    mime_type = str(getattr(doc, "mime_type", "") or "").lower()
+    if FORM_WORD_EXTENSION in filename or mime_type == FORM_WORD_MIME_TYPE:
+        return True
+    return _is_current_form_pdf_bytes(data)
+
+
 def _looks_like_generated_form_document(doc, stored_path):
-    expected_original = f"{doc.doc_type}_form.pdf"
+    expected_originals = {f"{doc.doc_type}_form.pdf", f"{doc.doc_type}_form.{FORM_WORD_EXTENSION}"}
     return (
-        doc.original_name == expected_original
-        or str(doc.stored_name or "").endswith("_form.pdf")
+        doc.original_name in expected_originals
+        or str(doc.stored_name or "").endswith(("_form.pdf", f"_form.{FORM_WORD_EXTENSION}"))
         or _is_old_blank_generated_pdf(stored_path)
     )
 
@@ -286,18 +528,17 @@ def _regenerate_generated_document_if_needed(project, doc, project_dir):
         "plagiarism_declaration",
         "ai_declaration_form",
         "affidavit",
+        "assessment_summary",
     } or doc.doc_type.startswith(
         (
             "assessor_profile_",
-            "assessment_result_",
             "assessor_report_",
-            "assessor_narrative_",
             "assessor_banking_",
             "assessor_temp_appointment_",
             "assessor_temp_claim_",
         )
     )
-    if not generated_doc_type or _is_current_form_pdf(stored_path):
+    if not generated_doc_type or _has_current_db_generated_document(doc) or _is_current_form_pdf(stored_path):
         return
 
     form = MbaForm.query.filter_by(project_id=project.id, form_type=doc.doc_type).first()
@@ -307,16 +548,22 @@ def _regenerate_generated_document_if_needed(project, doc, project_dir):
     if not _looks_like_generated_form_document(doc, stored_path):
         return
 
-    os.makedirs(project_dir, exist_ok=True)
     payload = dict(form.payload or {})
     if doc.doc_type == "supervisor_agreement" and doc.uploaded_by_id == project.student_id:
         payload["_student_acceptance"] = "1"
 
-    with open(stored_path, "wb") as fh:
-        file_bytes = generate_form_submission_document_bytes(project, form.form_type, payload)
-        fh.write(file_bytes)
-    doc.file_data = file_bytes
-    doc.mime_type = "application/pdf"
+    file_bytes, file_extension, mime_type = generate_form_submission_download_bytes(project, form.form_type, payload)
+    stored_file_bytes = encrypt_sensitive_document_bytes(doc.doc_type, file_bytes)
+    unique_name = f"{doc.doc_type}_{uuid.uuid4().hex[:8]}_form.{file_extension}"
+    if doc.stored_name and os.path.exists(stored_path):
+        try:
+            os.remove(stored_path)
+        except OSError:
+            pass
+    doc.original_name = f"{doc.doc_type}_form.{file_extension}"
+    doc.stored_name = unique_name
+    doc.file_data = stored_file_bytes
+    doc.mime_type = mime_type
     doc.file_size = len(file_bytes)
 
 
@@ -340,6 +587,12 @@ def upload_project_form(project_id):
     if doc_key == "dissertation":
         flash(MOODLE_CAPSTONE_SUBMISSION_MESSAGE, "info")
         return redirect(url_for("mba.student_dashboard"))
+    if doc_key == "jbs10":
+        flash("Please complete JBS10 using the fillable web form so your supervisor can review and sign it.", "error")
+        return redirect(url_for("mba.student_dashboard"))
+    if doc_key == "intent_to_submit":
+        flash("Please complete Intent to Submit using the fillable web form so your supervisor can review and sign it.", "error")
+        return redirect(url_for("mba.student_dashboard"))
 
     if doc_key == "supervisor_agreement":
         if not project.supervisor_accepted_at:
@@ -355,37 +608,39 @@ def upload_project_form(project_id):
         if not _jbs5_signed_by_supervisor(project):
             flash("Ethics Certificate or Ethics Exemption Form can only be uploaded after the supervisor signs JBS5.", "error")
             return redirect(url_for("mba.student_dashboard"))
-    elif doc_key in {"jbs10", "intent_to_submit"}:
-        if not project.supervisor_accepted_at:
-            flash("These forms become available after a supervisor accepts the invitation.", "error")
-            return redirect(url_for("mba.student_dashboard"))
-        if not student_has_uploaded_doc(project, "supervisor_agreement"):
-            flash("Upload your signed supervisor agreement before submitting these forms.", "error")
-            return redirect(url_for("mba.student_dashboard"))
-        if not _jbs5_signed_by_supervisor(project):
-            flash("These forms become available after the supervisor signs JBS5.", "error")
-            return redirect(url_for("mba.student_dashboard"))
-        if not project.jbs5_hdc_approved_at:
-            flash("JBS10 and Intent to Submit are available only after HDC approves JBS5.", "error")
-            return redirect(url_for("mba.student_dashboard"))
-        if not (
-            student_has_uploaded_doc(project, "ethics_certificate")
-            or student_has_uploaded_doc(project, "ethics_exemption_form")
-        ):
-            flash("Upload the Ethics Certificate or Ethics Exemption Form before submitting these forms.", "error")
-            return redirect(url_for("mba.student_dashboard"))
     elif doc_key in {"global_document", "combined_turnitin_ai_report"}:
         if not project.jbs5_hdc_approved_at:
             flash("JBS5 must be approved by HDC before supporting documents can be uploaded.", "error")
             return redirect(url_for("mba.student_dashboard"))
-        if not _project_has_document(project.id, "jbs10") or not _project_has_document(project.id, "intent_to_submit"):
-            flash("Submit JBS10 and Intent to Submit before uploading supporting documents.", "error")
+        if not jbs10_supervisor_signed(project) or not intent_to_submit_supervisor_signed(project):
+            flash("JBS10 and Intent to Submit must be signed by your supervisor before uploading supporting documents.", "error")
             return redirect(url_for("mba.student_dashboard"))
         if not (
             _project_has_document(project.id, "ethics_certificate")
             or _project_has_document(project.id, "ethics_exemption_form")
         ):
             flash("Upload the Ethics Certificate or Ethics Exemption Form before uploading supporting documents.", "error")
+            return redirect(url_for("mba.student_dashboard"))
+        if not (
+            _project_has_document(project.id, "jbs1_declaration")
+            and _project_has_document(project.id, "plagiarism_declaration")
+            and _project_has_document(project.id, "affidavit_stamped")
+        ):
+            flash(
+                "Complete JBS 1 Declaration, the combined plagiarism declaration, and upload the stamped JBS 2 Affidavit before uploading supporting documents.",
+                "error",
+            )
+            return redirect(url_for("mba.student_dashboard"))
+    elif doc_key == "affidavit_stamped":
+        if not project.jbs5_hdc_approved_at:
+            flash("JBS5 must be approved by HDC before the stamped affidavit can be uploaded.", "error")
+            return redirect(url_for("mba.student_dashboard"))
+        if not jbs10_supervisor_signed(project) or not intent_to_submit_supervisor_signed(project):
+            flash("JBS10 and Intent to Submit must be signed by your supervisor before uploading the stamped affidavit.", "error")
+            return redirect(url_for("mba.student_dashboard"))
+        affidavit_form = MbaForm.query.filter_by(project_id=project.id, form_type="affidavit").first()
+        if not affidavit_form or not isinstance(affidavit_form.payload, dict):
+            flash("Complete and download the JBS 2 Affidavit before uploading the stamped copy.", "error")
             return redirect(url_for("mba.student_dashboard"))
 
     uploaded_file = request.files.get("form_file")
@@ -394,14 +649,15 @@ def upload_project_form(project_id):
         flash(file_error, "error")
         return redirect(url_for("mba.student_dashboard"))
 
-    assessor_suggestions_created = False
     try:
         doc = _store_project_document(project, doc_key, uploaded_file)
         db.session.flush()
         if not doc.id:
             raise RuntimeError("Document metadata row was not persisted")
-        if doc_key in {"jbs10", "intent_to_submit"}:
-            assessor_suggestions_created = bool(apply_assessor_suggestions_if_ready(project))
+        if doc_key in {"ethics_certificate", "ethics_exemption_form"}:
+            from . import routes_forms as _routes_forms
+
+            _routes_forms._maybe_notify_jbs10_intent_released(project)
         db.session.commit()
     except Exception:
         db.session.rollback()
@@ -409,13 +665,12 @@ def upload_project_form(project_id):
         return redirect(url_for("mba.student_dashboard"))
 
     if doc_key in {
-        "jbs10",
         "supervisor_agreement",
-        "intent_to_submit",
         "ethics_certificate",
         "ethics_exemption_form",
         "global_document",
         "combined_turnitin_ai_report",
+        "affidavit_stamped",
     }:
         from ..mail import send_email
 
@@ -436,8 +691,6 @@ def upload_project_form(project_id):
         if doc_key == "supervisor_agreement":
             send_bulk_emails(supervisor_agreement_submission_email_messages(project, doc_key))
 
-    if assessor_suggestions_created:
-        flash("Assessor suggestions were generated for MBA Admin.", "info")
     flash(f"{MBA_FORM_TEMPLATES[doc_key]['label']} uploaded successfully.", "success")
     return redirect(url_for("mba.student_dashboard"))
 
@@ -449,9 +702,11 @@ def _combined_declaration_ready(project):
         uploaded_doc_for(project, "plagiarism_declaration")
         and payload.get("signature_name")
         and payload.get("signature_date")
-        and payload.get("supervisor_signature_name")
-        and payload.get("supervisor_signature_date")
     )
+
+
+def _jbs1_declaration_ready(project):
+    return jbs1_declaration_complete(project)
 
 
 @mba_bp.route("/projects/<int:project_id>/admin-capstone-submission", methods=["POST"])
@@ -464,9 +719,23 @@ def admin_upload_capstone_submission(project_id):
     if not project:
         abort(404)
 
+    if not assessor_hr_documents_sent(project):
+        flash(
+            "Send the approved assessor temporary appointment and claim forms to HR before uploading the Capstone Manuscript.",
+            "error",
+        )
+        return redirect(url_for("mba.admin_dashboard", panel="projects"))
+
+    if not _jbs1_declaration_ready(project):
+        flash(
+            "The JBS 1 Declaration must be signed by the student, supervisor, and Program Manager before Admin uploads the Capstone Manuscript.",
+            "error",
+        )
+        return redirect(url_for("mba.admin_dashboard", panel="projects"))
+
     if not _combined_declaration_ready(project):
         flash(
-            "The combined plagiarism, Turnitin and AI declaration must be signed by the student and supervisor before Admin uploads the Capstone Manuscript.",
+            "The combined plagiarism, Turnitin and AI declaration must be signed by the student before Admin uploads the Capstone Manuscript.",
             "error",
         )
         return redirect(url_for("mba.admin_dashboard", panel="projects"))
@@ -575,11 +844,15 @@ def _load_project_document_for_current_user(project_id, doc_id):
         and not can_view_released_pool_jbs5
     ):
         abort(403)
+    nomination_doc_types = {
+        external_examiner_nomination_doc_type(),
+        additional_external_examiner_nomination_doc_type(),
+    }
     restricted_assessor_doc = doc.doc_type.startswith(
         (
-            "assessment_result_",
+            "assessment_summary",
             "assessor_report_",
-            "assessor_narrative_",
+            "assessor_detailed_report_",
             "assessor_profile_",
             "assessor_cv_",
             "assessor_highest_qualification_",
@@ -587,8 +860,14 @@ def _load_project_document_for_current_user(project_id, doc_id):
             "assessor_temp_appointment_",
             "assessor_temp_claim_",
         )
+    ) or doc.doc_type in nomination_doc_types
+    owner_can_view_released_detailed_report = (
+        is_owner
+        and doc.doc_type.startswith("assessor_detailed_report_")
+        and project_has_active_corrections(project)
+        and corrections_released_to_student(project)
     )
-    if is_owner and not (is_admin or is_hdc) and restricted_assessor_doc:
+    if is_owner and not (is_admin or is_hdc) and restricted_assessor_doc and not owner_can_view_released_detailed_report:
         abort(403)
     is_hdc_results_document = doc.doc_type.startswith(HDC_ASSESSOR_RESULTS_DOCUMENT_PREFIXES)
     supervisor_can_view_forwarded_assessment_docs = (
@@ -619,6 +898,9 @@ def _load_project_document_for_current_user(project_id, doc_id):
         return project, doc, None
     if doc.doc_type.startswith(("assessor_banking_", "assessor_temp_appointment_", "assessor_temp_claim_")):
         if not is_admin and doc.uploaded_by_id != current_user.id:
+            abort(403)
+    if doc.doc_type in nomination_doc_types:
+        if not (is_admin or is_hdc or current_user.id == project.primary_supervisor_id):
             abort(403)
     if doc.doc_type.startswith(("assessor_profile_", "assessor_cv_", "assessor_highest_qualification_")):
         hdc_assessor_doc_allowed_statuses = {
@@ -673,19 +955,9 @@ def download_project_document(project_id, doc_id):
         return redirect_response
 
     if supports_exact_form_render(doc.doc_type):
-        live_form_response = _live_form_pdf_response(project, doc)
-        if live_form_response and getattr(live_form_response, "status_code", 200) < 400:
+        live_form_response = _live_form_download_response(project, doc)
+        if live_form_response:
             return live_form_response
-
-        live_html_response = _live_form_html_response(project, doc, as_attachment=True)
-        if live_html_response:
-            return live_html_response
-
-        return current_app.response_class(
-            "Unable to generate a download from the submitted form HTML right now.",
-            status=503,
-            mimetype="text/plain",
-        )
 
     project_dir = os.path.join(_uploads_dir(), str(project_id))
     _regenerate_generated_document_if_needed(project, doc, project_dir)
@@ -693,6 +965,15 @@ def download_project_document(project_id, doc_id):
     if db_response:
         db.session.commit()
         return db_response
+
+    stored_path = os.path.join(project_dir, doc.stored_name or "")
+    if _looks_like_html_document(doc) or _file_looks_like_html(stored_path):
+        file_pdf_response = _html_file_pdf_response(stored_path, doc, as_attachment=True)
+        if file_pdf_response:
+            return file_pdf_response
+        file_word_response = _html_file_word_response(stored_path, doc, as_attachment=True)
+        if file_word_response:
+            return file_word_response
 
     return send_from_directory(project_dir, doc.stored_name, as_attachment=True, download_name=doc.original_name)
 
@@ -706,7 +987,7 @@ def view_project_document(project_id, doc_id):
         return redirect_response
 
     if supports_exact_form_render(doc.doc_type):
-        live_form_response = _live_form_html_response(project, doc, as_attachment=False)
+        live_form_response = _live_form_html_response(project, doc)
         if live_form_response:
             return live_form_response
         db_response = _project_document_db_response(doc, as_attachment=False)
@@ -720,12 +1001,12 @@ def view_project_document(project_id, doc_id):
 
     project_dir = os.path.join(_uploads_dir(), str(project_id))
     _regenerate_generated_document_if_needed(project, doc, project_dir)
-    db_response = _project_document_db_response(doc, as_attachment=not str(doc.original_name or "").lower().endswith(".pdf"))
+    if not str(doc.original_name or "").lower().endswith(".pdf"):
+        return _download_only_view_response(project, doc)
+    db_response = _project_document_db_response(doc, as_attachment=False)
     if db_response:
         db.session.commit()
         return db_response
-    if not str(doc.original_name or "").lower().endswith(".pdf"):
-        return send_from_directory(project_dir, doc.stored_name, as_attachment=True, download_name=doc.original_name)
     return send_from_directory(
         project_dir,
         doc.stored_name,

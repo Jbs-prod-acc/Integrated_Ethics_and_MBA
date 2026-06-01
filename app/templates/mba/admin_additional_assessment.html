@@ -22,6 +22,9 @@
         <a href="{{ url_for('mba.admin_additional_assessment', assessment_status='needs_assignment', student_number=student_number) }}" class="filter-pill {% if assessment_status == 'needs_assignment' %}is-active{% endif %}">
           Needs Assignment <strong>{{ assessment_counts.needs_assignment }}</strong>
         </a>
+        <a href="{{ url_for('mba.admin_additional_assessment', assessment_status='awaiting_nomination', student_number=student_number) }}" class="filter-pill {% if assessment_status == 'awaiting_nomination' %}is-active{% endif %}">
+          Awaiting Nomination <strong>{{ assessment_counts.awaiting_nomination }}</strong>
+        </a>
         <a href="{{ url_for('mba.admin_additional_assessment', assessment_status='awaiting_acceptance', student_number=student_number) }}" class="filter-pill {% if assessment_status == 'awaiting_acceptance' %}is-active{% endif %}">
           Awaiting Acceptance <strong>{{ assessment_counts.awaiting_acceptance }}</strong>
         </a>
@@ -51,9 +54,11 @@
         {% set student_number_value = project.student.student_profile.student_number if project.student and project.student.student_profile and project.student.student_profile.student_number else 'Not captured' %}
         {% set assessor_1_grade = assessor_grade_for_slot(project, 'assessor_1', forms_by_project=forms_by_project) %}
         {% set assessor_2_grade = assessor_grade_for_slot(project, 'assessor_2', forms_by_project=forms_by_project) %}
-        {% set assessor_3_result = uploaded_doc_for(project, assessment_doc_type('assessor_3')) %}
         {% set assessor_3_report = uploaded_doc_for(project, assessor_report_doc_type('assessor_3')) %}
-        {% set assessor_3_narrative = uploaded_doc_for(project, assessor_narrative_doc_type('assessor_3')) %}
+        {% set assessor_3_detailed_report = uploaded_doc_for(project, 'assessor_detailed_report_assessor_3') %}
+        {% set additional_nomination_doc = uploaded_doc_for(project, additional_external_examiner_nomination_doc_type()) %}
+        {% set additional_nomination_supervisor_signed = additional_external_examiner_nomination_supervisor_signed(project) %}
+        {% set additional_nomination_hdc_signed = hdc_additional_external_examiner_nomination_signature_complete(project) %}
         {% call project_disclosure(project, 'project-disclosure--admin') %}
         <article class="record-card admin-project-card">
           <div class="record-card__top">
@@ -128,7 +133,7 @@
                 </select>
               </label>
               <button class="primary-button small-button" name="action" value="assign_additional_assessor" type="submit">
-                {% if project.assessor_3_id %}Update Third Assessor{% else %}Assign Third Assessor{% endif %}
+                {% if project.assessor_3_id %}Update Proposed Third Assessor{% else %}Propose Third Assessor{% endif %}
               </button>
             </form>
           </section>
@@ -140,45 +145,62 @@
                 <div class="invite-row">
                   <div>
                     <strong>Invitation</strong>
-                    <small>{{ (project.assessor_3_invitation_status or 'not sent').replace('_', ' ').title() }}</small>
+                    <small>
+                      {% if additional_nomination_supervisor_signed and additional_nomination_hdc_signed %}
+                        {{ (project.assessor_3_invitation_status or 'not sent').replace('_', ' ').title() }}
+                      {% else %}
+                        Held until additional nomination is signed by the supervisor and HDC
+                      {% endif %}
+                    </small>
                   </div>
+                  {% if additional_nomination_supervisor_signed and additional_nomination_hdc_signed and project.assessor_3_invitation_status not in ['pending', 'accepted'] %}
+                    <form action="{{ url_for('mba.admin_project_action', project_id=project.id) }}" method="post" class="inline-action" style="gap:0.5rem;">
+                      <button class="primary-button small-button" name="action" value="send_additional_assessor_invitation" type="submit">Send Invitation</button>
+                    </form>
+                  {% endif %}
                 </div>
                 <div class="invite-row">
                   <div>
-                    <strong>Assessment Result Summary</strong>
-                    <small>{% if assessor_3_result %}Submitted{% else %}Pending{% endif %}</small>
+                    <strong>Additional Assessor Nomination Form</strong>
+                    <small>
+                      {% if additional_nomination_doc %}
+                        Supervisor: {{ 'Signed' if additional_nomination_supervisor_signed else 'Pending' }} &middot; HDC: {{ 'Signed' if additional_nomination_hdc_signed else 'Pending' }}
+                      {% else %}
+                        Generated after a proposed third assessor is selected
+                      {% endif %}
+                    </small>
                   </div>
-                  {% if assessor_3_result %}
+                  {% if additional_nomination_doc %}
                     <div class="inline-action" style="gap:0.5rem;">
-                      <a href="{{ url_for('mba.view_project_document', project_id=project.id, doc_id=assessor_3_result.id) }}" class="secondary-button small-button">View</a>
-                      <a href="{{ url_for('mba.download_project_document', project_id=project.id, doc_id=assessor_3_result.id) }}" class="secondary-button small-button">Download</a>
+                      <a href="{{ url_for('mba.view_project_document', project_id=project.id, doc_id=additional_nomination_doc.id) }}" class="secondary-button small-button">View</a>
+                      <a href="{{ url_for('mba.download_project_document', project_id=project.id, doc_id=additional_nomination_doc.id) }}" class="secondary-button small-button">Download Word</a>
                     </div>
                   {% endif %}
                 </div>
                 <div class="invite-row">
                   <div>
-                    <strong>Assessor Report Form 1</strong>
+                    <strong>Assessor Report Form</strong>
                     <small>{% if assessor_3_report %}Submitted{% else %}Pending{% endif %}</small>
                   </div>
                   {% if assessor_3_report %}
                     <div class="inline-action" style="gap:0.5rem;">
                       <a href="{{ url_for('mba.view_project_document', project_id=project.id, doc_id=assessor_3_report.id) }}" class="secondary-button small-button">View</a>
-                      <a href="{{ url_for('mba.download_project_document', project_id=project.id, doc_id=assessor_3_report.id) }}" class="secondary-button small-button">Download</a>
+                      <a href="{{ url_for('mba.download_project_document', project_id=project.id, doc_id=assessor_3_report.id) }}" class="secondary-button small-button">Download Word</a>
                     </div>
                   {% endif %}
                 </div>
-                <div class="invite-row">
-                  <div>
-                    <strong>Assessor Report Form 2</strong>
-                    <small>{% if assessor_3_narrative %}Submitted{% else %}Pending{% endif %}</small>
-                  </div>
-                  {% if assessor_3_narrative %}
+                {% if assessor_3_detailed_report %}
+                  <div class="invite-row">
+                    <div>
+                      <strong>{{ document_label(assessor_3_detailed_report.doc_type) }}</strong>
+                      <small>{{ assessor_3_detailed_report.original_name }}</small>
+                    </div>
                     <div class="inline-action" style="gap:0.5rem;">
-                      <a href="{{ url_for('mba.view_project_document', project_id=project.id, doc_id=assessor_3_narrative.id) }}" class="secondary-button small-button">View</a>
-                      <a href="{{ url_for('mba.download_project_document', project_id=project.id, doc_id=assessor_3_narrative.id) }}" class="secondary-button small-button">Download</a>
+                      <a href="{{ url_for('mba.view_project_document', project_id=project.id, doc_id=assessor_3_detailed_report.id) }}" class="secondary-button small-button">View</a>
+                      <a href="{{ url_for('mba.download_project_document', project_id=project.id, doc_id=assessor_3_detailed_report.id) }}" class="secondary-button small-button">Download</a>
                     </div>
-                  {% endif %}
-                </div>
+                  </div>
+                {% endif %}
               </div>
             </section>
           {% endif %}

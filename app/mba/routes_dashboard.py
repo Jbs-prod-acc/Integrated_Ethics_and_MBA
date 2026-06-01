@@ -1,4 +1,6 @@
-from flask import flash, redirect, render_template, request, url_for
+from io import BytesIO
+
+from flask import abort, flash, redirect, render_template, request, send_file, url_for
 from flask_login import current_user, login_required
 from sqlalchemy import or_
 from sqlalchemy.orm import joinedload
@@ -16,42 +18,6 @@ def dashboard():
     if not require_mba_user():
         return redirect(url_for("auth.login"))
     return redirect(role_landing_url())
-
-
-def _missing_required_profile_fields(fields):
-    return [label for label, value in fields if not (value or "").strip()]
-
-
-def _student_profile_missing_fields(profile, student_number):
-    return _missing_required_profile_fields(
-        [
-            ("first name", profile.name),
-            ("surname", profile.surname),
-            ("contact number", profile.contact),
-            ("student number", student_number),
-            ("module", profile.module),
-            ("block", profile.block_id),
-            ("degree", profile.degree),
-        ]
-    )
-
-
-def _staff_profile_missing_fields(profile):
-    return _missing_required_profile_fields(
-        [
-            ("first name", profile.name),
-            ("surname", profile.surname),
-            ("contact number", profile.contact),
-            ("department", profile.department),
-            ("position", profile.position),
-            ("highest qualification", profile.qualification),
-            ("affiliation", profile.affiliation),
-            ("areas of expertise", profile.skills),
-            ("research themes", profile.research_themes),
-            ("research interests", profile.research_interests),
-            ("research disciplines", profile.research_disciplines),
-        ]
-    )
 
 
 def _change_current_user_password():
@@ -81,12 +47,52 @@ def _change_current_user_password():
     return True
 
 
+@mba_bp.route("/profile/signature-image")
+@login_required
+def profile_signature_image():
+    if not require_mba_user():
+        abort(403)
+    signature_type = normalize_user_signature_type(request.args.get("signature_type"))
+    signature_bytes, mime_type = user_signature_bytes(current_user, signature_type)
+    if not signature_bytes:
+        abort(404)
+    response = send_file(BytesIO(signature_bytes), mimetype=mime_type or user_signature_mime_type(current_user, signature_type))
+    response.headers["Cache-Control"] = "no-store, max-age=0"
+    return response
+
+
 @mba_bp.route("/profile", methods=["GET", "POST"])
 @login_required
 def profile():
     if not require_mba_user():
         return redirect(url_for("auth.login"))
     is_student = current_user.role == MbaRole.STUDENT.value
+    is_hdc_committee_profile = mba_profile_is_committee(current_user)
+    if request.method == "POST" and request.form.get("action") == "save_signature":
+        signature_type = normalize_user_signature_type(request.form.get("signature_type"))
+        try:
+            save_user_signature(
+                current_user,
+                uploaded_file=request.files.get("signature_file"),
+                signature_data=request.form.get("signature_data"),
+                signature_type=signature_type,
+                printed_name=request.form.get("signature_printed_name"),
+            )
+            db.session.commit()
+            flash(f"{mba_profile_signature_label(current_user, signature_type)} has been updated.", "success")
+        except ValueError as exc:
+            db.session.rollback()
+            flash(str(exc), "error")
+        except Exception:
+            db.session.rollback()
+            flash("Your signature could not be saved. Please try again.", "error")
+        return redirect(url_for("mba.profile"))
+    if request.method == "POST" and request.form.get("action") == "delete_signature":
+        signature_type = normalize_user_signature_type(request.form.get("signature_type"))
+        delete_user_signature(current_user, signature_type)
+        db.session.commit()
+        flash(f"{mba_profile_signature_label(current_user, signature_type)} has been removed.", "success")
+        return redirect(url_for("mba.profile"))
     if request.method == "POST" and request.form.get("action") == "change_password":
         _change_current_user_password()
         return redirect(url_for("mba.profile"))
@@ -105,7 +111,15 @@ def profile():
             profile.block_id = (request.form.get("block_id") or "").strip() or None
             profile.degree = ((request.form.get("degree") or "MBA").strip() or "MBA")
             profile.address = (request.form.get("address") or "").strip() or None
-            missing_fields = _student_profile_missing_fields(profile, submitted_student_number)
+            profile.postal_code = (request.form.get("postal_code") or "").strip() or None
+            profile.id_passport_number = (request.form.get("id_passport_number") or "").strip() or None
+            profile.default_signing_location = (request.form.get("default_signing_location") or "").strip() or None
+            missing_fields = mba_profile_missing_fields(
+                current_user,
+                profile=profile,
+                submitted_student_number=submitted_student_number,
+                include_signature=False,
+            )
             if missing_fields:
                 flash(f"Complete required profile fields: {', '.join(missing_fields)}.", "error")
             elif (
@@ -120,7 +134,12 @@ def profile():
                 profile.student_number = submitted_student_number
                 current_user.first_name = profile.name
                 current_user.last_name = profile.surname
-                current_user.has_profile = True
+                current_user.has_profile = not mba_profile_missing_fields(
+                    current_user,
+                    profile=profile,
+                    submitted_student_number=submitted_student_number,
+                    include_signature=False,
+                )
                 try:
                     db.session.add(profile)
                     db.session.commit()
@@ -143,6 +162,10 @@ def profile():
             profile.position = (request.form.get("position") or "").strip() or None
             profile.qualification = (request.form.get("qualification") or "").strip() or None
             profile.affiliation = (request.form.get("affiliation") or "").strip() or None
+            profile.staff_number = (request.form.get("staff_number") or "").strip() or None
+            profile.id_passport_number = (request.form.get("id_passport_number") or "").strip() or None
+            profile.postal_code = (request.form.get("postal_code") or "").strip() or None
+            profile.default_signing_location = (request.form.get("default_signing_location") or "").strip() or None
             profile.skills = (request.form.get("skills") or "").strip() or None
             profile.research_themes = (request.form.get("research_themes") or "").strip() or None
             profile.research_interests = (request.form.get("research_interests") or "").strip() or None
@@ -166,18 +189,86 @@ def profile():
             )
             profile.approved_before = request.form.get("approved_before") == "on"
             profile.international_assessor = request.form.get("international_assessor") == "on"
-            missing_fields = _staff_profile_missing_fields(profile)
+            if is_hdc_committee_profile:
+                profile.name = profile.name or "Higher Degree Committee"
+                profile.surname = None
+                profile.title = None
+                profile.position = "Committee"
+                profile.staff_number = None
+                profile.qualification = None
+                profile.id_passport_number = None
+                profile.skills = None
+                profile.research_themes = None
+                profile.research_interests = None
+                profile.research_disciplines = None
+                profile.selected_publications = None
+                profile.scholarly_profile_links = None
+                profile.students = 0
+                profile.academic_experience = 0
+                profile.students_supervised_total = 0
+                profile.students_assessed_total = 0
+                profile.publication_count = 0
+                profile.approved_before = False
+                profile.international_assessor = False
+            missing_fields = mba_profile_missing_fields(
+                current_user,
+                profile=profile,
+                include_signature=False,
+            )
             if missing_fields:
                 flash(f"Complete required profile fields: {', '.join(missing_fields)}.", "error")
             else:
                 current_user.first_name = profile.name
-                current_user.last_name = profile.surname
-                current_user.has_profile = True
+                current_user.last_name = None if is_hdc_committee_profile else profile.surname
+                current_user.has_profile = not mba_profile_missing_fields(
+                    current_user,
+                    profile=profile,
+                    include_signature=False,
+                )
                 db.session.add(profile)
                 db.session.commit()
                 flash("Your staff profile has been saved.", "success")
                 return redirect(url_for("mba.profile"))
-    return render_template("mba/profile.html", profile=profile, is_student=is_student, role_label=profile_role_label(current_user))
+    signature_slots = []
+    for slot in mba_profile_signature_slots(current_user):
+        signature_type = slot["type"]
+        signature_record = active_user_signature_record(current_user, signature_type)
+        has_signature = user_has_signature(current_user, signature_type)
+        preview_url = ""
+        if has_signature:
+            preview_url = url_for(
+                "mba.profile_signature_image",
+                signature_type=signature_type,
+                v=user_signature_cache_token(current_user, signature_type) or "1",
+            )
+        signature_slots.append(
+            {
+                **slot,
+                "has_signature": has_signature,
+                "preview_url": preview_url,
+                "printed_name": (
+                    getattr(signature_record, "printed_name", None)
+                    or (
+                        f"{profile.title or ''} {profile.name or current_user.first_name or ''} {profile.surname or current_user.last_name or ''}".strip()
+                        if signature_type == USER_SIGNATURE_PRIMARY and not is_hdc_committee_profile
+                        else ""
+                    )
+                ),
+            }
+        )
+    profile_missing_fields = mba_profile_missing_fields(current_user, profile=profile)
+    return render_template(
+        "mba/profile.html",
+        profile=profile,
+        is_student=is_student,
+        role_label=profile_role_label(current_user),
+        signature_slots=signature_slots,
+        profile_is_complete=not profile_missing_fields,
+        profile_missing_fields=profile_missing_fields,
+        requires_academic_profile=mba_profile_requires_academic_fields(current_user),
+        is_hdc_committee_profile=is_hdc_committee_profile,
+        requires_signature=mba_profile_requires_signature(current_user),
+    )
 
 
 @mba_bp.route("/student-dashboard")
@@ -209,6 +300,11 @@ def student_dashboard():
         project_corrections_status=project_corrections_status,
         corrections_status_label=corrections_status_label,
         corrections_released_to_student=corrections_released_to_student,
+        jbs10_supervisor_signed=jbs10_supervisor_signed,
+        jbs10_supervisor_return_pending=jbs10_supervisor_return_pending,
+        intent_to_submit_supervisor_signed=intent_to_submit_supervisor_signed,
+        jbs1_supervisor_signed=jbs1_supervisor_signed,
+        jbs1_program_manager_signed=jbs1_program_manager_signed,
         pending_correction_projects=pending_correction_projects,
     )
 
@@ -457,6 +553,7 @@ def scholar_dashboard():
         assessor_can_view_project_documents=assessor_can_view_project_documents,
         assessor_can_view_student_dissertation=assessor_can_view_student_dissertation,
         assessment_doc_type=assessment_doc_type,
+        assessor_report_doc_type=assessor_report_doc_type,
         assessor_profile_doc_type=assessor_profile_doc_type,
         assessor_cv_doc_type=assessor_cv_doc_type,
         assessor_highest_qualification_doc_type=assessor_highest_qualification_doc_type,
@@ -481,11 +578,24 @@ def scholar_dashboard():
         project_corrections_status=project_corrections_status,
         corrections_status_label=corrections_status_label,
         assessment_results_forwarded_to_supervisor=assessment_results_forwarded_to_supervisor,
+        assessment_summary_supervisor_signed=assessment_summary_supervisor_signed,
+        assessment_summary_supervisor_signing_block_reason=assessment_summary_supervisor_signing_block_reason,
         results_released_to_supervisor=results_released_to_supervisor,
+        assessment_result_submitted=assessment_result_submitted,
         assessment_result_pack_complete=assessment_result_pack_complete,
         additional_assessment_required=additional_assessment_required,
         additional_assessment_stage=additional_assessment_stage,
         additional_assessment_status_label=additional_assessment_status_label,
+        external_examiner_nomination_doc_type=external_examiner_nomination_doc_type,
+        external_examiner_nomination_supervisor_signed=external_examiner_nomination_supervisor_signed,
+        additional_external_examiner_nomination_doc_type=additional_external_examiner_nomination_doc_type,
+        additional_external_examiner_nomination_supervisor_signed=additional_external_examiner_nomination_supervisor_signed,
+        hdc_additional_external_examiner_nomination_signature_complete=hdc_additional_external_examiner_nomination_signature_complete,
+        jbs10_supervisor_signed=jbs10_supervisor_signed,
+        jbs10_supervisor_return_pending=jbs10_supervisor_return_pending,
+        intent_to_submit_supervisor_signed=intent_to_submit_supervisor_signed,
+        jbs1_supervisor_signed=jbs1_supervisor_signed,
+        jbs1_program_manager_signed=jbs1_program_manager_signed,
     )
 
 
@@ -600,6 +710,8 @@ def scholar_corrections():
         project_status_badge_class=public_project_status_badge_class,
         assessment_results_forwarded_to_supervisor=assessment_results_forwarded_to_supervisor,
         corrections_released_to_student=corrections_released_to_student,
+        assessment_summary_supervisor_signed=assessment_summary_supervisor_signed,
+        assessment_summary_supervisor_signing_block_reason=assessment_summary_supervisor_signing_block_reason,
         kpis=mba_kpis(),
     )
 
@@ -644,6 +756,7 @@ def examiner_dashboard():
         assessor_can_view_project_documents=assessor_can_view_project_documents,
         assessor_can_view_student_dissertation=assessor_can_view_student_dissertation,
         assessment_doc_type=assessment_doc_type,
+        assessor_report_doc_type=assessor_report_doc_type,
         assessor_profile_doc_type=assessor_profile_doc_type,
         assessor_cv_doc_type=assessor_cv_doc_type,
         assessor_highest_qualification_doc_type=assessor_highest_qualification_doc_type,
@@ -654,6 +767,7 @@ def examiner_dashboard():
         kpis=mba_kpis(),
         project_status_label=public_project_status_label,
         project_status_badge_class=public_project_status_badge_class,
+        assessment_result_submitted=assessment_result_submitted,
         assessment_result_pack_complete=assessment_result_pack_complete,
         additional_assessment_required=additional_assessment_required,
         additional_assessment_stage=additional_assessment_stage,
@@ -852,5 +966,10 @@ def hdc_dashboard():
         project_status_label=project_status_label,
         assessor_hdc_decision=assessor_hdc_decision,
         assessor_hdc_decision_label=assessor_hdc_decision_label,
+        external_examiner_nomination_supervisor_signed=external_examiner_nomination_supervisor_signed,
+        additional_external_examiner_nomination_doc_type=additional_external_examiner_nomination_doc_type,
+        additional_external_examiner_nomination_supervisor_signed=additional_external_examiner_nomination_supervisor_signed,
+        hdc_additional_external_examiner_nomination_signature_complete=hdc_additional_external_examiner_nomination_signature_complete,
+        hdc_document_signature_status=hdc_document_signature_status,
     )
 
