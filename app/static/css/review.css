@@ -1,0 +1,263 @@
+:root {
+  --jbs-orange: #ef820d;
+  --jbs-teal: #022169;
+  --jbs-purple: #4F2365;
+  --jbs-yellow: #FFCB05;
+  --jbs-grey: #939598;
+  --white: #ffffff;
+  --black: #000000;
+  --accent: #F26522;
+}
+
+  h2, label, input, select, textarea {
+    color: black;
+  }
+  
+
+/* Buttons in Admin Review */
+.view-btn, .approve-btn, .revise-btn, .reject-btn {
+    padding: 8px 18px;
+    border: none;
+    border-radius: 6px;
+    margin-right: 8px;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .view-btn { background-color: #00B6B5; }
+  .view-btn:hover { background-color: #028180; }
+  .approve-btn { background-color: #27ae60; }
+  .approve-btn:hover { background-color: #219150; }
+  .revise-btn { background-color: #FFCB05; color: #022169;}
+  .revise-btn:hover { background-color: #ffe380; color: #022169;}
+  .reject-btn { background-color: #CE0F46; }
+  .reject-btn:hover { background-color: #a50c38; }
+  
+  /* Comment Thread and Log */
+  .comment-thread {
+    background: #f7f7fa;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+    max-height: 150px;
+    overflow-y: auto;
+    font-size: 0.97rem;
+  }
+  .change-log {
+    list-style: disc inside;
+    color: #4F2365;
+    font-size: 0.93rem;
+    padding-left: 1rem;
+  }
+  
+  /* Make modal content wider for admin review */
+  #reviewModal .modal-content {
+    max-width: 600px;
+    width: 98%;
+  }
+
+
+  .admin-wrapper {
+    display: flex;
+    min-height: 100vh;
+  }
+  
+ /* Sidebar */
+.sidebar {
+    width: 250px;
+    background-color: #f26e31;
+    color: white;
+    padding: 1.5rem 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .sidebar-header {
+.sidebar-link.active,
+.sidebar-nav a.active {
+  background-color: #4F2365;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  color: white;
+}
+
+.sidebar-link.active:hover,
+.sidebar-nav a.active:hover {
+  background-color: #4F2365;
+}
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 1rem;
+  }
+  
+  .sidebar-logo {
+    width: 100px;
+    margin-bottom: 0.5rem;
+  }
+  
+  .sidebar-nav {
+    width: 100%;
+  }
+  
+  .sidebar-nav a {
+    display: block;
+    width: 100%;
+    color: white;
+    padding: 10px 12px;
+    margin-bottom: 5px;
+    text-decoration: none;
+    font-weight: 500;
+    border-radius: 6px;
+    transition: background 0.2s ease;
+  }
+  
+  .sidebar-nav a:hover {
+    background-color: #00B6B5;
+  }
+
+  @media (max-height: 600px) {
+    .sidebar {
+      overflow-y: auto;
+    }
+  }
+  
+  .admin-wrapper {
+    display: flex;
+    min-height: 100vh;
+  }
+  
+  /* Sidebar styles */
+  .sidebar {
+    width: 250px;
+    
+    color: white;
+    padding: 1.5rem 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .sidebar-logo {
+    width: 100px;
+    margin-bottom: 0.5rem;
+  }
+  
+  .sidebar-header h3 {
+    font-size: 1.2rem;
+    margin-top: 0.5rem;
+  }
+  
+  .sidebar-nav {
+    width: 100%;
+    margin-top: 1rem;
+  }
+  
+  .sidebar-nav a {
+    display: block;
+    color: white;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+    text-decoration: none;
+    font-weight: 500;
+    border-radius: 6px;
+  }
+  
+  .sidebar-nav a:hover {
+    background-color: #00B6B5;
+  }
+  
+  /* Main area */
+  .admin-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: #f9f9f9;
+  }
+  
+  .topbar {
+    background-color: #F26522;
+    color: white;
+    padding: 1rem 2rem;
+    font-weight: bold;
+  }
+  
+  .admin-content {
+    padding: 1rem;
+  }
+
+  .filter-row {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    align-items: center;
+  }
+  
+  .filter-row input,
+  .filter-row select {
+    padding: 8px;
+    border-radius: 6px;
+    border: 1px solid #DCDDDE;
+    font-size: 1rem;
+  }
+  
+  .filter-row button {
+    background-color: #022169;
+    color: white;
+    padding: 8px 14px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  
+  .filter-row button:hover {
+    background-color: #00B6B5;
+  }
+
+  .sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  color: white;
+  text-decoration: none;
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  font-weight: 500;
+  transition: background-color 0.3s ease;
+}
+
+.sidebar-link i {
+  color: white;
+  font-size: 1.1rem;
+}
+
+/* Hover effect */
+.sidebar-link:hover {
+  background-color: #022169;
+  border: 1px solid #ffffff30;
+}
+
+.footer {
+  text-align: center;
+  margin-top: 2rem;
+  padding: 1rem;
+  background-color: var(--jbs-orange);
+  color: var(--white);
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: url('/static/img/dash.jpeg');
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-attachment: fixed;
+  opacity: 10%;
+  z-index: -1;
+}
+  
+  

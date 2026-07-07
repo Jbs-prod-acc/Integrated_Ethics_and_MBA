@@ -1,5 +1,6 @@
 import os
 import secrets
+import sqlite3
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -7,6 +8,34 @@ from dotenv import load_dotenv
 load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent
+
+
+def _sqlite_database_is_healthy(path: Path) -> bool:
+    if not path.exists():
+        return False
+
+    try:
+        conn = sqlite3.connect(path)
+        try:
+            row = conn.execute("PRAGMA quick_check").fetchone()
+            return bool(row) and row[0] == "ok"
+        finally:
+            conn.close()
+    except sqlite3.DatabaseError:
+        return False
+
+
+def _default_sqlite_database_uri() -> str:
+    primary_db_path = BASE_DIR / "app.db"
+    if _sqlite_database_is_healthy(primary_db_path):
+        return f"sqlite:///{primary_db_path.as_posix()}"
+
+    backup_paths = sorted(BASE_DIR.glob("app.db.backup-*"), reverse=True)
+    for backup_path in backup_paths:
+        if _sqlite_database_is_healthy(backup_path):
+            return f"sqlite:///{backup_path.as_posix()}"
+
+    return f"sqlite:///{primary_db_path.as_posix()}"
 
 
 def _env_float(name, default):
@@ -23,7 +52,7 @@ class Config:
     PREFERRED_URL_SCHEME = os.getenv("PREFERRED_URL_SCHEME", "https")
     SQLALCHEMY_DATABASE_URI = os.getenv(
         "DATABASE_URL",
-        f"sqlite:///{(BASE_DIR / 'app.db').as_posix()}",
+        _default_sqlite_database_uri(),
     )
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     WTF_CSRF_ENABLED = os.getenv("WTF_CSRF_ENABLED", "true").lower() in {"1", "true", "yes"}

@@ -29,6 +29,7 @@ def validate_csrf_request():
     expected = session.get(CSRF_SESSION_KEY)
     provided = (
         request.form.get("_csrf_token")
+        or request.form.get("csrf_token")
         or request.headers.get("X-CSRF-Token")
         or request.headers.get("X-CSRFToken")
     )

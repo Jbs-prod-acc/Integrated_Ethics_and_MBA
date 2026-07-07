@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Select Submission Month | JBS Ethics</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link rel="stylesheet" href="css/supervisor.css" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/supervisor.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/review.css') }}">
+  <style>
+    .folder-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 2rem;
+      padding: 2rem;
+    }
+
+    .folder-card {
+      text-align: center;
+      padding: 2rem;
+      background-color: #f7f7f7;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+
+    .folder-card:hover {
+      transform: scale(1.05);
+      background-color: #e9f3ff;
+    }
+
+    .folder-icon {
+      font-size: 3rem;
+      color: #4F2365;
+    }
+
+    .folder-label {
+      margin-top: 0.5rem;
+      font-weight: bold;
+      color: #022169;
+    }
+
+    .navbar {
+      background: #022169;
+      color: white;
+      padding: 1rem 2rem;
+    }
+
+    .navbar h2 {
+      margin: 0;
+    }
+
+    .footer {
+      text-align: center;
+      padding: 1rem;
+      background: #939598;
+      color: white;
+      margin-top: 2rem;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <img src="{{ url_for('static',filename='img/image.png')}}" alt="UJ JBS Logo" class="sidebar-logo">
+      <h3>JBS Ethics Application</h3>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="admin-dashboard.html">📋 Dashboard</a>
+      <a href="view-changes.html">🔄 Submission Timeline</a>
+      <a href="reviewer-list.html">👤 Reviewer List</a>
+      <a href="user-list.html">👥 User Management</a>
+      <a href="{{url_for('logout')}}">🔒 Logout</a>
+    </nav>
+  </aside>
+
+  <!-- Main Dashboard Content -->
+  <main class="admin-main">
+    <header class="topbar">
+      <h2>Ethics Admin Dashboard-Application By Month</h2>
+    </header>
+  <div class="folder-grid">
+    <div class="folder-card" onclick="goToDashboard('2025-01')">
+      <div class="folder-icon">📁</div>
+      <div class="folder-label">January 2025</div>
+    </div>
+    <div class="folder-card" onclick="goToDashboard('2025-02')">
+      <div class="folder-icon">📁</div>
+      <div class="folder-label">February 2025</div>
+    </div>
+    <div class="folder-card" onclick="goToDashboard('2025-03')">
+      <div class="folder-icon">📁</div>
+      <div class="folder-label">March 2025</div>
+    </div>
+    <div class="folder-card" onclick="goToDashboard('2025-04')">
+      <div class="folder-icon">📁</div>
+      <div class="folder-label">April 2025</div>
+    </div>
+    <div class="folder-card" onclick="goToDashboard('2025-05')">
+      <div class="folder-icon">📁</div>
+      <div class="folder-label">May 2025</div>
+    </div>
+    <div class="folder-card" onclick="goToDashboard('2025-06')">
+        <div class="folder-icon">📁</div>
+        <div class="folder-label">June 2025</div>
+      </div>
+      <div class="folder-card" onclick="goToDashboard('2025-07')">
+        <div class="folder-icon">📁</div>
+        <div class="folder-label">July 2025</div>
+      </div>
+      <div class="folder-card" onclick="goToDashboard('2025-08')">
+        <div class="folder-icon">📁</div>
+        <div class="folder-label">August 2025</div>
+      </div>
+    <!-- Add more months as needed -->
+  </div>
+</main>
+
+<footer class="footer">
+  &copy; 2025 Johannesburg Business School | JBS Ethics System
+</footer>
+
+<script>
+  function goToDashboard(month) {
+    // You could use query params to pass the month, e.g., ?month=2025-04
+    window.location.href = `admin-dashboard.html?month=${month}`;
+  }
+</script>
+
+</body>
+</html>

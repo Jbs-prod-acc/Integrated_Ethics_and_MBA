@@ -39,7 +39,7 @@
         {% set latest_jbs5 = jbs5_docs|last if jbs5_docs else None %}
         <div class="invitation-action-row" style="margin-top:0.75rem;">
           {% if latest_jbs5 %}
-            <a href="{{ url_for('mba.view_project_document', project_id=project.id, doc_id=latest_jbs5.id) }}" class="secondary-button small-button">View JBS5</a>
+            <a href="{{ url_for('mba.view_project_document', project_id=project.id, doc_id=latest_jbs5.id) }}" class="secondary-button small-button"><i class="link-icon fas fa-eye" aria-hidden="true"></i>View JBS5</a>
           {% endif %}
           <form action="{{ url_for('mba.select_supervisor_project', project_id=project.id) }}" method="post" class="invitation-action-form">
             <button class="primary-button small-button" type="submit">Choose Project and Complete Agreement</button>
@@ -117,9 +117,9 @@
               </p>
               <div class="invitation-action-row">
                 {% if latest_jbs5 %}
-                  <a href="{{ url_for('mba.view_project_document', project_id=project.id, doc_id=latest_jbs5.id) }}" class="secondary-button small-button">View JBS5</a>
+                  <a href="{{ url_for('mba.view_project_document', project_id=project.id, doc_id=latest_jbs5.id) }}" class="secondary-button small-button"><i class="link-icon fas fa-eye" aria-hidden="true"></i>View JBS5</a>
                 {% endif %}
-                <a href="{{ url_for('mba.supervisor_fill_form', project_id=project.id) }}" class="primary-button small-button">Fill Supervisor Agreement and Accept</a>
+                <a href="{{ url_for('mba.supervisor_fill_form', project_id=project.id) }}" class="primary-button small-button"><i class="link-icon fas fa-file-signature" aria-hidden="true"></i>Fill Supervisor Agreement and Accept</a>
               </div>
               <form action="{{ url_for('mba.invitation_response', project_id=project.id) }}" method="post" class="inline-action" style="margin-top:0.5rem;">
                 <input type="hidden" name="supervisor_invitation_id" value="{{ supervisor_invitation.id }}">
@@ -143,8 +143,8 @@
                     <small>{{ doc.original_name }}</small>
                   </div>
                   <div class="document-action-row">
-                    <a href="{{ url_for('mba.view_project_document', project_id=project.id, doc_id=doc.id) }}" class="secondary-button small-button">View</a>
-                    <a href="{{ url_for('mba.download_project_document', project_id=project.id, doc_id=doc.id) }}" class="secondary-button small-button">Download</a>
+                    <a href="{{ url_for('mba.view_project_document', project_id=project.id, doc_id=doc.id) }}" class="secondary-button small-button"><i class="link-icon fas fa-eye" aria-hidden="true"></i>View</a>
+                    <a href="{{ url_for('mba.download_project_document', project_id=project.id, doc_id=doc.id) }}" class="secondary-button small-button"><i class="link-icon fas fa-download" aria-hidden="true"></i>Download</a>
                   </div>
                 </div>
               {% else %}
@@ -170,11 +170,11 @@
               </p>
               <div class="invitation-action-row">
                 {% if external_nomination_doc %}
-                  <a href="{{ url_for('mba.view_project_document', project_id=project.id, doc_id=external_nomination_doc.id) }}" class="secondary-button small-button">View Nomination</a>
-                  <a href="{{ url_for('mba.download_project_document', project_id=project.id, doc_id=external_nomination_doc.id) }}" class="secondary-button small-button">Download Word</a>
+                  <a href="{{ url_for('mba.view_project_document', project_id=project.id, doc_id=external_nomination_doc.id) }}" class="secondary-button small-button"><i class="link-icon fas fa-eye" aria-hidden="true"></i>View Nomination</a>
+                  <a href="{{ url_for('mba.download_project_document', project_id=project.id, doc_id=external_nomination_doc.id) }}" class="secondary-button small-button"><i class="link-icon fas fa-file-arrow-down" aria-hidden="true"></i>Download Word</a>
                 {% endif %}
                 {% if not external_nomination_signed %}
-                  <a href="{{ url_for('mba.supervisor_sign_external_examiner_nomination', project_id=project.id) }}" class="primary-button small-button">Sign Nomination Form</a>
+                  <a href="{{ url_for('mba.supervisor_sign_external_examiner_nomination', project_id=project.id) }}" class="primary-button small-button"><i class="link-icon fas fa-signature" aria-hidden="true"></i>Sign Nomination Form</a>
                 {% else %}
                   <span class="status-pill status-pill--accepted">Nomination Signed</span>
                 {% endif %}
@@ -199,11 +199,11 @@
               </p>
               <div class="invitation-action-row">
                 {% if additional_nomination_doc %}
-                  <a href="{{ url_for('mba.view_project_document', project_id=project.id, doc_id=additional_nomination_doc.id) }}" class="secondary-button small-button">View Nomination</a>
-                  <a href="{{ url_for('mba.download_project_document', project_id=project.id, doc_id=additional_nomination_doc.id) }}" class="secondary-button small-button">Download Word</a>
+                  <a href="{{ url_for('mba.view_project_document', project_id=project.id, doc_id=additional_nomination_doc.id) }}" class="secondary-button small-button"><i class="link-icon fas fa-eye" aria-hidden="true"></i>View Nomination</a>
+                  <a href="{{ url_for('mba.download_project_document', project_id=project.id, doc_id=additional_nomination_doc.id) }}" class="secondary-button small-button"><i class="link-icon fas fa-file-arrow-down" aria-hidden="true"></i>Download Word</a>
                 {% endif %}
                 {% if not additional_nomination_signed %}
-                  <a href="{{ url_for('mba.supervisor_sign_additional_external_examiner_nomination', project_id=project.id) }}" class="primary-button small-button">Sign Additional Nomination</a>
+                  <a href="{{ url_for('mba.supervisor_sign_additional_external_examiner_nomination', project_id=project.id) }}" class="primary-button small-button"><i class="link-icon fas fa-signature" aria-hidden="true"></i>Sign Additional Nomination</a>
                 {% else %}
                   <span class="status-pill status-pill--accepted">Nomination Signed</span>
                 {% endif %}
@@ -224,7 +224,7 @@
             {% set accepted_title_change_pending = project.supervisor_title_change_requested_at and not project.supervisor_title_change_resolved_at %}
             <div class="invitation-action-row">
               {% if accepted_latest_jbs5 %}
-                <a href="{{ url_for('mba.view_project_document', project_id=project.id, doc_id=accepted_latest_jbs5.id) }}" class="secondary-button small-button">View JBS5</a>
+                <a href="{{ url_for('mba.view_project_document', project_id=project.id, doc_id=accepted_latest_jbs5.id) }}" class="secondary-button small-button"><i class="link-icon fas fa-eye" aria-hidden="true"></i>View JBS5</a>
               {% endif %}
               {% if accepted_jbs5_form and accepted_jbs5_form.supervisor_signed %}
                 <span class="status-pill status-pill--accepted">JBS5 Signed</span>
@@ -235,7 +235,7 @@
               {% elif not accepted_student_supervisor_agreement_signed %}
                 <span class="muted" style="display:inline-flex;align-items:center;">Waiting for the student to submit the supervisor-signed Supervisor Agreement.</span>
               {% else %}
-                <a href="{{ url_for('mba.supervisor_sign_jbs5', project_id=project.id) }}" class="primary-button small-button">Sign JBS5</a>
+                <a href="{{ url_for('mba.supervisor_sign_jbs5', project_id=project.id) }}" class="primary-button small-button"><i class="link-icon fas fa-signature" aria-hidden="true"></i>Sign JBS5</a>
               {% endif %}
             </div>
             {% include "mba/_jbs5_hdc_feedback.html" %}

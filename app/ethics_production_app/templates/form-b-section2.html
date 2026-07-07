@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Form B – Research Project Details | JBS Ethics</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/form_a.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/loading.css') }}">
+
+</head>
+<style>
+  #personalInfoComment textarea {
+  width: 100%;
+}
+
+</style>
+<body>
+
+<div class="form-wrapper">
+
+  <!-- Navbar -->
+  <header class="navbar">
+    <div class="nav-content">
+      <img src="{{ url_for('static',filename='img/image.png')}}" alt="UJ JBS Logo" class="logo uj">
+      <span class="nav-title">Form B – Research Project Details</span>
+      <div style="text-align: right;">
+        <a href="{{url_for('logout')}}" class="btn-logout">Logout</a>
+      </div>
+    </div>
+  </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+  <div id="autosave-status" style="position: fixed; top: 70px; right: 20px; padding: 8px 16px; background: #f0f0f0; border-radius: 4px; font-size: 14px; z-index: 1000;"></div>
+
+
+  <!-- Top Bar -->
+  <!-- <div class="form-header">
+    <button class="approve-btn">Save Draft</button>
+    <strong>Step 2 of 3</strong>
+  </div> -->
+
+  <!-- Progress Bar -->
+  <div class="progress-bar">
+    <div class="progress-fill" style="width: 66%">66%</div>
+  </div>
+
+  <!-- Main Content -->
+ 
+    <form action="{{ url_for('form_b_sec2') }}" method="post" enctype="multipart/form-data">
+
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <h2>Section 2: Research Project and Data Information</h2>
+
+      <label>2.1 Provide short description of the research project (±200 words)</label>
+      <textarea name="project_description" rows="5" required placeholder="Summarize your project aims, scope, and relevance."></textarea>
+
+
+      <label>2.2 What is the nature of the data? <span class="info-icon" title="Archival sources, statistical, reports, etc">ℹ️</span></label>
+      <input type="text" name="data_nature" required placeholder="Describe the type of data you will collect (archival sources, statistical data, etc.).">
+
+      <label>2.3 What is the origin/source of the research data?</label>
+      <input type="text" name="data_origin" required placeholder="Specify where the data will come from (e.g., primary collection, existing databases, public records).">
+
+      <div class="question-block">
+        <label>2.4 Are the sources of the research data in the public domain?</label>
+        
+        <div class="d-flex gap-4">
+          <label class="form-check-label">
+            <input type="radio" name="data_public" value="Yes" required onchange="togglePublicData()"> Yes
+          </label>
+          <label class="form-check-label">
+            <input type="radio" name="data_public" value="No" required onchange="togglePublicData()"> No
+          </label>
+        </div>
+      </div>
+
+      <!-- Shown only if data_public = No -->
+        <div id="public_data_fields" style="display: none;">
+          <label>2.4.1 Provide explanation:</label>
+          <textarea name="public_evidence" rows="3" placeholder="Explain why the data is not publicly accessible."></textarea>
+
+          <label>2.4.2 If the data is in the public domain, what are the access conditions?</label>
+          <textarea name="access_conditions" rows="3" placeholder="Mention access terms, restrictions, or data agreements."></textarea>
+        </div>
+
+      <div class="question-block">
+        <label>2.5 Does the database contain personal information/identifiers?</label>
+          <p>This information relates to the anonymity of data/confidentiality of the data</p>
+        
+        <div class="d-flex gap-4">
+          <label class="form-check-label">
+            <input type="radio" name="personal_info" value="Yes" required onchange="togglePersonalInfo()"> Yes
+          </label>
+          <label class="form-check-label">
+            <input type="radio" name="personal_info" value="No" required onchange="togglePersonalInfo()"> No
+          </label>
+        </div>
+      </div>
+
+        <div id="personalInfoComment" style="display: none; margin-top: 1rem;">
+          <textarea name="personal_info_comment" rows="3"
+            placeholder="If yes, please specify what kind of personal information/identifiers to be collected"></textarea>
+        </div>
+
+
+      <div class="question-block">
+        <label>2.6 If the database does contain personal information, do you have evidence that the data to be provided to you have been anonymized?</label>
+        <div class="d-flex gap-4">
+          <label class="form-check-label">
+            <input type="radio" name="data_anonymized" required value="Yes"> Yes
+          </label>
+          <label class="form-check-label">
+            <input type="radio" name="data_anonymized" required value="No"> No
+          </label>
+          <label class="form-check-label">
+            <input type="radio" name="data_anonymized" required value="Not Applicable"> Not Applicable
+          </label>
+        </div>
+      </div>
+
+      <label>2.6.1 Comment / Justification:</label>
+      <textarea name="anonymization_comment" rows="3" required placeholder="Provide justification for anonymization or not"></textarea>
+     
+      <div class="question-block">
+        <label>2.7 In the case of a private database, does it contain information on private firms/organisations for which permission is required? </label>
+        <div class="d-flex gap-4">
+          <label class="form-check-label">
+            <input type="radio" name="private_permission" value="Yes" required onchange="togglePrivatePermission()" required> Yes
+          </label>
+          <label class="form-check-label">
+            <input type="radio" name="private_permission" value="No" required onchange="togglePrivatePermission()" required> No
+          </label>
+        </div>
+      </div>
+
+      <div id="permission_details_box" style="display: none;">
+        <label>2.7.1 Provide permission details:</label>
+        <textarea name="permission_details" rows="3"
+          placeholder="Describe the permission granted."></textarea>
+        <br>
+        <label>Upload permission document (if applicable):</label>
+        <input type="file" name="private_permission_file" class="form-control">
+      </div>
+
+      <div class="question-block">
+        <label>2.8 Will data shortcomings/incompleteness be reported?</label>
+        <div class="d-flex gap-4">
+          <label class="form-check-label">
+            <input type="radio" name="shortcomings_reported" value="Yes" required> Yes
+          </label>
+          <label class="form-check-label">
+            <input type="radio" name="shortcomings_reported" value="No" required> No
+          </label>
+        </div>
+      </div>
+
+      <label>2.9 Explain how data limitations will be reported OR Why they will not be reported?</label>
+      <textarea name="limitations_reporting" rows="3" required placeholder="Describe how you will address or disclose any gaps or limitations."></textarea>
+
+      <div class="question-block">
+        <label>2.10 Are the research methodology and research design in line with the answers of the preceding questions?</label>
+        <div class="d-flex gap-4">
+          <label class="form-check-label">
+            <input type="radio" name="methodology_alignment" value="Yes" required> Yes
+          </label>
+          <label class="form-check-label">
+            <input type="radio" name="methodology_alignment" value="No" required> No
+          </label>
+        </div>
+      </div>
+
+      <label>2.11 How are the original owners of the data going to be recognised/ referenced/ acknowledged?</label>
+      <textarea name="data_acknowledgment" rows="3" required placeholder="Mention citation, attribution in publications, or formal agreements."></textarea>
+
+      <!-- Navigation Buttons -->
+      <div class="form-navigation">
+        <a href="{{url_for('form_b_sec1')}}" class="revise-btn">⬅ Back</a>
+        <button type="submit" class="approve-btn">Next ➔ Ethical Considerations</button>
+      </div>
+    </form>
+  </main>
+
+</div>
+<footer class="footer">
+   
+</footer>
+
+<script>
+  // Hide alert after 3 seconds
+    setTimeout(function() {
+      const alert = document.getElementById('alertMessage');
+      if (alert) {
+        alert.classList.remove('show'); // Bootstrap fade out
+        alert.classList.add('fade'); // add fade class
+        alert.style.display = 'none'; // or use .remove() if you prefer
+      }
+    }, 3000); // 3000ms = 3 seconds
+
+  // function togglePersonalInfo() {
+  //   const yesSelected = document.querySelector('input[name="personal_info"]:checked').value === "Yes";
+  //   const commentBox = document.getElementById("personalInfoComment");
+  //   commentBox.style.display = yesSelected ? "block" : "none";
+  // }
+    function togglePersonalInfo() {
+    const selected = document.querySelector('input[name="personal_info"]:checked');
+    const commentBox = document.getElementById("personalInfoComment");
+
+    if (selected && selected.value === "Yes") {
+      commentBox.style.display = "block";
+    } else {
+      commentBox.style.display = "none";
+    }
+  }
+
+function togglePublicData() {
+    const value = document.querySelector('input[name="data_public"]:checked').value;
+    document.getElementById('public_data_fields').style.display = value === "No" ? 'block' : 'none';
+  }
+
+  function toggleAnonymization() {
+    const value = document.querySelector('input[name="data_anonymized"]:checked').value;
+    document.getElementById('anonymization_box').style.display = value === "No" ? 'block' : 'none';
+  }
+
+  function togglePrivatePermission() {
+    const value = document.querySelector('input[name="private_permission"]:checked').value;
+    document.getElementById('permission_details_box').style.display = value === "Yes" ? 'block' : 'none';
+  }
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="{{ url_for('static', filename='js/form-autosave.js') }}"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    if (window.initFormAutosave) {
+      window.initFormAutosave({
+        formSelector: 'form',
+        endpoint: '{{ url_for("student_autosave_formb") }}',
+        statusElementId: 'autosave-status'
+      });
+    }
+  });
+</script>
+<script src="{{ url_for('static', filename='js/form-submission-handler.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+
+
+<head>
+  <meta charset="UTF-8">
+  <title>Form A Requirements | JBS Ethics</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/form_a.css') }}">
+  <style>
+    .question-block {
+      margin: 1.5rem 0;
+    }
+
+    label {
+      font-weight: bold;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    input[type="radio"] {
+      margin-right: 0.3rem;
+    }
+
+  .info-icon {
+    font-size: 0.95rem;
+    margin-left: 2px;
+    color: var(--jbs-teal);
+    padding-top: 2px;
+  }
+
+  </style>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/loading.css') }}">
+</head>
+
+
+<body>
+
+  <!-- Navbar -->
+  <header class="navbar">
+    <div class="nav-content">
+      <img src="{{ url_for('static',filename='img/image.png')}}" alt="UJ JBS Logo" class="logo uj">
+      <span class="nav-title">Ethics Application System</span>
+
+      <!-- Logout -->
+      <div style="text-align: right;">
+
+      </div>
+        <a href="{{ url_for('logout') }}" class="btn-logout">Logout</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="main-content">
+
+    <h2>Before You Start Form A</h2>
+    <form id="formARequirements" action="{{url_for('submit_form_a_requirements')}}" method="post" enctype="multipart/form-data">
+      <input type="hidden" name="from_dashboard" value="{{ from_dashboard if from_dashboard else '' }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="question-block">
+        <label>1. Will you require permission to access the company or organisation? <span class="info-icon" title="If yes, please upload letter with company letterhead, time-stamped and signed. If pending, you need to upload a letter or a screenshot of an email of an organization you have contacted.">ℹ️</span></label>
+        <div class="d-flex gap-4">
+          <label class="form-check-label">
+            <input type="radio" name="need_permission" value="Yes" required> Yes
+          </label>
+          <label class="form-check-label">
+            <input type="radio" name="need_permission" value="No" checked required> No
+          </label>
+          <label class="form-check-label">
+            <input type="radio" name="need_permission" value="Pending" required> Pending
+          </label>
+          
+        </div>
+
+      <!-- <div class="question-block hidden" id="companyLetterUpload">       
+        <label>Upload Company Permission Letter <small>(with a letterhead, signed and dated)</small></label>
+        <input type="file" name="permission_letter" accept=".pdf,.docx">
+      </div> -->
+
+      <div class="question-block hidden" id="companyLetterUpload">       
+        <label>Upload Company Permission Letter(s) <small>(with a letterhead, signed and dated)</small></label>
+        <div id="permissionFilesContainer">
+          <div class="file-input-group">
+            <input type="file" name="permission_letter[]" accept=".pdf,.docx">
+          </div>
+        </div>
+        <button type="button" class="btn btn-sm btn-outline-primary mt-2" onclick="addFileInput()">Add Another</button>
+      </div>
+
+      <!-- Shown when 'Pending' is selected -->
+      <div class="question-block hidden" id="pendingNoteUpload">
+        <label>Upload Pending Note
+          <small>(Briefly explain who you’ve contacted and expected timeline)</small>
+        </label>
+        <input type="file" name="pending_note" accept=".pdf,.docx">
+      </div>
+
+
+
+      <div class="question-block">
+        <label>2. Do you have prior ethical clearance from the original study?</label>
+        <div class="d-flex gap-4">
+          <label class="form-check-label">
+            <input type="radio" name="has_clearance" value="Yes" required> Yes
+          </label>
+          <label class="form-check-label">
+            <input type="radio" name="has_clearance" value="No" checked required> No
+          </label>
+        </div>
+
+      <div class="question-block hidden" id="clearanceUpload">
+        <label>Upload Prior Ethical Clearance Document (Original Study)</label>
+        <input type="file" name="prior_clearance" accept=".pdf,.docx">
+      </div>
+
+      <div class="question-block">
+        <label>3. Will you collect personal information? <span class="info-icon" title="Personal information includes collecting biodata, doing audio and video recordings of the participants.">ℹ️</span></label>
+        <div class="d-flex gap-4">
+          <label class="form-check-label">
+            <input type="radio" name="company_requires_jbs" value="Yes" required> Yes
+          </label>
+          <label class="form-check-label">
+            <input type="radio" name="company_requires_jbs" value="No" checked required> No
+          </label>
+        </div>
+
+      <div class="question-block hidden" id="clearanceUpload1">
+        <label>Upload POPIA Information Letter and Consent Form</label>
+        <input type="file" name="prior_clearance1" accept=".pdf,.docx">
+      </div>
+
+      <div class="question-block">
+        <label>4. Upload Survey / Questionnaire / Focus Group Questions</label>
+        <input type="file" name="research_tools_path" accept=".pdf,.docx" required>
+      </div>
+
+      <div class="question-block">
+        <label>5. Upload Research Proposal</label>
+        <input type="file" name="proposal_path" accept=".pdf,.docx" required>
+      </div>
+
+      <div class="question-block">
+        <label>6. Upload Personal Impact Assessment Form</label>
+        <input type="file" name="impact_assessment_path" accept=".pdf,.docx" required>
+      </div>
+
+      <div class="question-block">
+        <label>7. Upload Participation Information Sheet & Consent Form</label>
+        <input type="file" name="participation_info_sheet" accept=".pdf,.docx" required>
+      </div>
+
+      <div class="form-navigation">
+       
+          
+        <button type="submit" class="approve-btn">Proceed to Form A</button>
+      </div>
+    </form>
+  </main>
+
+  
+<footer class="footer">
+   
+</footer>
+
+  <!-- <script>
+    
+  document.addEventListener("DOMContentLoaded", function () {
+    const permissionRadios = document.querySelectorAll('input[name="need_permission"]');
+    const clearanceRadios = document.querySelectorAll('input[name="has_clearance"]');
+    const jbsRadios = document.querySelectorAll('input[name="company_requires_jbs"]');
+    const jbsClearanceUpload1 = document.getElementById("clearanceUpload1");
+
+
+    const companyLetterUpload = document.getElementById("companyLetterUpload");
+    const pendingNoteUpload = document.getElementById("pendingNoteUpload");
+    const clearanceUpload = document.getElementById("clearanceUpload");
+    const clearanceUpload1 = document.getElementById("clearanceUpload1");
+    // const jbsClearanceUpload = document.getElementById("jbsClearanceUpload");
+    const prior_clearance1 = document.getElementById("prior_clearance1");
+
+
+    permissionRadios.forEach(r => {
+      r.addEventListener("change", () => {
+        companyLetterUpload.classList.toggle("hidden", r.value !== "Yes");
+        pendingNoteUpload.classList.toggle("hidden", selected !== "Pending");
+      });
+    });
+    
+
+    clearanceRadios.forEach(r => {
+      r.addEventListener("change", () => {
+        clearanceUpload.classList.toggle("hidden", r.value === "No");
+      });
+    });
+
+    jbsRadios.forEach(r => {
+      r.addEventListener("change", () => {
+        jbsClearanceUpload1.classList.toggle("hidden", r.value === "No");
+      });
+    });
+  });
+
+    function addFileInput() {
+    const container = document.getElementById("permissionFilesContainer");
+
+    const fileGroup = document.createElement("div");
+    fileGroup.className = "file-input-group d-flex align-items-center gap-2 mt-2";
+
+    const input = document.createElement("input");
+    input.type = "file";
+    input.name = "permission_letter[]";
+    input.accept = ".pdf,.docx";
+    input.required = false;
+
+    const removeBtn = document.createElement("button");
+    removeBtn.type = "button";
+    removeBtn.className = "btn btn-sm btn-danger";
+    removeBtn.textContent = "Remove";
+    removeBtn.onclick = () => container.removeChild(fileGroup);
+
+    fileGroup.appendChild(input);
+    fileGroup.appendChild(removeBtn);
+    container.appendChild(fileGroup);
+  }
+
+</script> -->
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const permissionRadios = document.querySelectorAll('input[name="need_permission"]');
+  const clearanceRadios = document.querySelectorAll('input[name="has_clearance"]');
+  const jbsRadios = document.querySelectorAll('input[name="company_requires_jbs"]');
+
+  const companyLetterUpload = document.getElementById("companyLetterUpload");
+  const pendingNoteUpload = document.getElementById("pendingNoteUpload");
+  const clearanceUpload = document.getElementById("clearanceUpload");
+  const jbsClearanceUpload1 = document.getElementById("clearanceUpload1");
+
+  function setRequiredForLetterInputs(isRequired) {
+    const letterInputs = document.querySelectorAll('input[name="permission_letter[]"], input[name="permission_letter"]');
+    letterInputs.forEach(i => i.required = isRequired);
+  }
+
+  function updatePermissionVisibility() {
+    const selected = document.querySelector('input[name="need_permission"]:checked')?.value;
+
+    // Show/hide blocks
+    companyLetterUpload.classList.toggle("hidden", selected !== "Yes");
+    pendingNoteUpload.classList.toggle("hidden", selected !== "Pending");
+
+    // Required states
+    setRequiredForLetterInputs(selected === "Yes");
+
+    const pendingNoteInput = document.querySelector('input[name="pending_note"]');
+    if (pendingNoteInput) {
+      pendingNoteInput.required = (selected === "Pending");
+    }
+  }
+
+  permissionRadios.forEach(r => r.addEventListener("change", updatePermissionVisibility));
+  updatePermissionVisibility(); // initialize on load
+
+  // Prior clearance (Q2)
+  function updateClearanceVisibility() {
+    const hasClearance = document.querySelector('input[name="has_clearance"]:checked')?.value;
+    clearanceUpload.classList.toggle("hidden", hasClearance !== "Yes");
+    const prior = document.querySelector('input[name="prior_clearance"]');
+    if (prior) prior.required = (hasClearance === "Yes");
+  }
+  clearanceRadios.forEach(r => r.addEventListener("change", updateClearanceVisibility));
+  updateClearanceVisibility();
+
+  // Company requires JBS clearance (Q3)
+  function updateJbsVisibility() {
+    const needsJbs = document.querySelector('input[name="company_requires_jbs"]:checked')?.value;
+    jbsClearanceUpload1.classList.toggle("hidden", needsJbs !== "Yes");
+    const prior1 = document.querySelector('input[name="prior_clearance1"]');
+    if (prior1) prior1.required = (needsJbs === "Yes");
+  }
+  jbsRadios.forEach(r => r.addEventListener("change", updateJbsVisibility));
+  updateJbsVisibility();
+
+  // Expose addFileInput globally
+  window.addFileInput = function addFileInput() {
+    const container = document.getElementById("permissionFilesContainer");
+
+    const fileGroup = document.createElement("div");
+    fileGroup.className = "file-input-group d-flex align-items-center gap-2 mt-2";
+
+    const input = document.createElement("input");
+    input.type = "file";
+    input.name = "permission_letter[]";
+    input.accept = ".pdf,.docx";
+
+    // Make new inputs required only when 'Yes' is selected
+    const selected = document.querySelector('input[name="need_permission"]:checked')?.value;
+    input.required = (selected === "Yes");
+
+    const removeBtn = document.createElement("button");
+    removeBtn.type = "button";
+    removeBtn.className = "btn btn-sm btn-danger";
+    removeBtn.textContent = "Remove";
+    removeBtn.onclick = () => container.removeChild(fileGroup);
+
+    fileGroup.appendChild(input);
+    fileGroup.appendChild(removeBtn);
+    container.appendChild(fileGroup);
+  };
+});
+</script>
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="{{ url_for('static', filename='js/form-submission-handler.js') }}"></script>
+</body>
+
+
+</html>

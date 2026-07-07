@@ -1,0 +1,579 @@
+html, body {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: 'Arial', sans-serif;
+  background-color: #ffffff;
+  color: #474b56;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+p {
+  font-style: italic;
+}
+  
+
+/* === NAVBAR === */
+.navbar {
+  background-color: #ef820d;
+  color: white;
+  padding: 1rem;
+}
+
+.nav-content {
+  /* max-width: 480px; */
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+  .logo.uj {
+  height: 55px;
+  border-radius: 8%; /* makes it round */
+  object-fit: cover;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15); /* soft shadow */
+  margin-left: 1rem;
+}
+
+.nav-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: white;
+  align-items: center;
+}
+
+/* === MAIN CONTAINER === */
+.main-content,
+.auth-container,
+.container {
+  max-width: 1700px;
+  margin: 2rem auto;
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* === HEADINGS === */
+h2,
+h4 {
+  color: #000000;
+  margin-bottom: 1rem;
+}
+
+h4 {
+  font-size: 1rem;
+  margin-top: 1.5rem;
+}
+
+.centered-text {
+  text-align: center;
+}
+
+/* === FORMS === */
+form input,
+form select,
+form textarea {
+  width: 100%;
+  padding: 12px;
+  margin-bottom: 1rem;
+  border: 1px solid #DCDDDE;
+  border-radius: 8px;
+  background-color: #fdfdfd;
+  transition: border 0.3s ease;
+}
+
+/* === BUTTONS === */
+button {
+  width: 25%;
+  padding: 12px;
+  background-color: #ef820d;
+  color: white;
+  font-weight: bold;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+  font-size: 1rem;
+}
+
+button:hover {
+  background-color: #d9541e;
+  /* Slightly darker orange */
+}
+
+button:disabled {
+  background-color: #939598;
+  cursor: not-allowed;
+}
+
+/* === VIDEO BOX === */
+.video-box {
+  margin-bottom: 2rem;
+}
+
+.confirm-check {
+  /* display: inline-flex; */
+  /* align-items: center; */
+  font-weight: 500;
+  margin: 1rem 0;
+  /* padding-left: 0.1rem; */
+  color: var(--jbs-navy);
+}
+
+
+/* === SWITCH LINKS === */
+.switch-link {
+  text-align: center;
+  margin-top: 1rem;
+  font-size: 0.9rem;
+}
+
+.switch-link a {
+  color: #4F2365;
+  text-decoration: none;
+}
+
+.switch-link a:hover {
+  text-decoration: underline;
+}
+
+/* === FOOTER === */
+/* .footer {
+  background-color: #ef820d;
+  color: white;
+  text-align: center;
+  padding: 1rem;
+  font-size: 0.85rem;
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  position: sticky;
+} */
+
+.footer {
+  margin-top: auto;
+  background-color: #ef820d;
+  color: white;
+  text-align: center;
+  padding: 1rem;
+  font-size: 0.85rem;
+}
+
+
+/* === RESPONSIVENESS === */
+@media (max-width: 600px) {
+
+  .main-content,
+  .auth-container,
+  .container {
+    margin: 1rem;
+    padding: 1.5rem;
+  }
+
+  .nav-content {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+/* === FORM CARDS === */
+.form-card-grid {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.form-card {
+  flex: 1 1 30%;
+  background: #fdfdfd;
+  border: 2px solid #DCDDDE;
+  padding: 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: 0.3s;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+}
+
+.form-card:hover {
+  border-color: #F26522;
+  background-color: #fff7f2;
+}
+
+.form-card h5 {
+  margin-bottom: 0.5rem;
+  color: #022169;
+}
+
+/* === TABLE === */
+.status-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+}
+
+.status-table th,
+.status-table td {
+  padding: 12px;
+  border: 1px solid #DCDDDE;
+  text-align: left;
+}
+
+.status-table th {
+  background-color: #f2f2f2;
+  color: #022169;
+}
+
+.status-table tr:nth-child(even) {
+  background-color: #f3eded; /* light grey */
+}
+
+.status-table tr:nth-child(odd) {
+  background-color: #ffffff; /* white */
+}
+
+
+/* === NOTIFICATIONS === */
+.notification-box {
+  margin-top: 2rem;
+  padding: 1rem;
+  background: #f5f9ff;
+  border-left: 5px solid #00B6B5;
+  border-radius: 8px;
+}
+
+.notification-box ul {
+  padding-left: 1.2rem;
+}
+
+.notification-box li {
+  margin-bottom: 0.5rem;
+  color: #333;
+}
+
+/* === LOGOUT BUTTON === */
+.btn-logout {
+  display: inline-block;
+  padding: 12px 24px;
+  background-color: #000000;
+  color: white;
+  text-decoration: none;
+  font-weight: bold;
+  border-radius: 8px;
+  /* margin-left: 1200px; */
+}
+
+
+@media (max-width: 768px) {
+
+  .main-content,
+  .auth-container,
+  .container {
+    padding: 1.5rem;
+    margin: 1rem;
+    max-width: 95vw;
+  }
+
+  .form-card-grid {
+    flex-direction: column;
+  }
+}
+
+/* === POPUP MODAL === */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(214, 222, 242, 0.85);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+}
+
+.modal-content {
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
+  text-align: center;
+  max-width: 400px;
+  width: 90%;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+}
+
+.modal-content h3 {
+  color: #022169;
+  margin-bottom: 1rem;
+}
+
+.modal-content button {
+  margin-top: 1.5rem;
+  padding: 10px 20px;
+  background-color: #F26522;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.modal-content button:hover {
+  background-color: #d9541e;
+}
+
+
+
+/* =========== GENERAL FORM PAGE STYLES =========== */
+.main-content input,
+.main-content textarea,
+.main-content select {
+  margin-bottom: 1rem;
+  font-size: 1rem;
+}
+
+.main-content label {
+  font-weight: 700;
+  color: #000000;
+  /* margin-top: 1rem; */
+  display: block;
+}
+
+/* Button Styles (Reuse Existing) */
+.approve-btn,
+.revise-btn,
+.reject-btn {
+  display: inline-block;
+  margin-top: 1rem;
+  margin-right: 0.5rem;
+  padding: 10px 20px;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  text-decoration: none;
+  text-align: center;
+}
+
+.approve-btn {
+  background-color: #ef820d;
+  color: white;
+}
+
+.revise-btn {
+  background-color: #ef820d;
+  color: #ef820d;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 600px) {
+
+  .main-content input,
+  .main-content textarea {
+    font-size: 1rem;
+  }
+
+  .approve-btn,
+  .revise-btn,
+  .btn-logout {
+    width: 100%;
+    margin-bottom: 1rem;
+  }
+}
+
+
+/* Buttons */
+.view-btn {
+  background-color: #00B6B5;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: 600;
+  text-decoration: none;
+  display: inline-block;
+}
+
+
+/* Document link */
+.doc-link {
+  color: #4F2365;
+  text-decoration: underline;
+  font-weight: 500;
+}
+
+/* Badges */
+.badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: white;
+}
+
+.status-pending {
+  background-color: #F26522;
+}
+
+.status-approved {
+  background-color: #27ae60;
+}
+
+.status-returned {
+  background-color: #CE0F46;
+}
+
+.download-list {
+  list-style: none;
+  padding-left: 0;
+  margin-top: 1rem;
+}
+
+.download-list li {
+  margin-bottom: 0.75rem;
+  font-size: 1rem;
+}
+
+.download-list a {
+  text-decoration: underline;
+  color: #022169;
+  font-weight: 500;
+}
+
+.download-list a:hover {
+  color: #00B6B5;
+}
+
+.status-high {
+  background-color: #CE0F46;
+  /* Deep pink/red */
+}
+
+.status-medium {
+  background-color: #FFCB05;
+  /* JBS Yellow */
+  color: #022169;
+}
+
+.status-low {
+  background-color: #00B6B5;
+}
+
+.status-reviewed {
+  background-color: #27ae60;
+}
+
+
+.review-field {
+  background: #f9f9f9;
+  border: 1px solid #DCDDDE;
+  padding: 12px;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+  font-size: 1rem;
+}
+
+.form-wrapper {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.main-content form {
+  padding: 2rem;
+  background: #ffffff;
+  max-width: 800px;
+  margin: 2rem auto;
+}
+
+.main-content form label {
+  display: block;
+  /* margin-top: 1.2rem; */
+  font-weight: bold;
+  color: #000000;
+}
+
+
+.main-content form input, 
+.main-content form textarea, 
+.main-content form select {
+  padding: 10px;
+  margin-top: 0.5rem;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+.form-note {
+  margin-top: 1.5rem;
+  background: #f2f2f2;
+  padding: 1rem;
+  border-radius: 8px;
+}
+
+.upload-instructions {
+  padding-left: 1.5rem;
+  list-style: disc;
+}
+
+.progress-bar {
+  background: #e0e0e0;
+  border-radius: 8px;
+  height: 20px;
+  margin: 0;
+}
+
+.progress {
+  background-color: #00B6B5;
+  height: 100%;
+  border-radius: 8px;
+  text-align: center;
+  color: white;
+  font-weight: bold;
+  line-height: 20px;
+}
+
+.question-block {
+  margin-top: 1.5rem;
+}
+
+.question-block label {
+  font-weight: bold;
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.yes-no {
+  display: flex;
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+
+.form-navigation {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 2rem;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: url('/static/img/dash.jpeg');
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-attachment: fixed;
+  opacity: 10%;
+  z-index: -1;
+}

@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Supervisor Dashboard | JBS Ethics</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="css/supervisor.css" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/supervisor.css') }}">
+</head>
+<body>
+
+<div class="admin-wrapper">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <img src="{{ url_for('static',filename='img/image.png')}}" alt="UJ JBS Logo" class="logo uj">
+      <h3>Dean Portal</h3>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="{{url_for('supervisor_dashboard')}}" class="active">🏠 Dashboard</a>
+      <a href="{{url_for('logout')}}">🔒 Logout</a>
+    </nav>
+  </aside>
+
+  <!-- Main -->
+  <main class="admin-main">
+    <header class="topbar">
+      <h2>Dean Dashboard</h2>
+    </header>
+
+    <section class="admin-content">
+      <h3>Student Submissions</h3>
+      <div class="container mt-5">
+  <div class="row">
+    <div class="col-md mb-4">
+      <div class="card shadow-sm border-start border-primary border-4">
+        <div class="card-body">
+          <h5 class="card-title">Form A</h5>
+          <p class="card-text fs-4">{{ supervisor_formA|length }}</p>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-md mb-4">
+      <div class="card shadow-sm border-start border-success border-4">
+        <div class="card-body">
+          <h5 class="card-title">Form B</h5>
+          <p class="card-text fs-4">{{ supervisor_formB|length }}</p>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-md mb-4">
+      <div class="card shadow-sm border-start border-warning border-4">
+        <div class="card-body">
+          <h5 class="card-title">Form C</h5>
+          <p class="card-text fs-4">{{ supervisor_formC|length }}</p>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-md mb-4">
+      <div class="card shadow-sm border-start border-danger border-4">
+        <div class="card-body">
+          <h5 class="card-title">Form A Requirements</h5>
+          <p class="card-text fs-4">{{ supervisor_formA_req|length }}</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md mb-4">
+      <div class="card shadow-sm border-start border-danger border-4">
+        <div class="card-body">
+          <h5 class="card-title"># students</h5>
+          <p class="card-text fs-4">{{ students|length }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+      <table class="status-table">
+        <thead>
+          <tr>
+            <th>Form Name</th>
+            <th>Name</th>
+            <th>Student</th>
+            <th>Status</th>
+            <th>Reason</th>
+            <th>Submitted On</th>
+            <th>Documents</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% if supervisor_formA %}
+          {% for forma in supervisor_formA %}
+          <tr>
+            <td>Form A</td>
+            <td>{{forma.declaration_name}}</td>
+            <td>{{forma.student_number}}</td>
+            <td><span class="badge status-pending">
+              {{
+  'Rejected' if forma.rejected_or_accepted is not none and not forma.rejected_or_accepted and forma.supervisor_comments
+  else 'Accepted' if forma.rejected_or_accepted and forma.supervisor_comments
+  else 'Waiting Review'
+}}
+
+            </span></td>
+            <td>
+              {% if forma.supervisor_comments and not forma.ethics_commettee_comments%}
+              <strong>Supervisors comments</strong>
+              <br>
+              {{forma.supervisor_comments}}
+              {% elif forma.ethics_commettee_comments %}
+              <strong>Ethics Admin comments</strong>
+              <br>
+              {{forma.ethics_commettee_comments}}
+              {% endif %}
+            </td>
+            <td>{{forma.declaration_date}}</td>
+            
+            <td>
+              <a href="{{url_for('form_a_supervisor',id=forma.form_id)}}" class="view-btn">📝 View/Edit</a><br>
+             
+            </td>
+          </tr>
+          {% endfor %}
+          {% endif %}
+          
+          {% if supervisor_formB %}
+          {% for formb in supervisor_formB %}
+          <br>
+          <tr>
+            <td>Form B</td>
+            <td>{{formb.declaration_name}}</td>
+            <td>{{formb.student_number}}</td>
+            <td><span class="badge status-pending">
+              {% if formb.ethics_commettee_status %}
+              <strong>Ethics Admin comments</strong>
+              <br>
+              {{"Accepted by ethics commettee"}}
+              {% else %}
+        {{
+  'Rejected' if formb.rejected_or_accepted is not none and not formb.rejected_or_accepted and formb.supervisor_comments
+  else 'Accepted' if formb.rejected_or_accepted and formb.supervisor_comments
+  else 'Waiting Review'
+        }}
+        {% endif %}
+            </span></td>
+            <td>
+              {% if formb.supervisor_comments and not formb.ethics_commettee_comments%}
+              <strong>Supervisors comments</strong>
+              <br>
+              {{formb.supervisor_comments}}
+              {% elif formb.ethics_commettee_comments %}
+              <strong>Ethics Admin comments</strong>
+              <br>
+              {{formb.ethics_commettee_comments}}
+              
+              {% endif %}
+            </td>
+            <td>{{formb.declaration_date}}</td>
+            <td>
+              <ul class="doc-link">
+                {% if formb.proposal_path %}
+                    <li><a href="{{ url_for('view_form_file', form_type='B', form_id=formb.form_id, field_name='proposal_path') }}" target="_blank">Proposal</a></li>
+                {% endif %}
+                {% if formb.permission_letter %}
+                    <li><a href="{{ url_for('view_form_file', form_type='B', form_id=formb.form_id, field_name='permission_letter') }}" target="_blank">Permission Letter</a></li>
+                {% endif %}
+                {% if formb.pending_note %}
+                    <li><a href="{{ url_for('view_form_file', form_type='B', form_id=formb.form_id, field_name='pending_note') }}" target="_blank">Pending Note</a></li>
+                {% endif %}
+                {% if formb.private_permission_file %}
+                    <li><a href="{{ url_for('view_form_file', form_type='B', form_id=formb.form_id, field_name='private_permission_file') }}" target="_blank">Private Data Permission</a></li>
+                {% endif %}
+
+                {% if supervisor_formA_req %}
+                  {% for formR in supervisor_formA_req %}
+                  {% if formR.user_id == formb.user_id %}
+                    {% if formR.proposal_path and not formb.proposal_path %}
+                        <li><a href="{{ url_for('view_requirement_file', identifier=formR.user_id, field_name='proposal_path') }}" target="_blank">Proposal (Reqs)</a></li>
+                    {% endif %}
+                    {% if formR.impact_assessment_path %}
+                        <li><a href="{{ url_for('view_requirement_file', identifier=formR.user_id, field_name='impact_assessment_path') }}" target="_blank">Impact Form</a></li>
+                    {% endif %}
+                    {% if formR.permission_letter and not formb.permission_letter %}
+                        <li><a href="{{ url_for('view_requirement_file', identifier=formR.user_id, field_name='permission_letter') }}" target="_blank">Permission Letter (Reqs)</a></li>
+                    {% endif %}
+                    {% if formR.prior_clearance_path %}
+                        <li><a href="{{ url_for('view_requirement_file', identifier=formR.user_id, field_name='prior_clearance_path') }}" target="_blank">Ethics Clearance</a></li>
+                    {% endif %}
+                    {% if formR.research_tools_path %}
+                        <li><a href="{{ url_for('view_requirement_file', identifier=formR.user_id, field_name='research_tools_path') }}" target="_blank">Survey</a></li>
+                    {% endif %}
+                  {% endif %}
+                  {% endfor %}
+                {% endif %}
+              </ul>
+            </td>
+            <td>
+              <a href="{{url_for('form_b_supervisor',id=formb.form_id)}}" class="view-btn">📝 View/Edit</a><br>
+             
+            </td>
+          </tr>
+          {% endfor %}
+          {% endif %}
+          <br>
+          {% if supervisor_formC %}
+          {% for formc in supervisor_formC %}
+          <br>
+          <tr>
+            <td>Form C</td>
+            <td>{{formc.declaration_name}}</td>
+            <td>{{formc.student_number}}</td>
+            <td><span class="badge status-pending">{{
+  'Rejected' if formc.rejected_or_accepted is not none and not formc.rejected_or_accepted and formc.supervisor_comments
+  else 'Accepted' if formc.rejected_or_accepted and formc.supervisor_comments
+  else 'Waiting Review'
+}}
+</span></td>
+<td>
+              {% if formc.supervisor_comments and not formc.ethics_commettee_comments%}
+              <strong>Supervisors comments</strong>
+              <br>
+              {{formc.supervisor_comments}}
+              {% elif formc.ethics_commettee_comments %}
+              <strong>Ethics Admin comments</strong>
+              <br>
+              {{formc.ethics_commettee_comments}}
+              {% endif %}
+            </td>
+            <td>{{formc.declaration_date}}</td>
+            <td>
+              <ul class="doc-link">
+                {% if supervisor_formA_req %}
+                {% for formR in supervisor_formA_req %}
+                  {% if formR.user_id == formc.user_id and formR.files %}
+                    <li><a href="{{ url_for('view_requirement_file', req_id=formR.id, field='files') }}" target="_blank">Research Proposal</a></li>
+                  {% endif %}
+                {% endfor %}
+                {% endif %}
+              </ul>
+            </td>
+            <td>
+              <a href="{{url_for('form_c_supervisor',id=formc.form_id)}}" class="view-btn">📝 View/Edit</a><br>
+             
+            </td>
+          </tr>
+          {% endfor %}
+          {% endif %}
+        </tbody>
+      </table>
+    </section>
+  </main>
+
+</div>
+
+    <!-- <footer class="footer">
+      <p>&copy; 2025 Johannesburg Business School | University of Johannesburg</p>
+    </footer> -->
+
+</body>
+</html>

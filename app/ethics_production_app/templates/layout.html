@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="icon" type="image/x-icon" href="{{ url_for('favicon') }}">
+  <link rel="apple-touch-icon" href="{{ url_for('static', filename='apple-touch-icon.png') }}">
+  <title>JBS Ethics System</title>
+  <link rel="stylesheet" href="css/styles.css" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/loading.css') }}">
+</head>
+<body>
+
+  <!--NAVIGATION BAR -->
+  <header class="navbar">
+    <div class="nav-content">
+      <img src="img/image.png" alt="UJ JBS Logo" class="logo uj">
+      <img src="{{ url_for('static',filename='img/image.png')}}" alt="UJ JBS Logo" class="logo uj">
+      <span class="nav-title">Ethics Clearance System – JBS Students</span>
+    </div>
+  </header>
+
+  <!-- MAIN PAGE CONTENT -->
+  <main class="main-content">
+    <!-- Replace this with your page-specific content -->
+    <h2>Welcome to the JBS Ethics Portal</h2>
+    <p>This is your placeholder content. Replace it per page.</p>
+  </main>
+
+  <!--FOOTER -->
+<footer class="footer">
+   
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="{{ url_for('static', filename='js/form-submission-handler.js') }}"></script>
+</body>
+</html>

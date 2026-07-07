@@ -23,23 +23,14 @@
     {% if pagination.has_multiple_pages %}
       <nav class="dashboard-pagination__pages" aria-label="Project pagination">
         {% if pagination.prev_url %}
-          <a href="{{ pagination.prev_url }}" class="dashboard-pagination__link">Previous</a>
+          <a href="{{ pagination.prev_url }}" class="dashboard-pagination__link"><i class="link-icon fas fa-chevron-left" aria-hidden="true"></i>Previous</a>
         {% else %}
-          <span class="dashboard-pagination__link is-disabled">Previous</span>
+          <span class="dashboard-pagination__link is-disabled"><i class="link-icon fas fa-chevron-left" aria-hidden="true"></i>Previous</span>
         {% endif %}
-        {% for link in pagination.page_links %}
-          {% if link.is_gap %}
-            <span class="dashboard-pagination__gap">...</span>
-          {% elif link.is_active %}
-            <span class="dashboard-pagination__link is-active">{{ link.number }}</span>
-          {% else %}
-            <a href="{{ link.url }}" class="dashboard-pagination__link">{{ link.number }}</a>
-          {% endif %}
-        {% endfor %}
         {% if pagination.next_url %}
-          <a href="{{ pagination.next_url }}" class="dashboard-pagination__link">Next</a>
+          <a href="{{ pagination.next_url }}" class="dashboard-pagination__link">Next<i class="link-icon fas fa-chevron-right" aria-hidden="true"></i></a>
         {% else %}
-          <span class="dashboard-pagination__link is-disabled">Next</span>
+          <span class="dashboard-pagination__link is-disabled">Next<i class="link-icon fas fa-chevron-right" aria-hidden="true"></i></span>
         {% endif %}
       </nav>
     {% endif %}

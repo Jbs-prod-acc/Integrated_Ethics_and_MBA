@@ -6117,16 +6117,16 @@ body,
 .ethics-sidebar {
   gap: 14px;
   padding: 20px 14px 16px;
-  background: var(--surface) !important;
-  color: var(--text);
-  border-right: 1px solid var(--border);
-  box-shadow: none;
+  background: linear-gradient(180deg, #ef820d 0%, #d96a07 100%) !important;
+  color: #fff;
+  border-right: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 14px 0 30px rgba(15, 23, 42, 0.08);
 }
 
 .ethics-sidebar__brand {
   gap: 12px;
   padding: 10px 8px 14px;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.18);
 }
 
 .ethics-sidebar__logo,
@@ -6155,13 +6155,13 @@ body,
 }
 
 .ethics-sidebar__brand-text h2 {
-  color: var(--text);
+  color: #fff;
   font-size: 0.95rem;
   font-weight: 750;
 }
 
 .ethics-sidebar__brand-text p {
-  color: var(--text-muted);
+  color: rgba(255, 255, 255, 0.82);
   font-size: 0.74rem;
 }
 
@@ -6172,7 +6172,7 @@ body,
 
 .ethics-sidebar__section-label {
   margin: 16px 10px 6px;
-  color: var(--text-muted);
+  color: rgba(255, 255, 255, 0.82);
   font-size: 0.68rem;
   letter-spacing: 0.06em;
 }
@@ -6181,7 +6181,7 @@ body,
   min-height: 40px;
   padding: 9px 10px;
   border-radius: var(--radius-md);
-  color: var(--text-muted) !important;
+  color: rgba(255, 255, 255, 0.94) !important;
   font-size: 0.86rem;
   font-weight: 650;
   box-shadow: none;
@@ -6189,25 +6189,25 @@ body,
 }
 
 .ethics-sidebar__item:hover {
-  background: var(--surface-alt);
-  color: var(--text) !important;
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff !important;
   transform: none;
 }
 
 .ethics-sidebar__item.is-active {
-  background: var(--primary);
+  background: rgba(255, 255, 255, 0.24);
   color: #fff !important;
-  box-shadow: var(--shadow-sm);
+  box-shadow: inset 3px 0 0 rgba(255, 255, 255, 0.92);
 }
 
 .ethics-sidebar__item.has-alert:not(.is-active) {
-  background: var(--primary-soft);
-  color: var(--primary-strong) !important;
-  box-shadow: inset 3px 0 0 var(--primary);
+  background: rgba(17, 24, 39, 0.2);
+  color: #fff !important;
+  box-shadow: inset 3px 0 0 #fff;
 }
 
 .ethics-sidebar__footer {
-  border-top: 1px solid var(--border);
+  border-top: 1px solid rgba(255, 255, 255, 0.18);
 }
 
 .ethics-sidebar__logout {
@@ -6219,8 +6219,8 @@ body,
   height: 24px;
   flex: 0 0 24px;
   border-radius: var(--radius-md);
-  background: var(--surface-alt);
-  color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
   font-size: 0.7rem;
 }
 
@@ -6230,9 +6230,9 @@ body,
 }
 
 .nav-badge {
-  background: var(--primary-soft);
-  color: var(--primary-strong);
-  box-shadow: none;
+  background: #fff;
+  color: #b45309;
+  box-shadow: 0 6px 14px rgba(17, 24, 39, 0.18);
 }
 
 .ethics-main {
@@ -6249,10 +6249,10 @@ body,
   min-height: 64px;
   margin-bottom: 20px;
   padding: 12px 18px;
-  background: var(--surface);
-  border: 1px solid var(--border);
+  background: linear-gradient(180deg, #ef820d 0%, #d96a07 100%);
+  border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: var(--radius-lg);
-  box-shadow: none;
+  box-shadow: 0 16px 36px rgba(239, 130, 13, 0.2);
 }
 
 .ethics-topbar__search {
@@ -6268,7 +6268,7 @@ body,
   left: 12px;
   z-index: 1;
   transform: translateY(-50%);
-  color: var(--text-muted);
+  color: rgba(255, 255, 255, 0.82);
   font-size: 1rem;
   line-height: 1;
 }
@@ -6277,13 +6277,18 @@ body,
   min-height: 40px;
   padding-left: 36px;
   padding-right: 72px;
-  border-color: transparent;
-  background: var(--surface-alt);
+  border-color: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
 }
 
 .ethics-topbar__search input:focus {
-  border-color: var(--primary);
-  background: var(--surface);
+  border-color: rgba(255, 255, 255, 0.45);
+  background: rgba(255, 255, 255, 0.24);
+}
+
+.ethics-topbar__search input::placeholder {
+  color: rgba(255, 255, 255, 0.78);
 }
 
 .ethics-topbar__search-clear {
@@ -6292,7 +6297,7 @@ body,
   right: 10px;
   z-index: 1;
   transform: translateY(-50%);
-  color: var(--text-muted);
+  color: rgba(255, 255, 255, 0.86);
   font-size: 0.76rem;
   font-weight: 800;
   line-height: 1;
@@ -6300,7 +6305,7 @@ body,
 }
 
 .ethics-topbar__search-clear:hover {
-  color: var(--text);
+  color: #fff;
 }
 
 .ethics-topbar__actions {
@@ -6319,16 +6324,16 @@ body,
   place-items: center;
   border: 1px solid transparent;
   border-radius: var(--radius-md);
-  background: transparent;
-  color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
   font-size: 0.78rem;
   font-weight: 850;
   text-decoration: none;
 }
 
 .ethics-topbar__icon-button:hover {
-  background: var(--surface-alt);
-  color: var(--text);
+  background: rgba(255, 255, 255, 0.22);
+  color: #fff;
 }
 
 .ethics-topbar__notification-dot {
@@ -6337,9 +6342,9 @@ body,
   right: 7px;
   width: 8px;
   height: 8px;
-  border: 2px solid var(--surface);
+  border: 2px solid rgba(255, 255, 255, 0.9);
   border-radius: 999px;
-  background: var(--primary);
+  background: #fff;
 }
 
 .ethics-topbar__user {
@@ -6356,16 +6361,24 @@ body,
 }
 
 .ethics-topbar__avatar {
-  display: inline-grid;
+  display: inline-flex;
   width: 34px;
   height: 34px;
   flex: 0 0 34px;
-  place-items: center;
+  align-items: center;
+  justify-content: center;
   border-radius: 999px;
   background: var(--primary);
   color: #fff;
-  font-size: 0.84rem;
-  font-weight: 850;
+  font-size: 0.95rem;
+  line-height: 1;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.ethics-topbar__avatar i {
+  display: block;
+  line-height: 1;
 }
 
 .ethics-topbar__user-copy {
@@ -6376,7 +6389,7 @@ body,
 .ethics-topbar__user strong {
   display: block;
   overflow: hidden;
-  color: var(--text);
+  color: #fff;
   font-weight: 750;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -6385,7 +6398,7 @@ body,
 .ethics-topbar__user span {
   display: block;
   overflow: hidden;
-  color: var(--text-muted);
+  color: rgba(255, 255, 255, 0.82);
   font-size: 0.78rem;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -6473,17 +6486,56 @@ body,
   text-decoration: none;
 }
 
+.portal-tab strong {
+  color: inherit;
+  font-weight: 800;
+}
+
+a.primary-button,
+a.secondary-button,
+a.text-link,
+.filter-pill,
+.dashboard-pagination__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.quick-action-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.quick-action-card__icon,
+.link-icon,
+.portal-tab .nav-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  min-width: 18px;
+  color: #c55a06;
+  font-size: 0.95rem;
+  line-height: 1;
+  opacity: 1;
+}
+
 .portal-tab:hover {
   background: var(--surface-alt);
   color: var(--text);
 }
 
-.portal-tab.is-active {
-  background: var(--primary);
-  color: #fff;
+.portal-tab:hover .nav-icon {
+  color: #b45309;
 }
 
-.portal-tab span {
+.portal-tab.is-active {
+  background: rgba(255, 255, 255, 0.94);
+  color: #b45309;
+}
+
+.portal-tab > span:not(.nav-icon) {
   display: inline-grid;
   width: 22px;
   height: 22px;
@@ -6497,6 +6549,10 @@ body,
 
 .portal-tab.is-active span {
   background: rgba(255, 255, 255, 0.22);
+}
+
+.portal-tab.is-active .nav-icon {
+  color: #b45309;
 }
 
 .portal-tab em {

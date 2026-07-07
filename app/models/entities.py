@@ -1,13 +1,29 @@
 from datetime import datetime
+import uuid
 
 from flask_login import UserMixin
-from sqlalchemy import CheckConstraint, UniqueConstraint
+from sqlalchemy import CheckConstraint, UniqueConstraint, event
+from sqlalchemy.dialects.postgresql import ENUM
 from sqlalchemy.orm import deferred
 from werkzeug.security import check_password_hash, generate_password_hash
+import bcrypt
 
 from ..extensions import db
 from .enums import EthicsRole, EthicsSubmissionStatus, MbaRole, MbaScholarRole, ProjectStatus
 from .helpers import normalize_email
+
+
+USER_ROLE_ENUM = ENUM(
+    "SUPER_ADMIN",
+    "ADMIN",
+    "REVIEWER",
+    "SUPERVISOR",
+    "STUDENT",
+    "REC",
+    "DEAN",
+    name="userrole",
+    create_type=False,
+)
 
 
 class UserAuthMixin(UserMixin):
@@ -34,7 +50,17 @@ class UserAuthMixin(UserMixin):
         self.password_hash = generate_password_hash(password)
 
     def check_password(self, password):
-        return bool(self.password_hash) and check_password_hash(self.password_hash, password)
+        if not self.password_hash:
+            return False
+        try:
+            return check_password_hash(self.password_hash, password)
+        except (ValueError, TypeError):
+            pass
+        try:
+            stored_hash = self.password_hash.encode("utf-8") if isinstance(self.password_hash, str) else self.password_hash
+            return bcrypt.checkpw(password.encode("utf-8"), stored_hash)
+        except Exception:
+            return False
 
     @classmethod
     def find_by_email(cls, email):
@@ -42,18 +68,43 @@ class UserAuthMixin(UserMixin):
 
 
 class MbaUser(UserAuthMixin, db.Model):
-    __tablename__ = "mba_users"
+    __tablename__ = "users"
     __table_args__ = (
-        CheckConstraint("role in ('main_admin','admin','scholar','student','examiner','hdc')", name="mba_user_role_check"),
+        CheckConstraint("mba_role is null or mba_role in ('main_admin','admin','scholar','student','examiner','hdc')", name="mba_user_role_check"),
         CheckConstraint("scholar_role is null or scholar_role in ('examiner','supervisor','both')", name="mba_scholar_role_check"),
     )
 
     system_name = "mba"
-    role = db.Column(db.String(40), nullable=False, default=MbaRole.STUDENT.value)
+    id = db.Column("integrated_id", db.BigInteger, primary_key=True)
+    legacy_user_id = db.Column("user_id", db.String(255), nullable=False, unique=True, default=lambda: uuid.uuid4().hex)
+    full_name = db.Column(db.String(255), nullable=False, default="")
+    password_hash = db.Column("password", db.String(255), nullable=True)
+    legacy_role = db.Column("role", USER_ROLE_ENUM, nullable=False, default="STUDENT")
+    role = db.Column("mba_role", db.String(40), nullable=True, default=MbaRole.STUDENT.value)
     scholar_role = db.Column(db.String(40), nullable=True)
+    ethics_role = db.Column(db.String(40), nullable=True)
     has_profile = db.Column(db.Boolean, nullable=False, default=False)
     has_signature = db.Column(db.Boolean, nullable=False, default=False)
     has_cv = db.Column(db.Boolean, nullable=False, default=False)
+    mba_access = db.Column(db.Boolean, nullable=False, default=True)
+    ethics_access = db.Column(db.Boolean, nullable=False, default=False)
+    authenticated_student = db.Column(db.Boolean, nullable=False, default=False)
+    legacy_authenticated_student = db.Column("authenticate_student", db.String(40), nullable=True)
+    student_number = db.Column(db.Integer, nullable=True)
+    staff_number = db.Column(db.String(80), nullable=True)
+    supervisor_id = db.Column(db.String(255), nullable=True)
+    supervisor_integrated_id = db.Column(db.BigInteger, nullable=True)
+    specialisation = db.Column(db.String(255), nullable=True)
+    reset_token = db.Column(db.String, nullable=True)
+    reset_token_expiry = db.Column(db.DateTime, nullable=True)
+    watched_demo = db.Column(db.Boolean, nullable=False, default=False)
+
+    @classmethod
+    def find_by_email(cls, email):
+        return cls.query.filter(
+            db.func.lower(cls.email) == normalize_email(email),
+            cls.mba_access.is_(True),
+        ).first()
 
     def is_admin_role(self):
         return self.role in {MbaRole.MAIN_ADMIN.value, MbaRole.ADMIN.value}
@@ -75,7 +126,7 @@ class MbaUserSignature(db.Model):
     __tablename__ = "mba_user_signatures"
 
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey("mba_users.id"), nullable=False, index=True)
+    user_id = db.Column(db.BigInteger, db.ForeignKey("users.integrated_id"), nullable=False, index=True)
     user = db.relationship(
         "MbaUser",
         backref=db.backref("signature_records", order_by=lambda: MbaUserSignature.created_at.desc()),
@@ -105,7 +156,7 @@ class MbaDocumentTemplate(db.Model):
     file_size = db.Column(db.Integer, nullable=False)
     sha256 = db.Column(db.String(64), nullable=False, index=True)
     is_active = db.Column(db.Boolean, nullable=False, default=True, index=True)
-    uploaded_by_id = db.Column(db.Integer, db.ForeignKey("mba_users.id"), nullable=True)
+    uploaded_by_id = db.Column(db.BigInteger, db.ForeignKey("users.integrated_id"), nullable=True)
     uploaded_by = db.relationship("MbaUser", foreign_keys=[uploaded_by_id])
     uploaded_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     notes = db.Column(db.Text, nullable=True)
@@ -142,7 +193,7 @@ class MbaStudentProfile(db.Model):
     __table_args__ = (UniqueConstraint("student_number", name="uq_mba_student_number"),)
 
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey("mba_users.id"), nullable=False, unique=True)
+    user_id = db.Column(db.BigInteger, db.ForeignKey("users.integrated_id"), nullable=False, unique=True)
     user = db.relationship("MbaUser", backref=db.backref("student_profile", uselist=False))
     name = db.Column(db.String(120))
     surname = db.Column(db.String(120))
@@ -165,7 +216,7 @@ class MbaScholarProfile(db.Model):
     __tablename__ = "mba_scholar_profiles"
 
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey("mba_users.id"), nullable=False, unique=True)
+    user_id = db.Column(db.BigInteger, db.ForeignKey("users.integrated_id"), nullable=False, unique=True)
     user = db.relationship("MbaUser", backref=db.backref("scholar_profile", uselist=False))
     name = db.Column(db.String(120))
     surname = db.Column(db.String(120))
@@ -220,7 +271,7 @@ class MbaProject(db.Model):
     __tablename__ = "mba_projects"
 
     id = db.Column(db.Integer, primary_key=True)
-    student_id = db.Column(db.Integer, db.ForeignKey("mba_users.id"), nullable=False)
+    student_id = db.Column(db.BigInteger, db.ForeignKey("users.integrated_id"), nullable=False)
     student = db.relationship("MbaUser", foreign_keys=[student_id], backref="projects")
     project_title = db.Column(db.String(220), nullable=False)
     project_description = db.Column(db.Text, nullable=False)
@@ -234,12 +285,12 @@ class MbaProject(db.Model):
     nomination_form_submitted = db.Column(db.Boolean, nullable=False, default=False)
     intent_form_approved = db.Column(db.Boolean, nullable=False, default=False)
     intent_form_submitted = db.Column(db.Boolean, nullable=False, default=False)
-    primary_supervisor_id = db.Column(db.Integer, db.ForeignKey("mba_users.id"))
+    primary_supervisor_id = db.Column(db.BigInteger, db.ForeignKey("users.integrated_id"))
     primary_supervisor = db.relationship("MbaUser", foreign_keys=[primary_supervisor_id])
     assignment_confirmed = db.Column(db.Boolean, nullable=False, default=False)
     invitations_sent_at = db.Column(db.DateTime, nullable=True)
     primary_supervisor_invitation_status = db.Column(db.String(20), nullable=True)
-    assessor_1_id = db.Column(db.Integer, db.ForeignKey("mba_users.id"))
+    assessor_1_id = db.Column(db.BigInteger, db.ForeignKey("users.integrated_id"))
     assessor_1 = db.relationship("MbaUser", foreign_keys=[assessor_1_id])
     assessor_1_invitation_status = db.Column(db.String(20), nullable=True)
     assessor_1_invited_at = db.Column(db.DateTime, nullable=True)
@@ -247,7 +298,7 @@ class MbaProject(db.Model):
     assessor_1_hdc_decision = db.Column(db.String(20), nullable=True)
     assessor_1_hdc_decision_at = db.Column(db.DateTime, nullable=True)
     assessor_1_hdc_decision_assessor_id = db.Column(db.Integer, nullable=True)
-    assessor_2_id = db.Column(db.Integer, db.ForeignKey("mba_users.id"))
+    assessor_2_id = db.Column(db.BigInteger, db.ForeignKey("users.integrated_id"))
     assessor_2 = db.relationship("MbaUser", foreign_keys=[assessor_2_id])
     assessor_2_invitation_status = db.Column(db.String(20), nullable=True)
     assessor_2_invited_at = db.Column(db.DateTime, nullable=True)
@@ -255,7 +306,7 @@ class MbaProject(db.Model):
     assessor_2_hdc_decision = db.Column(db.String(20), nullable=True)
     assessor_2_hdc_decision_at = db.Column(db.DateTime, nullable=True)
     assessor_2_hdc_decision_assessor_id = db.Column(db.Integer, nullable=True)
-    assessor_3_id = db.Column(db.Integer, db.ForeignKey("mba_users.id"))
+    assessor_3_id = db.Column(db.BigInteger, db.ForeignKey("users.integrated_id"))
     assessor_3 = db.relationship("MbaUser", foreign_keys=[assessor_3_id])
     assessor_3_invitation_status = db.Column(db.String(20), nullable=True)
     assessor_3_invited_at = db.Column(db.DateTime, nullable=True)
@@ -273,7 +324,7 @@ class MbaProject(db.Model):
     dissertation_released_to_assessors = db.Column(db.Boolean, nullable=False, default=False)
     dissertation_released_at = db.Column(db.DateTime, nullable=True)
     supervisor_pool_released_at = db.Column(db.DateTime, nullable=True)
-    supervisor_pool_released_by_id = db.Column(db.Integer, db.ForeignKey("mba_users.id"), nullable=True)
+    supervisor_pool_released_by_id = db.Column(db.BigInteger, db.ForeignKey("users.integrated_id"), nullable=True)
     dissertation_moodle_request_sent_at = db.Column(db.DateTime, nullable=True)
     dissertation_resubmission_requested_at = db.Column(db.DateTime, nullable=True)
     dissertation_resubmission_open = db.Column(db.Boolean, nullable=False, default=False)
@@ -334,7 +385,7 @@ class MbaProjectComment(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     project_id = db.Column(db.Integer, db.ForeignKey("mba_projects.id"), nullable=False, index=True)
-    author_id = db.Column(db.Integer, db.ForeignKey("mba_users.id"), nullable=False, index=True)
+    author_id = db.Column(db.BigInteger, db.ForeignKey("users.integrated_id"), nullable=False, index=True)
     comment = db.Column(db.Text, nullable=False)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
 
@@ -351,10 +402,10 @@ class MbaReminderState(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     reminder_key = db.Column(db.String(255), nullable=False, unique=True, index=True)
     last_sent_at = db.Column(db.DateTime, nullable=True)
-    last_sent_by_id = db.Column(db.Integer, db.ForeignKey("mba_users.id"), nullable=True)
+    last_sent_by_id = db.Column(db.BigInteger, db.ForeignKey("users.integrated_id"), nullable=True)
     last_sent_by = db.relationship("MbaUser", foreign_keys=[last_sent_by_id])
     dismissed_at = db.Column(db.DateTime, nullable=True)
-    dismissed_by_id = db.Column(db.Integer, db.ForeignKey("mba_users.id"), nullable=True)
+    dismissed_by_id = db.Column(db.BigInteger, db.ForeignKey("users.integrated_id"), nullable=True)
     dismissed_by = db.relationship("MbaUser", foreign_keys=[dismissed_by_id])
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -373,7 +424,7 @@ class MbaProjectDocument(db.Model):
     file_data = deferred(db.Column(db.LargeBinary, nullable=True))
     mime_type = db.Column(db.String(120), nullable=True)
     file_size = db.Column(db.Integer, nullable=True)
-    uploaded_by_id = db.Column(db.Integer, db.ForeignKey("mba_users.id"), nullable=False)
+    uploaded_by_id = db.Column(db.BigInteger, db.ForeignKey("users.integrated_id"), nullable=False)
     uploaded_by = db.relationship("MbaUser", foreign_keys=[uploaded_by_id])
     uploaded_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
 
@@ -398,7 +449,7 @@ class MbaBookingSettings(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     is_released = db.Column(db.Boolean, nullable=False, default=False)
     released_at = db.Column(db.DateTime, nullable=True)
-    released_by_id = db.Column(db.Integer, db.ForeignKey("mba_users.id"), nullable=True)
+    released_by_id = db.Column(db.BigInteger, db.ForeignKey("users.integrated_id"), nullable=True)
     released_by = db.relationship("MbaUser", foreign_keys=[released_by_id])
     updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -409,7 +460,7 @@ class MbaBookingDay(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     date = db.Column(db.Date, nullable=False, index=True)
-    created_by_id = db.Column(db.Integer, db.ForeignKey("mba_users.id"), nullable=True)
+    created_by_id = db.Column(db.BigInteger, db.ForeignKey("users.integrated_id"), nullable=True)
     created_by = db.relationship("MbaUser", foreign_keys=[created_by_id])
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
 
@@ -456,15 +507,15 @@ class MbaPanelBooking(db.Model):
     )
 
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey("mba_users.id"), nullable=False, index=True)
+    user_id = db.Column(db.BigInteger, db.ForeignKey("users.integrated_id"), nullable=False, index=True)
     user = db.relationship("MbaUser", foreign_keys=[user_id])
     first_name = db.Column(db.String(150), nullable=False)
     surname = db.Column(db.String(150), nullable=False)
     email = db.Column(db.String(255), nullable=False, index=True)
     role = db.Column(db.String(20), nullable=False)
-    supervisor_id = db.Column(db.Integer, db.ForeignKey("mba_users.id"), nullable=True)
+    supervisor_id = db.Column(db.BigInteger, db.ForeignKey("users.integrated_id"), nullable=True)
     supervisor = db.relationship("MbaUser", foreign_keys=[supervisor_id])
-    co_supervisor_id = db.Column(db.Integer, db.ForeignKey("mba_users.id"), nullable=True)
+    co_supervisor_id = db.Column(db.BigInteger, db.ForeignKey("users.integrated_id"), nullable=True)
     co_supervisor = db.relationship("MbaUser", foreign_keys=[co_supervisor_id])
     co_supervisor_name = db.Column(db.String(255), nullable=True)
     day_id = db.Column(db.Integer, db.ForeignKey("mba_booking_days.id"), nullable=False, index=True)
@@ -567,6 +618,11 @@ class EthicsFormSubmission(db.Model):
     certificate_end_date = db.Column(db.DateTime, nullable=True)
     certificate_issuer = db.Column(db.String(255), nullable=True)
     certificate_heading = db.Column(db.Text, nullable=True)
+    admin_comments = db.Column(db.Text, nullable=True)
+    admin_reviewed_at = db.Column(db.DateTime, nullable=True)
+    certificate_conditions = db.Column(db.Text, nullable=True)
+    certificate_modified = db.Column(db.Boolean, nullable=False, default=False)
+    certificate_received = db.Column(db.Boolean, nullable=False, default=False)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -639,7 +695,7 @@ class MbaProjectSupervisorInvitation(db.Model):
     __tablename__ = "mba_project_supervisor_invitations"
     id = db.Column(db.Integer, primary_key=True)
     project_id = db.Column(db.Integer, db.ForeignKey("mba_projects.id"), nullable=False)
-    supervisor_id = db.Column(db.Integer, db.ForeignKey("mba_users.id"), nullable=False)
+    supervisor_id = db.Column(db.BigInteger, db.ForeignKey("users.integrated_id"), nullable=False)
     status = db.Column(db.String(20), nullable=False, default="pending")  # pending, accepted, declined, expired
     invited_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     reminder_sent_at = db.Column(db.DateTime, nullable=True)
@@ -653,3 +709,61 @@ MbaProject.supervisor_invitations = db.relationship(
     back_populates="project",
     cascade="all, delete-orphan"
 )
+
+
+def _legacy_role_for_mba_user(target):
+    if getattr(target, "ethics_access", False) and getattr(target, "ethics_role", None) == EthicsRole.SUPER_ADMIN.value:
+        return "SUPER_ADMIN"
+    if getattr(target, "ethics_access", False) and getattr(target, "ethics_role", None) == EthicsRole.ADMIN.value:
+        return "ADMIN"
+    if getattr(target, "ethics_access", False) and getattr(target, "ethics_role", None) == EthicsRole.REC.value:
+        return "REC"
+    if getattr(target, "ethics_access", False) and getattr(target, "ethics_role", None) == EthicsRole.DEAN.value:
+        return "DEAN"
+    if getattr(target, "ethics_access", False) and getattr(target, "ethics_role", None) == EthicsRole.REVIEWER.value:
+        return "REVIEWER"
+    if getattr(target, "ethics_access", False) and getattr(target, "ethics_role", None) == EthicsRole.SUPERVISOR.value:
+        return "SUPERVISOR"
+    if getattr(target, "ethics_access", False) and getattr(target, "ethics_role", None) == EthicsRole.STUDENT.value:
+        return "STUDENT"
+    if target.role == MbaRole.MAIN_ADMIN.value:
+        return "SUPER_ADMIN"
+    if target.role == MbaRole.ADMIN.value:
+        return "ADMIN"
+    if target.role == MbaRole.HDC.value:
+        return "REC"
+    if target.scholar_role in {MbaScholarRole.SUPERVISOR.value, MbaScholarRole.BOTH.value}:
+        return "SUPERVISOR"
+    if target.role == MbaRole.EXAMINER.value or target.scholar_role == MbaScholarRole.EXAMINER.value:
+        return "REVIEWER"
+    return "STUDENT"
+
+
+def _sync_mba_user_columns(target):
+    first_name = (target.first_name or "").strip()
+    last_name = (target.last_name or "").strip()
+    email_local = (target.email or "user").split("@", 1)[0]
+    target.full_name = " ".join(part for part in [first_name, last_name] if part).strip() or email_local
+    if target.mba_access and not target.role:
+        target.role = MbaRole.STUDENT.value
+    if not target.mba_access:
+        target.role = None
+        target.scholar_role = None
+    if target.ethics_access and not target.ethics_role:
+        target.ethics_role = EthicsRole.STUDENT.value
+    if not target.ethics_access:
+        target.ethics_role = None
+        target.authenticated_student = False
+    if not target.legacy_user_id:
+        target.legacy_user_id = uuid.uuid4().hex
+    target.legacy_role = _legacy_role_for_mba_user(target)
+
+
+@event.listens_for(MbaUser, "before_insert")
+def _before_insert_mba_user(mapper, connection, target):
+    _sync_mba_user_columns(target)
+
+
+@event.listens_for(MbaUser, "before_update")
+def _before_update_mba_user(mapper, connection, target):
+    _sync_mba_user_columns(target)

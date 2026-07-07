@@ -1,0 +1,903 @@
+<!-- FORM A: SECTION 1-5 -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Form A – Human Research Ethics | JBS Ethics</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/form_a.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/loading.css') }}">
+  <!-- <link rel="stylesheet" href="{{ url_for('static', filename='css/form_a.css') }}"> -->
+</head>
+<body>
+
+  <!-- Navbar -->
+  <header class="navbar">
+    <div class="nav-content">
+      <!-- <img src="{{ url_for('static',filename='img/image.png')}}" alt="UJ JBS Logo" class="logo uj"> -->
+       <img src="/static/img/image.png" alt="UJ JBS Logo" class="logo uj">
+      <span class="nav-title">Form A – Section 5: Methodology</span>
+
+                <!-- Logout -->
+    <div style="text-align: right;">
+
+      <a href="{{url_for('logout')}}" class="btn-logout">Logout</a>
+    </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <form action="{{url_for('form_a_sec4')}}" method="post" enctype="multipart/form-data" class="no-loading-indicator">
+ 
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="forma_id" value="{{ form_data.form_id if form_data and form_data.form_id else '' }}">
+    <!-- Top Bar -->
+    <!-- <div class="form-header">
+      <button class="approve-btn">Save Draft</button>
+      <strong>Step 5 of 7</strong>
+    </div> -->
+
+    <!-- Progress Bar -->
+    <div class="progress-bar">
+      <div class="progress-fill" style="width: 70%">70%</div>
+    </div>
+
+
+  <!-- Section 5: Methodology -->
+  <section id="section-5">
+    <h2>Section 5: Methodology</h2>
+
+    <label>5.1 Research Paradigm (Substantiate your choice of paradigm)</label><br>
+    <table id="methodTypeTable" class="table table-bordered">
+      <thead>
+        <tr>
+          <th>Quantitative Methods</th>
+          <th>Qualitative Methods</th>
+          <th>Mixed Methods</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="text-center"><input type="checkbox" name="quantitative[]" value="Yes" {% if form_data and (form_data.quantitative|string|lower in ['yes','true','1']) %}checked{% endif %}></td>
+          <td class="text-center"><input type="checkbox" name="qualitative[]" value="Yes" {% if form_data and (form_data.qualitative|string|lower in ['yes','true','1']) %}checked{% endif %}></td>
+          <td class="text-center"><input type="checkbox" name="mixed_methods[]" value="Yes" {% if form_data and (form_data.mixed_methods|string|lower in ['yes','true','1']) %}checked{% endif %}></td>
+        </tr>
+      </tbody>
+    </table>
+    <textarea name="paradigm_explanation" rows="3" placeholder="Explain your paradigm selection"></textarea>
+
+    <label>5.2 Research Design / Approach</label>
+    <textarea name="design" rows="4" placeholder="Name & describe the research design you intend to use, e.g. descriptive correlation, case study, grounded theory, etc. If your research will proceed in different phases, describe each phase sequentially"></textarea>
+
+    <br>
+    <label>5.3 Details of the Participants</label>
+
+    <label>5.3.1 Participant Group Description</label>
+    <textarea name="participants_description" rows="3" placeholder="Describe the participant group(s) you will be studying, e.g. age,"></textarea>
+    <br>
+
+    <table id="participantsTable" class="table table-bordered">
+      <thead>
+        <tr>
+          <th>Population</th>
+          <th>Sampling Method</th>
+          <th>Sample Size</th>
+          <th>Inclusion Criteria</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><input type="text" name="population[]" class="form-control" /></td>
+          <td><input type="text" name="sampling_method[]" class="form-control" /></td>
+          <td><input type="number" name="sample_size[]" class="form-control" /></td>
+          <td><textarea name="inclusion_criteria[]" rows="2" class="form-control"></textarea></td>
+          <td><button type="button" class="btn btn-danger btn-sm" onclick="removeRow(this)">Remove</button></td>
+        </tr>
+      </tbody>
+    </table>
+    
+    <button type="button" class="btn btn-secondary" onclick="addRow()">Add Row</button>
+
+
+    <label>5.3.2 Describe how much time you require of participants in each group and when the data will be collected/ interviews will take place.</label>
+    <textarea name="duration_timing" rows="2" required placeholder="Explain how much time you require from participants and when data collection will occur"></textarea>
+
+    <label>5.3.3 Explain how you will obtain the contact details of participants</label>
+    <textarea name="contact_details_method" rows="2" required placeholder="Explain how you will obtain the contact details of participants"></textarea>
+    
+    <label>5.3.4 Conflict of interest or unequal relationship between researcher and participants?<span class="info-icon" title="A conflict of interest may arise where financial, personal or other considerations could directly and significantly affect, or appear to affect, a researcher's research conduct and judgement.">ℹ️</span></label>
+    <div class="d-flex gap-4">  
+            <label class="form-check-label">
+              <input type="radio" name="conflict_interest" value="No" required> No
+            </label>
+            <label class="form-check-label">
+              <input type="radio" name="conflict_interest" value="Yes" required> Yes
+            </label>
+    </div>
+    <div id="conflict_explanation_box" style="display: none;">
+            <textarea name="conflict_explanation" rows="2"
+              placeholder="If yes, give details and explain how it will be mitigated"></textarea>
+          </div>
+          <br>
+
+    <label>5.4 Research Instruments for Data Collection</label>
+    <label>5.4.1 Indicate which data collection methods will be used</label>
+    
+  <table id="data_methods" class="table table-bordered">
+    <thead class="thead-light">
+      <tr>
+        <th>Questionnaire</th>
+        <th>Interview</th>
+        <th>Focus Group</th>
+        <th>Observation</th>
+        <th>Documents</th>
+        <th>Other</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="text-center">
+          <input id="m-questionnaire" type="checkbox" value="questionnaire" class="method-check" name="data_methods[]" {% if form_data and form_data.data_methods and 'questionnaire' in form_data.data_methods.split(',') %}checked{% endif %}>
+          <label class="visually-hidden" for="m-questionnaire">Questionnaire</label>
+        </td>
+        <td class="text-center">
+          <input id="m-interview" type="checkbox" value="interview" class="method-check" name="data_methods[]" {% if form_data and form_data.data_methods and 'interview' in form_data.data_methods.split(',') %}checked{% endif %}>
+          <label class="visually-hidden" for="m-interview">Interview</label>
+        </td>
+        <td class="text-center">
+          <input id="m-focus" type="checkbox" value="focus" class="method-check" name="data_methods[]" {% if form_data and form_data.data_methods and 'focus' in form_data.data_methods.split(',') %}checked{% endif %}>
+          <label class="visually-hidden" for="m-focus">Focus Group</label>
+        </td>
+        <td class="text-center">
+          <input id="m-observation" type="checkbox" value="observation" class="method-check" name="data_methods[]" {% if form_data and form_data.data_methods and 'observation' in form_data.data_methods.split(',') %}checked{% endif %}>
+          <label class="visually-hidden" for="m-observation">Observation</label>
+        </td>
+        <td class="text-center">
+          <input id="m-documents" type="checkbox" value="documents" class="method-check" name="data_methods[]" {% if form_data and form_data.data_methods and 'documents' in form_data.data_methods.split(',') %}checked{% endif %}>
+          <label class="visually-hidden" for="m-documents">Documents</label>
+        </td>
+        <td class="text-center">
+          <input id="m-other" type="checkbox" value="other" class="method-check" name="data_methods[]" {% if form_data and form_data.data_methods and 'other' in form_data.data_methods.split(',') %}checked{% endif %}>
+          <label class="visually-hidden" for="m-other">Other</label>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+    <br>
+    
+    <!-- Questionnaire -->
+          <div id="questionnaire_fields" style="display:none; margin-top: 1rem;">
+            <label>5.4.1.1 Questionnaire(s):</label>
+            <div class="d-flex gap-4">
+              <label class="form-check-label">
+                <input type="radio" name="questionnaire_type" value="Self-designed"> Self-designed
+              </label>
+              <label class="form-check-label">
+                <input type="radio" name="questionnaire_type" value="Existing"> Existing
+              </label>
+            </div>
+            <label>If existing, permission obtained?</label>
+            <div class="d-flex gap-4">
+              <label class="form-check-label">
+                <input type="radio" name="questionnaire_permission" value="Yes"> Yes
+              </label>
+              <label class="form-check-label">
+                <input type="radio" name="questionnaire_permission" value="Open Source"> Open Source
+              </label>
+            </div>
+            <textarea name="instrument_attachment_reason" rows="2" placeholder="Justify"></textarea>
+          </div>
+    <!-- Interview -->
+          <div id="interview_fields" style="display:none; margin-top: 1rem;">
+            <label>5.4.1.2 Interviews</label>
+            <div class="d-flex gap-4">
+              <label class="form-check-label">
+                <input type="radio" name="interview_type" value="In-depth"> In-depth
+              </label>
+              <label class="form-check-label">
+                <input type="radio" name="interview_type" value="Semi-structured"> Semi-structured
+              </label>
+              <label class="form-check-label">
+                <input type="radio" name="interview_type" value="Unstructured"> Unstructured
+              </label>
+            </div>
+            <label>How will the interviews be recorded?</label>
+            <div class="d-flex gap-4">
+              <label class="form-check-label">
+                <input type="radio" name="interview_recording" value="Audio"> Audio
+              </label>
+              <label class="form-check-label">
+                <input type="radio" name="interview_recording" value="Video"> Video
+              </label>
+            </div>
+            </div>
+
+          <!-- Focus Group -->
+          <div id="focus_fields" style="display:none; margin-top: 1rem;">
+            <label>5.4.1.3 Focus Groups</label>
+            <label>How will the focus groups be recorded?</label>
+            <div class="d-flex gap-4">
+              <label class="form-check-label">
+                <input type="radio" name="focus_recording" value="Audio"> Audio
+              </label>
+              <label class="form-check-label">
+                <input type="radio" name="focus_recording" value="Video"> Video
+              </label>
+            </div>
+            </div>
+
+          <!-- Observation -->
+          <div id="observation_fields" style="display:none; margin-top: 1rem;">
+            <label>5.4.1.4 Please describe your observation protocol:</label>
+            <textarea name="observation_details" rows="3"
+              placeholder="Explain how observations will be conducted."></textarea>
+          </div>
+
+          <!-- Documents -->
+          <div id="documents_fields" style="display:none; margin-top: 1rem;">
+            <label>5.4.1.5 What type of documents will be analyzed?</label>
+            <textarea name="documents_details" rows="3"
+              placeholder="E.g. reports, archives, publications..."></textarea>
+          </div>
+
+          <!-- Other -->
+          <div id="other_fields" style="display:none; margin-top: 1rem;">
+            <label>5.4.1.6 Please describe other data collection method(s):</label>
+            <textarea name="other_details" rows="3" placeholder="Describe any other data collection methods you plan to use"></textarea>
+          </div>
+
+          <!-- General Data Collection Procedure -->
+          <label style="margin-top: 1.5rem;">5.4.2 Describe the data collection procedure</label>
+          <textarea name="data_collection_procedure" rows="3" required placeholder="Describe the data collection procedure in detail"></textarea>
+
+          <br>
+
+
+    <label>5.4.3 Who will collect the data (Researcher and/or field workers/external company)?</label>
+    <textarea name="data_collectors" rows="2" required placeholder="Explain any measures that you will take to prepare yourself or field workers to optimise data collection activities (Provide a confidentiality agreement form for fieldworkers/ external party"></textarea>
+
+    <label>5.4.4 Will participants be subjected to any form of intervention (manipulation of the participant or the participants' environment)?</label>
+    <div class="d-flex gap-4">
+      <label class="form-check-label">
+        <input type="radio" name="intervention" value="No" required onchange="toggleIntervention()"> No
+      </label>
+      <label class="form-check-label">
+        <input type="radio" name="intervention" value="Yes" required onchange="toggleIntervention()"> Yes
+      </label>
+    </div>
+    <div id="intervention_details_box" style="display:none; margin-top: 1rem;">
+      <textarea name="intervention_details" rows="2" placeholder="If yes, explain the intervention in full"></textarea>
+    </div>
+    
+
+    <label>5.4.5 Will sensitive data be used or vulnerable populations be questioned?</label>
+    <textarea name="sensitive_data" rows="2" required placeholder="If yes, explain how you will handle sensitive data or vulnerable populations"></textarea>
+
+    <label>5.4.6 Will a translator be required?</label>
+    <div class="d-flex gap-4">
+      <label class="form-check-label">
+        <input type="radio" name="translator" value="No" required onclick="toggleTranslatorBox()"> No
+      </label>
+      <label class="form-check-label">
+        <input type="radio" name="translator" value="Yes" required onclick="toggleTranslatorBox()"> Yes
+      </label>
+    </div>
+
+    <div id="translator_details_box" style="display:none; margin-top: 1rem;">
+      <textarea name="translator_procedure" rows="2" placeholder="If yes, explain in which way and the procedure that will be followed"></textarea>
+    </div>
+    <br>
+  
+
+<label>5.5 Secondary Data Usage</label>
+
+<label>5.5.1 Will secondary data be used?</label><br>
+<div id="secondaryData" class="d-flex gap-4">
+  <label class="form-check-label">
+    <input type="radio" name="secondary_data" value="Yes" {% if form_data and form_data.uses_secondary_data %}checked{% endif %} onchange="handleSecondaryData()"> Yes
+  </label>
+  <label class="form-check-label">
+    <input type="radio" name="secondary_data" value="No" {% if form_data and form_data.uses_secondary_data is sameas false %}checked{% endif %} onchange="handleSecondaryData()"> No
+  </label>
+</div>
+
+<div id="secondaryDetails" style="display: {% if form_data and form_data.uses_secondary_data %}block{% else %}none{% endif %}; margin-top: 1rem;">
+
+  <label>5.5.2 Is the data public, private, or both?</label><br>
+  <select id="dataType" name="data_type" class="form-select" onchange="handleDataType()">
+    <option value="" {% if not form_data or not form_data.secondary_data_type %}selected{% endif %}>-- Select --</option>
+    <option value="public" {% if form_data and form_data.secondary_data_type == 'public' %}selected{% endif %}>Public</option>
+    <option value="private" {% if form_data and form_data.secondary_data_type == 'private' %}selected{% endif %}>Private</option>
+    <option value="both" {% if form_data and form_data.secondary_data_type == 'both' %}selected{% endif %}>Both</option>
+  </select>
+
+  <label>5.5.3 Nature of the Data</label>
+  <input type="text" name="data_nature" class="form-control"  placeholder="e.g., survey, interviews, reports">
+
+  <label>5.5.4 Origin/Source of Research Data</label>
+  <input type="text" name="data_origin" class="form-control"  placeholder="e.g., academic articles, organizational data">
+
+  <label>5.5.5 What are the access conditions?</label>
+  <textarea name="access_conditions" class="form-control" rows="3" placeholder="Access terms, licenses, restrictions, etc."></textarea>
+
+  <label>5.5.6 Does the database contain personal information/identifiers?</label>
+  <div class="d-flex gap-4">
+    <label class="form-check-label">
+      <input type="radio" name="personal_info" value="Yes" onchange="togglePersonalInfo()"> Yes
+    </label>
+    <label class="form-check-label">
+      <input type="radio" name="personal_info" value="No" onchange="togglePersonalInfo()"> No
+    </label>
+  </div>
+
+  <div id="personalInfoComment" style="display: none; margin-top: 1rem;">
+    <label>5.5.6.1 Specify the personal info/identifiers:</label>
+    <textarea name="personal_info_comment" class="form-control" rows="3" placeholder="List the types of identifiers."></textarea>
+  </div>
+
+  <label>5.5.7 Has the data been anonymized?</label>
+  <div class="d-flex gap-4">
+    <label class="form-check-label">
+      <input type="radio" name="data_anonymized" value="Yes"> Yes
+    </label>
+    <label class="form-check-label">
+      <input type="radio" name="data_anonymized" value="No"> No
+    </label>
+    <label class="form-check-label">
+      <input type="radio" name="data_anonymized" value="Not Applicable"> Not Applicable
+    </label>
+  </div>
+
+
+  <label>5.5.7.1 Comment / Justification:</label>
+  <textarea name="anonymization_comment" class="form-control" rows="3" placeholder="Justify anonymization or explain why not applicable."></textarea>
+
+
+  <!-- PRIVATE SECTION -->
+  <div id="privateDataSection" style="display: none;">
+    <label>5.5.8 Is the data from a company that has provided permission?</label>
+    <select id="privatePermission" name="privatePermission" class="form-select" onchange="handlePrivatePermission()">
+      <option value="" {% if not form_data or not form_data.private_permission %}selected{% endif %}>-- Select --</option>
+      <option value="Yes" {% if form_data and form_data.private_permission == 'Yes' %}selected{% endif %}>Yes</option>
+      <option value="No" {% if form_data and form_data.private_permission == 'No' %}selected{% endif %}>No</option>
+    </select>
+
+    <div id="uploadPrivatePermission" style="display: none; margin-top: 1rem;">
+      <label>5.5.8.1 Upload permission document:</label>
+      <input type="file" name="private_permission_file" class="form-control">
+      <br>
+      <label>OR provide details:</label>
+      <textarea name="permission_details" class="form-control" rows="3" placeholder="Describe the permission granted."></textarea>
+    </div>
+  </div>
+
+  <!-- PUBLIC SECTION -->
+  <div id="publicDataSection" >
+    <label>5.5.8 What type of public data will be used?</label>
+    <textarea name="public_data_description" class="form-control" rows="3" placeholder="e.g., Government stats, open access articles, datasets."></textarea>
+  </div>
+
+  <label>5.5.9 Will data shortcomings/incompleteness be reported?</label>
+  <div class="d-flex gap-4">
+    <label class="form-check-label">
+      <input type="radio" name="shortcomings_reported" value="Yes"> Yes
+    </label>
+    <label class="form-check-label">
+      <input type="radio" name="shortcomings_reported" value="No"> No
+    </label>
+  </div>
+
+  <label>5.5.10 How will data limitations be reported?</label>
+  <textarea name="limitations_reporting" class="form-control" rows="3" placeholder="Explain methods to manage missing or incomplete data."></textarea>
+
+  <label>5.5.11 Is the research methodology and design aligned with secondary data use?</label>
+  <div class="d-flex gap-4">
+    <label class="form-check-label">
+      <input type="radio" name="methodology_alignment" value="Yes"> Yes
+    </label>
+    <label class="form-check-label">
+      <input type="radio" name="methodology_alignment" value="No"> No
+    </label>
+  </div>
+
+  <label>5.5.12 How will the original owners of the data be acknowledged?</label>
+  <textarea name="data_acknowledgment" class="form-control" rows="3" placeholder="e.g., citations, credits, license acknowledgments."></textarea>
+
+</div>
+</section>
+
+        <!-- Navigation Buttons -->
+        <div class="form-navigation">
+          <a href="{{url_for('form_a_sec3')}}" class="revise-btn">⬅ Section 4-3</a>
+          <button type="submit"  class="approve-btn">Next ➔ Section 6</button>
+        </div>
+
+        <div id="autosave-status" style="position: fixed; top: 70px; right: 20px; padding: 8px 16px; background: #f0f0f0; border-radius: 4px; font-size: 14px; z-index: 1000;"></div>
+      </form>
+  
+    </main>
+  
+    <!-- Footer -->
+ <footer class="footer">
+   
+</footer>
+
+    <script>
+  function addRow() {
+    const participantsTable = document.getElementById('participantsTable');
+    if (!participantsTable) return;
+    const table = participantsTable.getElementsByTagName('tbody')[0];
+    if (!table || !table.rows || !table.rows.length) return;
+    const newRow = table.rows[0].cloneNode(true);
+    Array.from(newRow.querySelectorAll('input, textarea')).forEach(input => input.value = '');
+    table.appendChild(newRow);
+  }
+
+  function removeRow(button) {
+    const row = button.closest('tr');
+    const participantsTable = document.getElementById('participantsTable');
+    if (!participantsTable) return;
+    const table = participantsTable.getElementsByTagName('tbody')[0];
+    if (!table || !table.rows) return;
+    if (table.rows.length > 1) {
+      row.remove();
+    } else {
+      alert("You must have at least one row.");
+    }
+  }
+
+  function toggleTranslatorBox() {
+    const radios = document.getElementsByName("translator");
+    const box = document.getElementById("translator_details_box");
+    if (!box) return;
+    box.style.display = Array.from(radios).some(r => r.checked && r.value === "Yes") ? "block" : "none";
+  }
+
+  function toggleIntervention() {
+    const selected = document.querySelector('input[name="intervention"]:checked')?.value;
+    const detailsBox = document.getElementById("intervention_details_box");
+    if (!detailsBox) return;
+    detailsBox.style.display = selected === "Yes" ? "block" : "none";
+  }
+
+  function handleSecondaryData() {
+    const secondaryData = document.querySelector('input[name="secondary_data"]:checked');
+    const secondaryDetails = document.getElementById("secondaryDetails");
+    if (!secondaryDetails) return;
+    const val = secondaryData ? secondaryData.value : '';
+    if (val === "No") {
+      clearSecondaryDataFields();
+    }
+    secondaryDetails.style.display = val === "Yes" ? "block" : "none";
+  }
+
+  function handleDataType() {
+    const dataType = document.getElementById("dataType");
+    const privateSection = document.getElementById("privateDataSection");
+    const publicSection = document.getElementById("publicDataSection");
+    if (!dataType || !privateSection || !publicSection) return;
+    const type = dataType.value;
+    privateSection.style.display = (type === "private" || type === "both") ? "block" : "none";
+    publicSection.style.display = (type === "public" || type === "both") ? "block" : "none";
+  }
+
+  function handlePrivatePermission() {
+    const privatePermission = document.getElementById("privatePermission");
+    const uploadPrivatePermission = document.getElementById("uploadPrivatePermission");
+    if (!privatePermission || !uploadPrivatePermission) return;
+    const val = privatePermission.value;
+    uploadPrivatePermission.style.display = val === "No" ? "block" : "none";
+  }
+
+  function resetFields() {
+    const dataType = document.getElementById('dataType');
+    const privatePermission = document.getElementById('privatePermission');
+    const privateDataSection = document.getElementById('privateDataSection');
+    const publicDataSection = document.getElementById('publicDataSection');
+    const uploadPrivatePermission = document.getElementById('uploadPrivatePermission');
+    if (dataType) dataType.value = "";
+    if (privatePermission) privatePermission.value = "";
+    if (privateDataSection) privateDataSection.style.display = 'none';
+    if (publicDataSection) publicDataSection.style.display = 'none';
+    if (uploadPrivatePermission) uploadPrivatePermission.style.display = 'none';
+  }
+
+  function clearSecondaryDataFields() {
+    const secondaryDetails = document.getElementById('secondaryDetails');
+    if (!secondaryDetails) return;
+
+    secondaryDetails.querySelectorAll('input, textarea, select').forEach(field => {
+      if (field.type === 'radio' || field.type === 'checkbox') {
+        field.checked = false;
+        return;
+      }
+      if (field.type === 'file') {
+        field.value = '';
+        return;
+      }
+      field.value = '';
+    });
+
+    resetFields();
+    togglePersonalInfo();
+  }
+
+  function togglePersonalInfo() {
+    const radios = document.getElementsByName("personal_info");
+    const commentBox = document.getElementById("personalInfoComment");
+    if (!commentBox) return;
+    commentBox.style.display = Array.from(radios).some(r => r.checked && r.value === "Yes") ? "block" : "none";
+  }
+
+  // Conflict of interest logic
+  document.querySelectorAll('input[name="conflict_interest"]').forEach(radio => {
+    radio.addEventListener('change', function () {
+      const conflictExplanationBox = document.getElementById('conflict_explanation_box');
+      if (!conflictExplanationBox) return;
+      conflictExplanationBox.style.display = this.value === 'Yes' ? 'block' : 'none';
+    });
+  });
+
+  // Method logic
+  const methodMap = {
+    'questionnaire': 'questionnaire_fields',
+    'interview': 'interview_fields',
+    'focus': 'focus_fields',
+    'observation': 'observation_fields',
+    'documents': 'documents_fields',
+    'other': 'other_fields',
+  };
+
+  function clearMethodFields(target) {
+    if (!target) return;
+    target.querySelectorAll('input, textarea, select').forEach(field => {
+      if (field.type === 'checkbox' || field.type === 'radio') {
+        field.checked = false;
+        return;
+      }
+      if (field.type === 'file') {
+        field.value = '';
+        return;
+      }
+      field.value = '';
+    });
+  }
+
+  document.querySelectorAll('.method-check').forEach(checkbox => {
+    checkbox.addEventListener('change', function () {
+      const targetId = methodMap[this.value];
+      if (targetId) {
+        const target = document.getElementById(targetId);
+        if (!target) return;
+        if (!this.checked) {
+          clearMethodFields(target);
+        }
+        target.style.display = this.checked ? 'block' : 'none';
+      }
+    });
+  });
+
+  // Toggle public data fallback field
+  function togglePublicData() {
+    const radios = document.getElementsByName("data_public");
+    const field = document.getElementById("public_data_fields");
+    if (!field) return;
+    field.style.display = Array.from(radios).some(r => r.checked && r.value === "No") ? "block" : "none";
+  }
+  
+  document.addEventListener('DOMContentLoaded', function() {
+    console.log('[FORM-A-SEC4] DOM ready');
+    const form = document.querySelector('form');
+    if (!form) {
+      console.warn('[FORM-A-SEC4] Form element not found; autosave not initialized');
+      return;
+    }
+    form.querySelectorAll('input[type="radio"]').forEach(radio => {
+      radio.addEventListener('mousedown', function() {
+        this.dataset.wasChecked = this.checked ? '1' : '0';
+      });
+      radio.addEventListener('click', function() {
+        if (this.dataset.wasChecked === '1') {
+          this.checked = false;
+          this.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+        delete this.dataset.wasChecked;
+      });
+    });
+    form.querySelectorAll('input[name="secondary_data"]').forEach(radio => {
+      radio.addEventListener('change', handleSecondaryData);
+    });
+    const initialData = {{ {
+      'paradigm_explanation': form_data.paradigm_explanation if form_data else '',
+      'design': form_data.design if form_data else '',
+      'participants_description': form_data.participants_description if form_data else '',
+      'duration_timing': form_data.duration_timing if form_data else '',
+      'contact_details_method': form_data.contact_details_method if form_data else '',
+      'conflict_interest': ('Yes' if form_data and form_data.conflict_interest else 'No') if form_data and form_data.conflict_interest is not none else '',
+      'conflict_explanation': form_data.conflict_explanation if form_data else '',
+      'questionnaire_type': form_data.questionnaire_type if form_data else '',
+      'questionnaire_permission': ('Yes' if form_data and form_data.permission_obtained == 'Yes' else 'Open Source') if form_data and (form_data.permission_obtained == 'Yes' or form_data.open_source == 'Yes') else '',
+      'instrument_attachment_reason': form_data.instrument_attachment_reason if form_data else '',
+      'interview_type': form_data.interview_type if form_data else '',
+      'interview_recording': form_data.interview_recording if form_data else '',
+      'focus_recording': form_data.focus_recording if form_data else '',
+      'observation_details': form_data.observation_details if form_data else '',
+      'documents_details': form_data.documents_details if form_data else '',
+      'other_details': form_data.other_details if form_data else '',
+      'data_collection_procedure': form_data.data_collection_procedure if form_data else '',
+      'data_collectors': form_data.data_collectors if form_data else '',
+      'intervention': ('Yes' if form_data and form_data.intervention else 'No') if form_data and form_data.intervention is not none else '',
+      'intervention_details': form_data.intervention_details if form_data else '',
+      'sensitive_data': form_data.sensitive_data if form_data else '',
+      'translator': ('Yes' if form_data and form_data.translator else 'No') if form_data and form_data.translator is not none else '',
+      'translator_procedure': form_data.translator_procedure if form_data else '',
+      'secondary_data': ('Yes' if form_data and form_data.uses_secondary_data else 'No') if form_data and form_data.uses_secondary_data is not none else '',
+      'data_type': form_data.secondary_data_type if form_data else '',
+      'privatePermission': form_data.private_permission if form_data else '',
+      'data_nature': form_data.data_nature if form_data else '',
+      'data_origin': form_data.data_origin if form_data else '',
+      'access_conditions': form_data.access_conditions if form_data else '',
+      'personal_info': form_data.personal_info if form_data else '',
+      'personal_info_comment': form_data.personal_info_comment if form_data else '',
+      'data_anonymized': form_data.data_anonymized if form_data else '',
+      'anonymization_comment': form_data.anonymization_comment if form_data else '',
+      'permission_details': form_data.permission_details if form_data else '',
+      'public_data_description': form_data.public_data_description if form_data else '',
+      'shortcomings_reported': form_data.shortcomings_reported if form_data else '',
+      'limitations_reporting': form_data.limitations_reporting if form_data else '',
+      'methodology_alignment': form_data.methodology_alignment if form_data else '',
+      'data_acknowledgment': form_data.data_acknowledgment if form_data else '',
+      'population': (form_data.population.split(',') if form_data and form_data.population else []),
+      'sampling_method': (form_data.sampling_method.split(',') if form_data and form_data.sampling_method else []),
+      'sampling_size': (form_data.sampling_size.split(',') if form_data and form_data.sampling_size else []),
+      'inclusion_criteria': (form_data.inclusion_criteria.split(',') if form_data and form_data.inclusion_criteria else [])
+    } | tojson }};
+
+    function setVal(name, value) {
+      if (value === null || value === undefined || value === '') return;
+      const el = form.querySelector(`[name="${name}"]`);
+      if (el) el.value = value;
+    }
+
+    function setRadio(name, value) {
+      if (!value) return;
+      const el = form.querySelector(`input[type="radio"][name="${name}"][value="${value}"]`);
+      if (el) el.checked = true;
+    }
+
+    setVal('paradigm_explanation', initialData.paradigm_explanation);
+    setVal('design', initialData.design);
+    setVal('participants_description', initialData.participants_description);
+    setVal('duration_timing', initialData.duration_timing);
+    setVal('contact_details_method', initialData.contact_details_method);
+    setRadio('conflict_interest', initialData.conflict_interest);
+    setVal('conflict_explanation', initialData.conflict_explanation);
+    setRadio('questionnaire_type', initialData.questionnaire_type);
+    setRadio('questionnaire_permission', initialData.questionnaire_permission);
+    setVal('instrument_attachment_reason', initialData.instrument_attachment_reason);
+    setRadio('interview_type', initialData.interview_type);
+    setRadio('interview_recording', initialData.interview_recording);
+    setRadio('focus_recording', initialData.focus_recording);
+    setVal('observation_details', initialData.observation_details);
+    setVal('documents_details', initialData.documents_details);
+    setVal('other_details', initialData.other_details);
+    setVal('data_collection_procedure', initialData.data_collection_procedure);
+    setVal('data_collectors', initialData.data_collectors);
+    setRadio('intervention', initialData.intervention);
+    setVal('intervention_details', initialData.intervention_details);
+    setVal('sensitive_data', initialData.sensitive_data);
+    setRadio('translator', initialData.translator);
+    setVal('translator_procedure', initialData.translator_procedure);
+    setRadio('secondary_data', initialData.secondary_data);
+    setVal('data_type', initialData.data_type);
+    setVal('privatePermission', initialData.privatePermission);
+    setVal('data_nature', initialData.data_nature);
+    setVal('data_origin', initialData.data_origin);
+    setVal('access_conditions', initialData.access_conditions);
+    setRadio('personal_info', initialData.personal_info);
+    setVal('personal_info_comment', initialData.personal_info_comment);
+    setRadio('data_anonymized', initialData.data_anonymized);
+    setVal('anonymization_comment', initialData.anonymization_comment);
+    setVal('permission_details', initialData.permission_details);
+    setVal('public_data_description', initialData.public_data_description);
+    setRadio('shortcomings_reported', initialData.shortcomings_reported);
+    setVal('limitations_reporting', initialData.limitations_reporting);
+    setRadio('methodology_alignment', initialData.methodology_alignment);
+    setVal('data_acknowledgment', initialData.data_acknowledgment);
+
+    function escapeHtml(value) {
+      return String(value || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function populateParticipantsTable() {
+      const tbody = form.querySelector('#participantsTable tbody');
+      if (!tbody) return;
+
+      const rows = Math.max(
+        initialData.population.length,
+        initialData.sampling_method.length,
+        initialData.sampling_size.length,
+        initialData.inclusion_criteria.length,
+        1
+      );
+
+      tbody.innerHTML = '';
+      for (let index = 0; index < rows; index++) {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td><input type="text" name="population[]" class="form-control" value="${escapeHtml(initialData.population[index] || '')}" /></td>
+          <td><input type="text" name="sampling_method[]" class="form-control" value="${escapeHtml(initialData.sampling_method[index] || '')}" /></td>
+          <td><input type="number" name="sample_size[]" class="form-control" value="${escapeHtml(initialData.sampling_size[index] || '')}" /></td>
+          <td><textarea name="inclusion_criteria[]" rows="2" class="form-control">${escapeHtml(initialData.inclusion_criteria[index] || '')}</textarea></td>
+          <td><button type="button" class="btn btn-danger btn-sm" onclick="removeRow(this)">Remove</button></td>
+        `;
+        tbody.appendChild(row);
+      }
+    }
+
+    populateParticipantsTable();
+
+    toggleTranslatorBox();
+    toggleIntervention();
+    handleSecondaryData();
+    handleDataType();
+    handlePrivatePermission();
+    togglePersonalInfo();
+
+    let autosaveTimeout = null;
+    const savingIndicator = document.getElementById('autosave-status');
+    const AUTOSAVE_DEBUG_SEC4 = true;
+    function debugLogSec4(...args) {
+      if (!AUTOSAVE_DEBUG_SEC4) return;
+      console.log('[FORM-A-SEC4]', ...args);
+    }
+    debugLogSec4('Autosave initialized');
+    
+    function showSaving() {
+      if (savingIndicator) savingIndicator.innerHTML = 'Autosaving...';
+    }
+    function showSaved() {
+      if (savingIndicator) {
+        savingIndicator.innerHTML = 'Saved';
+        setTimeout(() => { savingIndicator.innerHTML = ''; }, 1500);
+      }
+    }
+    function showError() {
+      if (savingIndicator) savingIndicator.innerHTML = '<span style="color:red">Error saving</span>';
+    }
+    
+    function autosave() {
+      showSaving();
+      debugLogSec4('Autosave start');
+      const formData = new FormData(form);
+      
+      const checkboxes = form.querySelectorAll('input[type="checkbox"]');
+      debugLogSec4('Checkbox count', checkboxes.length);
+      
+      // Rebuild checkbox payload to correctly handle [] groups
+      const arrayCheckboxNames = new Set();
+      checkboxes.forEach(cb => {
+        if (cb.name && cb.name.endsWith('[]')) {
+          arrayCheckboxNames.add(cb.name);
+        }
+      });
+      arrayCheckboxNames.forEach(name => formData.delete(name));
+      checkboxes.forEach((cb, index) => {
+        if (!cb.name) {
+          return;
+        }
+        if (cb.name.endsWith('[]')) {
+          if (cb.checked) {
+            formData.append(cb.name, cb.value || 'Yes');
+          }
+        } else {
+          formData.set(cb.name, cb.checked ? 'Yes' : 'No');
+        }
+
+        if (cb.name.includes('quantitative') || cb.name.includes('qualitative') || cb.name.includes('mixed') || index < 3) {
+          debugLogSec4('Checkbox state', { index: index, name: cb.name, checked: cb.checked });
+        }
+      });
+      
+      // Preserve radio button values
+      const radioButtons = form.querySelectorAll('input[type="radio"]');
+      radioButtons.forEach(rb => {
+        if (rb.checked) {
+          debugLogSec4('Radio selected', { name: rb.name, value: rb.value });
+          formData.set(rb.name, rb.value);
+        }
+      });
+      
+      // Debug: Log key field values
+      debugLogSec4('Payload preview', {
+        quantitative: formData.getAll('quantitative[]'),
+        qualitative: formData.getAll('qualitative[]'),
+        mixed_methods: formData.getAll('mixed_methods[]'),
+        participants_description: formData.get('participants_description')
+      });
+      debugLogSec4('Sending fetch request');
+      
+      fetch('{{ url_for("form_a_sec4_autosave") }}', {
+        method: 'POST',
+        body: formData,
+        headers: { 'Accept': 'application/json' }
+      })
+      .then(r => {
+        debugLogSec4('Response status', r.status, r.statusText);
+        return r.json().catch(() => ({ success: false, error: 'Invalid JSON response' }));
+      })
+      .then(data => {
+        debugLogSec4('Response data', data);
+        if (data && data.success) {
+          showSaved();
+        } else {
+          showError();
+          console.error('[FORM-A-SEC4] Save failed:', data && data.error ? data.error : 'Unknown error');
+        }
+      })
+      .catch(err => {
+        showError();
+        console.error('[FORM-A-SEC4] Fetch error:', err);
+      });
+    }
+    
+    // Attach autosave to all inputs
+    function attachAutosaveListeners() {
+      const allFields = Array.from(form.querySelectorAll('input:not([type="file"]), textarea, select'));
+      allFields.forEach(field => {
+        if (field.name === 'csrf_token') return;
+        if (field.dataset.autosaveBound === '1') return;
+        field.oninput = null;
+        field.onchange = null;
+        const eventType = (field.type === 'checkbox' || field.type === 'radio' || field.tagName === 'SELECT') ? 'change' : 'input';
+        field.addEventListener(eventType, function() {
+          const valuePreview = field.type === 'checkbox' ? field.checked : field.value;
+          debugLogSec4('Field event', {
+            name: field.name,
+            type: field.type,
+            eventType: eventType,
+            value: valuePreview
+          });
+          clearTimeout(autosaveTimeout);
+          autosaveTimeout = setTimeout(function() {
+            debugLogSec4('Debounced autosave trigger for field', field.name);
+            autosave();
+          }, 700);
+        });
+        field.dataset.autosaveBound = '1';
+      });
+    }
+    attachAutosaveListeners();
+
+    // Dynamic row add/remove should autosave too
+    const addRowButtons = form.querySelectorAll('button[onclick*="addRow"]');
+    addRowButtons.forEach(btn => {
+      btn.addEventListener('click', function() {
+        setTimeout(() => {
+          attachAutosaveListeners();
+          autosave();
+        }, 100);
+      });
+    });
+
+    form.addEventListener('click', function(e) {
+      if (e.target.matches('button[onclick*="removeRow"]')) {
+        setTimeout(() => autosave(), 0);
+      }
+    });
+  });
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="{{ url_for('static', filename='js/form-submission-handler.js') }}"></script>
+</body>
+</html>

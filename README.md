@@ -28,7 +28,7 @@ python -m venv .venv
 pip install -r requirements.txt
 ```
 
-Set `DATABASE_URL` in `.env` to your own local PostgreSQL connection string. Do not commit `.env`.
+Set `DATABASE_URL` in `.env` for the MBA app and `ETHICS_DATABASE_URL` for the mounted ethics app. For local development, SQLite paths work fine. Do not commit `.env`.
 
 Initialize or update the database:
 
@@ -77,6 +77,7 @@ Required for production:
 ```text
 SECRET_KEY=
 DATABASE_URL=
+ETHICS_DATABASE_URL=
 PUBLIC_BASE_URL=
 ```
 

@@ -13,43 +13,48 @@
   {% set isp = invitation_state_by_project|default({}, true) %}
   {% set dbp = documents_by_project|default({}, true) %}
   {% set active_panel = request.args.get('panel', 'projects') %}
-  {% if active_panel not in ['disciplines', 'projects', 'assessors', 'supervisors', 'students'] %}
+  {% if active_panel not in ['disciplines', 'projects', 'assessors', 'supervisors', 'students', 'users'] %}
   {% set active_panel = 'projects' %}
   {% endif %}
   {% set admin_reminders_nav = mba_reminders_nav() %}
   <nav class="portal-tabs" aria-label="Admin workspace sections">
     <a href="#admin-overview" class="portal-tab portal-tab--overview">
-      <span aria-hidden="true">O</span>
+      <i class="nav-icon fas fa-chart-line" aria-hidden="true"></i>
       <strong>Overview</strong>
     </a>
     <a href="{{ url_for('mba.admin_dashboard', panel='students', view='all') }}"
       class="portal-tab {% if active_panel == 'students' %}is-active{% endif %}">
-      <span aria-hidden="true">S</span>
+      <i class="nav-icon fas fa-user-graduate" aria-hidden="true"></i>
       <strong>Students</strong>
+    </a>
+    <a href="{{ url_for('mba.admin_dashboard', panel='users', view='all') }}"
+      class="portal-tab {% if active_panel == 'users' %}is-active{% endif %}">
+      <i class="nav-icon fas fa-users-cog" aria-hidden="true"></i>
+      <strong>Users</strong>
     </a>
     <a href="{{ url_for('mba.admin_dashboard', panel='supervisors', view='all') }}"
       class="portal-tab {% if active_panel == 'supervisors' %}is-active{% endif %}">
-      <span aria-hidden="true">V</span>
+      <i class="nav-icon fas fa-user-gear" aria-hidden="true"></i>
       <strong>Supervisors</strong>
     </a>
     <a href="{{ url_for('mba.admin_dashboard', panel='assessors', view='all') }}"
       class="portal-tab {% if active_panel == 'assessors' %}is-active{% endif %}">
-      <span aria-hidden="true">E</span>
+      <i class="nav-icon fas fa-user-check" aria-hidden="true"></i>
       <strong>Assessors</strong>
     </a>
     <a href="{{ url_for('mba.admin_dashboard', panel='projects', view='all') }}"
       class="portal-tab {% if active_panel == 'projects' %}is-active{% endif %}">
-      <span aria-hidden="true">P</span>
+      <i class="nav-icon fas fa-folder-open" aria-hidden="true"></i>
       <strong>Projects</strong>
     </a>
     <a href="{{ url_for('mba.admin_dashboard', panel='disciplines', view='all') }}"
       class="portal-tab {% if active_panel == 'disciplines' %}is-active{% endif %}">
-      <span aria-hidden="true">D</span>
+      <i class="nav-icon fas fa-layer-group" aria-hidden="true"></i>
       <strong>Disciplines</strong>
     </a>
     {% if admin_reminders_nav.visible and admin_reminders_nav.url %}
     <a href="{{ admin_reminders_nav.url }}" class="portal-tab">
-      <span aria-hidden="true">R</span>
+      <i class="nav-icon fas fa-bell" aria-hidden="true"></i>
       <strong>Reminders{% if admin_reminders_nav.count %} <em>{{ admin_reminders_nav.count }}</em>{% endif %}</strong>
     </a>
     {% endif %}
@@ -1480,7 +1485,7 @@
   <section class="ethics-panel">
     <div class="panel-heading">
       <h2>Assessors</h2>
-      <span>{{ examiners|length }} available</span>
+      <span>{{ assessor_pagination.total }} available</span>
     </div>
     <div class="admin-discipline-layout">
       <form action="{{ url_for('mba.admin_import_assessors') }}" method="post" enctype="multipart/form-data"
@@ -1535,6 +1540,9 @@
         </tbody>
       </table>
     </div>
+    {% set pagination = assessor_pagination %}
+    {% set item_label = 'assessors' %}
+    {% include "mba/_project_pagination.html" %}
   </section>
   {% endif %}
 
@@ -1542,7 +1550,7 @@
   <section class="ethics-panel">
     <div class="panel-heading">
       <h2>Supervisors</h2>
-      <span>{{ supervisors|length }} available</span>
+      <span>{{ supervisor_pagination.total }} available</span>
     </div>
     <div class="admin-discipline-layout">
       <form action="{{ url_for('mba.admin_import_supervisors') }}" method="post" enctype="multipart/form-data"
@@ -1598,6 +1606,9 @@
         </tbody>
       </table>
     </div>
+    {% set pagination = supervisor_pagination %}
+    {% set item_label = 'supervisors' %}
+    {% include "mba/_project_pagination.html" %}
   </section>
   {% endif %}
 
@@ -1605,7 +1616,7 @@
   <section class="ethics-panel">
     <div class="panel-heading">
       <h2>Students</h2>
-      <span>{{ students|length }} shown</span>
+      <span>{{ student_pagination.total }} shown</span>
     </div>
     <form action="{{ url_for('mba.admin_import_students') }}" method="post" enctype="multipart/form-data"
       class="form-stack compact-form admin-form-section" style="margin-bottom:1rem;">
@@ -1649,6 +1660,105 @@
         </tbody>
       </table>
     </div>
+    {% set pagination = student_pagination %}
+    {% set item_label = 'students' %}
+    {% include "mba/_project_pagination.html" %}
+  </section>
+  {% endif %}
+
+  {% if active_panel == 'users' %}
+  <section class="ethics-panel">
+    <div class="panel-heading">
+      <h2>User Management</h2>
+      <span>{{ user_pagination.total }} shown</span>
+    </div>
+    <div class="admin-project-toolbar" style="margin-bottom:1rem;">
+      <div class="admin-project-toolbar__views" role="tablist" aria-label="User access filters">
+        <a href="{{ url_for('mba.admin_dashboard', panel='users', user_q=user_search or None, user_access='all') }}"
+          class="filter-pill {% if (user_access_filter or 'all') == 'all' %}is-active{% endif %}">
+          All <strong>{{ shared_user_access_counts.all }}</strong>
+        </a>
+        <a href="{{ url_for('mba.admin_dashboard', panel='users', user_q=user_search or None, user_access='mba') }}"
+          class="filter-pill {% if user_access_filter == 'mba' %}is-active{% endif %}">
+          MBA Only <strong>{{ shared_user_access_counts.mba }}</strong>
+        </a>
+        <a href="{{ url_for('mba.admin_dashboard', panel='users', user_q=user_search or None, user_access='ethics') }}"
+          class="filter-pill {% if user_access_filter == 'ethics' %}is-active{% endif %}">
+          Ethics Only <strong>{{ shared_user_access_counts.ethics }}</strong>
+        </a>
+        <a href="{{ url_for('mba.admin_dashboard', panel='users', user_q=user_search or None, user_access='both') }}"
+          class="filter-pill {% if user_access_filter == 'both' %}is-active{% endif %}">
+          Both <strong>{{ shared_user_access_counts.both }}</strong>
+        </a>
+        <a href="{{ url_for('mba.admin_dashboard', panel='users', user_q=user_search or None, user_access='none') }}"
+          class="filter-pill {% if user_access_filter == 'none' %}is-active{% endif %}">
+          No Access <strong>{{ shared_user_access_counts.none }}</strong>
+        </a>
+      </div>
+    </div>
+    <form method="get" action="{{ url_for('mba.admin_dashboard') }}" class="admin-filter-form" style="margin-bottom:1rem;">
+      <input type="hidden" name="panel" value="users">
+      <input type="hidden" name="user_access" value="{{ user_access_filter or 'all' }}">
+      <label class="admin-filter-field">
+        <span>Search users</span>
+        <input type="text" name="user_q" placeholder="Email or name" value="{{ user_search or '' }}" class="admin-filter-input">
+      </label>
+      <div class="admin-filter-actions">
+        <button type="submit" class="secondary-button small-button">Search</button>
+        {% if user_search or (user_access_filter and user_access_filter != 'all') %}
+        <a href="{{ url_for('mba.admin_dashboard', panel='users') }}" class="text-link">Reset</a>
+        {% endif %}
+      </div>
+    </form>
+    <p class="muted" style="margin-bottom:1rem;">Each person keeps one shared profile. The Current Access column shows whether the user has MBA only, Ethics only, Both systems, or no access.</p>
+    <div class="table-wrap">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Current Access</th>
+            <th>MBA Role</th>
+            <th>Ethics Role</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for user in shared_users %}
+          {% set access_key = shared_access_mode_key(user) %}
+          <tr>
+            <td>{{ person_name(user) }}</td>
+            <td>{{ user.email }}</td>
+            <td>
+              <span class="status-pill {% if access_key == 'both' %}status-pill--accepted{% elif access_key == 'mba' %}status-pill--awaiting_admin{% elif access_key == 'ethics' %}status-pill--submitted{% else %}status-pill--declined{% endif %}">
+                {{ shared_access_mode_label(user) }}
+              </span>
+            </td>
+            <td>{{ (user.role or '-')|replace('_', ' ')|title }}</td>
+            <td>{{ (user.ethics_role or '-')|replace('_', ' ')|title }}</td>
+            <td>
+              <form action="{{ url_for('mba.admin_user_access_action') }}" method="post" class="inline-action" style="display:flex; gap:0.4rem; flex-wrap:wrap;">
+                <input type="hidden" name="user_id" value="{{ user.id }}">
+                <input type="hidden" name="user_q" value="{{ user_search or '' }}">
+                <input type="hidden" name="user_access" value="{{ user_access_filter or 'all' }}">
+                <button class="secondary-button small-button" type="submit" name="access_mode" value="mba">MBA</button>
+                <button class="secondary-button small-button" type="submit" name="access_mode" value="ethics">Ethics</button>
+                <button class="primary-button small-button" type="submit" name="access_mode" value="both">Both</button>
+                <button class="secondary-button small-button" type="submit" name="access_mode" value="none">Revoke</button>
+              </form>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="6" class="muted">No users matched your search.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% set pagination = user_pagination %}
+    {% set item_label = 'users' %}
+    {% include "mba/_project_pagination.html" %}
   </section>
   {% endif %}
 

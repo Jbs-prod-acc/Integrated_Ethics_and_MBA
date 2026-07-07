@@ -1,0 +1,355 @@
+:root {
+    --jbs-orange: #ef820d;
+    --jbs-teal: #022169;
+    --jbs-purple: #4F2365;
+    --jbs-yellow: #FFCB05;
+    --jbs-grey: #7e8085;
+    --white: #ffffff;
+    --black: #000000;
+    --accent: #F26522;
+  }
+  
+  /* Reset and base */
+  * {
+    box-sizing: border-box;
+  }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Arial', sans-serif;
+    /* background-color: var(--white); */
+    color: var(--black);
+    font-size: 18px;
+  }
+
+
+  label {
+    font-size: 20px;
+  }
+  
+  /* Navbar */
+  .navbar {
+    background-color: var(--jbs-orange);
+    color: var(--white);
+    padding: 1rem;
+  }
+
+  .nav-content {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .logo.uj {
+  height: 55px;
+  border-radius: 8%; /* makes it round */
+  object-fit: cover;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15); /* soft shadow */
+}
+
+  .nav-title {
+    font-size: 1.25rem;
+    font-weight: bold;
+    align-items: center;
+  }
+  
+  /* Progress Bar */
+  .progress-bar-container {
+    width: 100%;
+    background-color: var(--white);
+    padding: 0.5rem;
+  }
+  .progress-bar {
+    height: 16px;
+    background-color: var(--jbs-grey);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    width: 0%;
+    background-color: var(--accent);
+    transition: width 0.3s ease-in-out;
+  }
+
+  .form-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+  }
+
+  .progress-bar {
+    width: 100%;
+    background-color: #ddd;
+    border-radius: 20px;
+    overflow: hidden;
+    margin: 1rem 0;
+  }
+
+  .progress-fill {
+    height: 20px;
+    background-color: var(--jbs-teal);
+    width: 14.28%; /* 1 out of 7 steps */
+    color: white;
+    text-align: center;
+    font-size: 0.85rem;
+    line-height: 20px;
+  }
+
+  .form-section label {
+    display: block;
+    margin-top: 1rem;
+    font-weight: bold;
+  }
+
+  .form-navigation {
+    margin-top: 2rem;
+    display: flex;
+    justify-content: space-between;
+  }
+  
+  /* Main content styling */
+  .main-content {
+    max-width: 1500px;
+    margin: 2rem auto;
+    padding: 2rem;
+    background-color: var(--white);
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(2, 33, 105, 0.1);
+    position: relative;
+    z-index: 1;
+  }
+  .main-content h2, h3 {
+    color: var(--jbs-grey);
+  }
+  .main-content label {
+    display: block;
+    font-weight: bold;
+    margin-top: 1.5rem;
+  }
+  input[type="text"],
+  input[type="email"],
+  input[type="number"],
+  input[type="file"],
+  input[type="date"],
+  textarea,
+  select {
+    width: 100%;
+    padding: 0.7rem;
+    margin-top: 0.5rem;
+    border-radius: 5px;
+    border: 1px solid var(--jbs-grey);
+    font-size: 1rem;
+  }
+  
+  /* Radio and checkbox inline */
+  .radio-group, .checkbox-group {
+    display: flex;
+    gap: 2rem;
+    margin-top: 0.5rem;
+  }
+  .radio-group label, .checkbox-group label {
+    font-weight: normal;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  
+  /* Table Style for Section 6.9 */
+  .table-style {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+  }
+
+  .table-style th, .table-style td {
+    padding: 0.6rem;
+    border: 1px solid var(--jbs-grey);
+  }
+
+  .table-style th {
+    background-color: var(--jbs-teal);
+    color: var(--white);
+    text-align: left;
+  }
+
+.table tr:nth-child(even) {
+    background-color: #f8f9fa; /* light grey */
+}
+
+.table tr:nth-child(odd) {
+  background-color: #ffffff; /* white */
+}
+  
+  /* Buttons */
+.submit-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+/* Base Button Style */
+.submit-row button {
+  padding: 0.7rem 1.4rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 6px;
+  color: #fff;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+#rejectBtn {
+  display: contents; /* allows children to stay inside parent flex */
+}
+
+
+/* Approve */
+.approve-btn {
+  background-color: #d95900; 
+  border-color: none;
+  padding: 12px 24px;
+  color: white;
+  text-decoration: none;
+  font-weight: bold;
+  border-radius: 8px;
+}
+
+.revise-btn {
+  background-color: #040404;
+  padding: 12px 24px;
+  color: white;
+  text-decoration: none;
+  font-weight: bold;
+  border-radius: 8px;
+}
+
+/* Approve Button */
+.btn-approve {
+  background-color: #218f4f; 
+  color: white;
+}
+
+/* Minor Changes */
+.btn-minor {
+  background-color: #7D7008;
+  color: #212529;
+}
+
+
+/* Resubmission */
+.btn-resubmit {
+  background-color: #173d75; 
+}
+
+
+/* Reject */
+.btn-reject {
+  background-color: #c90808;
+}
+  
+  /* Footer */
+  .footer {
+    text-align: center;
+    margin-top: 3rem;
+    background-color: var(--jbs-orange);
+    color: var(--white);
+    padding: 0.5rem;
+  }
+  
+  /* Small devices */
+  @media (max-width: 768px) {
+    .main-content {
+      padding: 1rem;
+    }
+    .radio-group, .checkbox-group {
+      flex-direction: column;
+    }
+  }
+
+    /* === LOGOUT BUTTON === */
+    .btn-logout {
+      display: inline-block;
+      padding: 12px 24px;
+      background-color: #000000;
+      color: white;
+      text-decoration: none;
+      font-weight: bold;
+      border-radius: 8px;
+      margin-left: 1000px;
+    }
+    
+    h1,
+    h2 {
+      text-align: center;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 2rem;
+    }
+
+    th,
+    td {
+      border: 1px solid #ccc;
+      padding: 10px;
+      text-align: left;
+    }
+
+    th {
+      background: #f0f0f0;
+    }
+  
+    tr:nth-child(even) {
+    background-color: #f8f9fa; /* light grey */
+    }
+
+    tr:nth-child(odd) {
+      background-color: #ffffff; /* white */
+    }
+
+.form-answer {
+  display: inline-block;
+  font-size: 20px;
+  background-color: #f8f9fa; /* light grey background */
+  padding: 8px 12px;
+  border-radius: 6px;
+  margin-top: 4px;
+  font-weight: 600;
+  color: #333;
+  width: 100%;
+  border: #939598 1px solid;
+}
+
+
+body::before {
+  content: "";
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: url('/static/img/download.jpeg');
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-attachment: fixed;
+  opacity: 20%;
+  z-index: -1;
+}
+
+/* Horizontal alignment for all radio label pairs */
+label input[type="radio"] {
+  margin-right: 7px;
+  word-spacing: 15px;
+}
+
+label {
+  display: inline-block;
+  margin-right: 30px;
+  padding-bottom: 2px;
+}

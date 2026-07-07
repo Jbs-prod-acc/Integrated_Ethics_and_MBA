@@ -1,0 +1,129 @@
+<!-- register.html -->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Register | JBS Ethics Portal</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
+</head>
+
+<body>
+
+  <!-- Include layout.html navbar -->
+  <header class="navbar">
+    <div class="nav-content">
+      <img src="{{ url_for('static',filename='img/image.png')}}" alt="UJ JBS Logo" class="logo uj">
+      <span class="nav-title">Ethics Application System</span>
+    </div>
+  </header>
+
+  <!-- Page-specific content -->
+  <main class="main-content">
+    <h2 class="centered-text">Register</h2>
+    <p id="message" style="color: red;"></p>
+    <form action="{{ url_for('register_reviewer') }}" id="registerForm" method="post">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"> 
+      {% if messages %}
+                <div id="alertMessage" class="alert alert-danger alert-dismissible fade show">
+                    {% for message in messages %}
+                        {{ message }}
+                    {% endfor %}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endif %}
+  <input id="full-name"  name="full_name" type="text" placeholder="Enter Full Name" required>
+  <input id="staff-number" name="staff_number" type="text" placeholder="Enter Staff Number" required>
+  <input id="email"  name="email" type="email" placeholder="Enter UJ Email" required>
+  <input id="password" name="password" type="password" placeholder="Create password" required>
+  <input id="password2" name="password2" type="password" placeholder="Confirm password" required>
+  <input id="specialisation" type="text" name="specialisation" placeholder="Specialisation" required>
+  <select name="role" required>
+  <option value="" disabled selected hidden>Choose Role</option>
+  <option value="ADMIN" >ADMIN</option>
+  <option value="DEAN" >DEAN</option>
+  <option value="REVIEWER" >REVIEWER</option>
+  <option value="REC" >REC</option>
+  <option value="SUPERVISOR" >SUPERVISOR</option>
+  
+</select>
+
+  <button type="submit">Register</button>
+</form>
+    <a class="btn btn-primary mt-1" href={{url_for('chair_landing')}}>Cancel</a>
+   
+  </main>
+
+  <!-- Footer -->
+  <!-- <footer class="footer">
+    <p>&copy; 2025 Johannesburg Business School | University of Johannesburg</p>
+  </footer> -->
+
+  <script>
+
+    window.addEventListener('DOMContentLoaded', async function () {
+      const response = await fetch("{{ url_for('get_supervisors') }}");
+      const supervisors = await response.json();
+
+      const select = document.getElementById('supervisors');
+      select.length = 1; // keep placeholder
+      supervisors.forEach(sup => {
+        const option = document.createElement('option');
+        option.value = sup.user_id;
+        option.textContent = sup.full_name;
+        option.setAttribute('data-email', sup.email);
+        select.appendChild(option);
+      });
+
+    window.addEventListener('DOMContentLoaded', async function () {
+      const response = await fetch("{{ url_for('get_supervisors') }}");
+      const supervisors = await response.json();
+
+      const select = document.getElementById('supervisors');
+      select.length = 1; // keep placeholder
+      supervisors.forEach(sup => {
+        const option = document.createElement('option');
+        option.value = sup.user_id;
+        option.textContent = sup.full_name;
+        option.setAttribute('data-email', sup.email);
+        select.appendChild(option);
+      });
+
+      document.getElementById('supervisors').addEventListener('change', function () {
+        const selected = this.options[this.selectedIndex];
+        const email = selected.getAttribute('data-email') || '';
+        document.getElementById('sup-email').value = email;
+      });
+    });
+
+    const input = document.getElementById('password');
+    const tooltip = document.getElementById('passHint');
+    input.addEventListener('focus', () => tooltip.classList.add('visible'));
+    input.addEventListener('blur', () => tooltip.classList.remove('visible'));
+      document.getElementById('supervisors').addEventListener('change', function () {
+        const selected = this.options[this.selectedIndex];
+        const email = selected.getAttribute('data-email') || '';
+        document.getElementById('sup-email').value = email;
+      });
+    });
+
+    const input = document.getElementById('password');
+    const tooltip = document.getElementById('passHint');
+    input.addEventListener('focus', () => tooltip.classList.add('visible'));
+    input.addEventListener('blur', () => tooltip.classList.remove('visible'));
+ // Hide alert after 3 seconds
+    setTimeout(function() {
+      const alert = document.getElementById('alertMessage');
+      if (alert) {
+        alert.classList.remove('show'); // Bootstrap fade out
+        alert.classList.add('fade'); // add fade class
+        alert.style.display = 'none'; // or use .remove() if you prefer
+      }
+    }, 3000); // 3000ms = 3 seconds
+  </script>
+
+</body>
+
+</html>

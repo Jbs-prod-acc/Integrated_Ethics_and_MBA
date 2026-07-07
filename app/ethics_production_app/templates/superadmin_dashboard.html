@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>JBS Ethics Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+  <style>
+            body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f8f9fa;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 250px;
+            height: 100vh;
+            position: fixed;
+            background-color: #ef820d;
+            padding: 20px;
+            box-sizing: border-box;
+            overflow-y: auto;
+        }
+
+        .sidebar-header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: white;
+        }
+
+        .sidebar-logo {
+            max-width: 150px;
+            height: auto;
+            margin-bottom: 10px;
+        }
+
+        .sidebar a {
+            display: block;
+            color: white;
+            text-decoration: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            text-align: left;
+        }
+
+        .sidebar a:hover, .sidebar a:focus {
+            background-color: #7e8085;
+        }
+
+        .sidebar .dropdown-menu {
+            display: block;
+            position: static;
+            float: none;
+            background-color: transparent;
+            border: none;
+            padding-left: 20px;
+        }
+
+        .sidebar .dropdown-item {
+            color: white;
+            padding: 6px 12px;
+        }
+
+        .sidebar .dropdown-item:hover {
+            background-color: #c2bfbf;
+        }
+
+        main.admin-main {
+            margin-left: 270px;
+            padding: 20px;
+        }
+
+        header.topbar h2 {
+            color: #022169;
+            margin-bottom: 0.2rem;
+        }
+
+        header.topbar p {
+            margin-top: 0;
+            color: #555;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ccc;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background: #f2f2f2;
+        }
+        .delayed {
+            background-color: #ffcccc;
+        }
+
+        /* Collapse header */
+        .collapse-header {
+            cursor: pointer;
+            color: #022169;
+        }
+
+        .bordered-card {
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 15px;
+            background: white;
+            box-shadow: 0 0 5px rgba(0,0,0,0.05);
+        }
+
+    main.admin-main {
+      margin-left: 270px; /* leave space for sidebar */
+      padding: 20px;
+    }
+
+    header.topbar h2 {
+      color: #FFFFFFFF;
+      margin-bottom: 0.2rem;
+    }
+
+    header.topbar p {
+      margin-top: 0;
+      color: #555;
+    }
+
+    /* Cards and images */
+    .card {
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 250px; /* equal height */
+    }
+
+    .card img {
+      width: 300px;
+      height: 300px;
+      object-fit: contain;
+    }
+
+    .card h6 {
+      margin-top: 0.5rem;
+      font-weight: bold;
+      text-align: center;
+    }
+
+    /* Grid spacing */
+    .row.text-center.mb-4 > .col-md-4 {
+      margin-bottom: 2rem;
+    }
+
+    .no-data {
+      display: none;
+      text-align: center;
+      font-weight: bold;
+      color: #cc0000;
+      margin-top: 2rem;
+    }
+
+    .table-container { display: block; }
+    .table-container.hidden { display: none; }
+    
+    .btn {
+      background-color: #022169;
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 5px;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+    }
+    .btn:hover {
+      background-color: #4F2365;
+      color: white;
+    }
+    .btn-success {
+      background-color: #28a745;
+    }
+    .btn-success:hover {
+      background-color: #218838;
+    }
+  </style>
+</head>
+
+<body>
+   <div class="sidebar">
+    <div class="sidebar-header">
+        <img src="{{ url_for('static', filename='img/image.png') }}" alt="UJ JBS Logo" class="sidebar-logo">
+        <h3>JBS Ethics</h3>
+    </div>
+    <nav class="sidebar-nav">
+      {% if 'admin' == role|lower%}
+      <a href="{{url_for('chair_landing')}}" class="sidebar-link">
+        <i class="fas fa-clipboard-list"></i> Dashboard
+      </a>
+      <a href="{{url_for('monitor')}}" class="sidebar-link">
+        <i class="fas fa-user me-2"></i>Student List
+      </a>
+      <a href="{{url_for('admin_reassign_supervisors')}}" class="sidebar-link">
+        <i class="fas fa-user-gear"></i> Reassign Supervisors
+      </a>
+      <a href="{{url_for('admin_reassign_reviewers')}}" class="sidebar-link">
+        <i class="fas fa-users-gear"></i> Reassign Reviewers
+      </a>
+      <a href="{{url_for('admin_student_password_resets')}}" class="sidebar-link">
+        <i class="fas fa-key"></i> Student Password Resets
+      </a>
+
+      <a href="{{url_for('reviewer_list')}}" class="sidebar-link">
+        <i class="fas fa-user"></i> Reviewer List
+      </a>
+
+      <a href="{{url_for('all_users')}}" class="sidebar-link">
+        <i class="fas fa-users-cog"></i> User Management
+      </a>
+      <a href="{{ url_for('admin_status_monitor') }}" class="sidebar-link">
+        <i class="fas fa-filter"></i> Admin Status Monitor
+      </a>
+      <a href="{{ url_for('archived_forms') }}" class="sidebar-link">
+        <i class="fas fa-box-archive"></i> Archived Forms
+      </a>
+      <div class="dropdown w-100">
+        <a class="dropdown-toggle" href="#" data-bs-toggle="collapse" data-bs-target="#monitoringFormsAdmin">
+            <i class="fas fa-clipboard me-2"></i>Monitoring Forms
+        </a>
+        <div class="collapse" id="monitoringFormsAdmin">
+            <a class="dropdown-item" href="{{ url_for('super_admin_monitoring_page_a') }}">Form A</a>
+            <a class="dropdown-item" href="{{ url_for('super_admin_monitoring_page_b') }}">Form B</a>
+            <a class="dropdown-item" href="{{ url_for('super_admin_monitoring_page_c') }}">Form C</a>
+        </div>
+      </div>
+      {% elif 'super_admin' == role|lower %}
+      <a href="{{url_for('chair_landing')}}" class="sidebar-link">
+        <i class="fas fa-clipboard-list"></i> Dashboard
+      </a>
+      <a href="{{url_for('monitor')}}" class="sidebar-link">
+        <i class="fas fa-user me-2"></i>Student List
+      </a>
+      <a href="{{url_for('admin_reassign_supervisors')}}" class="sidebar-link">
+        <i class="fas fa-user-gear"></i> Reassign Supervisors
+      </a>
+      <a href="{{url_for('admin_reassign_reviewers')}}" class="sidebar-link">
+        <i class="fas fa-users-gear"></i> Reassign Reviewers
+      </a>
+      <a href="{{url_for('admin_student_password_resets')}}" class="sidebar-link">
+        <i class="fas fa-key"></i> Student Password Resets
+      </a>
+
+      <a href="{{url_for('reviewer_list')}}" class="sidebar-link">
+        <i class="fas fa-user"></i> Reviewer List
+      </a>
+
+      <a href="{{url_for('all_users')}}" class="sidebar-link">
+        <i class="fas fa-users-cog"></i> User Management
+      </a>
+      <a href="{{ url_for('admin_status_monitor') }}" class="sidebar-link">
+        <i class="fas fa-filter"></i> Admin Status Monitor
+      </a>
+      <a href="{{ url_for('archived_forms') }}" class="sidebar-link">
+        <i class="fas fa-box-archive"></i> Archived Forms
+      </a>
+      
+      <div class="dropdown w-100">
+        <a class="dropdown-toggle" href="#" data-bs-toggle="collapse" data-bs-target="#analyticsForms">
+            <i class="fas fa-chart-bar me-2"></i>Analytics Forms
+        </a>
+        <div class="collapse" id="analyticsForms">
+            <a class="dropdown-item" href="{{ url_for('super_admin_form_a') }}">Form A</a>
+            <a class="dropdown-item" href="{{ url_for('super_admin_form_b') }}">Form B</a>
+            <a class="dropdown-item" href="{{ url_for('super_admin_form_c') }}">Form C</a>
+        </div>
+    </div>
+
+    <div class="dropdown w-100">
+        <a class="dropdown-toggle" href="#" data-bs-toggle="collapse" data-bs-target="#monitoringForms">
+            <i class="fas fa-clipboard me-2"></i>Monitoring Forms
+        </a>
+        <div class="collapse" id="monitoringForms">
+            <a class="dropdown-item" href="{{ url_for('super_admin_monitoring_page_a') }}">Form A</a>
+            <a class="dropdown-item" href="{{ url_for('super_admin_monitoring_page_b') }}">Form B</a>
+            <a class="dropdown-item" href="{{ url_for('super_admin_monitoring_page_c') }}">Form C</a>
+        </div>
+    </div>
+      {% else %}
+      <a href="{{url_for('review_dashboard')}}" class="sidebar-link">
+        <i class="fas fa-clipboard-check"></i> My Reviews
+      </a>
+      {% endif %}
+      <a href="{{url_for('rec_dashboard')}}" class="sidebar-link">
+        <i class="fas fa-users"></i> Rec Team Dashboard
+      </a>
+      <a href="{{url_for('logout')}}" class="sidebar-link">
+        <i class="fas fa-sign-out-alt"></i> Logout
+      </a>
+
+    </nav>
+</div>
+<div class="admin-wrapper">
+  
+
+  <main class="admin-main">
+    <header class="topbar">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <h2>Ethics Superadmin</h2>
+        </div>
+        {% if role|lower == 'admin' or role|lower == 'super_admin' %}
+        <div>
+          <form method="POST" action="{{ url_for('export_forms_csv') }}" class="d-inline-flex align-items-center gap-2">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <select name="year" class="form-select" style="width: auto;">
+              <option value="all">All Years</option>
+              {% for year in range(2020, 2031) %}
+              <option value="{{ year }}" {% if year == current_year %}selected{% endif %}>{{ year }}</option>
+              {% endfor %}
+            </select>
+            <button type="submit" class="btn btn-success">
+              <i class="fas fa-download"></i> Export Forms (Excel)
+            </button>
+          </form>
+          <form method="POST" action="{{ url_for('export_reviewer_assignments_csv') }}" class="d-inline-flex align-items-center gap-2">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="year" value="all">
+            <button type="submit" class="btn btn-success">
+              <i class="fas fa-download"></i> Export Reviewer Assignments (Excel)
+            </button>
+          </form>
+        </div>
+        {% endif %}
+      </div>
+      <p class="text-muted">Monitor submissions, certificates, review stages, and reviewer efficiency.</p>
+    </header>
+
+    {% if forma %}
+    <h1>FORM A</h1>
+    {% elif formb %}
+    <h1>FORM B</h1>
+    {% elif formc %}
+    <h1>FORM C</h1>
+    {% endif %}
+
+    <section class="admin-content container-fluid mt-4">
+      <div class="row text-center mb-4">
+        {% set charts = [
+          ('Applications vs Certificates', plot_applications_vs_certificates),
+          ('REC Member Distribution', rec_member_distribution),
+          ('Risk Rating Distribution', risk_rating_distribution),
+          ('Review Recommendations', review_recommendations),
+          ('Certificate Status', certificate_status),
+          ('Submissions Over Time', submissions_over_time),
+          ('Review Recommendation by Risk Rating', review_by_risk_rating),
+          ('Top Applicants', top_applicants),
+          ('Certificates Received %', certificate_received_percentage),
+          ('Primary vs Secondary Review', review_recommendation_comparison)
+        ] %}
+        {% if forma %}
+        {% for title, chart in charts %}
+        <div class="col-md-4">
+          <div class="card shadow-sm p-3">
+            <h6>{{ title }}</h6>
+            <img src="data:image/png;base64,{{ chart }}">
+          </div>
+        </div>
+        {% endfor %}
+        {% elif formb %}
+        {% for title, chart in charts %}
+        <div class="col-md-4">
+          <div class="card shadow-sm p-3">
+            <h6>{{ title }}</h6>
+            <img src="data:image/png;base64,{{ chart }}">
+          </div>
+        </div>
+        {% endfor %}
+        
+        {% elif formc %}
+        {% for title, chart in charts %}
+        <div class="col-md-4">
+          <div class="card shadow-sm p-3">
+            <h6>{{ title }}</h6>
+            <img src="data:image/png;base64,{{ chart }}">
+          </div>
+        </div>
+        {% endfor %}
+        {% else %}
+        No data
+        {% endif %}
+      </div>
+    </section>
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

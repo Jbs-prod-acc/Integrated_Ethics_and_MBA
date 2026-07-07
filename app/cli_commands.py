@@ -100,10 +100,10 @@ def register_cli(app):
             "alter table ethcis_users add column if not exists popia_notice_version varchar(40)",
             "alter table ethcis_users add column if not exists popia_confirmed_ip varchar(64)",
             "alter table ethcis_users add column if not exists popia_confirmed_user_agent varchar(255)",
-            "alter table mba_users add column if not exists popia_confirmed_at timestamp without time zone",
-            "alter table mba_users add column if not exists popia_notice_version varchar(40)",
-            "alter table mba_users add column if not exists popia_confirmed_ip varchar(64)",
-            "alter table mba_users add column if not exists popia_confirmed_user_agent varchar(255)",
+            "alter table users add column if not exists popia_confirmed_at timestamp without time zone",
+            "alter table users add column if not exists popia_notice_version varchar(40)",
+            "alter table users add column if not exists popia_confirmed_ip varchar(64)",
+            "alter table users add column if not exists popia_confirmed_user_agent varchar(255)",
             "alter table mba_student_profiles alter column student_number drop not null",
             "alter table mba_projects add column if not exists primary_supervisor_invitation_status varchar(20)",
             "alter table mba_projects add column if not exists assessor_1_invitation_status varchar(20)",
@@ -204,7 +204,7 @@ def register_cli(app):
                 doc_type varchar(60) not null,
                 original_name varchar(255) not null,
                 stored_name varchar(255) not null,
-                uploaded_by_id integer not null references mba_users(id),
+                uploaded_by_id bigint not null references users(integrated_id),
                 uploaded_at timestamp without time zone not null default now()
             )
             """,
@@ -243,7 +243,7 @@ def register_cli(app):
             create table if not exists mba_project_supervisor_invitations (
                 id serial primary key,
                 project_id integer not null references mba_projects(id),
-                supervisor_id integer not null references mba_users(id),
+                supervisor_id bigint not null references users(integrated_id),
                 status varchar(20) not null default 'pending',
                 invited_at timestamp without time zone not null default now(),
                 reminder_sent_at timestamp without time zone,
@@ -256,9 +256,9 @@ def register_cli(app):
                 id serial primary key,
                 reminder_key varchar(255) not null unique,
                 last_sent_at timestamp without time zone,
-                last_sent_by_id integer references mba_users(id),
+                last_sent_by_id bigint references users(integrated_id),
                 dismissed_at timestamp without time zone,
-                dismissed_by_id integer references mba_users(id),
+                dismissed_by_id bigint references users(integrated_id),
                 created_at timestamp without time zone not null default now(),
                 updated_at timestamp without time zone not null default now()
             )
@@ -286,7 +286,7 @@ def register_cli(app):
                 id integer primary key,
                 is_released boolean not null default false,
                 released_at timestamp without time zone,
-                released_by_id integer references mba_users(id),
+                released_by_id bigint references users(integrated_id),
                 updated_at timestamp without time zone not null default now()
             )
             """,
@@ -294,7 +294,7 @@ def register_cli(app):
             create table if not exists mba_booking_days (
                 id serial primary key,
                 date date not null unique,
-                created_by_id integer references mba_users(id),
+                created_by_id bigint references users(integrated_id),
                 created_at timestamp without time zone not null default now()
             )
             """,
@@ -323,13 +323,13 @@ def register_cli(app):
             """
             create table if not exists mba_panel_bookings (
                 id serial primary key,
-                user_id integer not null references mba_users(id),
+                user_id bigint not null references users(integrated_id),
                 first_name varchar(150) not null,
                 surname varchar(150) not null,
                 email varchar(255) not null,
                 role varchar(20) not null,
-                supervisor_id integer references mba_users(id),
-                co_supervisor_id integer references mba_users(id),
+                supervisor_id bigint references users(integrated_id),
+                co_supervisor_id bigint references users(integrated_id),
                 co_supervisor_name varchar(255),
                 day_id integer not null references mba_booking_days(id),
                 panel_id integer not null references mba_booking_panels(id),

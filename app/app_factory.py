@@ -1,16 +1,153 @@
-from flask import Flask, redirect, request, url_for
+from flask import Flask, abort, redirect, request, url_for
 from flask_login import current_user
+from sqlalchemy import inspect, text
+from werkzeug.middleware.dispatcher import DispatcherMiddleware
 
 from config import Config
 
 from .auth import auth_bp, user_has_popia_confirmation
 from .cli_commands import register_cli
 from .context_processors import inject_auth_flags_factory
-from .ethics.routes import ethics_bp
 from .extensions import db, login_manager, migrate, oauth
 from .mba.routes import mba_bp
 from .oauth_config import configure_microsoft_oauth
 from .security import init_csrf
+from .seeds import seed_mba_disciplines
+
+
+def _bootstrap_sqlite_dev_database(app):
+    database_uri = app.config.get("SQLALCHEMY_DATABASE_URI") or ""
+    if not database_uri.startswith("sqlite:///"):
+        return
+
+    with app.app_context():
+        inspector = inspect(db.engine)
+        existing_tables = set(inspector.get_table_names())
+        required_tables = {"user_Registration", "user_profile"}
+        if required_tables.issubset(existing_tables):
+            return
+
+        db.create_all()
+        seed_mba_disciplines()
+        db.session.commit()
+        app.logger.info("Initialized local SQLite database schema automatically.")
+
+
+def _mount_production_ethics_app(app):
+    try:
+        from .ethics_production_app import get_mounted_app
+
+        app.wsgi_app = DispatcherMiddleware(app.wsgi_app, {"/ethics": get_mounted_app()})
+        app.logger.info("Mounted production ethics app at /ethics")
+    except Exception as exc:
+        app.logger.exception("Failed to mount production ethics app: %s", exc)
+
+
+def _ensure_postgres_support_tables(app):
+    database_uri = app.config.get("SQLALCHEMY_DATABASE_URI") or ""
+    if not database_uri.startswith("postgresql"):
+        return
+
+    with app.app_context():
+        statements = [
+            """
+            CREATE TABLE IF NOT EXISTS mba_reminder_states (
+                id SERIAL PRIMARY KEY,
+                reminder_key VARCHAR(255) NOT NULL UNIQUE,
+                last_sent_at TIMESTAMP WITHOUT TIME ZONE,
+                last_sent_by_id BIGINT REFERENCES users(integrated_id),
+                dismissed_at TIMESTAMP WITHOUT TIME ZONE,
+                dismissed_by_id BIGINT REFERENCES users(integrated_id),
+                created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT NOW(),
+                updated_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT NOW()
+            )
+            """,
+            """
+            CREATE TABLE IF NOT EXISTS mba_user_signatures (
+                id SERIAL PRIMARY KEY,
+                user_id BIGINT NOT NULL REFERENCES users(integrated_id),
+                file_data BYTEA NOT NULL,
+                mime_type VARCHAR(120) NOT NULL,
+                file_size INTEGER NOT NULL,
+                sha256 VARCHAR(64) NOT NULL,
+                source VARCHAR(40),
+                signature_type VARCHAR(40) NOT NULL DEFAULT 'primary',
+                printed_name VARCHAR(255),
+                is_active BOOLEAN NOT NULL DEFAULT TRUE,
+                created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT NOW(),
+                updated_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT NOW()
+            )
+            """,
+            "CREATE INDEX IF NOT EXISTS ix_mba_user_signatures_user_id ON mba_user_signatures (user_id)",
+            "CREATE INDEX IF NOT EXISTS ix_mba_user_signatures_sha256 ON mba_user_signatures (sha256)",
+            "CREATE INDEX IF NOT EXISTS ix_mba_user_signatures_signature_type ON mba_user_signatures (signature_type)",
+            "CREATE INDEX IF NOT EXISTS ix_mba_user_signatures_is_active ON mba_user_signatures (is_active)",
+            "ALTER TABLE mba_projects ADD COLUMN IF NOT EXISTS assessor_1_invited_at TIMESTAMP WITHOUT TIME ZONE",
+            "ALTER TABLE mba_projects ADD COLUMN IF NOT EXISTS assessor_1_reminder_sent_at TIMESTAMP WITHOUT TIME ZONE",
+            "ALTER TABLE mba_projects ADD COLUMN IF NOT EXISTS assessor_1_hdc_decision VARCHAR(20)",
+            "ALTER TABLE mba_projects ADD COLUMN IF NOT EXISTS assessor_1_hdc_decision_at TIMESTAMP WITHOUT TIME ZONE",
+            "ALTER TABLE mba_projects ADD COLUMN IF NOT EXISTS assessor_1_hdc_decision_assessor_id INTEGER",
+            "ALTER TABLE mba_projects ADD COLUMN IF NOT EXISTS assessor_2_invited_at TIMESTAMP WITHOUT TIME ZONE",
+            "ALTER TABLE mba_projects ADD COLUMN IF NOT EXISTS assessor_2_reminder_sent_at TIMESTAMP WITHOUT TIME ZONE",
+            "ALTER TABLE mba_projects ADD COLUMN IF NOT EXISTS assessor_2_hdc_decision VARCHAR(20)",
+            "ALTER TABLE mba_projects ADD COLUMN IF NOT EXISTS assessor_2_hdc_decision_at TIMESTAMP WITHOUT TIME ZONE",
+            "ALTER TABLE mba_projects ADD COLUMN IF NOT EXISTS assessor_2_hdc_decision_assessor_id INTEGER",
+            "ALTER TABLE mba_projects ADD COLUMN IF NOT EXISTS assessor_3_invited_at TIMESTAMP WITHOUT TIME ZONE",
+            "ALTER TABLE mba_projects ADD COLUMN IF NOT EXISTS assessor_3_reminder_sent_at TIMESTAMP WITHOUT TIME ZONE",
+            "ALTER TABLE mba_projects ADD COLUMN IF NOT EXISTS jbs5_hdc_comments TEXT",
+            "ALTER TABLE mba_projects ADD COLUMN IF NOT EXISTS dissertation_released_to_assessors BOOLEAN NOT NULL DEFAULT FALSE",
+            "ALTER TABLE mba_projects ADD COLUMN IF NOT EXISTS dissertation_released_at TIMESTAMP WITHOUT TIME ZONE",
+            "ALTER TABLE mba_projects ADD COLUMN IF NOT EXISTS supervisor_pool_released_at TIMESTAMP WITHOUT TIME ZONE",
+            "ALTER TABLE mba_projects ADD COLUMN IF NOT EXISTS supervisor_pool_released_by_id BIGINT",
+            "ALTER TABLE mba_projects ADD COLUMN IF NOT EXISTS dissertation_moodle_request_sent_at TIMESTAMP WITHOUT TIME ZONE",
+            "ALTER TABLE mba_projects ADD COLUMN IF NOT EXISTS dissertation_resubmission_requested_at TIMESTAMP WITHOUT TIME ZONE",
+            "ALTER TABLE mba_projects ADD COLUMN IF NOT EXISTS dissertation_resubmission_open BOOLEAN NOT NULL DEFAULT FALSE",
+            "ALTER TABLE mba_projects ADD COLUMN IF NOT EXISTS dissertation_resubmission_opened_at TIMESTAMP WITHOUT TIME ZONE",
+            "ALTER TABLE mba_projects ADD COLUMN IF NOT EXISTS additional_assessment_requested_at TIMESTAMP WITHOUT TIME ZONE",
+            "ALTER TABLE mba_projects ADD COLUMN IF NOT EXISTS corrections_requested_at TIMESTAMP WITHOUT TIME ZONE",
+            "ALTER TABLE mba_projects ADD COLUMN IF NOT EXISTS corrections_student_resubmitted_at TIMESTAMP WITHOUT TIME ZONE",
+            "ALTER TABLE mba_projects ADD COLUMN IF NOT EXISTS corrections_supervisor_approved_at TIMESTAMP WITHOUT TIME ZONE",
+            "ALTER TABLE mba_projects ADD COLUMN IF NOT EXISTS corrections_supervisor_comments TEXT",
+            "ALTER TABLE mba_projects ADD COLUMN IF NOT EXISTS corrections_supervisor_rejected_at TIMESTAMP WITHOUT TIME ZONE",
+            "ALTER TABLE mba_projects ADD COLUMN IF NOT EXISTS corrections_supervisor_rejection_comments TEXT",
+            "ALTER TABLE mba_projects ADD COLUMN IF NOT EXISTS assessment_results_forwarded_to_supervisor_at TIMESTAMP WITHOUT TIME ZONE",
+            "ALTER TABLE mba_projects ADD COLUMN IF NOT EXISTS corrections_released_to_student_at TIMESTAMP WITHOUT TIME ZONE",
+            "ALTER TABLE mba_projects ADD COLUMN IF NOT EXISTS module_completion_status VARCHAR(60) NOT NULL DEFAULT 'not_checked'",
+            "ALTER TABLE mba_projects ADD COLUMN IF NOT EXISTS module_completion_marks_email VARCHAR(255)",
+            "ALTER TABLE mba_projects ADD COLUMN IF NOT EXISTS module_completion_verification_token VARCHAR(128)",
+            "ALTER TABLE mba_projects ADD COLUMN IF NOT EXISTS module_completion_requested_at TIMESTAMP WITHOUT TIME ZONE",
+            "ALTER TABLE mba_projects ADD COLUMN IF NOT EXISTS module_completion_responded_at TIMESTAMP WITHOUT TIME ZONE",
+            "ALTER TABLE mba_projects ADD COLUMN IF NOT EXISTS module_completion_response VARCHAR(10)",
+            "ALTER TABLE mba_projects ADD COLUMN IF NOT EXISTS jbs5_hdc_approved_at TIMESTAMP WITHOUT TIME ZONE",
+            "ALTER TABLE mba_projects ADD COLUMN IF NOT EXISTS results_hdc_approved_mark DOUBLE PRECISION",
+            "ALTER TABLE mba_projects ADD COLUMN IF NOT EXISTS results_hdc_approved_classification VARCHAR(40)",
+            "ALTER TABLE mba_projects ADD COLUMN IF NOT EXISTS results_released_to_supervisor_at TIMESTAMP WITHOUT TIME ZONE",
+            "ALTER TABLE mba_projects ADD COLUMN IF NOT EXISTS supervisor_title_change_requested_at TIMESTAMP WITHOUT TIME ZONE",
+            "ALTER TABLE mba_projects ADD COLUMN IF NOT EXISTS supervisor_title_change_request TEXT",
+            "ALTER TABLE mba_projects ADD COLUMN IF NOT EXISTS supervisor_title_change_resolved_at TIMESTAMP WITHOUT TIME ZONE",
+            "ALTER TABLE mba_project_supervisor_invitations ADD COLUMN IF NOT EXISTS reminder_sent_at TIMESTAMP WITHOUT TIME ZONE",
+            "ALTER TABLE mba_project_documents ADD COLUMN IF NOT EXISTS file_data BYTEA",
+            "ALTER TABLE mba_project_documents ADD COLUMN IF NOT EXISTS mime_type VARCHAR(120)",
+            "ALTER TABLE mba_project_documents ADD COLUMN IF NOT EXISTS file_size INTEGER",
+            "ALTER TABLE mba_student_profiles ADD COLUMN IF NOT EXISTS postal_code VARCHAR(20)",
+            "ALTER TABLE mba_student_profiles ADD COLUMN IF NOT EXISTS id_passport_number VARCHAR(80)",
+            "ALTER TABLE mba_student_profiles ADD COLUMN IF NOT EXISTS default_signing_location VARCHAR(255)",
+            "ALTER TABLE mba_student_profiles ADD COLUMN IF NOT EXISTS form_defaults JSON",
+            "ALTER TABLE mba_scholar_profiles ADD COLUMN IF NOT EXISTS staff_number VARCHAR(80)",
+            "ALTER TABLE mba_scholar_profiles ADD COLUMN IF NOT EXISTS id_passport_number VARCHAR(80)",
+            "ALTER TABLE mba_scholar_profiles ADD COLUMN IF NOT EXISTS postal_code VARCHAR(20)",
+            "ALTER TABLE mba_scholar_profiles ADD COLUMN IF NOT EXISTS default_signing_location VARCHAR(255)",
+            "ALTER TABLE mba_scholar_profiles ADD COLUMN IF NOT EXISTS form_defaults JSON",
+            "ALTER TABLE mba_scholar_profiles ADD COLUMN IF NOT EXISTS students_supervised_total INTEGER NOT NULL DEFAULT 0",
+            "ALTER TABLE mba_scholar_profiles ADD COLUMN IF NOT EXISTS students_assessed_total INTEGER NOT NULL DEFAULT 0",
+            "ALTER TABLE mba_scholar_profiles ADD COLUMN IF NOT EXISTS publication_count INTEGER NOT NULL DEFAULT 0",
+            "ALTER TABLE mba_scholar_profiles ADD COLUMN IF NOT EXISTS selected_publications TEXT",
+            "ALTER TABLE mba_scholar_profiles ADD COLUMN IF NOT EXISTS scholarly_profile_links TEXT",
+        ]
+        for statement in statements:
+            db.session.execute(text(statement))
+        db.session.commit()
+        app.logger.info("Ensured required Postgres support tables exist.")
 
 
 def create_app(config_class=Config):
@@ -29,7 +166,6 @@ def create_app(config_class=Config):
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(mba_bp, url_prefix="/mba")
-    app.register_blueprint(ethics_bp, url_prefix="/ethics")
 
     app.context_processor(inject_auth_flags_factory(app))
 
@@ -48,5 +184,16 @@ def create_app(config_class=Config):
     @app.route("/")
     def index():
         return redirect(url_for("mba.dashboard"))
+
+    @app.route("/switch/ethics-sso")
+    def ethics_sso_bridge():
+        token = request.args.get("token", "")
+        if not token:
+            abort(400)
+        return redirect(f"/ethics/sso-login?token={token}")
+
+    _bootstrap_sqlite_dev_database(app)
+    _ensure_postgres_support_tables(app)
+    _mount_production_ethics_app(app)
 
     return app

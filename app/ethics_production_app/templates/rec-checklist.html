@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>JBSREC Reviewer Checklist | JBS Ethics</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css" />
+  <link rel="stylesheet" href="css/supervisor.css" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/supervisor.css') }}">
+  <!-- <link rel="stylesheet" href="css/review.css" /> -->
+  <style>
+    .checklist-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+    }
+
+    .checklist-table th,
+    .checklist-table td {
+      border: 1px solid #ccc;
+      padding: 10px;
+      vertical-align: top;
+    }
+
+    .checklist-table th {
+      background-color: #f6f6f6;
+      font-weight: bold;
+    }
+
+    .textarea-sm {
+      width: 100%;
+      height: 70px;
+      resize: vertical;
+    }
+
+    .submit-row {
+      margin-top: 2rem;
+      display: flex;
+      gap: 1rem;
+    }
+
+    .form-label {
+      margin-top: 1.5rem;
+      font-weight: bold;
+    }
+
+    .checklist-table ul {
+        padding-left: 2rem;
+    }
+  </style>
+</head>
+<body>
+
+<div class="admin-wrapper">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <img src="{{ url_for('static',filename='img/image.png')}}" alt="UJ JBS Logo" class="sidebar-logo">
+      <h3>Reviewer Panel</h3>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="reviewer-dashboard.html">📋 My Reviews</a>
+      <a href="logout.html">🔒 Logout</a>
+    </nav>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="admin-main">
+    <header class="topbar">
+      <h2>JBSREC Checklist – Student 216018061</h2>
+    </header>
+
+    <section class="admin-content">
+      <form id="checklistForm">
+        <h3>Reviewer Feedback</h3>
+
+        <table class="checklist-table">
+          <thead>
+            <tr>
+              <th>Checklist of documents required for ethical clearance process</th>
+              <th>Submitted (Yes / No)</th>
+              <th>Reviewer Comments</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Organisational Permission</strong>
+                <ul>
+                    <li>Can be an email or formal letter; ensure that permission to access relevant business documents are also included.</li>
+                    <li>If you have not yet requested permission from the organization, please use request for permission template in “Additional resources” tab, under “Ethical clearance templates” section</li>
+                </ul>
+              </td>
+              <td>
+                <select name="org_permission" required>
+                  <option value="">Select</option>
+                  <option>Yes</option>
+                  <option>No</option>
+                </select>
+              </td>
+              <td><textarea class="textarea-sm" name="org_permission_comment"></textarea></td>
+            </tr>
+            <tr>
+              <td><strong>Signed Waiver from Business</strong>
+                <ul>
+                    <li>Please use template provided in “Additional resources” tab, under “Ethical clearance templates” section in Blackboard</li>
+                </ul>
+              </td>
+              <td>
+                <select name="signed_waiver" required>
+                  <option value="">Select</option>
+                  <option>Yes</option>
+                  <option>No</option>
+                </select>
+              </td>
+              <td><textarea class="textarea-sm" name="signed_waiver_comment"></textarea></td>
+            </tr>
+            <tr>
+              <td><strong>Form A – Ethics Application Form</strong>
+                <ul>
+                    <li>Completed form, otherwise your application will be referred back to you; please refer to ethical clearance presentation by Prof. Henn earlier this year to complete the form correctly.</li>
+                    <li>Please submit with any changes made since your supervisor reviewed it as part of your formal proposal submission.</li>
+                    <li>Your supervisor must co-sign this form</li>
+                </ul>
+              </td>
+              <td>
+                <select name="form_a" required>
+                  <option value="">Select</option>
+                  <option>Yes</option>
+                  <option>No</option>
+                </select>
+              </td>
+              <td><textarea class="textarea-sm" name="form_a_comment"></textarea></td>
+            </tr>
+            <tr>
+              <td><strong>Interview Questions or Questionnaire</strong>
+                <ul>
+                    <li>As close to final as possible</li>
+                    <li>If not finalised, you may submit preliminary interview questions and questionnaire items. </li>
+                    <li>Ethical clearance committee needs to review whether the questions are sensitive or invasive. This is important because we want studies to be low or negligible risk and invasive questions can increase the ethical risk. However, this should in all likelihood not be the case for the Capstone projects. </li>
+                    <li>This can be added to the bottom of the informed consent form, or submitted as a separate document</li>
+                </ul>
+              </td>
+              <td>
+                <select name="questions" required>
+                  <option value="">Select</option>
+                  <option>Yes</option>
+                  <option>No</option>
+                </select>
+              </td>
+              <td><textarea class="textarea-sm" name="questions_comment"></textarea></td>
+            </tr>
+            <tr>
+              <td><strong>Participant Info Sheet & Informed Consent</strong>
+                <ul>
+                    <li>Adapt the provided template to suit your project.</li>
+                    <li>Please use template provided in “Additional resources” tab, under “Ethical clearance templates” section in Moodle.</li>
+                </ul>
+              </td>
+              <td>
+                <select name="consent_form" required>
+                  <option value="">Select</option>
+                  <option>Yes</option>
+                  <option>No</option>
+                </select>
+              </td>
+              <td><textarea class="textarea-sm" name="consent_form_comment"></textarea></td>
+            </tr>
+            <tr>
+              <td><strong>Refined Concept Proposal</strong>
+                <ul>
+                    <li>This is the Refined Concept Proposal you submitted with your Literature Review</li>
+                </ul>
+              </td>
+              <td>
+                <select name="refined_proposal" required>
+                  <option value="">Select</option>
+                  <option>Yes</option>
+                  <option>No</option>
+                </select>
+              </td>
+              <td><textarea class="textarea-sm" name="refined_proposal_comment"></textarea></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <label class="form-label">Reviewer Comments (Mandatory)</label>
+        <textarea rows="5" name="additional_comments" style="width:100%;" placeholder="Add general comments or recommendation..."></textarea>
+
+        <div class="submit-row">
+            <button type="button" class="approve-btn" onclick="decision('Approved')">✔ Approve</button>
+            <button type="button" class="revise-btn" onclick="decision('Minor')">⚠️ Approved with Minor Changes</button>
+            <button type="button" class="btn-logout" onclick="decision('Resubmit')">🔁 Resubmission Required</button>
+            <button type="button" class="reject-btn" onclick="decision('Rejected')">✖ Reject</button>
+        
+          </div>
+          
+      </form>
+    </section>
+
+  <footer class="footer">
+   
+</footer>
+  </main>
+
+</div>
+
+<script>
+<script>
+  function decision(type) {
+    const comments = document.querySelector('textarea[name="additional_comments"]').value.trim();
+    if (!comments) {
+      alert("⚠️ Please enter your feedback before submitting.");
+      return;
+    }
+
+    let message = "";
+    switch (type) {
+      case "Approved":
+        message = "✔ Study approved. Checklist and comments sent to Ethics Admin.";
+        break;
+      case "Minor":
+        message = "⚠️ Approved with minor changes. Comments have been noted.";
+        break;
+      case "Resubmit":
+        message = "🔁 Resubmission required. Student and supervisor will be notified.";
+        break;
+      case "Rejected":
+        message = "✖ Study has been rejected and returned to the applicant.";
+        break;
+    }
+
+    alert(message);
+    window.location.href = "rec-dashboard.html";
+  }
+</script>
+
+</script>
+
+</body>
+</html>

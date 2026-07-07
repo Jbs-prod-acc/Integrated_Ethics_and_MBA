@@ -1,0 +1,1657 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Form A – Section 1 | JBS Ethics</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/form_a.css" />
+  <!-- <link rel="stylesheet" href="{{ url_for('static', filename='css/form_a.css') }}"> -->
+  <style>
+    
+              #autosave-status {
+                display: inline-flex;
+                align-items: center;
+                margin-left: 10px;
+                font-size: 0.95em;
+              }
+              .autosave-spinner {
+                border: 2px solid #f3f3f3;
+                border-top: 2px solid #3498db;
+                border-radius: 50%;
+                width: 16px;
+                height: 16px;
+                animation: spin 1s linear infinite;
+                margin-right: 7px;
+              }
+              @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+              }
+             
+      .modal-overlay {
+        display: none;
+        position: fixed;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        background: rgba(0, 0, 0, 0.6);
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+        pointer-events: none;
+      }
+
+      .modal-content {
+        background: #fff;
+        padding: 2rem;
+        border-radius: 8px;
+        text-align: center;
+        width: 400px;
+        max-width: 90%;
+        box-shadow: 0 0 10px rgba(0,0,0,0.25);
+        pointer-events: auto;
+      }
+
+    .modal-content h3 {
+      margin-bottom: 1rem;
+      color: #2E1A46;
+    }
+
+    .modal-content button {
+      margin-top: 1rem;
+      background-color: #2E1A46;
+      color: #fff;
+      padding: 0.6rem 1.2rem;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    /* Universal style for all checkboxes */
+input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;          /* Make them round */
+  border: 2px solid black;     /* Black border */
+  appearance: none;            /* Remove default OS styling */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-color: white;
+  cursor: pointer;
+  vertical-align: middle;
+  position: relative;
+}
+
+/* Checked style: black circle with white center */
+input[type="checkbox"]:checked {
+  background-color: black;
+}
+
+/* Inner dot for checked checkboxes */
+input[type="checkbox"]:checked::after {
+  content: "";
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+  </style>
+</head>
+
+<body>
+
+<noscript>
+  <div style="background: #ffdddd; color: #a00; padding: 1em; text-align: center; font-weight: bold;">
+    JavaScript is disabled or not supported by your browser. This form requires JavaScript to function properly.
+  </div>
+</noscript>
+
+  <!-- Navbar -->
+  <header class="navbar">
+    <div class="nav-content">
+      <img src="/static/img/image.png" alt="UJ JBS Logo" class="logo uj">
+      <span class="nav-title">Form A – Section 1: Researcher’s Details</span>
+
+      <!-- Logout -->
+      <div style="text-align: right;">
+
+        <a href="{{url_for('logout')}}" class="btn-logout">Logout</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  
+
+    <!-- Form -->
+  <form action="{{url_for('student_continue_forma')}}" method="post" enctype="multipart/form-data">
+        
+                  <main class="main-content">
+                  
+                  
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="forma_id" value="{{ formA.form_id }}">
+                    <div class="form-section">
+                      <h2>Section 1: Researcher’s Details</h2>
+                      <label for="applicant-name">Applicant Name
+                      </label><input type="text" name="applicant_name" value="{{formA.applicant_name if formA.applicant_name is not none else ''}}">
+                      <label for="student-number">Student / Staff Number
+                      </label><input type="text" name="student_number" value="{{formA.student_number if formA.student_number is not none else ''}}">
+                      <label for="institution">Institution
+                      </label><input type="text" name="institution" value="{{formA.institution if formA.institution is not none else ''}}">
+                      <label for="department">UJ Department and School
+                      </label><input type="text" name="department" value="{{formA.department if formA.department is not none else ''}}">
+                      <label for="degree">Degree Registered For
+                      </label><input type="text" name="degree" value="{{formA.degree if formA.degree is not none else ''}}">
+                      <label for="title">Title / Working Title of Study
+                      </label><input type="text" name="study_title" value="{{formA.study_title if formA.study_title is not none else ''}}">
+                      <label for="mobile">Mobile Number
+                      </label><input type="text" name="mobile" value="{{formA.mobile if formA.mobile is not none else ''}}">
+                      <label for="email">Email Address
+                      </label><input type="text" name="email" value="{{formA.email if formA.email is not none else ''}}">
+                      <label for="supervisor">Supervisor Name(s)
+                      </label><input type="text" name="supervisor" value="{{formA.supervisor if formA.supervisor is not none else ''}}">
+                      <label for="supervisor_email">Supervisor Email
+                      </label><input type="text" name="supervisor_email" value="{{formA.supervisor_email if formA.supervisor_email is not none else ''}}">
+                    </div>
+                  
+                  
+                  </main>
+
+                  <!-- Section 2 -->
+
+                    <!-- Main Content -->
+              <main class="main-content">
+                    <h2>Section 2: Ethical Considerations</h2>
+
+                          <h3>1. Ethical Clearance Aspects</h3>
+                          <table>
+                            <thead>
+                              <tr>
+                                <th>Aspect</th>
+                                <th>Check all that is applicable:</th>
+
+                              </tr>
+                            </thead>
+                            <tbody>
+                              <tr>
+                                <td>Survey/questionnaire</td>
+                                <td><input type="checkbox" name="survey" value="Yes" {% if formA.survey%}checked{% endif%}></td>
+
+                              </tr>
+                              <tr>
+                                <td>Focus groups</td>
+                                <td><input type="checkbox" value='Yes' name="focus_groups" {% if formA.focus_groups%}checked{% endif%}></td>
+
+                              </tr>
+                              <tr>
+                                <td>Observations</td>
+                                <td><input type="checkbox" value="Yes" name="observations" {% if formA.observations%}checked{% endif%}></td>
+
+                              </tr>
+                              <tr>
+                                <td>Interviews</td>
+                                <td><input type="checkbox" value="Yes" name="interviews" {% if formA.interviews%}checked{% endif%}></td>
+
+                              </tr>
+                              <tr>
+                                <td>Documents</td>
+                                <td><input type="checkbox" value='Yes' name="documents" {% if formA.documents%}checked{% endif%}></td>
+
+                              </tr>
+                              <tr>
+                                <td>Other</td>
+                                <td>
+                                  <input type="text" value="{{formA.vulnerable_other_specify}}" name="vulnerable_other_specify" >
+                                </td>
+
+                              </tr>
+                            </tbody>
+                          </table>
+
+                          <h3>2. Risk Assessment </h3>
+                          <table>
+                            <thead>
+                              <tr>
+                                <th width="80%">2.1 Does your research include the direct involvement of any of the following groups of participants?</th>
+                                <th width="20%">Select where applicable</th>
+
+                              </tr>
+                            </thead>
+                                  <tbody>
+                              <tr>
+                                <td>Communities that may be considered as vulnerable</td>
+                                <td><input type="checkbox" value="Yes" name="vulnerable_communities" {% if formA.vulnerable_communities%}checked{% endif %}></td>
+
+                              </tr>
+                              <tr>
+                                <td>People under the age of 18 or over 65</td>
+                                <td><input type="checkbox" value="Yes" name="age_range" {% if formA.age_range %}checked{% endif %}></td>
+
+                              </tr>
+                              <tr>
+                                <td>UJ employees or students</td>
+                                <td><input type="checkbox" value="Yes" name="uj_employees" {% if formA.uj_employees%} checked{% endif %}></td>
+
+                              </tr>
+                              <tr>
+                                <td>Persons not usually considered to be vulnerable but would be considered vulnerable in the context of this
+                                  research project</td>
+                                <td><input type="checkbox" value="Yes" name="vulnerable" {% if formA.vulnerable%} checked{% endif%}></td>
+
+                              </tr>
+                              <tr>
+                                <td>Non-English-speaking participants</td>
+                                <td><input type="checkbox" value="Yes" name="non_english" {% if formA.non_english%}checked{% endif %}></td>
+
+                              </tr>
+                              <tr>
+                                <td>A researcher’s own students</td>
+                                <td><input type="checkbox" value="Yes" name="own_students" {% if formA.own_students%}checked{% endif%}></td>
+
+                              </tr>
+                              <tr>
+                                <td>People living in poverty</td>
+                                <td><input type="checkbox" value="Yes" name="poverty" {% if formA.poverty%}checked{% endif %}></td>
+
+                              </tr>
+                              <tr>
+                                <td>People with little or no education </td>
+                                <td><input type="checkbox" value="Yes" name="no_education" {% if formA.no_education%}checked{% endif %}></td>
+
+                              </tr>
+                              <tr>
+                                <td>Other: Provide a description</td>
+                                <td><input type="text"  name="assessment_other_specify" value="{{formA.assessment_other_specify}}">
+                                </td>
+
+                              </tr>
+                            </tbody>
+                          </table>
+
+
+                          <hr>
+
+                          <table>
+                            <thead>
+                              <tr>
+                                <th>2.2 Does your research involve any of the following types of activity?</th>
+                                <th>Select where applicable</th>
+
+                              </tr>
+                            </thead>
+                            <tbody>
+                              <tr>
+                                <td>Collection, use or disclosure of information WITHOUT the consent of the individual whose informAtion it
+                                  is, with the exception of aggregated data or data from official databases such as StatsSA, SARS, etc.</td>
+                                <td><input type="checkbox" value="Yes" name="disclosure" {% if formA.disclosure%}checked{% endif %}></td>
+
+                              </tr>
+                              <tr>
+                                <td>Causing discomfiture to participants beyond normal levels of inconvenience</td>
+                                <td><input type="checkbox" value="Yes" name="discomfiture" {% if formA.discomfiture%}checked{% endif%}></td>
+
+                              </tr>
+                              <tr>
+                                <td>Deception of participants, concealment or covert observation</td>
+                                <td><input type="checkbox" value="Yes" name="deception" {% if formA.deception%}checked{% endif %}></td>
+
+                              </tr>
+                              <tr>
+                                <td>Examining potentially sensitive or contentious issues</td>
+                                <td><input type="checkbox" value="Yes" name="sensitive" {% if formA.sensitive%}checked{% endif %}></td>
+
+                              </tr>
+                              <tr>
+                                <td>Seeking disclosure of informAtion which may be prejudicial to participants</td>
+                                <td><input type="checkbox" value="Yes" name="prejudice" {% if formA.prejudice%}checked{% endif %}></td>
+
+                              </tr>
+                              <tr>
+                                <td>Using intrusive techniques</td>
+                                <td><input type="checkbox" value="Yes" name="intrusive_techniques" {% if formA.intrusive_techniques%}checked{% endif %}></td>
+
+                              </tr>
+                              <tr>
+                                <td>Study of or participation in illegal activities</td>
+                                <td><input type="checkbox" value="Yes" name="illegal_activities" {% if formA.illegal_activities%}checked{% endif%}></td>
+
+                              </tr>
+                              <tr>
+                                <td>Personal and social informAtion collected directly from participants</td>
+                                <td><input type="checkbox" value="Yes" name="personal" {% if formA.personal%}checked{% endif %}></td>
+
+                              </tr>
+                              <tr>
+                                <td>Identifiable informAtion to be collected about people from available records (e.g., staff records, student
+                                  records, etc.)</td>
+                                <td><input type="checkbox" value="Yes" name="available_records" {% if formA.available_records%}checked{% endif %}></td>
+
+                              </tr>
+                              <tr>
+                                <td>Psychology inventories / scales / tests</td>
+                                <td><input type="checkbox" value="Yes" name="inventories" {% if formA.inventories%}checked{% endif %}></td>
+
+                              </tr>
+                              <tr>
+                                <td>Activities which may place the researcher(s) / data collector at risk</td>
+                                <td><input type="checkbox" value="Yes" name="risk_activities" {% if formA.risk_activities%}checked{% endif %}></td>
+
+                              </tr>
+                              <tr>
+                                <td>Other: Provide a description</td>
+                                <td><input type="text" name="activity_specify" value="{{formA.activity_specify}}"></td>
+
+                              </tr>
+
+                            </tbody>
+                          </table>
+                          <textarea name="vulnerable_comments" value="{{formA.vulnerable_comments}}" rows="3" placeholder="Comments (if any)..."></textarea>
+                          <hr>
+
+                          <table>
+                            <thead>
+                              <tr>
+                                <th>2.3 Do any of the following apply to your research project?</th>
+                                <th>Select where applicable</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              <tr>
+                                <td>a) Reimbursement or incentives to any participants. </td>
+                                <td><input type="checkbox" value="Yes" name="incentives" {% if formA.incentives%}checked{% endif %}></td>
+
+                              </tr>
+                              <tr>
+                                <td>b) The participants will incur financial costs by participating in the study.</td>
+                                <td><input type="checkbox" value="Yes" name="financial_costs" {% if formA.financial_costs %}checked{% endif %}></td>
+
+                              </tr>
+                              <tr>
+                                <td>c) At least one of the researchers has a financial or other involvement in the research (apart from their
+                                  research role) or may receive a reward.</td>
+                                <td><input type="checkbox" value="Yes" name="reward" {% if formA.reward %}checked{% endif %}></td>
+
+                              </tr>
+                              <tr>
+                                <td>d) Any other potential conflict of interest for any of the researchers (real or perceived financial or
+                                  personal considerations that may compromise a researcher’s professional judgement in carrying out or
+                                  reporting research, such as conducting research with colleagues, peers or students).</td>
+                                <td><input type="checkbox" value="Yes" name="conflict" {% if formA.conflict%}checked{% endif %}></td>
+
+                              </tr>
+                              <tr>
+                                <td>e) Research is done on the premises of UJ or any of its units.</td>
+                                <td><input type="checkbox" value="Yes" name="uj_premises" {% if formA.uj_premises%}checked{% endif %}></td>
+
+                              </tr>
+                              <tr>
+                                <td>f) Research will make use of some of UJs facilities (venues, software, hardware, etc.)</td>
+                                <td><input type="checkbox" value="Yes" name="uj_facilities" {% if formA.uj_facilities%}checked{% endif %}></td>
+
+                              </tr>
+                              <tr>
+                                <td>g) Research will be funded by UJ or funding for it was acquired through UJ.</td>
+                                <td><input type="checkbox" value="Yes" name="uj_funding" {% if formA.uj_funding%}checked{% endif %}></td>
+
+                              </tr>
+                              <tr>
+                                <td>
+                                <label>Other (Specify)</label>
+                                </td>
+                                <td><input type="text" value="{{formA.vulnerable_comments_3}}" name="vulnerable_comments_3"></td>
+                              </tr>
+                            </tbody>
+                          </table>
+                      <textarea name="apply_comments" value="{{formA.apply_comments}}" rows="3" placeholder="Comments (if any)..."></textarea>
+                          <div class="mb-3">
+                        <label><strong>2.4 Rate your project (Low, Medium, High Risk):</strong>
+                          <span class="info-icon" title="Low risk: The research has little to no impact on people (e.g., using existing public data); Medium risk: The research involves people but with minimal chance of harm (e.g., anonymous surveys); High risk: The research could cause significant harm or distress to people (e.g., sensitive interviews or medical tests)">ℹ️</span>
+                        </label>
+                        
+                        <select name="risk_rating" id="risk-rating" class="form-select" onchange="toggleRiskFields()">
+                          <option value="">-- Select Risk Level --</option>
+                          <option value="low" {% if formA.risk_rating and 'low' in formA.risk_rating%}selected{% endif %}>Low</option>
+                          <option value="medium" {% if formA.risk_rating and  'medium' in formA.risk_rating%}selected{% endif %}>Medium</option>
+                          <option value="high" {% if formA.risk_rating and 'high' in formA.risk_rating%}selected{% endif %}>High</option>
+                        </select>
+
+                          <label for="risk_justification">2.4.1 Please justify your risk level</label>
+                          <input type="text" name="risk_justification"  placeholder="Justification for risk level" value="{{formA.risk_justification}}">
+                        <div id="risk-fields">
+                          
+                          <label for="benefits_description">2.4.2 For medium and high risk, describe the potential benefits of the study:</label>
+                          <input type="text" name="benefits_description" placeholder="Describe potential benefits" value="{{formA.benefits_description}}">
+
+                          <label for="risk_mitigation">2.4.3 For medium and high risk, describe how potential risks will be mitigated against:</label>
+                          <input type="text" name="risk_mitigation" placeholder="Describe risk mitigation strategies" value="{{formA.risk_mitigation}}">
+                        </div>
+                      </div>
+
+              </main>
+
+              <!-- Section 3 -->
+
+                <!-- Main Content -->
+              <main class="main-content">
+                
+                <h2>Section 3: Proposal Summary Sheet</h2>
+                <div class="section">
+                  <label>3.1 Title or provisional title of the research project:
+                    <br><input type="text" name="title_provision" placeholder="10 – 16 words"  value="{{formA.title_provision}}">
+                  </label>
+                
+
+                  <label>3.2 Proposal abstract in nontechnical language and statement of research problem:
+                    <br><input type="text" name="abstract"  placeholder="Provide a non-technical summary and state the research problem" value="{{formA.abstract}}">
+                  </label>
+
+
+                  <label>3.3 Research Questions / Hypotheses:
+                    
+                  </label><input type="text" name="questions"  placeholder="List your main research questions or hypotheses" value="{{formA.questions}}">
+
+
+                  <label>3.4 Research Purpose and Objectives / Anticipated outcomes:
+
+                  </label><input type="text" name="purpose_objectives"  placeholder="State the purpose, objectives, and anticipated outcomes" value="{{formA.purpose_objectives}}">
+            
+                </div>
+                </main>
+                <!-- Section 4 -->
+
+                  <!-- Main Content -->
+                   <main class="main-content">
+
+                <h2>Section 4: Details of Proposed Research</h2>
+                <div class="section">
+                  <label>4.1 Does your project involve organisations or institutions that need to grant permission for research activities?</label>
+                  <div class="d-flex gap-4">
+                    <label><input type="radio" name="grant_permission" value="No" {% if formA and (formA.grant_permission|string|lower in ['', 'no', 'false', '0']) %}checked{% endif %}> No</label>
+                    <label><input type="radio" name="grant_permission" value="Yes" {% if formA and (formA.grant_permission|string|lower in ['yes', 'true', '1']) %}checked{% endif %}> Yes</label>
+                  </div>
+                  <div id="permission_table_wrapper" style="display: {% if formA and (formA.grant_permission|string|lower in ['yes', 'true', '1']) %}block{% else %}none{% endif %};">
+                  <p>Please complete the table below if permission is .</p>
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Name of Organisation</th>
+                        <th>Person Granting Permission & Contact</th>
+                        <th>Role</th>
+                        <th>Permission Granted?</th>
+                      </tr>
+                    </thead>
+                    <tbody id="permission_table_body">
+                      {% if data_org %}
+  {% for i in range(data_org['org_name']|length) %}
+    <tr>
+      <td>
+        <input type="text" name="org_name[]" 
+               placeholder="e.g., Department of Education" 
+               value="{{ data_org['org_name'][i] }}">
+      </td>
+      <td>
+        <input type="text" name="org_contact[]" 
+               placeholder="e.g., John Doe, johndoe@example.com" 
+               value="{{ data_org['org_contact'][i] }}">
+      </td>
+      <td>
+        <input type="text" name="org_role[]" 
+               placeholder="e.g., Research Coordinator" 
+               value="{{ data_org['org_role'][i] }}">
+      </td>
+      <td>
+        <label>
+          <input type="radio" name="org_permission_{{ i }}" value="Yes" 
+            {% if data_org['org_permission'][i] == 'Yes' %} checked {% endif %}> Yes
+        </label>
+        <label>
+          <input type="radio" name="org_permission_{{ i }}" value="No" 
+            {% if data_org['org_permission'][i] == 'No' %} checked {% endif %}> No
+        </label>
+        <label>
+          <input type="radio" name="org_permission_{{ i }}" value="Pending" 
+            {% if data_org['org_permission'][i] == 'Pending' %} checked {% endif %}> Pending
+        </label>
+      </td>
+    </tr>
+  {% endfor %}
+{% endif %}
+
+                    </tbody>
+                  </table>
+                  <button type="button" id="addRowBtn" class="btn btn-secondary mt-2">Add Another Organisation</button>
+                  </div>
+
+                  <label>4.2 Are any researchers affiliated with the organisations above?</label>
+                  <div class="d-flex gap-4">
+                    <label>
+                      <input type="radio" name="researcher_affiliation" value="No" {% if not formA.researcher_affiliation%}checked{% endif %} />
+                      No
+                    </label>
+                    <label>
+                      <input type="radio" name="researcher_affiliation" value="Yes" {% if formA.researcher_affiliation%} checked{% endif %} />
+                      Yes
+                    </label>
+                  </div>
+              <div id="affiliation_comment" placeholder="Please provide details of the affiliation">
+                  <textarea name="affiliation_details" rows="3" placeholder="Describe researcher’s affiliation to any listed organisation">{{formA.affiliation_details}}</textarea>
+                </div>
+                      <label>4.3 Does your research involve collectives or communities?
+                        <p style="font-weight: normal;">(Group of people sharing social ties, similar interests and a geographic location)</p>
+                      </label>
+                      <div class="d-flex gap-4">
+                        <label>
+                          <input type="radio" {% if formA and (formA.collective_involvement|string|lower in ['no','false','0']) %}checked{% endif %} name="collective_involvement" value="No" />
+                          No
+                        </label>
+                        <label>
+                          <input type="radio" {% if formA and (formA.collective_involvement|string|lower in ['yes','true','1']) %}checked{% endif %} name="collective_involvement" value="Yes" />
+                          Yes
+                        </label>
+                      </div>
+                          <textarea name="collective_details" placeholder="Explain what measures you have taken to consult and engage with those communities and / or representative groups regarding your research project."  rows="3">{{formA.collective_details}}</textarea>
+
+                      
+                      <label>4.4 Is your project funded or sponsored?</label>
+                     
+                        <div class="d-flex gap-4">
+                           <label>
+                          <input type="radio" name="is_funded" value="No" {% if formA and (formA.is_funded|string|lower in ['no','false','0']) %}checked{% endif %}/> No
+                      
+                      </label>
+                      <label>
+                        <input type="radio" name="is_funded" value="Yes" {% if formA and (formA.is_funded|string|lower in ['yes','true','1']) %}checked{% endif %}/> Yes
+                      </label>
+                        </div>
+                         <div id="funding_table">
+          <p>If Yes, Please complete the table below if your project is funded or sponsored.</p>
+                      
+                      <table>
+                        <thead>
+                          <tr>
+                            <th>Organisation Name</th>
+                            <th>Contact Person & Details</th>
+                            <th>Role</th>
+                            <th>Funding Amount</th>
+                          </tr>
+                        </thead>
+                        <tbody id="funding_body">
+                          {% if data_fund %}
+                          {% for i in range(data_fund['fund_org']|length) %}
+                          <tr>
+                            <td><input type="text" name="fund_org[]" Value="{{data_fund['fund_org'][i]}}" /></td>
+                                <td><input type="text" name="fund_contact[]"  value="{{data_fund['fund_contact'][i]}}" /></td>
+                                <td><input type="text" name="fund_role[]" value="{{data_fund['fund_role'][i]}}" /></td>
+                                <td><input type="text" name="fund_amount[]" value="{{data_fund['fund_amount'][i]}}" /></td>
+                          </tr>
+                          {% endfor %}
+                          {% endif%}
+                          <!-- add button to add row -->
+                          <tr>
+                            <td colspan="4">
+                              <button type="button" class="btn btn-secondary mt-2" onclick="addFundingRow()">Add Another Funding Source</button>
+                            </td>
+                        </tbody>
+                      </table>
+                         </div>
+
+                      <label>4.5 Describe your arrangements regarding indemnity/compensation for adverse events:</label>
+                  <textarea name="indemnity_arrangements"  rows="3"  placeholder="Describe plans for indemnity or compensation in case of adverse events" >{{formA.indemnity_arrangements}}</textarea>
+
+                      <label>4.6 Has this proposal been submitted to another ethics committee?
+                        
+                      </label>
+                <textarea name="other_committee" rows="3"  placeholder="If yes, indicate the name of the institution and the outcome. If previously rejected, provide the reasons" >{{formA.other_committee}}</textarea>
+                    </div>
+
+                  </main>
+
+                  <!-- Section 4 -->
+
+                    <!-- Main Content -->
+                  <main class="main-content">
+
+                  <!-- Section 5: Methodology -->
+                  <section id="section-5">
+                    <h2>Section 5: Methodology</h2>
+
+                    <label>5.1 Research Paradigm (Substantiate your choice of paradigm)</label><br>
+                    <table id="methodTypeTable" class="table table-bordered">
+                      <thead>
+                        <tr>
+                          <th>Quantitative Methods</th>
+                          <th>Qualitative Methods</th>
+                          <th>Mixed Methods</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td class="text-center"><input type="checkbox" value="Yes" name="quantitative[]" {% if formA.quantitative%}checked{% endif %}></td>
+                          <td class="text-center"><input type="checkbox" value="Yes" name="qualitative[]" {% if formA.qualitative%}checked{% endif %}></td>
+                          <td class="text-center"><input type="checkbox" value="Yes" name="mixed_methods[]" {% if formA.mixed_methods%}checked{% endif %}></td>
+                        </tr>
+                      </tbody>
+                    </table>
+
+                    <textarea name="paradigm_explanation" rows="3" placeholder="Explain your paradigm selection" >{{formA.paradigm_explanation}}</textarea>
+
+                    <label>5.2 Research Design / Approach</label>
+                    <textarea name="design"  rows="4" placeholder="Name & describe the research design you intend to use, e.g. descriptive correlation, case study, grounded theory, etc. If your research will proceed in different phases, describe each phase sequentially" >{{formA.design}}</textarea>
+
+                    <br>
+                
+                    <label>5.3 Details of the participants</label>
+
+                    <label>5.3.1 Participant Group Description</label>
+                    <textarea name="participants_description"  rows="3"  placeholder="Describe the participant group(s) you will be studying, e.g. age, etc.">{{formA.participants_description}}</textarea>
+
+                    <table id="participantsTable" class="table table-bordered">
+  <thead>
+    <tr>
+      <th>Population</th>
+      <th>Sampling Method</th>
+      <th>Sample Size</th>
+      <th>Inclusion Criteria</th>
+      <th>Action</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% if data_sampling %}
+      {% for i in range(data_sampling['sampling_method']|length)%}
+      <tr>
+        <td><input type="text" value="{{data_sampling['population'][i]}}" name="population[]" class="form-control" /></td>
+        <td><input type="text" value="{{data_sampling['sampling_method'][i]}}" name="sampling_method[]" class="form-control" /></td>
+        <td><input type="number" value="{{data_sampling['sampling_size'][i]}}" name="sample_size[]" class="form-control" /></td>
+        <td><textarea name="inclusion_criteria[]" class="form-control">{% if data_sampling['inclusion_criteria'] %}{{data_sampling['inclusion_criteria'][i]}}{% endif%}</textarea></td>
+        <td><button type="button" class="btn btn-danger btn-sm" onclick="removeRow(this)">Remove</button></td>
+      </tr>
+      {% endfor %}
+    {% endif %}
+  </tbody>
+</table>
+<button type="button" class="btn btn-secondary" onclick="addRow()">Add Row</button>
+
+
+                    <label>5.3.2 Describe how much time you require of participants in each group and when the data will be collected/ when the interviews will take place.</label>
+                    <textarea name="duration_timing" rows="2"  placeholder="Explain how much time you require from participants and when data collection will occur" >{{formA.duration_timing}}</textarea>
+
+                    <label>5.3.3 Explain how you will obtain the contact details of participants</label>
+                    <textarea  name="contact_details_method" rows="2"  placeholder="Explain how you will obtain the contact details of participants">{{formA.contact_details_method}}</textarea>
+                  <br>
+                    <label>5.3.4 Conflict of interest or unequal relationship between researcher and participants? <span class="info-icon" title="A conflict of interest may arise where financial, personal or other considerations could directly and significantly affect, or appear to affect, a researcher's research conduct and judgement.">ℹ️</span></label>
+                    <div class="d-flex gap-4">
+                      <input type="radio" name="conflict_interest" value="No" {% if not formA.conflict_interest %}checked{% endif%} > No
+                    <input type="radio" name="conflict_interest" value="Yes" {% if formA.conflict_interest %}checked{% endif%} > Yes
+                      </div>
+                      
+                    <div id="conflict_explanation_box">
+                            <textarea name="conflict_explanation" rows="2" placeholder="If yes, give details and explain how it will be mitigated" >{{formA.conflict_explanation}}</textarea>
+                          </div>
+                    <br>
+
+                    <label>5.4 Research Instruments for Data Collection</label>
+                    <label>5.4.1 Indicate which data collection methods will be used</label><br>
+                         <table id="data_methods" class="table table-bordered">
+                          <thead class="thead-light">
+                            <tr>
+                              <th>Questionnaire</th>
+                              <th>Interview</th>
+                              <th>Focus Group</th>
+                              <th>Observation</th>
+                              <th>Documents</th>
+                              <th>Other</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr>
+                            <td><input type="checkbox" name="data_methods[]" value="questionnaire" {% if formA.data_methods and 'questionnaire' in formA.data_methods %}checked{% endif %}> Questionnaire </td>
+                            <td><input type="checkbox" class="method-check" name="data_methods[]" value="interview" {% if formA.data_methods and 'interview' in formA.data_methods %}checked{% endif %}> Interview</td>
+                            <td><input type="checkbox" class="method-check" name="data_methods[]" value="focus" {% if formA.data_methods and 'focus' in formA.data_methods %}checked{% endif %}> Focus Group</td>
+                            <td><input type="checkbox" class="method-check" name="data_methods[]" value="observation" {% if formA.data_methods and 'observation' in formA.data_methods %}checked{% endif %}> Observation</td>
+                            <td><input type="checkbox" class="method-check" name="data_methods[]" value="documents" {% if formA.data_methods and 'documents' in formA.data_methods %}checked{% endif %}> Documents</td>
+                            <td><input type="checkbox" class="method-check" name="data_methods[]" value="other" {% if formA.data_methods and 'other' in formA.data_methods %}checked{% endif %}> Other</td>
+                            </tr>
+                          </tbody>
+                        </table>
+                
+                    <!-- Questionnaire -->
+                          <div id="questionnaire_fields" >
+                            <label>5.4.1.1 Questionnaire(s):</label><br>
+                            <input type="radio" name="questionnaire_type" value="Self-designed" {% if formA.questionnaire_type == 'Self-designed' %}checked{% endif %}> Self-designed
+                            <input type="radio" name="questionnaire_type" value="Existing" {% if formA.questionnaire_type == 'Existing' %}checked{% endif %}> Existing <br>
+
+                            <label>If existing, permission obtained?</label><br>
+                            <input type="radio" value="Yes" name="questionnaire_permission" {% if formA and (formA.permission_obtained|string|lower in ['yes','true','1','on']) %}checked{% endif %}> Yes
+                            <input type="radio" value="Open Source" name="questionnaire_permission" {% if formA and ((formA.open_source|string|lower in ['yes','true','1','on']) or (formA.open_source|string|lower == 'open source')) %}checked{% endif %}> Open Source<br>
+                            <textarea name="instrument_attachment_reason"  rows="2" placeholder="justify">{{formA.instrument_attachment_reason}}</textarea>
+                          </div>
+                    <!-- Interview -->
+                           <div id="interview_fields" >
+                            <label>5.4.1.2 Interviews</label><br>
+                            <input type="radio" name="interview_type" value="In-depth" {% if formA.interview_type == 'In-depth' %}checked{% endif %}>In-depth
+                            <input type="radio" name="interview_type" value="Semi-structured" {% if formA.interview_type == 'Semi-structured' %}checked{% endif %}>Semi-structured
+                            <input type="radio" name="interview_type" value="Unstructured" {% if formA.interview_type == 'Unstructured' %}checked{% endif %}>Unstructured
+                            <br>
+
+                            <label>How will the interviews be recorded?</label><br>
+                            <input type="radio" name="interview_recording" value="Audio" {% if formA.interview_recording == 'Audio' %}checked{% endif %}>Audio
+                            <input type="radio" name="interview_recording" value="Video" {% if formA.interview_recording == 'Video' %}checked{% endif %}>Video
+
+                          </div>
+
+                          <!-- Focus Group -->
+                          <div id="focus_fields" >
+                            <label>5.4.1.3 Focus Groups</label>
+
+                            <label>How will the focus groups be recorded?</label><br>
+                            <input type="radio" name="focus_recording" value="Audio" {% if formA.focus_recording == 'Audio' %}checked{% endif %}> Audio
+                            <input type="radio" name="focus_recording" value="Video" {% if formA.focus_recording == 'Video' %}checked{% endif %}> Video
+                          </div>
+                <!-- Observation -->
+                          <div id="observation_fields" >
+                            <label>5.4.1.4 Please describe your observation protocol:</label>
+                            <textarea name="observation_details"  rows="3"
+                              placeholder="Explain how observations will be conducted.">{{formA.observation_details}}</textarea>
+                          </div>
+                          <!-- Documents -->
+                          <div id="documents_fields" >
+                            <label>5.4.1.5 What type of documents will be analyzed?</label>
+                            <textarea name="documents_details" rows="3"
+                              placeholder="E.g. reports, archives, publications...">{{formA.documents_details}}</textarea>
+                          </div>
+                          <!-- Other -->
+                          <div id="other_fields" >
+                            <label>5.4.1.6 Please describe other data collection method(s):</label>
+                            <textarea name="other_details"  rows="3" placeholder="Describe...">{{formA.other_details}}</textarea>
+                          </div>
+
+                          <!-- General Data Collection Procedure -->
+                          <label style="margin-top: 1.5rem;">5.4.2 Describe the data collection procedure</label>
+                          <textarea name="data_collection_procedure" rows="3"  placeholder="Describe the data collection procedure in detail" >{{formA.data_collection_procedure}}</textarea>
+
+                    <label>5.4.2 Who will collect the data (Researcher and/or field workers/external company)?
+                    </label>
+                    <textarea name="data_collectors" rows="2" placeholder="Explain any measures that you will take to prepare yourself or field workers to optimise data collection activities (Provide a confidentiality agreement form for fieldworkers/ external party" >{{formA.data_collectors}}</textarea>
+
+                    <label>5.4.3 Will participants be subjected to any form of intervention (manipulation of the participant or the participants' environment)?</label>
+                    <div class="d-flex gap-4">
+                      <label><input type="radio" name="intervention" {% if not formA.intervention %}checked{% endif%} value="No"> No</label>
+                    <label><input type="radio" name="intervention" {% if formA.intervention %}checked{% endif %} value="Yes"> Yes</label>
+                    </div>
+                      
+                    <textarea name="intervention_details" rows="2" placeholder="If yes, explain the intervention" >{{formA.intervention_details}}</textarea>
+                    
+
+                    <label>5.4.4 Will sensitive data be used or vulnerable populations be questioned?</label>
+                    <textarea name="sensitive_data" rows="2"  placeholder="If yes, explain how you will handle sensitive data or vulnerable populations" >{{formA.sensitive_data}}</textarea>
+
+                    <label>5.4.5 Will a translator be required?</label>
+                    <div class="d-flex gap-4">
+                      <input type="radio" name="translator" {% if not formA.translator %}checked{% endif%} value="No" onclick="toggleTranslatorBox()"> No
+                    <input type="radio" name="translator" {% if formA.translator%}checked{% endif%} value="Yes" onclick="toggleTranslatorBox()"> Yes
+                    </div>
+                    <div id="translator_details_box" style="margin-top: 1rem; {% if not formA.translator %}display:none;{% endif %}">
+                      <textarea name="translator_procedure" rows="2" placeholder="Explain how translator will be used" >{{ formA.translator_procedure }}</textarea>
+                    </div>
+
+                  
+<label>5.5 Secondary Data Usage</label>
+
+<!-- 5.5.1 -->
+<label>5.5.1 Will secondary data be used?</label>
+<select id="secondaryData" name="secondary_data"  class="form-select" onchange="handleSecondaryData()">
+  <option value="" {% if formA.uses_secondary_data is none %}selected{% endif %}>-- Select --</option>
+  <option value="Yes" {% if formA.uses_secondary_data %}selected{% endif %}>Yes</option>
+  <option value="No" {% if formA.uses_secondary_data is sameas false %}selected{% endif %}>No</option>
+</select>
+
+<!-- Secondary Details Section -->
+<div id="secondaryDetails" style="display: {% if formA.uses_secondary_data %}block{% else %}none{% endif %};">
+
+  <!-- 5.5.2 -->
+  <label>5.5.2 Is the data public, private, or both?</label>
+  <select id="dataType" name="data_type" class="form-select" onchange="handleDataType()">
+    <option value="">-- Select --</option>
+    <option  value="private" {% if formA.secondary_data_type|lower == 'private' %}selected{% endif %}>Private</option>
+    <option value="public" {% if formA.secondary_data_type|lower == 'public' %}selected{% endif %}>Public</option>
+    <option value="both" {% if formA.secondary_data_type|lower == 'both' %}selected{% endif %}>Both</option>
+  </select>
+
+  <!-- 5.5.3 -->
+  <label>5.5.3 Nature of the Data</label>
+  <input type="text" name="data_nature" class="form-control" value="{{ formA.data_nature }}" placeholder="e.g., survey, interviews, secondary data">
+
+  <!-- 5.5.4 -->
+  <label>5.5.4 Origin/Source of Research Data</label>
+  <input type="text" name="data_origin" class="form-control" value="{{ formA.data_origin }}" placeholder="e.g., public records, academic journals">
+
+    <label>5.5.5 What are the access conditions?</label>
+    <textarea name="access_conditions" rows="3" class="form-control" placeholder="Access terms, licenses, restrictions, etc." >{{ formA.access_conditions }}</textarea>
+
+  <!-- 5.5.6 -->
+  <label>5.5.6 Does the database contain personal information/identifiers?</label><br>
+   <div class="d-flex gap-4">
+     <input type="radio" value="Yes" name="personal_info"  {% if formA.personal_info %}checked{% endif %} onchange="togglePersonalInfo()"> Yes
+     <input type="radio" value="No" name="personal_info"  {% if not formA.personal_info %}checked{% endif %} onchange="togglePersonalInfo()"> No
+   </div>
+
+  <!-- 5.5.6.1 -->
+  <div id="personalInfoComment" >
+    <label>5.5.6.1 If yes, specify what kind of personal information/identifiers:</label>
+    <textarea name="personal_info_comment" rows="3" class="form-control" placeholder="List the types of identifiers." >{{ formA.personal_info_comment }}</textarea>
+  </div>
+{{formA.data_anonymized}}
+  <!-- 5.5.7 -->
+  <label>5.5.7 Has the data been anonymized?</label><br>
+  <div class="d-flex gap-4">
+    <input type="radio" name="data_anonymized" value="Yes"  {% if formA.data_anonymized == 'Yes' %}checked{% endif %}> Yes
+    <input type="radio" name="data_anonymized" value="No"  {% if formA.data_anonymized == 'No' %}checked{% endif %}> No
+    <input type="radio" name="data_anonymized" value="Not Applicable"  {% if formA.data_anonymized == 'Not Applicable' %}checked{% endif %}> Not Applicable
+  </div>
+
+
+  <!-- 5.5.7.1 -->
+  <label>5.5.7.1 Comment / Justification</label>
+  <textarea name="anonymization_comment" rows="3" class="form-control" placeholder="Justify anonymization or explain why not applicable.">{{ formA.anonymization_comment }}</textarea>
+
+  <!-- 5.5.9 -->
+  <div id="privateDataSection" style="margin-top: 1rem;">
+    <label>5.5.9 Private Database Permission Letter</label>
+    <div class="mb-3">
+        <label for="private_permission_file" class="form-label">Upload proof of permission for private data access:</label>
+        <input class="form-control" type="file" id="private_permission_file" name="private_permission_file">
+        {% if formA.private_permission_file %}
+            <div class="mt-2">
+                <small class="text-success">Current file: {{ formA.private_permission_filename }}</small>
+                <a href="{{ url_for('view_form_file', form_type='A', form_id=formA.form_id, field_name='private_permission_file') }}" target="_blank" class="btn btn-sm btn-outline-primary ms-2">View</a>
+            </div>
+        {% endif %}
+    </div>
+  </div>
+
+  <!-- PUBLIC DATA SECTION -->
+  <div id="publicDataSection" >
+    <!-- 5.5.8 -->
+    <label>5.5.8 What type of public data will be used?</label>
+    <textarea name="public_data_description" rows="3" class="form-control" placeholder="e.g., Stats SA, open government data, research archives">{{ formA.public_data_description }}</textarea>
+  </div>
+
+  <label>5.5.9 Will data shortcomings/incompleteness be reported?</label><br>
+    <div class="d-flex gap-4">
+      <input type="radio" name="shortcomings_reported" value="Yes" {% if formA.shortcomings_reported == 'Yes' %}checked{% endif %}> Yes
+      <input type="radio" name="shortcomings_reported" value="No" {% if formA.shortcomings_reported == 'No' %}checked{% endif %}> No
+    </div>
+
+  <label>5.5.10 How will data limitations be reported?</label>
+  <textarea name="limitations_reporting" rows="3" class="form-control" placeholder="Explain methods to manage missing or incomplete data.">{{ formA.limitations_reporting }}</textarea>
+
+  <label>5.5.11 Is the research methodology and design aligned with secondary data use?</label><br>
+  <div class="d-flex gap-4">
+    <input type="radio" name="methodology_alignment" value="Yes" {% if formA.methodology_alignment == 'Yes' %}checked{% endif %}> Yes
+    <input type="radio" name="methodology_alignment" value="No" {% if formA.methodology_alignment == 'No' %}checked{% endif %}> No
+  </div>
+
+  <label>5.5.12 How will the original owners of the data be acknowledged?</label>
+  <textarea name="data_acknowledgment" rows="3" class="form-control" placeholder="e.g., citations, credits, license acknowledgments.">{{ formA.data_acknowledgment }}</textarea>
+
+</div>
+  </div>
+
+    </main>
+
+                <!-- Main Content -->
+              <main class="main-content">
+            
+                  <!-- Section 6 – Ethical Considerations -->
+                  <div class="form-section" id="section6">
+                      <h2>Section 6: Ethical Considerations</h2>
+                    
+                      <div class="question-block">
+                        <label for="informed-consent">6.1 Will informed consent be obtained? Explain the process:</label>
+                        <textarea id="informed-consent"  name="informed_consent" rows="4"  placeholder="Describe how informed consent will be obtained from participants, including any documentation or verbal explanations provided.">{{formA.informed_consent}}</textarea>
+                      </div>
+                    
+                      <div class="question-block">
+                        <label>6.2 Data storage and access to data</label><br>
+                        <p>Tick all that apply:</p>
+
+                        <input type="checkbox" name="data_storage[]" value="secure_location" 
+                              {% if formA.data_storage and 'secure_location' in formA.data_storage %}checked{% endif %}>
+                        Paper-based records must be kept in a secure location<br>
+
+                        <input type="checkbox" name="data_storage[]" value="password_protected" 
+                              {% if formA.data_storage and 'password_protected' in formA.data_storage %}checked{% endif %}>
+                        Computer-based records must only be available to personnel involved in the study through access privileges<br>
+
+                        <input type="checkbox" name="data_storage[]" value="protected_place" 
+                              {% if formA.data_storage and 'protected_place' in formA.data_storage %}checked{% endif %}>
+                        Electronic data will be kept in a protected place<br>
+
+                        <input type="checkbox" name="data_storage[]" value="retention" 
+                              {% if formA.data_storage and 'retention' in formA.data_storage %}checked{% endif %}>
+                        Paper-based data will be kept for 5 years and then destroyed<br>
+                      </div>
+
+                    
+                      <div class="question-block">
+                        <label for="study-benefits">6.3 What are the benefits of the study?</label>
+                        <textarea id="study-benefits" name="study_benefits" rows="3"  placeholder="Describe the benefits of the study, both to participants and to society at large.">{{formA.study_benefits}}</textarea>
+                      </div>
+                    
+                      <div class="question-block">
+                        <label for="participant-risks">6.4 Description of the risks participants may suffer and the level of risk:</label>
+                        <textarea id="participant-risks" name="participant_risks" rows="3"  placeholder="Describe any potential risks to participants, including physical, psychological, or social risks.">{{formA.participant_risks}}</textarea>
+                      </div>
+                    
+                      <div class="question-block">
+                        <label for="adverse-steps">6.5 Description of steps to be taken in case of adverse events:</label>
+                        <textarea id="adverse-steps" name="adverse_steps" rows="3"  placeholder="Describe the procedures in place to address any adverse events that may occur during the study.">{{formA.adverse_steps}}</textarea>
+                      </div>
+                    
+                      <div class="question-block">
+                        <label for="community-participation">6.6 Description of anticipated community participation in the study:</label>
+                        <textarea id="community-participation" name="community_participation" rows="3"  placeholder="Describe how the community will be involved in the study, including any partnerships or collaborations.">{{formA.community_participation}}</textarea>
+                      </div>
+                    
+                      <div class="question-block">
+                        <label for="community-effects">6.7 Description of possible adverse effects on the community:</label>
+                        <textarea id="community-effects"  name="community_effects" rows="3"  placeholder="Describe any potential negative impacts the study may have on the community, and how these will be mitigated.">{{formA.community_effects}}</textarea>
+                      </div>
+                    
+                      <div class="question-block">
+                        <label>6.8 Select all data privacy practices applied:</label><br>
+
+                            <input type="checkbox" name="privacy[]" value="remove_identifiers" 
+                                  {% if formA.privacy and 'remove_identifiers' in formA.privacy %}checked{% endif %}>
+                            Personal identifiers will be removed<br>
+
+                            <input type="checkbox" name="privacy[]" value="encryption" 
+                                  {% if formA.privacy and 'encryption' in formA.privacy %}checked{% endif %}>
+                            Encryption<br>
+
+                            <input type="checkbox" name="privacy[]" value="pseudonyms" 
+                                  {% if formA.privacy and 'pseudonyms' in formA.privacy %}checked{% endif %}>
+                            Use of pseudonyms<br>
+
+                            <input type="checkbox" name="privacy[]" value="focus_group_warning" 
+                                  {% if formA.privacy and 'focus_group_warning' in formA.privacy %}checked{% endif %}>
+                            Participants in focus groups will be advised confidentiality cannot be assured<br>
+                          </div>
+
+                    
+                      <div class="question-block">
+                        <label>6.9 Checklist to ensure the covering letter meets ethical requirements</label>
+
+                  <table>
+                    <thead>
+                      <tr>
+                        <th style="width: 80%;">Checklist Item</th>
+                        <th style="width: 20%;">Select where applicable</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr><td>a) Identity and position of the researcher(s)?</td><td><input type="checkbox" value="yes" {% if formA.q6_9a %}checked{% endif %} name="q6_9a"></td></tr>
+                      <tr><td>b) Purpose of the information collection?</td><td><input type="checkbox" value="yes" name="q6_9b" {% if formA.q6_9b %}checked{% endif %}></td></tr>
+                      <tr><td>c) Reason for selection and procedures for selecting participants?</td><td><input type="checkbox" value="yes" name="q6_9c" {% if formA.q6_9c %}checked{% endif %}></td></tr>
+                      <tr><td>d) Participant’s role in the study?</td><td><input type="checkbox" value="yes" name="q6_9d" {% if formA.q6_9d %}checked{% endif %}></td></tr>
+                      <tr><td>e) Expected duration of participation?</td><td><input type="checkbox" value="yes" name="q6_9e" {% if formA.q6_9e %}checked{% endif %}></td></tr>
+                      <tr><td>f) Statement of voluntary participation and no penalty?</td><td><input type="checkbox" value="yes" name="q6_9f" {% if formA.q6_9f %}checked{% endif %}></td></tr>
+                      <tr><td>g) Benefits to the participant and others?</td><td><input type="checkbox" value="yes" name="q6_9g" {% if formA.q6_9g %}checked{% endif %}></td></tr>
+                      <tr><td>h) Risks and steps for harm/injury?</td><td><input type="checkbox" value="yes" name="q6_9h" {% if formA.q6_9h %}checked{% endif %}></td></tr>
+                      <tr><td>i) Statement of right to withdraw?</td><td><input type="checkbox" value="yes" name="q6_9i" {% if formA.q6_9i %}checked{% endif %}></td></tr>
+                      <tr><td>j) Compensation/gifts/services?</td><td><input type="checkbox" value="yes" name="q6_9j" {% if formA.q6_9j %}checked{% endif %}></td></tr>
+                      <tr><td>k) Reimbursement for costs?</td><td><input type="checkbox" value="yes" name="q6_9k" {% if formA.q6_9k %}checked{% endif %}></td></tr>
+                      <tr><td>l) Indemnity if applicable?</td><td><input type="checkbox" value="yes" name="q6_9l" {% if formA.q6_9l %}checked{% endif %}></td></tr>
+                      <tr><td>m) Period for which records will be kept?</td><td><input type="checkbox" value="yes" name="q6_9m" {% if formA.q6_9m %}checked{% endif %}></td></tr>
+                      <tr><td>n) Steps for confidentiality and secure storage?</td><td><input type="checkbox" value="yes" name="q6_9n" {% if formA.q6_9n %}checked{% endif %}></td></tr>
+                      <tr><td>o) Disclosure of information to third parties?</td><td><input type="checkbox" value="yes" name="q6_9o" {% if formA.q6_9o %}checked{% endif %}></td></tr>
+                      <tr><td>p) Privacy protection in publications?</td><td><input type="checkbox" value="yes" name="q6_9p" {% if formA.q6_9p %}checked{% endif %}></td></tr>
+                      <tr><td>q) Feedback to participants?</td><td><input type="checkbox" value="yes" name="q6_9q" {% if formA.q6_9q %}checked{% endif %}></td></tr>
+                      <tr><td>r) Exclusions to confidentiality disclosed?</td><td><input type="checkbox" value="yes" name="q6_9r" {% if formA.q6_9r %}checked{% endif %}></td></tr>
+                      <tr><td>s) Consent for audio/video recording?</td><td><input type="checkbox" value="yes" name="q6_9s" {% if formA.q6_9s %}checked{% endif %}></td></tr>
+                    </tbody>
+                  </table>
+
+                      </div>
+                    
+                      <div class="question-block">
+                        <label for="results-feedback">6.10 How will participants be informed of findings?</label>
+                        <textarea id="results-feedback"  name="results_feedback" rows="3"  placeholder="Describe how you will provide feedback to participants about the study results, including any reports or publications.">{{formA.results_feedback}}</textarea>
+                      </div>
+                    
+                      <div class="question-block">
+                        <label for="products-access">6.11 Description of participants’ access to products developed from the study:</label>
+                        <textarea id="products-access"  name="products_access" rows="3"  placeholder="Describe how participants will have access to any products or outcomes developed from the study, such as reports, publications, or other materials.">{{formA.products_access}}</textarea>
+                      </div>
+                    
+                      <div class="question-block">
+                        <label for="publication-plans">6.12 Indicate how you envisage publishing this research:</label>
+                        <textarea id="publication-plans" name="publication_plans" rows="3"  placeholder="Describe your plans for publishing the research findings, including any journals or conferences you plan to submit to.">{{formA.publication_plans}}</textarea>
+                      </div>
+                    
+                      <div class="question-block">
+                        <label for="participant-comp">6.13 Describe compensation to participants (if applicable):</label>
+                        <textarea id="participant-comp" name="participant_comp" rows="3"  placeholder="Describe any compensation or incentives that will be provided to participants for their involvement in the study.">{{formA.participant_comp}}</textarea>
+                      </div>
+                    
+                      <div class="question-block">
+                        <label for="participant-costs">6.14 Describe any financial costs to participants (if applicable):</label>
+                        <textarea id="participant-costs" name="participant_costs" rows="3"  placeholder="Describe any financial costs that participants may incur as a result of their participation in the study, such as travel expenses or time away from work.">{{formA.participant_costs}}</textarea>
+                      </div>
+                    
+                      <div class="question-block">
+                        <label for="ethics-reporting">6.15 Description of reporting to ethics research committee:</label>
+                        <textarea id="ethics-reporting"  name="ethics_reporting" rows="3"  placeholder="Describe how you will report any adverse events or changes to the study to the ethics research committee, including timelines and procedures.">{{formA.ethics_reporting}}</textarea>
+                      </div>
+                            <!-- Navigation Buttons -->
+                    <!-- Save button removed: autosave is now active, only submit button remains -->
+              </main>
+              
+                <!-- Section 7: Declaration (Now inside the same form) -->
+    <main class="main-content">
+
+                    <h3>Section 7: Declaration</h3>
+                    <p><strong>Statement Agreeing To Comply With Ethical Principles Set Out In UJ Policy On Research Ethics</strong></p>
+
+                    <div class="form-group">
+                      <label for="declaration-name" style="text-align: justify;">
+                        I, <input type="text" id="declaration-name" name="declaration_name" placeholder="Enter your full name" style="display: inline-block; width: 300px;">
+                        (full name of main researcher), declare that I have read the Policy on Research Ethics of UJ and the contents of this document are a true and accurate reflection of the methodological and ethical implications of my proposed study. I shall carry out the study in strict accordance with the approved proposal and the Policy on Research Ethics of UJ. I further undertake to inform the relevant research ethics review committee of JBS in writing of any adverse events that occur arising from the injury or harm experienced by the participants in the study. I shall also notify the relevant JBS research ethics review committee if any changes to the study are proposed. I shall maintain the confidentiality of all data collected from or about the research participants and impose strict controls in the maintenance of privacy. I shall record all data captured during interviews in accordance with ethical guidelines outlined in my proposal. Paragraph 5 of the Policy on Research Ethics places huge emphasis on the integrity of the research and I shall ensure that I conduct the research with the highest integrity considering UJ’s Policy for Copyright Infringement and Plagiarism. Data that was gathered retrospectively will not be used. I acknowledge that as main researcher it is my responsibility to ensure that the co-researchers to this research project adhere to the ethical principles set out in the UJ Policy on Research Ethics. 
+                      </label>
+                    </div>
+
+                    <div class="form-group">
+                      <label>Signature of Applicant</label>
+                      <input type="text" name="applicant_signature" placeholder="Type your full name as signature" >
+                    </div>
+
+                    <div class="form-group">
+                      <label>Date</label>
+                      <input type="date" name="declaration_date" >
+                    </div>
+
+                    <div class="form-navigation">
+                      <button type="button" class="approve-btn" onclick="showSubmitModal(event)">✔ Submit Form To Supervisor</button>
+                      <span id="autosave-status"></span>
+                    </div>
+              </main>
+
+              
+
+              </main>
+
+<!-- Consolidated and fixed autosave script at end of body -->
+<script>
+// Top-level log to verify script is loaded even if DOMContentLoaded fails
+console.log('[AUTOSAVE] Script file loaded (top-level)');
+try {
+  document.addEventListener('DOMContentLoaded', function() {
+    try {
+      const form = document.querySelector('form');
+      if (!form) {
+        console.error('[AUTOSAVE] No form found on page');
+        document.body.insertAdjacentHTML('afterbegin', '<div style="background:#ffdddd;color:#a00;padding:1em;text-align:center;font-weight:bold;">Critical error: No form found on page. JavaScript autosave will not work.</div>');
+        return;
+      }
+      const declarationFields = ['declaration_name', 'applicant_signature', 'declaration_date'];
+      let autosaveTimeout = null;
+      let savingIndicator = document.getElementById('autosave-status');
+      function showSaving() {
+        if (savingIndicator) savingIndicator.innerHTML = '<span class="autosave-spinner"></span>Autosaving your progress...';
+      }
+      function showSaved() {
+        if (savingIndicator) {
+          savingIndicator.innerHTML = 'Saved';
+          setTimeout(() => { savingIndicator.innerHTML = ''; }, 1500);
+        }
+      }
+      function showError() {
+        if (savingIndicator) savingIndicator.innerHTML = '<span style="color:red">Error saving</span>';
+      }
+      function autosave() {
+        showSaving();
+        const formData = new FormData(form);
+        
+        // Explicitly handle all checkboxes (send checked state for all)
+        const checkboxes = form.querySelectorAll('input[type="checkbox"]');
+        checkboxes.forEach(cb => {
+          if (!declarationFields.includes(cb.name)) {
+            // Remove default FormData entry
+            formData.delete(cb.name);
+            // Array notation checkboxes (data_methods[], quantitative[], etc.)
+            if (cb.name.endsWith('[]')) {
+              // For array checkboxes, only append if checked (backend checks if value in list)
+              if (cb.checked) {
+                formData.append(cb.name, cb.value || 'Yes');
+              }
+            } else {
+              // Regular boolean checkboxes - always send Yes or No
+              formData.set(cb.name, cb.checked ? 'Yes' : 'No');
+            }
+          }
+        });
+        
+        // Radio buttons are automatically captured by FormData (only checked ones)
+        // No special handling needed since they have explicit value attributes
+        
+        declarationFields.forEach(f => formData.delete(f));
+        console.log('[AUTOSAVE] Sending autosave request to /student_autosave_forma');
+        fetch("{{ url_for('student_autosave_forma') }}", {
+          method: 'POST',
+          body: formData,
+        })
+        .then(r => {
+          console.log('[AUTOSAVE] Received response:', r.status, r.statusText);
+          return r.json().catch(err => {
+            console.error('[AUTOSAVE] Error parsing JSON:', err);
+            return { success: false, error: 'Invalid JSON' };
+          });
+        })
+        .then(data => {
+          console.log('[AUTOSAVE] Response data:', data);
+          if (data.success) {
+            showSaved();
+          } else {
+            showError();
+            console.error('[AUTOSAVE] Autosave error:', data.error);
+          }
+        })
+        .catch(err => {
+          showError();
+          console.error('[AUTOSAVE] Fetch/network error:', err);
+        });
+      }
+      form.addEventListener('input', function(e) {
+        console.log('[AUTOSAVE] Input event detected:', e.target.name, e.target.value);
+        if (declarationFields.includes(e.target.name)) {
+          console.log('[AUTOSAVE] Declaration field changed, skipping autosave:', e.target.name);
+          return;
+        }
+        clearTimeout(autosaveTimeout);
+        autosaveTimeout = setTimeout(function() {
+          console.log('[AUTOSAVE] Triggering autosave for field:', e.target.name);
+          autosave();
+        }, 700);
+      });
+      // Also listen for change event for checkboxes/radios
+      form.addEventListener('change', function(e) {
+        if (e.target.type === 'checkbox' || e.target.type === 'radio') {
+          console.log('[AUTOSAVE] Change event detected:', e.target.name, e.target.value);
+          if (declarationFields.includes(e.target.name)) {
+            console.log('[AUTOSAVE] Declaration field changed, skipping autosave:', e.target.name);
+            return;
+          }
+          clearTimeout(autosaveTimeout);
+          autosaveTimeout = setTimeout(function() {
+            console.log('[AUTOSAVE] Triggering autosave for field:', e.target.name);
+            autosave();
+          }, 700);
+        }
+      });
+    } catch (err) {
+      console.error('[AUTOSAVE] Error in DOMContentLoaded handler:', err);
+      document.body.insertAdjacentHTML('afterbegin', '<div style="background:#ffdddd;color:#a00;padding:1em;text-align:center;font-weight:bold;">JavaScript error: ' + (err && err.message ? err.message : err) + '</div>');
+    }
+  });
+} catch (err) {
+  console.error('[AUTOSAVE] Script file failed to execute:', err);
+  document.body.insertAdjacentHTML('afterbegin', '<div style="background:#ffdddd;color:#a00;padding:1em;text-align:center;font-weight:bold;">JavaScript critical error: ' + (err && err.message ? err.message : err) + '</div>');
+}
+</script>
+
+<!-- Modal HTML -->
+<div id="submitModal" class="modal-overlay" tabindex="-1" style="display:none; justify-content:center; align-items:center; pointer-events:none;">
+  <div class="modal-content" style="background:#fff; border-radius:8px; padding:2rem; max-width:400px; margin:auto; pointer-events:auto;">
+    <h5 class="modal-title" style="margin-bottom:1rem;">Confirm Submission</h5>
+    <p>You are about to submit the form to the supervisor. If you intend to save the form and submit it later, please cancel and press the save button instead.</p>
+    <div style="margin-top:1.5rem; display:flex; justify-content: flex-end; gap:1rem;">
+      <button type="button" class="btn btn-secondary" onclick="hideSubmitModal(); console.log('Cancel clicked');">Cancel</button>
+      <button type="button" class="btn btn-primary" onclick="submitSupervisorForm(); console.log('Submit clicked');">Submit</button>
+    </div>
+  </div>
+</div>
+
+  <!-- Hidden field to track action type -->
+  <input type="hidden" id="formAction" name="form_action" value="">
+</form>
+  <!-- Footer -->
+<footer class="footer">
+   
+</footer>
+
+<script>
+  
+  // Save button - saves Sections 1-6 without requiring Section 7
+  function saveForm(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    var form = document.querySelector('form');
+    // Explicitly set action to save route (student_continue_forma)
+    var saveUrl = "{{url_for('student_continue_forma')}}";
+    form.action = saveUrl;
+    document.getElementById('formAction').value = 'save';
+    console.log('Save clicked - form action set to:', form.action);
+    form.submit();
+  
+    window.location.reload(true);
+      
+  }
+
+  // Modal logic for submit confirmation
+  function showSubmitModal(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    // Validate Section 7 fields before showing modal
+    var declarationName = document.getElementById('declaration-name').value.trim();
+    var applicantSig = document.querySelector('input[name="applicant_signature"]').value.trim();
+    var declarationDate = document.querySelector('input[name="declaration_date"]').value;
+    
+    if (!declarationName || !applicantSig || !declarationDate) {
+      alert('Please complete all Section 7 (Declaration) fields before submitting to supervisor.');
+      return;
+    }
+    
+    document.getElementById('submitModal').style.display = 'flex';
+  }
+  
+  function hideSubmitModal() {
+    console.log('Cancel clicked');
+    document.getElementById('submitModal').style.display = 'none';
+  }
+  
+  function submitSupervisorForm() {
+    // Submit to supervisor - includes all sections including Section 7
+    hideSubmitModal();  // Close modal first
+    var form = document.querySelector('form');
+    // Explicitly set action to submit route
+    var submitUrl = "{{ url_for('submit_form_a',form_id=formA.form_id) }}";
+    form.action = submitUrl;
+    document.getElementById('formAction').value = 'submit';
+    console.log('Submit clicked - form action set to:', form.action);
+    console.log('Form declaration_name value:', document.getElementById('declaration-name').value);
+    console.log('Form applicant_signature value:', document.querySelector('input[name="applicant_signature"]').value);
+    form.submit();
+  }
+
+  // Section 2
+  function toggleRiskFields() {
+    const riskLevel = document.getElementById("risk-rating").value;
+    const riskFields = document.getElementById("risk-fields");
+    if (riskLevel) {
+      if (riskLevel === "low") {
+        riskFields.style.display = "none";
+        // Optionally clear input values if needed
+      riskFields.querySelectorAll("input").forEach(input => input.value = "");
+    } else {
+      riskFields.style.display = "block";
+    }
+  }
+}
+
+  // Run on page load in case of default value
+  window.onload = toggleRiskFields;
+
+  // Section 4
+
+  
+  // show/hide table
+  document.querySelectorAll('input[name="grant_permission"]').forEach(radio => {
+    radio.addEventListener('change', function () {
+      document.getElementById('permission_table_wrapper').style.display =
+        this.value === 'Yes' ? 'block' : 'none';
+    });
+  });
+  const selectedGrantPermission = document.querySelector('input[name="grant_permission"]:checked');
+  if (selectedGrantPermission) {
+    document.getElementById('permission_table_wrapper').style.display =
+      selectedGrantPermission.value === 'Yes' ? 'block' : 'none';
+  }
+
+  // 4.2 affiliation comment toggle
+  document.querySelectorAll('input[name="researcher_affiliation"]').forEach(radio => {
+    radio.addEventListener('change', function () {
+      document.getElementById('affiliation_comment').style.display = this.value === 'Yes' ? 'block' : 'none';
+    });
+  });
+
+  // 4.3 collective comment toggle
+  document.querySelectorAll('input[name="collective_involvement"]').forEach(radio => {
+    radio.addEventListener('change', function () {
+      document.getElementById('collective_comment').style.display = this.value === 'Yes' ? 'block' : 'none';
+    });
+  });
+
+  // 4.4 funding table toggle
+  document.querySelectorAll('input[name="is_funded"]').forEach(radio => {
+    radio.addEventListener('change', function () {
+      document.getElementById('funding_table').style.display = this.value === 'Yes' ? 'block' : 'none';
+    });
+  });
+
+  // Add funding row
+  function addFundingRow() {
+    const tbody = document.getElementById('funding_body');
+    const newRow = document.createElement('tr');
+    newRow.innerHTML = `
+      <td><input type="text" name="fund_org[]" placeholder="e.g., NRF South Africa" /></td>
+      <td><input type="text" name="fund_contact[]" placeholder="e.g., Ms. Jane Doe, jane@nrf.ac.za" /></td>
+      <td><input type="text" name="fund_role[]" placeholder="e.g., Primary Sponsor" /></td>
+      <td><input type="text" name="fund_amount[]" placeholder="e.g., R100,000.00" /></td>
+      <td><button type="button" class="remove-funding-row">✖</button></td>
+    `;
+    tbody.insertBefore(newRow, tbody.lastElementChild);
+  }
+
+  // remove funding row (event delegation)
+document.getElementById('funding_body').addEventListener('click', (e) => {
+  if (e.target.classList.contains('remove-funding-row')) {
+    e.target.closest('tr').remove();
+  }
+});
+
+  // add row
+document.getElementById('addRowBtn')?.addEventListener('click', function () {
+  const tbody = document.getElementById('permission_table_body');
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td><input type="text" name="org_name[]" placeholder="e.g., Department of Education" /></td>
+    <td><input type="text" name="org_contact[]" placeholder="e.g., Dr. John Doe, johndoe@example.com" /></td>
+    <td><input type="text" name="org_role[]" placeholder="e.g., Site Supervisor" /></td>
+    <td>
+      <select name="org_permission[]">
+        <option value="Yes">Yes</option>
+        <option value="No">No</option>
+        <option value="Pending">Pending</option>
+      </select>
+    </td>
+    <td><button type="button" class="remove-row">✖</button></td>
+  `;
+  tbody.appendChild(tr);
+});
+
+// remove row (event delegation)
+document.getElementById('permission_table_body').addEventListener('click', (e) => {
+  if (e.target.classList.contains('remove-row')) {
+    e.target.closest('tr').remove();
+  }
+});
+// quick client-side check of what will be submitted
+document.querySelector('form').addEventListener('submit', (e) => {
+  // remove this preventDefault() after testing
+  // e.preventDefault();
+  const fd = new FormData(e.target);
+  console.log('org_name[]', fd.getAll('org_name[]'));
+  console.log('org_contact[]', fd.getAll('org_contact[]'));
+  console.log('org_role[]', fd.getAll('org_role[]'));
+  console.log('org_permission[]', fd.getAll('org_permission[]'));
+});
+
+
+  // Section 5
+   
+  function addRow() {
+  const tbody = document.getElementById('participantsTable').getElementsByTagName('tbody')[0];
+
+  // Create new row from scratch
+  const newRow = document.createElement("tr");
+  newRow.innerHTML = `
+    <td><input type="text" name="population[]" class="form-control" /></td>
+    <td><input type="text" name="sampling_method[]" class="form-control" /></td>
+    <td><input type="number" name="sample_size[]" class="form-control" /></td>
+    <td><textarea name="inclusion_criteria[]" class="form-control"></textarea></td>
+    <td><button type="button" class="btn btn-danger btn-sm" onclick="removeRow(this)">Remove</button></td>
+  `;
+
+  tbody.appendChild(newRow);
+}
+
+function removeRow(button) {
+  const tbody = document.getElementById('participantsTable').getElementsByTagName('tbody')[0];
+  if (tbody.rows.length > 1) {
+    button.closest('tr').remove();
+  } else {
+    // Instead of leaving empty, reset fields in the last row
+    Array.from(tbody.rows[0].querySelectorAll('input, textarea')).forEach(input => {
+      input.value = '';
+      if (input.tagName.toLowerCase() === 'textarea') {
+        input.textContent = '';
+      }
+    });
+  }
+}
+
+
+
+
+  // Remove duplicate removeRow definition (keep only the one above)
+
+  function toggleTranslatorBox() {
+    const radios = document.getElementsByName("translator");
+    const box = document.getElementById("translator_details_box");
+    box.style.display = Array.from(radios).some(r => r.checked && r.value === "Yes") ? "block" : "none";
+  }
+
+  function toggleIntervention() {
+    const selected = document.querySelector('input[name="intervention"]:checked')?.value;
+    document.getElementById("intervention_details_box").style.display = selected === "Yes" ? "block" : "none";
+  }
+
+  function handleSecondaryData() {
+    const val = document.getElementById("secondaryData").value;
+    document.getElementById("secondaryDetails").style.display = val === "Yes" ? "block" : "none";
+  }
+
+  function handleDataType() {
+    const type = document.getElementById("dataType").value;
+    document.getElementById("privateDataSection").style.display = (type === "private" || type === "both") ? "block" : "none";
+    document.getElementById("publicDataSection").style.display = (type === "public" || type === "both") ? "block" : "none";
+  }
+
+  function handlePrivatePermission() {
+    const val = document.getElementById("privatePermission").value;
+    document.getElementById("uploadPrivatePermission").style.display = val === "No" ? "block" : "none";
+  }
+
+  function resetFields() {
+    document.getElementById('dataType').value = "";
+    document.getElementById('privatePermission').value = "";
+    document.getElementById('privateDataSection').style.display = 'none';
+    document.getElementById('publicDataSection').style.display = 'none';
+    document.getElementById('uploadPrivatePermission').style.display = 'none';
+  }
+
+  function togglePersonalInfo() {
+    const radios = document.getElementsByName("personal_info");
+    const commentBox = document.getElementById("personalInfoComment");
+    commentBox.style.display = Array.from(radios).some(r => r.checked && r.value === "Yes") ? "block" : "none";
+  }
+
+
+  // Conflict of interest logic
+  if (document.getElementById('conflict_explanation_box')) {
+    document.querySelectorAll('input[name="conflict_interest"]').forEach(radio => {
+      radio.addEventListener('change', function () {
+        document.getElementById('conflict_explanation_box').style.display = this.value === 'Yes' ? 'block' : 'none';
+      });
+    });
+  }
+
+  // Method logic
+  const methodMap = {
+    'questionnaire': 'questionnaire_fields',
+    'interview': 'interview_fields',
+    'focus': 'focus_fields',
+    'observation': 'observation_fields',
+    'documents': 'documents_fields',
+    'other': 'other_fields',
+  };
+
+
+  // Add method-check class to all data_methods checkboxes above in HTML
+  document.querySelectorAll('.method-check').forEach(checkbox => {
+    checkbox.addEventListener('change', function () {
+      const targetId = methodMap[this.value];
+      if (targetId) {
+        const target = document.getElementById(targetId);
+        if (target) target.style.display = this.checked ? 'block' : 'none';
+      }
+    });
+  });
+
+  // On page load, set initial visibility for all dynamic sections
+  window.addEventListener('DOMContentLoaded', function() {
+    // Risk fields
+    if (typeof toggleRiskFields === 'function') toggleRiskFields();
+    // Section 4 toggles
+    document.querySelectorAll('input[name="grant_permission"]').forEach(radio => {
+      if (radio.checked && document.getElementById('permission_table_wrapper')) {
+        document.getElementById('permission_table_wrapper').style.display = radio.value === 'Yes' ? 'block' : 'none';
+      }
+    });
+    document.querySelectorAll('input[name="researcher_affiliation"]').forEach(radio => {
+      if (radio.checked && document.getElementById('affiliation_comment')) {
+        document.getElementById('affiliation_comment').style.display = radio.value === 'Yes' ? 'block' : 'none';
+      }
+    });
+    document.querySelectorAll('input[name="collective_involvement"]').forEach(radio => {
+      if (radio.checked && document.getElementById('collective_comment')) {
+        document.getElementById('collective_comment').style.display = radio.value === 'Yes' ? 'block' : 'none';
+      }
+    });
+    document.querySelectorAll('input[name="is_funded"]').forEach(radio => {
+      if (radio.checked && document.getElementById('funding_table')) {
+        document.getElementById('funding_table').style.display = radio.value === 'Yes' ? 'block' : 'none';
+      }
+    });
+    // Section 5 toggles
+    if (typeof handleSecondaryData === 'function') handleSecondaryData();
+    if (typeof handleDataType === 'function') handleDataType();
+    if (typeof toggleTranslatorBox === 'function') toggleTranslatorBox();
+    if (typeof togglePersonalInfo === 'function') togglePersonalInfo();
+    // Method fields
+    Object.entries(methodMap).forEach(([key, id]) => {
+      const checkbox = document.querySelector(`input.method-check[value="${key}"]`);
+      const target = document.getElementById(id);
+      if (checkbox && target) {
+        target.style.display = checkbox.checked ? 'block' : 'none';
+      }
+    });
+  });
+
+  // Toggle public data fallback field
+  function togglePublicData() {
+    const radios = document.getElementsByName("data_public");
+    const field = document.getElementById("public_data_fields");
+    field.style.display = Array.from(radios).some(r => r.checked && r.value === "No") ? "block" : "none";
+  }
+  
+
+
+console.log('[AUTOSAVE] Script loaded and running');
+document.addEventListener('DOMContentLoaded', function() {
+  const form = document.querySelector('form');
+  if (!form) {
+    console.error('[AUTOSAVE] No form found on page');
+    return;
+  }
+  const declarationFields = ['declaration_name', 'applicant_signature', 'declaration_date'];
+  let autosaveTimeout = null;
+  let savingIndicator = document.getElementById('autosave-status');
+  function showSaving() {
+    if (savingIndicator) savingIndicator.innerHTML = '<span class="autosave-spinner"></span>Autosaving your progress...';
+  }
+  function showSaved() {
+    if (savingIndicator) {
+      savingIndicator.innerHTML = 'Saved';
+      setTimeout(() => { savingIndicator.innerHTML = ''; }, 1500);
+    }
+  }
+  function showError() {
+    if (savingIndicator) savingIndicator.innerHTML = '<span style="color:red">Error saving</span>';
+  }
+  function autosave() {
+    showSaving();
+    const formData = new FormData(form);
+    const checkboxes = form.querySelectorAll('input[type="checkbox"]');
+    const arrayCheckboxNames = new Set();
+
+    checkboxes.forEach(cb => {
+      if (!cb.name) return;
+      if (cb.name.endsWith('[]')) {
+        arrayCheckboxNames.add(cb.name);
+      }
+    });
+
+    arrayCheckboxNames.forEach(name => formData.delete(name));
+
+    checkboxes.forEach(cb => {
+      if (!cb.name || declarationFields.includes(cb.name)) return;
+      if (cb.name.endsWith('[]')) {
+        if (cb.checked) {
+          formData.append(cb.name, cb.value || 'Yes');
+        }
+      } else {
+        formData.set(cb.name, cb.checked ? 'Yes' : 'No');
+      }
+    });
+
+    declarationFields.forEach(f => formData.delete(f));
+    console.log('[AUTOSAVE] Sending autosave request to /student_autosave_forma');
+    fetch("{{ url_for('student_autosave_forma') }}", {
+      method: 'POST',
+      body: formData,
+    })
+    .then(r => {
+      console.log('[AUTOSAVE] Received response:', r.status, r.statusText);
+      return r.json().catch(err => {
+        console.error('[AUTOSAVE] Error parsing JSON:', err);
+        return { success: false, error: 'Invalid JSON' };
+      });
+    })
+    .then(data => {
+      console.log('[AUTOSAVE] Response data:', data);
+      if (data.success) {
+        showSaved();
+      } else {
+        showError();
+        console.error('[AUTOSAVE] Autosave error:', data.error);
+      }
+    })
+    .catch(err => {
+      showError();
+      console.error('[AUTOSAVE] Fetch/network error:', err);
+    });
+  }
+  form.addEventListener('input', function(e) {
+    console.log('[AUTOSAVE] Input event detected:', e.target.name, e.target.value);
+    if (declarationFields.includes(e.target.name)) {
+      console.log('[AUTOSAVE] Declaration field changed, skipping autosave:', e.target.name);
+      return;
+    }
+    clearTimeout(autosaveTimeout);
+    autosaveTimeout = setTimeout(function() {
+      console.log('[AUTOSAVE] Triggering autosave for field:', e.target.name);
+      autosave();
+    }, 700);
+  });
+  form.addEventListener('change', function(e) {
+    if (e.target.type === 'checkbox' || e.target.type === 'radio') {
+      if (declarationFields.includes(e.target.name)) {
+        return;
+      }
+      clearTimeout(autosaveTimeout);
+      autosaveTimeout = setTimeout(function() {
+        console.log('[AUTOSAVE] Triggering autosave for field:', e.target.name);
+        autosave();
+      }, 700);
+    }
+  });
+});
+</script>
+</body>
+
+</html>

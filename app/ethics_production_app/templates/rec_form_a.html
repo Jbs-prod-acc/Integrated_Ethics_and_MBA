@@ -1,0 +1,1281 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Form A – Section 1 | JBS Ethics</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/form_a.css" />
+  
+  <!-- <link rel="stylesheet" href="{{ url_for('static', filename='css/form_a.css') }}"> -->
+  <style>
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.6);
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    .modal-content {
+      background: #fff;
+      padding: 2rem;
+      border-radius: 8px;
+      text-align: center;
+      width: 400px;
+      max-width: 90%;
+      box-shadow: 0 0 10px rgba(0,0,0,0.25);
+    }
+
+    .modal-content h3 {
+      margin-bottom: 1rem;
+      color: #2E1A46;
+    }
+
+    .modal-content button {
+      margin-top: 1rem;
+      background-color: #2E1A46;
+      color: #fff;
+      padding: 0.6rem 1.2rem;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    h1 {
+      text-align: center;
+      color: #022169;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      background-color: white;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 12px;
+      vertical-align: top;
+    }
+    th {
+      background-color: #f0f0f0;
+      text-align: left;
+    }
+    label {
+      font-weight: bold;
+    }
+    .section {
+      margin-top: 30px;
+    }
+    textarea {
+      width: 100%;
+      height: 120px;
+      padding: 10px;
+      font-family: Arial, sans-serif;
+      font-size: 14px;
+      resize: vertical;
+    }
+    input[type="text"], input[type="date"] {
+      width: 100%;
+      padding: 8px;
+      margin-top: 4px;
+      margin-bottom: 15px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    .dropdown-checkboxes {
+      max-height: 200px;
+      overflow-y: auto;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="form-wrapper">
+
+  <!-- Navbar -->
+  <header class="navbar">
+    <div class="nav-content">
+      <img src="/static/img/image.png" alt="UJ JBS Logo" class="logo uj">
+      <span class="nav-title">Form A – Section 1: Researcher’s Details</span>
+
+      <!-- Logout -->
+      <div style="text-align: right;">
+
+        <a href="{{url_for('logout')}}" class="btn-logout">Logout</a>
+      </div>
+    </div>
+  </header>
+<!-- Main Content -->
+  <main class="main-content">
+
+   
+      <div class="form-section">
+        <h2>Section 1: Researcher’s Details</h2>
+        <label for="applicant-name">Applicant Name
+          <br><span class="form-answer">{{form.applicant_name}}</span>
+        </label>
+        <label for="student-number">Student / Staff Number
+          <br><span class="form-answer">{{form.student_number}}</span>
+        </label>
+        <label for="institution">Institution
+          <br><span class="form-answer">{{form.institution}}</span>
+        </label>
+        <label for="department">UJ Department and School
+          <br><span class="form-answer">{{form.department}}</span>
+        </label>     
+        <label for="degree">Degree Registered For
+          <br><span class="form-answer">{{form.degree}}</span>
+        </label>
+        <label for="title">Title / Working Title of Study
+          <br><span class="form-answer">{{form.study_title}}</span>
+        </label>
+        <label for="mobile">Mobile Number
+          <br><span class="form-answer">{{form.mobile}}</span>
+        </label>
+        <label for="email">Email Address
+          <br><span class="form-answer">{{form.email}}</span>
+        </label>
+        <label for="supervisor">Supervisor Name(s)
+          <br><span class="form-answer">{{form.supervisor}}</span>
+        </label>
+        <label for="supervisor_email">Supervisor Email
+          <br><span class="form-answer">{{form.supervisor_email}}</span>
+        </label>
+      </div>
+ 
+  </main>
+
+  <!-- Section 2 -->
+
+  <!-- Main Content -->
+  <main class="main-content">
+
+    <h2>Section 2: Ethical Considerations</h2>
+
+    <h3>1. Ethical Clearance Aspects</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Aspect</th>
+          <th>Check all that is applicable:</th>
+
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Survey/questionnaire</td>
+          <td><span class="form-answer">{{'Yes' if form.survey else 'No'}}</span></td>
+
+        </tr>
+        <tr>
+          <td>Focus groups</td>
+          <td><span class="form-answer">{{'Yes' if form.focus_group else 'No'}}</span></td>
+
+        </tr>
+        <tr>
+          <td>Observations</td>
+          <td><span class="form-answer">{{'Yes' if form.observations else 'No'}}</span></td>
+
+        </tr>
+        <tr>
+          <td>Interviews</td>
+          <td><span class="form-answer">{{'Yes' if form.interviews else 'No'}}</span></td>
+
+        </tr>
+        <tr>
+          <td>Documents</td>
+          <td><span class="form-answer">{{'Yes' if form.documents else 'No'}}</span></td>
+
+        </tr>
+        <tr>
+          <td>Other</td>
+          <td>
+            <span class="form-answer">{{form.vulnerable_other_specify or 'Not Applicable'}}</span>
+          </td>
+
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>2. Risk Assessment </h3>
+    <table>
+      <thead>
+        <tr>
+          <th>2.1 Does your research include the direct involvement of any of the following groups of participants?</th>
+          <th>Tick where applicable</th>
+
+        </tr>
+      </thead>
+             <tbody>
+        <tr>
+          <td>a) Communities that may be considered as vulnerable</td>
+          <td><span class="form-answer">{{'Yes' if form.vulnerable_communities else 'No'}}</span></td>
+
+        </tr>
+        <tr>
+          <td>b) People under the age of 18 or over 65</td>
+          <td><span class="form-answer">{{'Yes' if form.age_group else 'No'}}</span></td>
+
+        </tr>
+        <tr>
+          <td>c) UJ employees or students</td>
+          <td><span class="form-answer">{{'Yes' if form.uj_employees else 'No'}}</span></td>
+
+        </tr>
+        <tr>
+          <td>d) Persons not usually considered to be vulnerable but would be considered vulnerable in the context of this
+            research project</td>
+          <td><span class="form-answer">{{'Yes' if form.vulnerable else 'No'}}</span></td>
+
+        </tr>
+        <tr>
+          <td>e) Non-English-speaking participants</td>
+          <td><span class="form-answer">{{'Yes' if form.non_english else 'No'}}</span></td>
+
+        </tr>
+        <tr>
+          <td>f) A researcher’s own students</td>
+          <td><span class="form-answer">{{'Yes' if form.own_students else 'No'}}</span></td>
+
+        </tr>
+        <tr>
+          <td>g) People living in poverty</td>
+          <td><span class="form-answer">{{'Yes' if form.poverty else 'No'}}</span></td>
+
+        </tr>
+        <tr>
+          <td>h) People with little or no education </td>
+          <td><span class="form-answer">{{'Yes' if form.no_education else 'No'}}</span></td>
+
+        </tr>
+        <tr>
+          <td>i) Other: Provide a description</td>
+          <td><span class="form-answer">{{form.assessment_other_specify or 'Not Applicable'}}</span>
+          </td>
+
+        </tr>
+      </tbody>
+    </table>
+
+
+    <hr>
+
+    <table>
+      <thead>
+        <tr>
+          <th>2.2 Does your research involve any of the following types of activity?</th>
+          <th>Tick where applicable</th>
+
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>a) Collection, use or disclosure of information WITHOUT the consent of the individual whose information it
+            is, with the exception of aggregated data or data from official databases such as StatsSA, SARS, etc.</td>
+          <td><span class="form-answer">{{'Yes' if form.disclosure else 'No'}}</span></td>
+
+        </tr>
+        <tr>
+          <td>b) Causing discomfiture to participants beyond normal levels of inconvenience</td>
+          <td><span class="form-answer">{{'Yes' if form.discomfiture else 'No'}}</span></td>
+
+        </tr>
+        <tr>
+          <td>c) Deception of participants, concealment or covert observation</td>
+          <td><span class="form-answer">{{'Yes' if form.deception else 'No'}}</span></td>
+
+        </tr>
+        <tr>
+          <td>d) Examining potentially sensitive or contentious issues</td>
+          <td><span class="form-answer">{{'Yes' if form.sensitive else 'No'}}</span></td>
+
+        </tr>
+        <tr>
+          <td>e) Seeking disclosure of information which may be prejudicial to participants</td>
+          <td><span class="form-answer">{{'Yes' if form.prejudice else 'No'}}</span></td>
+
+        </tr>
+        <tr>
+          <td>f) Using intrusive techniques</td>
+          <td><span class="form-answer">{{'Yes' if form.intrusive_technique else 'No'}}</span></td>
+
+        </tr>
+        <tr>
+          <td>g) Study of or participation in illegal activities</td>
+          <td><span class="form-answer">{{'Yes' if form.illegal_activities else 'No'}}</span></td>
+
+        </tr>
+        <tr>
+          <td>h) Personal and social information collected directly from participants</td>
+          <td><span class="form-answer">{{'Yes' if form.personal else 'No'}}</span></td>
+
+        </tr>
+        <tr>
+          <td>i) Identifiable information to be collected about people from available records (e.g., staff records, student
+            records, etc.)</td>
+          <td><span class="form-answer">{{'Yes' if form.available_records else 'No'}}</span></td>
+
+        </tr>
+        <tr>
+          <td>j) Psychology inventories / scales / tests</td>
+          <td><span class="form-answer">{{'Yes' if form.inventories else 'No'}}</span></td>
+
+        </tr>
+        <tr>
+          <td>k) Activities which may place the researcher(s) / data collector at risk</td>
+          <td><span class="form-answer">{{'Yes' if form.risk_activities else 'No'}}</span></td>
+
+        </tr>
+        <tr>
+          <td>l) Other: Provide a description</td>
+          <td><span class="form-answer">{{form.activity_specify or 'Not Applicable'}}</span></td>
+
+        </tr>
+
+      </tbody>
+    </table>
+   <label for="vulnerable_comments">Comments: <span class="form-answer">{{form.vulnerable_comments or 'Not Applicable'}}</span></label>
+    <hr>
+
+    <table>
+      <thead>
+        <tr>
+          <th>2.3 Do any of the following apply to your research project?</th>
+          <th>Tick where applicable</th>
+        </tr>
+      </thead>
+      <tbody>
+         <tr>
+          <td>a) Reimbursement or incentives to any participants. </td>
+          <td><span class="form-answer">{{'Yes' if form.incentives else 'No'}}</span></td>
+
+        </tr>
+        <tr>
+          <td>b) The participants will incur financial costs by participating in the study.</td>
+          <td><span class="form-answer">{{'Yes' if form.financial_costs else 'No'}}</span></td>
+
+        </tr>
+        <tr>
+          <td>c) At least one of the researchers has a financial or other involvement in the research (apart from their
+            research role) or may receive a reward.</td>
+          <td><span class="form-answer">{{'Yes' if form.reward else 'No'}}</span></td>
+
+        </tr>
+        <tr>
+          <td>d) Any other potential conflict of interest for any of the researchers (real or perceived financial or
+            personal considerations that may compromise a researcher’s professional judgement in carrying out or
+            reporting research, such as conducting research with colleagues, peers or students).</td>
+          <td><span class="form-answer">{{'Yes' if  form.conflict else 'No'}}</span></td>
+
+        </tr>
+        <tr>
+          <td>e) Research is done on the premises of UJ or any of its units.</td>
+          <td><span class="form-answer">{{'Yes' if form.uj_premises else 'No'}}</span></td>
+
+        </tr>
+        <tr>
+          <td>f) Research will make use of some of UJs facilities (venues, software, hardware, etc.)</td>
+          <td><span class="form-answer">{{'Yes' if form.uj_facilities else 'No'}}</span></td>
+
+        </tr>
+        <tr>
+          <td>g) Research will be funded by UJ or funding for it was acquired through UJ.</td>
+          <td><span class="form-answer">{{'Yes' if form.uj_funding else 'No'}}</span></td>
+
+        </tr>
+        <tr>
+          <td>
+          h) Other (Specify)
+          </td>
+          <td>
+            <span class="form-answer">{{form.vulnerable_comments_3 or 'Not Applicable'}}</span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+   <label for="apply_comments">Comments: <span class="form-answer">{{form.apply_comments or 'Not Applicable'}}</span></label>
+   <br>
+    <div class="mb-3">
+      <label><strong>2.4 Rate your project (Low, Medium, High Risk):
+        <br><span class="form-answer">{{form.risk_rating}}</span>
+      </strong>
+      <label for="risk_justification"> 2.4.1 Please justify your risk level: <span class="form-answer">{{form.risk_justification}}</span></label>
+      <label for="benefits_description"> 2.4.2 For medium and high risk, describe the potential benefits of the study: <span class="form-answer">{{form.benefits_description or 'Not applicable'}}</span></label>
+      <label for="risk_mitigation"> 2.4.3 For medium and high risk, describe how potential risks will be mitigated against: <span class="form-answer">{{form.risk_mitigation or 'Not applicable'}}</span></label>
+    </div>
+
+  </main>
+
+  <!-- Section 3 -->
+
+    <!-- Main Content -->
+  <main class="main-content">
+    
+    <h2>Section 3: Proposal Summary Sheet</h2>
+    <div class="section">
+      <label>3.1 Title or provisional title of the research project:
+        <br><span class="form-answer">{{form.title_provision}}</span>
+      </label>
+    
+
+      <label>3.2 Proposal abstract in nontechnical language and statement of research problem:
+        <br><span class="form-answer">{{form.abstract}}</span>
+      </label>
+
+
+      <label>3.3 Research Questions / Hypotheses:
+        <br><span class="form-answer">{{form.questions}}</span>
+      </label>
+
+
+      <label>3.4 Research Purpose and Objectives / Anticipated outcomes:
+        <br><span class="form-answer">{{form.purpose_objectives}}</span>
+      </label>
+ 
+    </div>
+
+  </main>
+
+  
+  <!-- Section 4 -->
+
+  <main class="main-content">
+
+    <h2>Section 4: Details of Proposed Research</h2>
+    <div class="section">
+      <label>4.1 Does your project involve organisations or institutions that need to grant permission for research activities?</label>
+      <span class="form-answer">{{form.grant_permission}}</span>
+        <br>
+      <table class="table table-bordered">
+        <thead>
+          <tr>
+            <th>Name of Organisation</th>
+            <th>Person Granting Permission & Contact</th>
+            <th>Role</th>
+            <th>Permission Granted?</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>{% for items in data.org_name%}<span class="form-answer">{{items}}</span>{% endfor %}</td>
+                <td>{% for items in data.org_contact%}<span class="form-answer">{{items}}</span>{% endfor %}</td>
+                <td>{% for items in data.org_role%}<span class="form-answer">{{items}}</span>{% endfor %}</td>
+                <td>{% for items in data.org_permission%}<span class="form-answer">{{items}}</span>{% endfor %}</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <label>4.2 Are any researchers affiliated with the organisations above?
+        <br><span class="form-answer">{{form.researcher_affiliation}}</span>
+        <span class="form-answer">Comment: {{form.affiliation_details or 'Not Applicable'}}</span>
+      </label>
+      
+      <label>4.3 Does your research involve collectives or communities?
+        <br><span class="form-answer">{{form.collective_involvement}}</span>
+        <span class="form-answer">Comment: {{form.collective_details or 'Not Applicable'}}</span>
+      </label>
+      
+      <label>4.4 Is your project funded or sponsored?
+        <br><span class="form-answer">{{form.is_funded}}</span>
+      </label>
+      
+      <table class="table table-bordered">
+        <thead>
+          <tr>
+            <th>Organisation Name</th>
+            <th>Contact Person & Details</th>
+            <th>Role</th>
+            <th>Funding Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>{% for items in data.fund_org%}<span class="form-answer">{{items}}</span>{% endfor %}</td>
+            <td>{% for items in data.fund_contact %}<span class="form-answer">{{items}}</span>{% endfor %}</td>
+            <td>{% for items in data.fund_role%}<span class="form-answer">{{items}}</span>{% endfor %}</td>
+            <td>{% for items in data.fund_amount%}<span class="form-answer">{{items}}</span>{% endfor %}</td>
+          </tr>
+          <!-- add button to add row -->
+          <tr>
+            <td colspan="4">
+            </td>
+        </tbody>
+      </table>
+
+      <label>4.5 Describe your arrangements regarding indemnity/compensation for adverse events:
+        <br><span class="form-answer">{{form.indemnity_arrangements}}</span>
+      </label>
+  
+
+      <label>4.6 Has this proposal been submitted to another ethics committee?
+        <br><span class="form-answer">{{form.other_committee}}</span>
+      </label>
+
+    </div>
+
+
+  </main>
+
+
+    <!-- Main Content -->
+  <main class="main-content">
+
+  <!-- Section 5: Methodology -->
+  <section id="section-5">
+    <h2>Section 5: Methodology</h2>
+
+    <label>5.1 Research Paradigm (Substantiate your choice of paradigm)</label><br>
+    <table id="methodTypeTable" class="table table-bordered">
+      <thead>
+        <tr>
+          <th>Quantitative Methods</th>
+          <th>Qualitative Methods</th>
+          <th>Mixed Methods</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="text-center">{{'Yes' if  form.quantitative else 'No'}}</td>
+          <td class="text-center">{{'Yes' if form.qualitative else 'No'}}</td>
+          <td class="text-center">{{'Yes' if form.mixed_methods else 'No'}}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <label>Explain your paradigm selection: <span class="form-answer">{{form.paradigm_explanation}}</span></label>
+    <label>5.2 Research Design / Approach
+      <br><span class="form-answer">{{form.design}}</span>
+    </label>
+    <br>
+
+    <label>5.3 Details of the participants</label>
+
+    <label>5.3.1 Participant Group Description</label>
+<br><span class="form-answer">{{form.participants_description}}</span>
+
+    <table id="participantsTable" class="table table-bordered">
+      <thead>
+        <tr>
+          <th>Population</th>
+          <th>Sampling Method</th>
+          <th>Sample Size</th>
+          <th>Inclusion Criteria</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><br>{% for items in data.population%}<span class="form-answer">{{items}}</span>{% endfor %}</td>
+          <td><br>{% for items in data.sampling_method%}<span class="form-answer">{{items}}</span>{% endfor %}</td>
+          <td><br>{% for items in data.sampling_size%}<span class="form-answer">{{items}}</span>{% endfor %}</td>
+          <td><br>{% for items in data.inclusion_criteria%}<span class="form-answer">{{items}}</span>{% endfor %}</textarea></td>
+          
+        </tr>
+      </tbody>
+    </table>
+    
+
+    <label>5.3.2 Describe how much time you require of participants in each group and when the data will be collected/ when the interviews will take place.
+      <br><span class="form-answer">{{form.duration_timing}}</span>
+    </label>
+    <br>
+
+    <label>5.3.3 Explain how you will obtain the contact details of participants</label>
+      <br><span class="form-answer">{{form.contact_details_method}}</span>
+    </label>
+  <br>
+    <label>5.3.4 Conflict of interest or unequal relationship between researcher and participants? <span class="info-icon" title="A conflict of interest may arise where financial, personal or other considerations could directly and significantly affect, or appear to affect, a researcher's research conduct and judgement.">ℹ️</span></label>
+      <br><span class="form-answer">{{'Yes' if form.conflict_interest else 'No'}}</span>
+
+    <br><span class="form-answer">{{form.conflict_explanation}}</span>
+    <br>
+
+    <label>5.4 Research Instruments for Data Collection</label>
+    <label for="data-collection-methods">5.4.1 Indicate which data collection methods will be used</label><br>
+     <table id="data_methods" class="table table-bordered">
+    <tr>
+        <th>Questionnaire</th>
+        <th>Interview</th>
+        <th>Focus Group</th>
+        <th>Observation</th>
+        <th>Documents</th>
+        <th>Other</th>
+    </tr>
+    <tr>
+        <td>{{ 'Yes' if 'questionnaire' in (form.data_methods or []) else 'No' }}</td>
+        <td>{{ 'Yes' if 'interview' in (form.data_methods or []) else 'No' }}</td>
+        <td>{{ 'Yes' if 'focus' in (form.data_methods or []) else 'No' }}</td>
+        <td>{{ 'Yes' if 'observation' in (form.data_methods or []) else 'No' }}</td>
+        <td>{{ 'Yes' if 'documents' in (form.data_methods or []) else 'No' }}</td>
+        <td>{{ 'Yes' if 'other' in (form.data_methods or []) else 'No' }}</td>
+    </tr>
+</table>
+      
+    <!-- 5.4.1.1 Questionnaire(s) -->
+  <label>5.4.1.1 Questionnaire(s):</label><br>
+  {% if form.questionnaire_type %}
+    <span class="form-answer">Questionnaire Type: {{ form.questionnaire_type or 'Not Applicable' }}</span><br>
+  {% endif %}
+
+{% if (form.questionnaire_type|string)|trim|lower == 'existing' %}
+  <label>If existing, permission obtained?</label><br>
+
+  <span class="form-answer">
+    {# normalize to string -> lower #}
+    {% set perm = (form.permission_obtained|string)|trim|lower %}
+    {% if perm in ['yes','true','on','1'] %}
+      Yes
+    {% elif perm in ['no','false','off','0'] %}
+      No
+    {% else %}
+      Not Applicable
+    {% endif %}
+  </span><br>
+
+  <span class="form-answer">
+    {% set os = (form.open_source|string)|trim|lower %}
+    {% if os in ['yes','true','on','1'] %}
+      Open Source
+    {% elif os in ['no','false','off','0'] %}
+      Not open source
+    {% else %}
+      Not Applicable
+    {% endif %}
+  </span><br>
+{% endif %}
+    <label>Justification: </label><span class="form-answer">{{form.instrument_attachment_reason or 'Not Applicable'}}</span>
+
+ <!-- Interview -->
+<label>5.4.1.2 Interviews</label>
+
+{% if form.interview_type %}
+  <span class="form-answer">Interview Type: {{ form.interview_type or 'Not Applicable' }}</span><br>
+{% endif %}
+
+<label>How will the interviews be recorded?</label><br>
+
+{% set irec = (form.interview_recording|string)|trim|lower %}
+<span class="form-answer">
+  {% if irec == 'audio' %}
+    Audio
+  {% elif irec == 'video' %}
+    Video
+  {% elif irec == 'both' %}
+    Audio & Video
+  {% else %}
+    Not Applicable
+  {% endif %}
+</span><br>
+
+<!-- Focus Group -->
+<label>5.4.1.3 Focus Groups</label>
+
+<label>How will the focus groups be recorded?</label><br>
+
+{% set frec = (form.focus_recording|string)|trim|lower %}
+<span class="form-answer">
+  {% if frec == 'audio' %}
+    Audio
+  {% elif frec == 'video' %}
+    Video
+  {% elif frec == 'both' %}
+    Audio & Video
+  {% else %}
+    Not Applicable
+  {% endif %}
+</span><br>
+   <!-- Observation -->
+    <label>5.4.1.4 Please describe your observation protocol:</label>
+    <br><span class="form-answer">{{form.observation_details or 'Not Applicable'}}</span>
+    <br>
+  <!-- Documents -->
+    <label>5.4.1.5 What type of documents will be analyzed?</label><br>
+    <span class="form-answer">{{form.documents_details or 'Not Applicable'}}</span>
+    <br>
+  <!-- Other -->
+  <label>5.4.1.6 Please describe other data collection method(s):</label>
+  <br>
+  <span class="form-answer">{{form.other_details or 'Not Applicable'}}</span>
+
+    <!-- General Data Collection Procedure -->
+     <label style="margin-top: 1.5rem;">5.4.2 Describe the data collection procedure</label>
+     <br>
+     <span class="form-answer">{{form.data_collection_procedure}}</span>
+    
+    <label>5.4.3 Who will collect the data (Researcher and/or field workers/external company)?
+      <br><span class="form-answer">{{form.data_collectors}}</span>
+    </label>
+    <br>
+
+    <label>5.4.4 Will participants be subjected to any form of intervention (manipulation of the participant or the participants' environment)?
+      <br><span class="form-answer">{{'Yes' if form.intervention else 'No'}}</span>
+    </label><br>
+    
+
+    <label>5.4.5 Sensitive data or vulnerable populations?
+      <br><span class="form-answer">{{form.sensitive_data}}</span>
+    </label>
+    <br>
+
+    <label>5.4.6 Will a translator be required?
+      <br><span class="form-answer">{{ 'Yes' if form.translator else 'No' }}</span>
+       <span class="form-answer">Comment: {{form.translator_procedure or 'Not Applicable'}}</span>
+    </label>
+ 
+
+    <br>
+    <br>
+
+<label>5.5 Secondary Data Usage</label>
+
+<label>5.5.1 Will secondary data be used?</label><br>
+<span class="form-answer">{{ 'Yes' if form.uses_secondary_data else 'No' }}</span>
+
+<label>5.5.2 Is the data public, private, or both?</label><br>
+<span class="form-answer">{{ form.secondary_data_type }}</span>
+
+<label>5.5.3 Nature of the Data</label><br>
+<span class="form-answer">{{ form.data_nature or 'Not Applicable' }}</span>
+
+<label>5.5.4 Origin/Source of Research Data</label><br>
+<span class="form-answer">{{ form.data_origin or 'Not Applicable' }}</span>
+
+<label>5.5.5 What are the access conditions?</label><br>
+<span class="form-answer">{{ form.access_conditions or 'Not Applicable' }}</span>
+
+<label>5.5.6 Does the database contain personal information/identifiers?</label><br>
+<span class="form-answer">{{ form.personal_info or 'Not Applicable' }}</span>
+
+{% if form.personal_info == 'Yes' %}
+  <label>5.5.6.1 Specify the personal info/identifiers:</label><br>
+  <span class="form-answer">{{ form.personal_info_comment or 'Not Applicable' }}</span>
+{% endif %}
+
+<label>5.5.7 Has the data been anonymized?</label><br>
+<span class="form-answer">{{ form.data_anonymized or 'Not Applicable' }}</span>
+
+<label>5.5.7.1 Comment / Justification:</label><br>
+<span class="form-answer">{{ form.anonymization_comment or 'Not Applicable' }}</span>
+
+<!-- <label>5.5.8 Is the data from a company that has provided permission?</label><br>
+<span class="form-answer">{{ form.org_permision or 'Not Applicable' }}</span>
+
+<label>5.5.8.1 Uploaded permission document:</label><br>
+{% if form.private_permission_file %}
+  <a href="{{ url_for('view_form_file', form_type='A', form_id=form.form_id, field_name='private_permission_file') }}" target="_blank">View Document</a>
+{% else %}
+  <span class="form-answer">No file uploaded</span>
+{% endif %}
+
+<br><br> -->
+
+<label>5.5.8 What type of public data will be used?</label><br>
+<span class="form-answer">{{ form.public_data_description or 'Not Applicable' }}</span>
+
+<label>5.5.9 Will data shortcomings/incompleteness be reported?</label><br>
+<span class="form-answer">{{ form.shortcomings_reported or 'Not Applicable' }}</span>
+
+<label>5.5.10 How will data limitations be reported?</label><br>
+<span class="form-answer">{{ form.limitations_reporting or 'Not Applicable' }}</span>
+
+<label>5.5.11 Is the research methodology and design aligned with secondary data use?</label><br>
+<span class="form-answer">{{ form.methodology_alignment or 'Not Applicable' }}</span>
+
+<label>5.5.12 How will the original owners of the data be acknowledged?</label><br>
+<span class="form-answer">{{ form.data_acknowledgment or 'Not Applicable' }}</span>
+
+</section>
+
+</main>
+
+    <!-- Section 5 -->
+
+    <!-- Main Content -->
+  <main class="main-content">
+ 
+<!-- Section 6 – Ethical Considerations -->
+<div class="form-section" id="section6">
+    <h2>Section 6:  Ethical Considerations</h2>
+
+    <div class="question-block">
+      <label for="informed-consent">6.1 Will informed consent be obtained? Explain the process:</label>
+      <span class="form-answer">{{form.informed_consent}}</span>
+      <br>
+    </div>
+  
+    <div class="question-block">
+      <label>6.2 Data storage and access to data</label><br>
+        <table class="table table-bordered table-striped">
+  <thead class="thead-light">
+    <tr>
+      <th>Requirement</th>
+      <th>Response</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Paper-based records must be kept in a secure location</td>
+      <td>{{ 'Yes' if 'secure_location' in (form.data_storage or []) else 'No' }}</td>
+    </tr>
+    <tr>
+      <td>Computer-based records must only be available to personnel involved in the study through access privileges</td>
+      <td>{{ 'Yes' if 'password_protected' in (form.data_storage or []) else 'No' }}</td>
+    </tr>
+    <tr>
+      <td>Electronic data will be kept in a protected place</td>
+      <td>{{ 'Yes' if 'protected_place' in (form.data_storage or []) else 'No' }}</td>
+    </tr>
+    <tr>
+      <td>Paper-based data will be kept for 5 years and then destroyed</td>
+      <td>{{ 'Yes' if 'retention' in (form.data_storage or []) else 'No' }}</td>
+    </tr>
+  </tbody>
+</table>
+    </div>
+  
+    <div class="question-block">
+      <label for="study-benefits">6.3 What are the benefits of the study?
+        <br><span class="form-answer">{{form.study_benefits}}</span>
+      </label>
+      <br>
+    </div>
+  
+    <div class="question-block">
+      <label for="participant-risks">6.4 Description of the risks participants may suffer and the level of risk:
+        <br><span class="form-answer">{{form.participant_risks}}</span>
+      </label>
+      <br>
+    </div>
+  
+    <div class="question-block">
+      <label for="adverse-steps">6.5 Description of steps to be taken in case of adverse events:
+        <br><span class="form-answer">{{form.adverse_steps}}</span>
+      </label>
+      <br>
+    </div>
+  
+    <div class="question-block">
+      <label for="community-participation">6.6 Description of anticipated community participation in the study:
+        <span class="form-answer">{{form.community_participation}}</span>
+      </label>
+      <br>
+    </div>
+  
+    <div class="question-block">
+      <label for="community-effects">6.7 Description of possible adverse effects on the community:
+        <br><span class="form-answer">{{form.community_effects}}</span>
+      </label>
+      <br>
+    </div>
+  
+    <div class="question-block">
+  <label>6.8 Select all data privacy practices applied:</label><br>
+    <table class="table table-bordered table-striped">
+  <thead class="thead-light">
+    <tr>
+      <th>Data Privacy Practice</th>
+      <th>Response</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Personal identifiers will be removed</td>
+      <td>{{ 'Yes' if 'remove_identifiers' in (form.privacy or []) else 'No' }}</td>
+    </tr>
+    <tr>
+      <td>Data encryption will be applied</td>
+      <td>{{ 'Yes' if 'encryption' in (form.privacy or []) else 'No' }}</td>
+    </tr>
+    <tr>
+      <td>Use of pseudonyms</td>
+      <td>{{ 'Yes' if 'pseudonyms' in (form.privacy or []) else 'No' }}</td>
+    </tr>
+    <tr>
+      <td>Participants in focus groups will be advised confidentiality cannot be assured</td>
+      <td>{{ 'Yes' if 'focus_group_warning' in (form.privacy or []) else 'No' }}</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+  
+    <div class="question-block">
+      <label>6.9 Checklist to ensure the covering letter meets ethical requirements</label>
+
+<table>
+  <thead>
+    <tr>
+      <th style="width: 70%;">Checklist Item</th>
+      <th style="width: 30%;">Select</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td>a) Identity and position of the researcher(s)?</td><td><br><span class="form-answer">{{'Yes' if form.q6_9a else 'No'}}</span></td></tr>
+<tr><td>b) Purpose of the information collection?</td><td><br><span class="form-answer">{{'Yes' if form.q6_9b else 'No'}}</span></td></tr>
+<tr><td>c) Reason for selection and procedures for selecting participants?</td><td><br><span class="form-answer">{{'Yes' if form.q6_9c else 'No'}}</span></td></tr>
+<tr><td>d) Participant’s role in the study?</td><td><br><span class="form-answer">{{'Yes' if form.q6_9d else 'No'}}</span></td></tr>
+<tr><td>e) Expected duration of participation?</td><td><br><span class="form-answer">{{'Yes' if form.q6_9e else 'No'}}</span></td></tr>
+<tr><td>f) Statement of voluntary participation and no penalty?</td><td><br><span class="form-answer">{{'Yes' if form.q6_9f else 'No'}}</span></td></tr>
+<tr><td>g) Benefits to the participant and others?</td><td><br><span class="form-answer">{{'Yes' if form.q6_9g else 'No'}}</span></td></tr>
+<tr><td>h) Risks and steps for harm/injury?</td><td><br><span class="form-answer">{{'Yes' if form.q6_9h else 'No'}}</span></td></tr>
+<tr><td>i) Statement of right to withdraw?</td><td><br><span class="form-answer">{{'Yes' if form.q6_9i else 'No'}}</span></td></tr>
+<tr><td>j) Compensation/gifts/services?</td><td><br><span class="form-answer">{{'Yes' if form.q6_9j else 'No'}}</span></td></tr>
+<tr><td>k) Reimbursement for costs?</td><td><br><span class="form-answer">{{'Yes' if form.q6_9k else 'No'}}</span></td></tr>
+<tr><td>l) Indemnity if applicable?</td><td><br><span class="form-answer">{{'Yes' if form.q6_9l else 'No'}}</span></td></tr>
+<tr><td>m) Period for which records will be kept?</td><td><br><span class="form-answer">{{'Yes' if form.q6_9m else 'No'}}</span></td></tr>
+<tr><td>n) Steps for confidentiality and secure storage?</td><td><br><span class="form-answer">{{'Yes' if form.q6_9n else 'No'}}</span></td></tr>
+<tr><td>o) Disclosure of information to third parties?</td><td><br><span class="form-answer">{{'Yes' if form.q6_9o else 'No'}}</span></td></tr>
+<tr><td>p) Privacy protection in publications?</td><td><br><span class="form-answer">{{'Yes' if form.q6_9p else 'No'}}</span></td></tr>
+<tr><td>q) Feedback to participants?</td><td><br><span class="form-answer">{{'Yes' if form.q6_9q else 'No'}}</span></td></tr>
+<tr><td>r) Exclusions to confidentiality disclosed?</td><td><br><span class="form-answer">{{'Yes' if form.q6_9r else 'No'}}</span></td></tr>
+<tr><td>s) Consent for audio/video recording?</td><td><br><span class="form-answer">{{'Yes' if form.q6_9s else 'No'}}</span></td></tr>
+
+  </tbody>
+</table>
+
+    </div>
+  
+    <div class="question-block">
+      <label for="results-feedback">6.10 How will participants be informed of findings?
+        <br><span class="form-answer">{{form.results_feedback}}</span>
+      </label>
+    
+    </div>
+  
+    <div class="question-block">
+      <label for="products-access">6.11 Description of participants’ access to products developed from the study:
+        <br><span class="form-answer">{{form.products_access}}</span>
+      </label>
+
+    </div>
+  
+    <div class="question-block">
+      <label for="publication-plans">6.12 Indicate how you envisage publishing this research:
+        <span class="form-answer">{{form.publication_plans}}</span>
+      </label>
+
+    </div>
+  
+    <div class="question-block">
+      <label for="participant-comp">6.13 Describe compensation to participants (if applicable):
+        <br><span class="form-answer">{{form.participant_comp}}</span>
+      </label>
+
+    </div>
+  
+    <div class="question-block">
+      <label for="participant-costs">6.14 Describe any financial costs to participants (if applicable):
+        <span class="form-answer">{{form.participant_costs}}</span>
+      </label>
+
+    </div>
+  
+    <div class="question-block">
+      <label for="ethics-reporting">6.15 Description of reporting to ethics research committee:
+        <br><span class="form-answer">{{form.ethics_reporting}}</span>
+      </label>
+    
+    </div>
+
+  
+    </main>
+  
+    <!-- Section 6 -->
+
+    <main class="main-content">
+
+    <h2>Section 7: Declaration</h2>
+    <p><strong>STATEMENT AGREEING TO COMPLY WITH ETHICAL PRINCIPLES SET OUT IN UJ POLICY ON RESEARCH ETHICS</strong></p>
+
+    <div class="form-group">
+      <label for="declaration-name" style="text-align: justify;">
+        I, <u>{{form.declaration_name}}</u>
+        (full name of main researcher), declare that I have read the Policy on Research Ethics of UJ and the contents of this document are a true and accurate reflection of the methodological and ethical implications of my proposed study. I shall carry out the study in strict accordance with the approved proposal and the Policy on Research Ethics of UJ. I further undertake to inform the relevant research ethics review committee of JBS in writing of any adverse events that occur arising from the injury or harm experienced by the participants in the study. I shall also notify the relevant JBS research ethics review committee if any changes to the study are proposed. I shall maintain the confidentiality of all data collected from or about the research participants and impose strict controls in the maintenance of privacy. I shall record all data captured during interviews in accordance with ethical guidelines outlined in my proposal. Paragraph 5 of the Policy on Research Ethics places huge emphasis on the integrity of the research and I shall ensure that I conduct the research with the highest integrity considering UJ’s Policy for Copyright Infringement and Plagiarism. Data that was gathered retrospectively will not be used. I acknowledge that as main researcher it is my responsibility to ensure that the co-researchers to this research project adhere to the ethical principles set out in the UJ Policy on Research Ethics. 
+      </label>
+    </div>
+
+    <div class="form-group">
+      <label>Signature of Applicant</label>
+      <span class="form-answer">{{form.applicant_signature}}</span>
+    </div>
+
+    <div class="form-group">
+      <label>Date</label>
+      <span class="form-answer">{% if form.declaration_date%}{{form.declaration_date.strftime('%d/%m/%Y')}}{% endif %}</span>
+    </div>
+
+    <hr>
+<div id="supervisorDeclaration" >
+    
+      <h1>JBS RESEARCH ETHICS COMMITTEE<br>REVIEWER REPORT</h1>
+
+  <div class="section">
+    <label>Student Name:</label>
+    <span class="form-answer">{{form.declaration_name}}</span>
+
+    <label>Date of Submission:</label>
+    <span class="form-answer">{% if form.submitted_at%}{{form.submitted_at.strftime('%d/%m/%Y')}}{% endif%}</span>
+
+    <label>Date of Re-submission:</label>
+    <span class="form-answer">{% if form.declaration_date%}{{form.declaration_date.strftime('%d/%m/%Y')}}{% endif %}</span>
+
+    <label>Supervisor:</label>
+    <span class="form-answer">{{form.supervisor}}</span>
+
+    <label>Title of Research:</label>
+    <span class="form-answer">{{form.study_title}}</span>
+    <table>
+        <thead class="thead-light">
+          <tr>
+            <th style="width: 40%;">Document</th>
+            <th style="width: 60%;">Supervisor Comments</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Organisational Permission/Signed Waiver</strong><br><small>Can be an email or formal letter. Ensure permission to access the organisation and relevant documents is included.</small></td>
+            <td><span id="org_permission_comment">{{form.org_permission_comment}}</span></td>
+          </tr>
+          <tr>
+            <td><strong>Impact Assessment Form</strong><br><small>Template available under “Ethical Clearance Templates” in the system.</small></td>
+            <td><span id="waiver_comment">{{form.waiver_comment}}</span></td>
+          </tr>
+          <tr>
+            <td><strong>Ethics Application Form</strong><br><small>Ensure all fields are complete and the form is co-signed by you as the supervisor. Any revisions made after your proposal review must be submitted.</small></td>
+            <td><span id="form_a_comment">{{form.form_a_comment}}</span></td>
+          </tr>
+          <tr>
+            <td><strong>Interview Questions and/or Questionnaire</strong><br><small>Review for clarity, appropriateness, and ethical sensitivity. Preliminary versions may be accepted if noted.</small></td>
+            <td><span id="questions_comment">{{form.questions_comment}}</span></td>
+          </tr>
+          <tr>
+            <td><strong>Participant information Sheet and Informed Consent Form</strong><br><small>Ensure the correct template has been used and tailored to the student’s study.</small></td>
+            <td><span id="consent_comment">{{form.consent_comment}}</span></td>
+          </tr>
+          <tr>
+            <td><strong>Refined Concept Proposal</strong><br><small>This should match the approved version with the literature review.</small></td>
+            <td><span id="proposal_comment">{{form.proposal_comment}}</span></td>
+          </tr>
+        </tbody>
+      </table>
+</section>
+    {% if has_reviewer_feedback(form) %}
+<section class="admin-content">
+<div id="supervisorDeclaration" >
+
+  <br>
+  <hr>
+ 
+  {% if form.review_recommendation %}
+  <div class="section">
+    <h3>Checklist of Documents Required for Ethical Clearance Process</h3>
+    <h3>First Reviewer</h3>
+    <br>
+     <table>
+        <thead class="thead-light">
+        <tr>
+          <th style="width: 30%;">Document</th>
+          <th style="width: 20%;">Submitted (Yes or No)</th>
+          <th style="width: 50%;">Reviewer Comments</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+            <strong>Organisational permission/Signed Waiver</strong><br>
+            • Can be an email or formal letter.<br>
+            • Include permission to access relevant business documents.
+          
+          </td>
+          <td><span id="org_permission_status">{{form.review_org_permission_status}}</span></td>
+          <td><span id="org_permission_comments">{{form.review_org_permission_comments}}</span></td>
+        </tr>
+        <tr>
+          <td>
+            <strong>Impact Assessment Form</strong><br>
+            • Use template provided in “Ethical clearance templates”.
+          </td>
+          <td><span id="waiver_status">{{form.review_waiver_status}}</span></td>
+          <td><span id="waiver_comments">{{form.review_waiver_comments}}</span></td>
+        </tr>
+        <tr>
+          <td>
+            <strong>Ethics Application Form</strong><br>
+            • Must be completed and co-signed by supervisor.<br>
+            • Submit updated version if changes were made since proposal.
+          </td>
+          <td><span id="form_status">{{form.review_form_status}}</span></td>
+          <td><span id="form_comments">{{form.review_form_comments}}</span></td>
+        </tr>
+        <tr>
+          <td>
+            <strong>Interview Questions and/or Questionnaire</strong><br>
+            • As close to final as possible.<br>
+            • If preliminary, indicate clearly.<br>
+            • Sensitive/invasive questions increase risk – avoid where possible.
+          </td>
+          <td><span id="questions_status">{{form.review_questions_status}}</span></td>
+          <td><span id="questions_comments">{{form.review_questions_comments}}</span></td>
+        </tr>
+        <tr>
+          <td>
+            <strong>Participant information Sheet & Informed Consent</strong><br>
+            • Use and adapt the provided template for your study.
+          </td>
+          <td><span  id="consent_status">{{form.review_consent_status}}</td>
+          <td><span id="consent_comments">{{form.review_consent_comments}}</span></td>
+        </tr>
+        <tr>
+          <td>
+            <strong>Refined Concept Proposal</strong><br>
+            • Should match the version submitted with Literature Review.
+          </td>
+          <td><span id="proposal_status">{{form.review_proposal_status}}</td>
+          <td><span id="proposal_comments">{{form.review_proposal_comments}}</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+
+  <div class="section">
+    <h3>First Reviewer Comments</h3>
+    <span class="form-answer" id="additional_comments">{{form.review_additional_comments}}</span>
+  </div>
+  {% endif %}
+</div>
+</section>
+{% endif %}
+  <br>
+  <hr>
+  {% if form.review_recommendation1 %}
+
+  <br>
+  
+  <section>
+  <div class="section">
+    <h3>Checklist of Documents Required for Ethical Clearance Process</h3>
+    <h3>Second Reviewer</h3>
+     <table>
+        <thead class="thead-light">
+        <tr>
+          <th style="width: 30%;">Document</th>
+          <th style="width: 20%;">Submitted (Yes or No)</th>
+          <th style="width: 50%;">Reviewer Comments</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+            <strong>Organisational permission/Signed Waiver</strong><br>
+            • Can be an email or formal letter.<br>
+            • Include permission to access relevant business documents.
+           
+          </td>
+          <td><span id="org_permission_status">{{form.review_org_permission_status1}}</span></td>
+          <td><span id="org_permission_comments">{{form.review_org_permission_comments1}}</span></td>
+        </tr>
+        <tr>
+          <td>
+            <strong>Impact Assessment Form</strong><br>
+            • Use template provided in “Ethical clearance templates”.
+          </td>
+          <td><span id="waiver_status">{{form.review_waiver_status1}}</span></td>
+          <td><span id="waiver_comments">{{form.review_waiver_comments1}}</span></td>
+        </tr>
+        <tr>
+          <td>
+            <strong>Ethics Application Form</strong><br>
+            • Must be completed and co-signed by supervisor.<br>
+            • Submit updated version if changes were made since proposal.
+          </td>
+          <td><span id="form_status">{{form.review_form_status1}}</span></td>
+          <td><span id="form_comments">{{form.review_form_comments1}}</span></td>
+        </tr>
+        <tr>
+          <td>
+            <strong>Interview Questions and/or Questionnaire</strong><br>
+            • As close to final as possible.<br>
+            • If preliminary, indicate clearly.<br>
+            • Sensitive/invasive questions increase risk – avoid where possible.
+          </td>
+          <td><span id="questions_status">{{form.review_questions_status1}}</span></td>
+          <td><span id="questions_comments">{{form.review_questions_comments1}}</span></td>
+        </tr>
+        <tr>
+          <td>
+            <strong>Participant Information Sheet & Informed Consent</strong><br>
+            • Use and adapt the provided template for your study.
+          </td>
+          <td><span  id="consent_status">{{form.review_consent_status1}}</td>
+          <td><span id="consent_comments">{{form.review_consent_comments1}}</span></td>
+        </tr>
+        <tr>
+          <td>
+            <strong>Refined Concept Proposal</strong><br>
+            • Should match the version submitted with Literature Review.
+          </td>
+          <td><span id="proposal_status">{{form.review_proposal_status1}}</td>
+          <td><span id="proposal_comments">{{form.review_proposal_comments1}}</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+
+  <div class="section">
+    <h3>Second Reviewer Comments</h3>
+    <span class="form-answer" id="additional_comments">{{form.review_additional_comments1}}</span>
+  </div>
+</div>
+</section>
+  {% endif %}
+
+
+
+ <form method="POST" action="{{ url_for('rec_response', id=form.form_id) }}">
+    <!-- Error Messages -->
+    {% if messages %}
+        <div id="alertMessage" class="alert alert-danger alert-dismissible fade show">
+            {% for message in messages %}
+                {{ message }}
+            {% endfor %}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    {% endif %}
+
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label class="form-label">REC Comments</label>
+    <textarea rows="5" name="rec_comments" style="width:100%;" placeholder="Add general comments or recommendation..." class="form-control" required></textarea>
+
+    <input type="hidden" name="status" id="status" value="" />
+
+    <div class="submit-row">
+        <button type="submit" class="btn-approve" onclick="document.getElementById('status').value='Approved'">✔ Approve</button><br>
+        <button type="submit" class="btn-minor" onclick="document.getElementById('status').value='Approved with Minor Changes'">⚠ Approve with Minor Changes</button><br>
+        <button type="submit" class="btn-resubmit" onclick="document.getElementById('status').value='Resubmission Required'">↻ Resubmission Required</button><br>
+        <button type="submit" class="btn-reject" onclick="document.getElementById('status').value='Reject'">✖ Reject</button>
+    </div>
+</form>
+
+  </div>
+</div>
+    </main>
+
+</div>
+
+
+  <!-- Footer -->
+<footer class="footer">
+   
+</footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

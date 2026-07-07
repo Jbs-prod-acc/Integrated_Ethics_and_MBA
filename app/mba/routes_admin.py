@@ -10,7 +10,7 @@ from datetime import datetime
 
 from flask import Response, abort, flash, jsonify, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
-from sqlalchemy import or_
+from sqlalchemy import or_, text
 from sqlalchemy.orm import joinedload
 
 from ..extensions import db
@@ -110,6 +110,90 @@ STUDENT_TEMPLATE_FIELDS = [
     "degree",
     "address",
 ]
+
+
+def _shared_access_mode_label(user):
+    if user.mba_access and user.ethics_access:
+        return "Both"
+    if user.mba_access:
+        return "MBA"
+    if user.ethics_access:
+        return "Ethics"
+    return "No access"
+
+
+def _shared_access_mode_key(user):
+    if user.mba_access and user.ethics_access:
+        return "both"
+    if user.mba_access:
+        return "mba"
+    if user.ethics_access:
+        return "ethics"
+    return "none"
+
+
+def _apply_shared_access_mode(user, access_mode):
+    enable_mba = access_mode in {"mba", "both"}
+    enable_ethics = access_mode in {"ethics", "both"}
+
+    user.mba_access = enable_mba
+    user.ethics_access = enable_ethics
+
+    if enable_mba and not user.role:
+        user.role = MbaRole.STUDENT.value
+    if not enable_mba:
+        user.role = None
+        user.scholar_role = None
+
+    if enable_ethics and not user.ethics_role:
+        user.ethics_role = EthicsRole.STUDENT.value
+    if enable_ethics and user.ethics_role == EthicsRole.STUDENT.value:
+        user.authenticated_student = True
+    if not enable_ethics:
+        user.ethics_role = None
+        user.authenticated_student = False
+
+    if enable_mba and user.role == MbaRole.STUDENT.value:
+        student_number_value = str(user.student_number) if user.student_number is not None else None
+        existing_profile_id = db.session.execute(
+            text("SELECT id FROM mba_student_profiles WHERE user_id = :user_id LIMIT 1"),
+            {"user_id": user.id},
+        ).scalar()
+        if existing_profile_id:
+            db.session.execute(
+                text(
+                    """
+                    UPDATE mba_student_profiles
+                    SET
+                        student_number = COALESCE(student_number, :student_number),
+                        name = COALESCE(name, :first_name),
+                        surname = COALESCE(surname, :last_name),
+                        degree = COALESCE(degree, 'MBA')
+                    WHERE id = :profile_id
+                    """
+                ),
+                {
+                    "profile_id": existing_profile_id,
+                    "student_number": student_number_value,
+                    "first_name": user.first_name,
+                    "last_name": user.last_name,
+                },
+            )
+        elif student_number_value:
+            db.session.execute(
+                text(
+                    """
+                    INSERT INTO mba_student_profiles (user_id, student_number, name, surname, degree, created_at)
+                    VALUES (:user_id, :student_number, :first_name, :last_name, 'MBA', CURRENT_TIMESTAMP)
+                    """
+                ),
+                {
+                    "user_id": user.id,
+                    "student_number": student_number_value,
+                    "first_name": user.first_name,
+                    "last_name": user.last_name,
+                },
+            )
 
 
 def _profile_url():
@@ -561,6 +645,18 @@ def admin_dashboard():
     allowed_views = {"all", "awaiting", "declined", "accepted"}
     if selected_view not in allowed_views:
         selected_view = "all"
+    user_search = (request.args.get("user_q") or "").strip()
+    user_access_filter = (request.args.get("user_access") or "all").strip().lower()
+    if user_access_filter not in {"all", "mba", "ethics", "both", "none"}:
+        user_access_filter = "all"
+    assessor_page = parse_positive_int(request.args.get("assessor_page"), 1)
+    assessor_per_page = parse_page_size(request.args.get("assessor_per_page"), 10)
+    supervisor_page = parse_positive_int(request.args.get("supervisor_page"), 1)
+    supervisor_per_page = parse_page_size(request.args.get("supervisor_per_page"), 10)
+    student_page = parse_positive_int(request.args.get("student_page"), 1)
+    student_per_page = parse_page_size(request.args.get("student_per_page"), 10)
+    user_page = parse_positive_int(request.args.get("user_page"), 1)
+    user_per_page = parse_page_size(request.args.get("user_per_page"), 10)
     search_text = (request.args.get("q") or "").strip()
     student_number = (request.args.get("student_number") or "").strip()
     status_filter = (request.args.get("status") or "").strip()
@@ -643,9 +739,82 @@ def admin_dashboard():
         anchor="project-queue",
     )
     disciplines = disciplines_query(include_inactive=True).all()
-    students = MbaUser.query.filter_by(role=MbaRole.STUDENT.value).order_by(MbaUser.email).limit(30).all()
-    supervisors = supervisors_query().all()
-    examiners = examiners_query().all()
+    student_query = MbaUser.query.filter_by(role=MbaRole.STUDENT.value).order_by(MbaUser.email)
+    student_pagination_args = request_query_args({"student_page", "student_per_page"})
+    student_pagination_args["panel"] = "students"
+    students, student_pagination = paginate_query(
+        student_query,
+        student_page,
+        student_per_page,
+        "mba.admin_dashboard",
+        page_param="student_page",
+        per_page_param="student_per_page",
+        base_args=student_pagination_args,
+    )
+
+    supervisor_query = supervisors_query().order_by(MbaUser.email)
+    supervisor_pagination_args = request_query_args({"supervisor_page", "supervisor_per_page"})
+    supervisor_pagination_args["panel"] = "supervisors"
+    supervisors, supervisor_pagination = paginate_query(
+        supervisor_query,
+        supervisor_page,
+        supervisor_per_page,
+        "mba.admin_dashboard",
+        page_param="supervisor_page",
+        per_page_param="supervisor_per_page",
+        base_args=supervisor_pagination_args,
+    )
+
+    examiner_query = examiners_query().order_by(MbaUser.email)
+    assessor_pagination_args = request_query_args({"assessor_page", "assessor_per_page"})
+    assessor_pagination_args["panel"] = "assessors"
+    examiners, assessor_pagination = paginate_query(
+        examiner_query,
+        assessor_page,
+        assessor_per_page,
+        "mba.admin_dashboard",
+        page_param="assessor_page",
+        per_page_param="assessor_per_page",
+        base_args=assessor_pagination_args,
+    )
+
+    shared_users_query = MbaUser.query
+    if user_search:
+        user_search_like = f"%{user_search}%"
+        shared_users_query = shared_users_query.filter(
+            or_(
+                MbaUser.email.ilike(user_search_like),
+                MbaUser.first_name.ilike(user_search_like),
+                MbaUser.last_name.ilike(user_search_like),
+                MbaUser.full_name.ilike(user_search_like),
+            )
+        )
+    if user_access_filter == "mba":
+        shared_users_query = shared_users_query.filter(MbaUser.mba_access.is_(True), MbaUser.ethics_access.is_(False))
+    elif user_access_filter == "ethics":
+        shared_users_query = shared_users_query.filter(MbaUser.mba_access.is_(False), MbaUser.ethics_access.is_(True))
+    elif user_access_filter == "both":
+        shared_users_query = shared_users_query.filter(MbaUser.mba_access.is_(True), MbaUser.ethics_access.is_(True))
+    elif user_access_filter == "none":
+        shared_users_query = shared_users_query.filter(MbaUser.mba_access.is_(False), MbaUser.ethics_access.is_(False))
+    user_pagination_args = request_query_args({"user_page", "user_per_page"})
+    user_pagination_args["panel"] = "users"
+    shared_users, user_pagination = paginate_query(
+        shared_users_query.order_by(MbaUser.created_at.desc(), MbaUser.id.desc()),
+        user_page,
+        user_per_page,
+        "mba.admin_dashboard",
+        page_param="user_page",
+        per_page_param="user_per_page",
+        base_args=user_pagination_args,
+    )
+    shared_user_access_counts = {
+        "all": MbaUser.query.count(),
+        "mba": MbaUser.query.filter(MbaUser.mba_access.is_(True), MbaUser.ethics_access.is_(False)).count(),
+        "ethics": MbaUser.query.filter(MbaUser.mba_access.is_(False), MbaUser.ethics_access.is_(True)).count(),
+        "both": MbaUser.query.filter(MbaUser.mba_access.is_(True), MbaUser.ethics_access.is_(True)).count(),
+        "none": MbaUser.query.filter(MbaUser.mba_access.is_(False), MbaUser.ethics_access.is_(False)).count(),
+    }
     supervisor_pool_candidates = (
         MbaProject.query.options(
             joinedload(MbaProject.documents),
@@ -746,8 +915,18 @@ def admin_dashboard():
         disciplines=disciplines,
         projects=projects,
         students=students,
+        student_pagination=student_pagination,
         supervisors=supervisors,
+        supervisor_pagination=supervisor_pagination,
         examiners=examiners,
+        assessor_pagination=assessor_pagination,
+        shared_users=shared_users,
+        user_pagination=user_pagination,
+        shared_access_mode_label=_shared_access_mode_label,
+        shared_access_mode_key=_shared_access_mode_key,
+        user_search=user_search,
+        user_access_filter=user_access_filter,
+        shared_user_access_counts=shared_user_access_counts,
         suggestions_by_project=suggestions_by_project,
         invitation_state_by_project=invitation_state_by_project,
         selected_view=selected_view,
@@ -791,6 +970,40 @@ def admin_dashboard():
         assessor_hr_documents_sent_to=assessor_hr_documents_sent_to,
         supervisor_pool_release_count=len(supervisor_pool_release_candidates),
         supervisor_pool_available_count=len(supervisor_pool_available_projects),
+    )
+
+
+@mba_bp.route("/admin-users/access", methods=["POST"])
+@login_required
+def admin_user_access_action():
+    if not require_mba_role(MbaRole.ADMIN.value, MbaRole.MAIN_ADMIN.value):
+        return redirect(role_landing_url())
+
+    user_id = parse_positive_int(request.form.get("user_id"), 0)
+    access_mode = (request.form.get("access_mode") or "").strip().lower()
+    if access_mode not in {"mba", "ethics", "both", "none"}:
+        flash("Select a valid access mode.", "error")
+        return redirect(url_for("mba.admin_dashboard", panel="users"))
+
+    user = db.session.get(MbaUser, user_id)
+    if not user:
+        flash("User not found.", "error")
+        return redirect(url_for("mba.admin_dashboard", panel="users"))
+
+    if user.id == current_user.id and access_mode not in {"mba", "both"}:
+        flash("You cannot revoke your own MBA admin access from this screen.", "error")
+        return redirect(url_for("mba.admin_dashboard", panel="users"))
+
+    _apply_shared_access_mode(user, access_mode)
+    db.session.commit()
+    flash(f"Updated access for {user.email} to {_shared_access_mode_label(user)}.", "success")
+    return redirect(
+        url_for(
+            "mba.admin_dashboard",
+            panel="users",
+            user_q=(request.form.get("user_q") or "").strip() or None,
+            user_access=(request.form.get("user_access") or "").strip().lower() or None,
+        )
     )
 
 

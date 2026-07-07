@@ -1,0 +1,646 @@
+/* === BASE RESET === */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+  
+  body {
+    font-family: 'Segoe UI', sans-serif;
+    background-color: #f9f9f9;
+    color: #022169;
+    /* JBS Navy */
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+  
+  /* === NAVBAR === */
+  .navbar {
+    background-color: #939598;
+    /* JBS Navy */
+    padding: 1rem;
+    color: white;
+  }
+  
+  .nav-content {
+    max-width: 1100px;
+    margin: auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+  }
+  
+  .logo {
+    height: 50px;
+    object-fit: contain;
+  }
+  
+  .nav-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: white;
+  }
+  
+  /* === MAIN CONTAINER === */
+  .main-content,
+  .auth-container,
+  .container {
+    max-width: 1500px;
+    margin: 2rem auto;
+    background: white;
+    padding: 2.5rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+  }
+  
+  /* === HEADINGS === */
+  h2,
+  h4 {
+    color: #022169;
+    /* JBS Navy */
+    margin-bottom: 1rem;
+  }
+  
+  h4 {
+    font-size: 1rem;
+    margin-top: 1.5rem;
+  }
+  
+  .centered-text {
+    text-align: center;
+  }
+  
+  /* === FORMS === */
+  form input,
+  form select,
+  form textarea {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 1rem;
+    border: 1px solid #DCDDDE;
+    /* Light Grey */
+    border-radius: 8px;
+    background-color: #fdfdfd;
+    transition: border 0.3s ease;
+  }
+  
+  form input:focus,
+  form select:focus,
+  form textarea:focus {
+    border-color: #00B6B5;
+    /* Teal */
+    outline: none;
+  }
+  
+  /* === BUTTONS === */
+  button {
+    width: 100%;
+    padding: 12px;
+    background-color: #F26522;
+    /* JBS Orange */
+    color: white;
+    font-weight: bold;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+    font-size: 1rem;
+  }
+  
+  button:hover {
+    background-color: #d9541e;
+    /* Slightly darker orange */
+  }
+  
+  button:disabled {
+    background-color: #939598;
+    /* Grey */
+    cursor: not-allowed;
+  }
+  
+  /* === VIDEO BOX === */
+  .video-box {
+    margin-bottom: 2rem;
+  }
+  
+  .confirm-check {
+    margin-top: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 500;
+  }
+  
+  /* === SWITCH LINKS === */
+  .switch-link {
+    text-align: center;
+    margin-top: 1rem;
+    font-size: 0.9rem;
+  }
+  
+  .switch-link a {
+    color: #4F2365;
+    /* JBS Purple */
+    text-decoration: none;
+  }
+  
+  .switch-link a:hover {
+    text-decoration: underline;
+  }
+  
+  /* === FOOTER === */
+  .footer {
+    background-color: #939598;
+    color: white;
+    text-align: center;
+    padding: 1rem;
+    font-size: 0.85rem;
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    position: sticky;
+  }
+  
+  /* === RESPONSIVENESS === */
+  @media (max-width: 600px) {
+  
+    .main-content,
+    .auth-container,
+    .container {
+      margin: 1rem;
+      padding: 1.5rem;
+    }
+  
+    .nav-content {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+  }
+  
+  /* === FORM CARDS === */
+  .form-card-grid {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+  
+  .form-card {
+    flex: 1 1 30%;
+    background: #fdfdfd;
+    border: 2px solid #DCDDDE;
+    padding: 1rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: 0.3s;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+  }
+  
+  .form-card:hover {
+    border-color: #F26522;
+    background-color: #fff7f2;
+  }
+  
+  .form-card h5 {
+    margin-bottom: 0.5rem;
+    color: #022169;
+  }
+  
+  /* === TABLE === */
+  .status-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+  }
+  
+  .status-table th,
+  .status-table td {
+    padding: 12px;
+    border: 1px solid #DCDDDE;
+    text-align: left;
+  }
+  
+  .status-table th {
+    background-color: #f2f2f2;
+    color: #022169;
+  }
+  
+  /* === NOTIFICATIONS === */
+  .notification-box {
+    margin-top: 2rem;
+    padding: 1rem;
+    background: #f5f9ff;
+    border-left: 5px solid #00B6B5;
+    border-radius: 8px;
+  }
+  
+  .notification-box ul {
+    padding-left: 1.2rem;
+  }
+  
+  .notification-box li {
+    margin-bottom: 0.5rem;
+    color: #333;
+  }
+  
+  /* === LOGOUT BUTTON === */
+  .btn-logout {
+    display: inline-block;
+    padding: 12px 24px;
+    background-color: #e85f1b;
+    color: white;
+    text-decoration: none;
+    font-weight: bold;
+    border-radius: 8px;
+  }
+  
+  .btn-logout:hover {
+    background-color: #a50c38;
+  }
+  
+  @media (max-width: 768px) {
+  
+    .main-content,
+    .auth-container,
+    .container {
+      padding: 1.5rem;
+      margin: 1rem;
+      max-width: 95vw;
+    }
+  
+    .form-card-grid {
+      flex-direction: column;
+    }
+  }
+  
+  /* === POPUP MODAL === */
+  .modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(214, 222, 242, 0.85);
+    /* JBS Navy with transparency */
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 999;
+  }
+  
+  .modal-content {
+    background: white;
+    padding: 2rem;
+    border-radius: 12px;
+    text-align: center;
+    max-width: 400px;
+    width: 90%;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+  }
+  
+  .modal-content h3 {
+    color: #022169;
+    margin-bottom: 1rem;
+  }
+  
+  .modal-content button {
+    margin-top: 1.5rem;
+    padding: 10px 20px;
+    background-color: #F26522;
+    /* JBS Orange */
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  
+  .modal-content button:hover {
+    background-color: #d9541e;
+  }
+  
+  .modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    display: none;
+    width: 100%;
+    height: 100%;
+    background: rgba(228, 232, 239, 0.85);
+    justify-content: center;
+    align-items: center;
+    z-index: 999;
+  }
+  
+  .modal-content {
+    background: white;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    width: 90%;
+    max-width: 600px;
+  }
+  
+  /* =========== GENERAL FORM PAGE STYLES =========== */
+  .main-content input,
+  .main-content textarea,
+  .main-content select {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 1rem;
+    border: 1px solid #DCDDDE;
+    /* JBS Light Grey */
+    border-radius: 8px;
+    background-color: #ffffff;
+    font-size: 1rem;
+  }
+  
+  .main-content label {
+    font-weight: 600;
+    color: #022169;
+    /* JBS Navy */
+    margin-top: 1rem;
+    display: block;
+  }
+  
+  /* Button Styles (Reuse Existing) */
+  .approve-btn,
+  .revise-btn,
+  .btn-logout {
+    display: inline-block;
+    margin-top: 1rem;
+    margin-right: 0.5rem;
+    padding: 10px 20px;
+    font-weight: 600;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    text-decoration: none;
+    text-align: center;
+  }
+  
+  .approve-btn {
+    background-color: #27ae60;
+    color: white;
+  }
+  
+  .approve-btn:hover {
+    background-color: #1e874b;
+  }
+  
+  .revise-btn {
+    background-color: #1911ff;
+    color: #ffffff;
+  }
+  
+  .revise-btn:hover {
+    background-color: #a5adec;
+  }
+
+  
+  /* Responsive Adjustments */
+  @media (max-width: 600px) {
+  
+    .main-content input,
+    .main-content textarea {
+      font-size: 1rem;
+    }
+  
+    .approve-btn,
+    .revise-btn,
+    .btn-logout {
+      width: 100%;
+      margin-bottom: 1rem;
+    }
+  }
+  
+  .status-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+  }
+  
+  .status-table th,
+  .status-table td {
+    padding: 12px;
+    border: 1px solid #DCDDDE;
+    text-align: left;
+  }
+  
+  .status-table th {
+    background-color: #F2F2F2;
+    color: #022169;
+    font-weight: bold;
+  }
+  
+  /* Buttons */
+  .view-btn {
+    background-color: #00B6B5;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-block;
+  }
+  
+  .view-btn:hover {
+    background-color: #029c9c;
+  }
+  
+  
+  /* Document link */
+  .doc-link {
+    color: #4F2365;
+    text-decoration: underline;
+    font-weight: 500;
+  }
+  
+  /* Badges */
+  .badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: white;
+  }
+  
+  .status-pending {
+    background-color: #F26522;
+  }
+  
+  .status-approved {
+    background-color: #27ae60;
+  }
+  
+  .status-returned {
+    background-color: #CE0F46;
+  }
+  
+  .download-list {
+    list-style: none;
+    padding-left: 0;
+    margin-top: 1rem;
+  }
+  
+  .download-list li {
+    margin-bottom: 0.75rem;
+    font-size: 1rem;
+  }
+  
+  .download-list a {
+    text-decoration: underline;
+    color: #022169;
+    font-weight: 500;
+  }
+  
+  .download-list a:hover {
+    color: #00B6B5;
+  }
+  
+  .status-high {
+    background-color: #CE0F46;
+    /* Deep pink/red */
+  }
+  
+  .status-medium {
+    background-color: #FFCB05;
+    /* JBS Yellow */
+    color: #022169;
+  }
+  
+  .status-low {
+    background-color: #00B6B5;
+  }
+  
+  .status-reviewed {
+    background-color: #27ae60;
+  }
+  
+  .status-pending {
+    background-color: #F26522;
+  }
+  
+  .badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: white;
+  }
+  
+  .review-field {
+    background: #f9f9f9;
+    border: 1px solid #DCDDDE;
+    padding: 12px;
+    border-radius: 6px;
+    margin-bottom: 1rem;
+    font-size: 1rem;
+  }
+  
+  form label {
+    font-weight: 600;
+    margin-top: 1rem;
+    display: block;
+    color: #022169;
+  }
+  
+  .form-wrapper {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+  
+  .main-content form {
+    padding: 2rem;
+    background: #ffffff;
+    max-width: 800px;
+    margin: 2rem auto;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+  }
+  
+  .main-content form label {
+    display: block;
+    margin-top: 1.2rem;
+    font-weight: bold;
+    color: #022169;
+  }
+  
+  .main-content form input, 
+  .main-content form textarea, 
+  .main-content form select {
+    width: 100%;
+    padding: 10px;
+    margin-top: 0.5rem;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+  }
+  
+  .form-note {
+    margin-top: 1.5rem;
+    background: #f2f2f2;
+    padding: 1rem;
+    border-radius: 8px;
+  }
+  
+  .upload-instructions {
+    padding-left: 1.5rem;
+    list-style: disc;
+  }
+  
+  .progress-bar {
+    background: #e0e0e0;
+    border-radius: 8px;
+    height: 20px;
+    margin: 0;
+  }
+  
+  .progress {
+    background-color: #00B6B5;
+    height: 100%;
+    border-radius: 8px;
+    text-align: center;
+    color: white;
+    font-weight: bold;
+    line-height: 20px;
+  }
+  
+  .question-block {
+    margin-top: 1.5rem;
+  }
+  
+  .question-block label {
+    font-weight: bold;
+    display: block;
+    margin-bottom: 0.5rem;
+  }
+  
+  .yes-no {
+    display: flex;
+    gap: 1rem;
+    margin-top: 0.5rem;
+  }
+  
+  .form-navigation {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 2rem;
+  }
+
+  .upload-instructions {
+    padding-left: 1.5rem;
+    list-style: disc;
+    margin-bottom: 1rem;
+  }
+  
+  input[type="file"] {
+    margin-top: 0.5rem;
+    margin-bottom: 1rem;
+  }
+  
+  
+  
+  
+  

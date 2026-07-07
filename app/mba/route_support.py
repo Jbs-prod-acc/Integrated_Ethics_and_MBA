@@ -7900,8 +7900,6 @@ def mba_required_signature_types(user):
             USER_SIGNATURE_DIRECTOR_OF_SCHOOL,
             USER_SIGNATURE_EXECUTIVE_DEAN,
         )
-    if role in {MbaRole.ADMIN.value, MbaRole.MAIN_ADMIN.value}:
-        return (USER_SIGNATURE_PRIMARY,)
     if role in {
         MbaRole.STUDENT.value,
         MbaRole.SCHOLAR.value,
@@ -7927,13 +7925,18 @@ def mba_profile_signature_label(user, signature_type):
 
 def mba_profile_signature_slots(user):
     slots = []
-    for signature_type in mba_required_signature_types(user):
+    role = getattr(user, "role", None)
+    signature_types = mba_required_signature_types(user)
+    required_types = set(signature_types)
+    if role in {MbaRole.ADMIN.value, MbaRole.MAIN_ADMIN.value}:
+        signature_types = (USER_SIGNATURE_PRIMARY,)
+    for signature_type in signature_types:
         label = mba_profile_signature_label(user, signature_type)
         slots.append(
             {
                 "type": signature_type,
                 "label": label,
-                "required": True,
+                "required": signature_type in required_types,
             }
         )
     return slots

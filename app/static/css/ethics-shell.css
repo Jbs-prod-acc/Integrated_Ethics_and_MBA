@@ -104,6 +104,16 @@
   color: currentColor !important;
 }
 
+.ethics-sidebar__item .nav-icon {
+  width: 20px;
+  min-width: 20px;
+  text-align: center;
+  font-size: 1rem;
+  line-height: 1;
+  color: currentColor !important;
+  flex: 0 0 auto;
+}
+
 .ethics-sidebar__item span {
   display: block;
   line-height: 1.2;

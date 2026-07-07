@@ -1,0 +1,402 @@
+{% extends "chair-base-layout.html" %}
+
+{% block title %}Login Logs | JBS Ethics{% endblock %}
+
+{% block page_title %}User Login Logs{% endblock %}
+
+{% block header_content %}
+<p class="mb-0 text-muted">Track successful logins by user and date.</p>
+{% endblock %}
+
+{% block content %}
+<style>
+  .log-table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+    overflow-y: auto;
+  }
+
+  .log-table {
+    width: 100%;
+    min-width: 720px;
+    table-layout: auto;
+    font-size: 0.9rem;
+  }
+
+  .log-table.log-table-activity {
+    min-width: 1100px;
+    font-size: 0.85rem;
+  }
+
+  .log-table th,
+  .log-table td {
+    white-space: normal;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+    vertical-align: top;
+  }
+
+  .log-table th:nth-child(1),
+  .log-table td:nth-child(1) {
+    min-width: 180px;
+  }
+
+  .log-table th:nth-child(2),
+  .log-table td:nth-child(2) {
+    min-width: 220px;
+  }
+
+  .log-table th:nth-child(3),
+  .log-table td:nth-child(3) {
+    min-width: 120px;
+  }
+
+  .log-table th:nth-child(4),
+  .log-table td:nth-child(4) {
+    min-width: 180px;
+  }
+
+  .log-table.log-table-activity th:nth-child(1),
+  .log-table.log-table-activity td:nth-child(1) {
+    min-width: 160px;
+  }
+
+  .log-table.log-table-activity th:nth-child(2),
+  .log-table.log-table-activity td:nth-child(2) {
+    min-width: 120px;
+  }
+
+  .log-table.log-table-activity th:nth-child(3),
+  .log-table.log-table-activity td:nth-child(3) {
+    min-width: 160px;
+  }
+
+  .log-table.log-table-activity th:nth-child(4),
+  .log-table.log-table-activity td:nth-child(4) {
+    min-width: 160px;
+  }
+
+  .log-table.log-table-activity th:nth-child(5),
+  .log-table.log-table-activity td:nth-child(5) {
+    min-width: 160px;
+  }
+
+  .log-table.log-table-activity th:nth-child(6),
+  .log-table.log-table-activity td:nth-child(6) {
+    min-width: 110px;
+  }
+
+  .log-table.log-table-activity th:nth-child(7),
+  .log-table.log-table-activity td:nth-child(7) {
+    min-width: 320px;
+  }
+
+  .log-table td pre {
+    white-space: pre-wrap;
+    word-break: break-word;
+    margin: 0;
+    font-size: 0.85rem;
+  }
+
+  @media (max-width: 1200px) {
+    .log-table {
+      font-size: 0.82rem;
+    }
+
+    .log-table.log-table-activity {
+      font-size: 0.78rem;
+    }
+  }
+</style>
+<!-- Inactive Users Table with Pagination -->
+<div class="card shadow-sm mb-4">
+  <div class="card-body">
+    <h5>Inactive Users Overview</h5>
+    <form method="get" action="{{ url_for('admin_login_logs') }}" class="row g-2 mb-3 align-items-end">
+      <input type="hidden" name="log_page" value="{{ log_page }}">
+      <input type="hidden" name="log_per_page" value="{{ log_per_page }}">
+      <input type="hidden" name="iu_page" value="1">
+      <input type="hidden" name="iu_per_page" value="{{ iu_per_page }}">
+      {% for k, v in filters.items() %}
+        <input type="hidden" name="{{ k }}" value="{{ v }}">
+      {% endfor %}
+      <div class="col-md-4">
+        <label for="iu_search" class="form-label">Search User</label>
+        <input
+          type="text"
+          id="iu_search"
+          name="search"
+          class="form-control"
+          list="user-name-suggestions"
+          placeholder="Name, email, student number, staff number, or user ID"
+          value="{{ filters.search or '' }}"
+        >
+      </div>
+      <div class="col-auto">
+        <label class="form-label">Inactive Only</label>
+        <select name="iu_inactive_only" class="form-select">
+          <option value="0" {% if not iu_inactive_only %}selected{% endif %}>No</option>
+          <option value="1" {% if iu_inactive_only %}selected{% endif %}>Yes</option>
+        </select>
+      </div>
+      <div class="col-auto">
+        <label class="form-label">Not logged in for (years)</label>
+        <input type="number" min="0" name="iu_years" class="form-control" value="{{ iu_years }}" placeholder="e.g. 5">
+      </div>
+      <div class="col-auto">
+        <label class="form-label">&nbsp;</label>
+        <button type="submit" class="btn btn-outline-primary w-100">Apply Filter</button>
+      </div>
+    </form>
+    <div class="log-table-wrapper" style="max-height: 350px;">
+      <table class="table table-striped table-bordered align-middle mb-0 log-table">
+        <thead>
+          <tr>
+            <th>User</th>
+            <th>Email</th>
+            <th>Role</th>
+            <th>Last Login</th>
+            <th>Inactive For</th>
+            <th>Account Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for entry in inactive_users %}
+          <tr>
+            <td>{{ entry.user.full_name or 'Unknown' }}</td>
+            <td>{{ entry.user.email or 'N/A' }}</td>
+            <td>{{ entry.user.role.value if entry.user.role else 'N/A' }}</td>
+            <td>
+              {% if entry.last_login %}
+                {{ entry.last_login.strftime('%Y-%m-%d %H:%M:%S') }}
+              {% else %}
+                Never
+              {% endif %}
+            </td>
+            <td>{{ entry.inactivity }}</td>
+            <td>
+              {% if entry.is_active %}
+                <span class="badge bg-success">Active</span>
+              {% else %}
+                <span class="badge bg-danger">Not Authenticated</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <!-- Pagination controls for inactive users -->
+    <nav aria-label="Inactive Users Pagination" class="mt-2">
+      <ul class="pagination justify-content-center">
+        <li class="page-item {% if iu_page == 1 %}disabled{% endif %}">
+          <a class="page-link" href="{{ url_for('admin_login_logs', iu_page=iu_page-1, iu_per_page=iu_per_page, log_page=log_page, log_per_page=log_per_page, **filters) }}">Previous</a>
+        </li>
+        {% for p in range(1, iu_pages+1) %}
+        <li class="page-item {% if p == iu_page %}active{% endif %}">
+          <a class="page-link" href="{{ url_for('admin_login_logs', iu_page=p, iu_per_page=iu_per_page, log_page=log_page, log_per_page=log_per_page, **filters) }}">{{ p }}</a>
+        </li>
+        {% endfor %}
+        <li class="page-item {% if iu_page == iu_pages %}disabled{% endif %}">
+          <a class="page-link" href="{{ url_for('admin_login_logs', iu_page=iu_page+1, iu_per_page=iu_per_page, log_page=log_page, log_per_page=log_per_page, **filters) }}">Next</a>
+        </li>
+      </ul>
+      <div class="text-center small text-muted">Page {{ iu_page }} of {{ iu_pages }} ({{ iu_total }} users)</div>
+    </nav>
+  </div>
+</div>
+
+<!-- Existing filter form and login logs table -->
+<div class="card shadow-sm mb-4">
+  <div class="card-body">
+    <form method="GET" action="{{ url_for('admin_login_logs') }}" class="row g-3 align-items-end">
+      <div class="col-md-4">
+        <label for="search" class="form-label">Search User</label>
+        <input
+          type="text"
+          id="search"
+          name="search"
+          class="form-control"
+          list="user-name-suggestions"
+          placeholder="Name, email, student number, staff number, or user ID"
+          value="{{ filters.search }}"
+        >
+      </div>
+      <div class="col-md-3">
+        <label for="start_date" class="form-label">Start Date</label>
+        <input
+          type="text"
+          id="start_date"
+          name="start_date"
+          class="form-control"
+          placeholder="dd/mm/yyyy"
+          value="{{ filters.start_date }}"
+        >
+        <div class="date-format-hint">Please enter the date in dd/mm/yyyy format.</div>
+      </div>
+      <div class="col-md-3">
+        <label for="end_date" class="form-label">End Date</label>
+        <input
+          type="text"
+          id="end_date"
+          name="end_date"
+          class="form-control"
+          placeholder="dd/mm/yyyy"
+          value="{{ filters.end_date }}"
+        >
+        <div class="date-format-hint">Please enter the date in dd/mm/yyyy format.</div>
+      </div>
+      <div class="col-md-2 d-flex gap-2">
+        <button type="submit" class="btn btn-primary w-100">Filter</button>
+        <a href="{{ url_for('admin_login_logs') }}" class="btn btn-outline-secondary w-100">Clear</a>
+      </div>
+    </form>
+  </div>
+</div>
+<div class="card shadow-sm">
+  <div class="card-body">
+    <datalist id="user-name-suggestions">
+      {% for name in user_name_suggestions %}
+        <option value="{{ name }}"></option>
+      {% endfor %}
+    </datalist>
+    <div class="log-table-wrapper" style="max-height: 350px;">
+      <table class="table table-striped table-bordered align-middle mb-0 log-table">
+        <thead>
+          <tr>
+            <th>User</th>
+            <th>Email</th>
+            <th>Role</th>
+            <th>Login Date/Time</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% if log_rows %}
+            {% for log, user in log_rows %}
+            <tr>
+              <td>{{ user.full_name or 'Unknown' }}</td>
+              <td>{{ user.email or 'N/A' }}</td>
+              <td>{{ user.role.value if user.role else 'N/A' }}</td>
+              <td>{{ log.timestamp.strftime('%Y-%m-%d %H:%M:%S') if log.timestamp else 'N/A' }}</td>
+            </tr>
+            {% endfor %}
+          {% else %}
+            <tr>
+              <td colspan="4" class="text-center text-muted">No login logs found for the selected filters.</td>
+            </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+    <!-- Pagination controls for login logs -->
+    <nav aria-label="Login Logs Pagination" class="mt-2">
+      <ul class="pagination justify-content-center">
+        <li class="page-item {% if log_page == 1 %}disabled{% endif %}">
+          <a class="page-link" href="{{ url_for('admin_login_logs', log_page=log_page-1, log_per_page=log_per_page, iu_page=iu_page, iu_per_page=iu_per_page, **filters) }}">Previous</a>
+        </li>
+        {% for p in range(1, log_pages+1) %}
+        <li class="page-item {% if p == log_page %}active{% endif %}">
+          <a class="page-link" href="{{ url_for('admin_login_logs', log_page=p, log_per_page=log_per_page, iu_page=iu_page, iu_per_page=iu_per_page, **filters) }}">{{ p }}</a>
+        </li>
+        {% endfor %}
+        <li class="page-item {% if log_page == log_pages %}disabled{% endif %}">
+          <a class="page-link" href="{{ url_for('admin_login_logs', log_page=log_page+1, log_per_page=log_per_page, iu_page=iu_page, iu_per_page=iu_per_page, **filters) }}">Next</a>
+        </li>
+      </ul>
+      <div class="text-center small text-muted">Page {{ log_page }} of {{ log_pages }} ({{ log_total }} log entries)</div>
+    </nav>
+  </div>
+</div>
+<div class="card shadow-sm mt-4">
+  <div class="card-body">
+    <h5>User Activity Logs</h5>
+    <form method="get" action="{{ url_for('admin_login_logs') }}" class="row g-2 mb-2 align-items-end">
+      <input type="hidden" name="log_page" value="{{ log_page }}">
+      <input type="hidden" name="log_per_page" value="{{ log_per_page }}">
+      <input type="hidden" name="iu_page" value="{{ iu_page }}">
+      <input type="hidden" name="iu_per_page" value="{{ iu_per_page }}">
+      {% for k, v in filters.items() %}
+        <input type="hidden" name="{{ k }}" value="{{ v }}">
+      {% endfor %}
+      <div class="col-md-4">
+        <label for="activity_search" class="form-label">Search User</label>
+        <input
+          type="text"
+          id="activity_search"
+          name="search"
+          class="form-control"
+          list="user-name-suggestions"
+          placeholder="Name, email, student number, staff number, or user ID"
+          value="{{ filters.search or '' }}"
+        >
+      </div>
+      <div class="col-auto">
+        <label class="form-label">Rows per page</label>
+        <select name="activity_per_page" class="form-select" onchange="this.form.submit()">
+          {% for size in [10, 20, 50, 100] %}
+          <option value="{{ size }}" {% if activity_per_page == size %}selected{% endif %}>{{ size }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-auto">
+        <label class="form-label">&nbsp;</label>
+        <button type="submit" class="btn btn-outline-primary w-100">Go</button>
+      </div>
+    </form>
+    <div class="log-table-wrapper" style="max-height: 350px;">
+      <table class="table table-striped table-bordered align-middle mb-0 log-table log-table-activity">
+        <thead>
+          <tr>
+            <th>User</th>
+            <th>Action</th>
+            <th>Page</th>
+            <th>Target User</th>
+            <th>Timestamp</th>
+            <th>Duration (s)</th>
+            <th>Details</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% if activity_rows %}
+            {% for activity, user, target_user in activity_rows %}
+            <tr>
+              <td>{{ user.full_name or 'Unknown' }}</td>
+              <td>{{ activity.action }}</td>
+              <td>{{ activity.page or '-' }}</td>
+              <td>{{ target_user.full_name if target_user else '-' }}</td>
+              <td>{{ activity.timestamp.strftime('%Y-%m-%d %H:%M:%S') if activity.timestamp else 'N/A' }}</td>
+              <td>{{ activity.duration_seconds or '-' }}</td>
+              <td>{% if activity.details %}<pre>{{ activity.details }}</pre>{% else %}-{% endif %}</td>
+            </tr>
+            {% endfor %}
+          {% else %}
+            <tr>
+              <td colspan="7" class="text-center text-muted">No activity logs found.</td>
+            </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+    <!-- Pagination controls for activity logs -->
+    <nav aria-label="Activity Logs Pagination" class="mt-2">
+      <ul class="pagination justify-content-center">
+        <li class="page-item {% if activity_page == 1 %}disabled{% endif %}">
+          <a class="page-link" href="{{ url_for('admin_login_logs', activity_page=activity_page-1, activity_per_page=activity_per_page, log_page=log_page, log_per_page=log_per_page, iu_page=iu_page, iu_per_page=iu_per_page, **filters) }}">Previous</a>
+        </li>
+        {% for p in range(1, activity_pages+1) %}
+        <li class="page-item {% if p == activity_page %}active{% endif %}">
+          <a class="page-link" href="{{ url_for('admin_login_logs', activity_page=p, activity_per_page=activity_per_page, log_page=log_page, log_per_page=log_per_page, iu_page=iu_page, iu_per_page=iu_per_page, **filters) }}">{{ p }}</a>
+        </li>
+        {% endfor %}
+        <li class="page-item {% if activity_page == activity_pages %}disabled{% endif %}">
+          <a class="page-link" href="{{ url_for('admin_login_logs', activity_page=activity_page+1, activity_per_page=activity_per_page, log_page=log_page, log_per_page=log_per_page, iu_page=iu_page, iu_per_page=iu_per_page, **filters) }}">Next</a>
+        </li>
+      </ul>
+      <div class="text-center small text-muted">Page {{ activity_page }} of {{ activity_pages }} ({{ activity_total }} activity logs)</div>
+    </nav>
+  </div>
+</div>
+<script src="{{ url_for('static', filename='js/datepicker-validation.js') }}"></script>
+{% endblock %}
+ 
+

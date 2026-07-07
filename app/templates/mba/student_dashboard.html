@@ -45,17 +45,17 @@
 
 <section class="quick-action-grid">
   <a href="{{ url_for('mba.download_manuscript_template') }}" class="quick-action-card quick-action-card--orange">
-    <span aria-hidden="true">D</span>
+    <i class="quick-action-card__icon fas fa-file-arrow-down" aria-hidden="true"></i>
     <strong>Capstone Manuscript Template</strong>
     <small>Download the required manuscript template.</small>
   </a>
   <a href="#create-capstone-project" class="quick-action-card quick-action-card--blue">
-    <span aria-hidden="true">N</span>
+    <i class="quick-action-card__icon fas fa-square-plus" aria-hidden="true"></i>
     <strong>New Project</strong>
     <small>Create a capstone project record.</small>
   </a>
   <a href="{{ url_for('mba.student_corrections') }}" class="quick-action-card quick-action-card--green">
-    <span aria-hidden="true">C</span>
+    <i class="quick-action-card__icon fas fa-file-pen" aria-hidden="true"></i>
     <strong>Corrections</strong>
     <small>Open response and corrections tasks.</small>
   </a>
@@ -79,7 +79,7 @@
       </p>
     </div>
   </div>
-  <a href="{{ url_for('mba.student_corrections') }}" class="primary-button">Open Corrections</a>
+  <a href="{{ url_for('mba.student_corrections') }}" class="primary-button"><i class="link-icon fas fa-arrow-up-right-from-square" aria-hidden="true"></i>Open Corrections</a>
 </section>
 {% endif %}
 
@@ -154,14 +154,14 @@
               {% set latest_jbs5 = jbs5_docs|last %}
               <span>Uploaded and visible to MBA Admin</span>
               <small>
-                <a href="{{ url_for('mba.download_project_document', project_id=project.id, doc_id=latest_jbs5.id) }}" class="text-link">{{ latest_jbs5.original_name }}</a>
+                <a href="{{ url_for('mba.download_project_document', project_id=project.id, doc_id=latest_jbs5.id) }}" class="text-link"><i class="link-icon fas fa-download" aria-hidden="true"></i>{{ latest_jbs5.original_name }}</a>
                 &mdash; {{ latest_jbs5.uploaded_at.strftime('%d %b %Y') }}
               </small>
             {% else %}
               <span>Missing</span>
               <small>Submitting JBS 5 sends the Capstone Project to MBA Admin automatically.</small>
               {% if project.project_status in ['created', 'admin_declined', 'jbs5_hdc_declined'] %}
-                <a href="{{ url_for('mba.fill_project_form', project_id=project.id, form_type='jbs5') }}" class="secondary-button small-button" style="margin-top:0.5rem;display:inline-block;">Fill JBS 5 Form</a>
+                <a href="{{ url_for('mba.fill_project_form', project_id=project.id, form_type='jbs5') }}" class="secondary-button small-button" style="margin-top:0.5rem;display:inline-block;"><i class="link-icon fas fa-file-circle-plus" aria-hidden="true"></i>Fill JBS 5 Form</a>
               {% endif %}
             {% endif %}
           </div>
@@ -169,9 +169,9 @@
           {% if jbs5_supervisor_signed %}
             <span class="muted" style="display:block;margin-bottom:0.75rem;">JBS5 has been signed by the supervisor and is locked for editing.</span>
           {% elif project.supervisor_title_change_requested_at and not project.supervisor_title_change_resolved_at %}
-            <a href="{{ url_for('mba.fill_project_form', project_id=project.id, form_type='jbs5') }}" class="secondary-button small-button" style="margin-bottom:0.75rem;display:inline-block;">Edit JBS 5 Form for Requested Title Changes</a>
+            <a href="{{ url_for('mba.fill_project_form', project_id=project.id, form_type='jbs5') }}" class="secondary-button small-button" style="margin-bottom:0.75rem;display:inline-block;"><i class="link-icon fas fa-pen-to-square" aria-hidden="true"></i>Edit JBS 5 Form for Requested Title Changes</a>
           {% elif project.project_status in ['created', 'admin_declined', 'jbs5_hdc_declined'] %}
-            <a href="{{ url_for('mba.fill_project_form', project_id=project.id, form_type='jbs5') }}" class="secondary-button small-button" style="margin-bottom:0.75rem;display:inline-block;">Complete JBS 5 and Submit to Admin</a>
+            <a href="{{ url_for('mba.fill_project_form', project_id=project.id, form_type='jbs5') }}" class="secondary-button small-button" style="margin-bottom:0.75rem;display:inline-block;"><i class="link-icon fas fa-paper-plane" aria-hidden="true"></i>Complete JBS 5 and Submit to Admin</a>
           {% endif %}
 
           {% if project.supervisor_accepted_at %}
@@ -222,7 +222,7 @@
                   </div>
                 {% endif %}
                 {% if not student_supervisor_submitted %}
-                  <a href="{{ url_for('mba.fill_project_form', project_id=project.id, form_type='supervisor_agreement') }}" class="primary-button small-button" style="display:inline-block;margin-top:0.5rem;">Fill Supervisor Agreement</a>
+                  <a href="{{ url_for('mba.fill_project_form', project_id=project.id, form_type='supervisor_agreement') }}" class="primary-button small-button" style="display:inline-block;margin-top:0.5rem;"><i class="link-icon fas fa-file-signature" aria-hidden="true"></i>Fill Supervisor Agreement</a>
                 {% endif %}
               </div>
 
