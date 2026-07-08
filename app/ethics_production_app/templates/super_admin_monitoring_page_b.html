@@ -98,8 +98,8 @@
                     </td>
                     <td>
                         {{item.supervisor}}<br>
-                        {% if item.ethics_supervisor_signature_date %}
-                            <small>Submitted: {{ item.ethics_supervisor_signature_date.strftime('%Y-%m-%d') }}</small>
+                        {% if item.ethics_signature_date %}
+                            <small>Submitted: {{ item.ethics_signature_date.strftime('%Y-%m-%d') }}</small>
                         {% elif item.supervisor_date %}
                             <small>Submitted: {{ item.supervisor_date.strftime('%Y-%m-%d') }}</small>
                         {% else %}
@@ -107,15 +107,15 @@
                         {% endif %}
                     </td>
                     <td>
-                        {% if item.ethics_supervisor_form_status %}
-                        {{item.ethics_supervisor_form_status}}<br>
+                        {% if item.ethics_form_status %}
+                        {{item.ethics_form_status}}<br>
                         {% elif item.status%}
                         {{item.status}}<br>
                         {% endif %}
                         {% if item.signature_date %}
                         Decision Date: {{item.signature_date}}
                         {% elif item.supervisor_sinature_date %}
-                        Decision Date: {{ item.ethics_supervisor_signature_date.strftime('%Y-%m-%d')}}
+                        Decision Date: {{ item.ethics_signature_date.strftime('%Y-%m-%d')}}
                         {% endif %}
                     </td>
                     <td>

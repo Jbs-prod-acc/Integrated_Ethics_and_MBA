@@ -66,8 +66,11 @@ def get_mounted_app():
 
     if str(app_dir) not in sys.path:
         sys.path.insert(0, str(app_dir))
+    project_root = app_dir.parent.parent
+    if str(project_root) not in sys.path:
+        sys.path.insert(0, str(project_root))
 
-    models_module = importlib.import_module("models")
+    models_module = importlib.import_module("app.models")
     models_module.Base.metadata.create_all(models_module.engine)
 
     spec = importlib.util.spec_from_file_location("ethics_production_runtime", app_file)

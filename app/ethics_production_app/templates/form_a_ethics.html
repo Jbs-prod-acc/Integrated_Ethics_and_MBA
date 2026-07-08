@@ -1441,7 +1441,7 @@
               value="{% if saved_review_date and '-' in saved_review_date %}{{ saved_review_date[:10] }}{% elif formA.review_signature_date %}{{ formA.review_signature_date.strftime('%Y-%m-%d') }}{% endif %}">
 
             <div class="date-format-hint">
-              Format: yyyy-mm-dd
+              
               {% if saved_review_date and '-' not in saved_review_date %}
               <br>
               <span class="text-muted">Saved date: {{ saved_review_date }}</span>
@@ -1513,7 +1513,7 @@
                 <label for="signature_date">Date:</label>
                 <input type="date" class="form-control" id="signature_date" name="signature_date"
                   placeholder="dd/mm/yyyy">
-                <div class="date-format-hint">Format: yyyy-mm-dd</div>
+                <div class="date-format-hint"></div>
               </div>
               <br>
 

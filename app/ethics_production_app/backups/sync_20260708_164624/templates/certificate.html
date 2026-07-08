@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Ethical Clearance Certificate</title>
+      <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+        body, html {
+            height: 100%;
+            margin: 0;
+            font-family: "Segoe UI", sans-serif;
+            background-color: #fdfdfd;
+        }
+
+        .container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 40px;
+            min-height: 100vh;
+        }
+
+        .certificate-content {
+            max-width: 800px;
+            background: white;
+            border: 1px solid #ccc;
+            padding: 40px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.1);
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .header img {
+            width: 100px;
+        }
+
+        .header h2, .header h3 {
+            margin: 0;
+        }
+
+        .header h2 {
+            font-size: 1.4rem;
+        }
+
+        .header h3 {
+            font-size: 1.2rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        table td {
+            padding: 8px 12px;
+            vertical-align: top;
+        }
+
+        .highlight {
+            font-weight: bold;
+            width: 30%;
+            background-color: #f0f0f0;
+        }
+
+        ol {
+            padding-left: 20px;
+        }
+
+        .signature {
+            margin-top: 30px;
+        }
+    </style>
+</head>
+<body>
+<form action="{{ url_for('certificate', id=certificate_details.form_id) }}" method="POST" style="margin-top: 30px;">
+<!-- Error Messages -->
+    {% if messages %}
+        <div id="alertMessage" class="alert alert-danger alert-dismissible fade show">
+            {% for message in messages %}
+                {{ message }}
+            {% endfor %}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    {% endif %}
+
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="container">
+    <div class="certificate-content">
+        <!-- Header Section -->
+        <div class="header">
+            <img src="{{ url_for('static', filename='img/uj.png') }}" alt="UJ JBS Logo">
+            <div>
+                <h2>JBS REC & Subcommittees</h2>
+                <h3>Johannesburg Business School Research Ethics Committee (JBSREC)</h3>
+            </div>
+        </div>
+
+        <!-- Body -->
+        <p>Dear <strong>{{certificate_details.applicant_name}}</strong>,</p>
+        
+        <h3><input type="text" name="certification_heading" style="width:80%;" placeholder="ETHICAL APPROVAL GRANTED FOR RESEARCH PROJECT"></h3>
+
+        <p>
+            This letter serves to confirm that the proposed research project indicated in the table below,
+            has been reviewed by the Johannesburg Business School Research Ethics Committee (JBSREC)
+            at the University of Johannesburg. Ethical clearance is granted for <input type="number" name="valid_years"  required placeholder="number of year(s)"> years,
+            from <strong>{% if certificate_details.certificate_issued %}{{certificate_details.certificate_issued.strftime('%Y-%m-%d')}}{% else %}<input type="date" name="certificate_issued" requred>{% endif%}</strong> to <input type="date" name="end_date" placeholder="specify the end date" required >.
+        </p>
+
+        <table>
+            <tr><td class="highlight">Applicant</td><td>{{certificate_details.applicant_name}}</td></tr>
+            <tr><td class="highlight">Supervisor</td><td>{% if certificate_details.supervisor%}{{certificate_details.supervisor}}{% elif certificate_details.supervisor_name%}{{certificate_details.supervisor_name}}{% endif%}</td></tr>
+            <tr><td class="highlight">Staff/Student number</td><td>{{certificate_details.student_number}}</td></tr>
+            <tr><td class="highlight">Title of Research</td><td>{% if certificate_details.study_title%}{{certificate_details.study_title}}{% elif certificate_details.project_title %} {{certificate_details.project_title}}{% endif%}</td></tr>
+            <!-- <tr><td class="highlight">Academic article/MCom</td><td>MCom</td></tr> -->
+            <tr><td class="highlight">Decision date</td><td>{% if certificate_details.certificate_issued %}{{certificate_details.certificate_issued.strftime('%Y-%m-%d')}}{% else %}<input type="date" name="certificate_issued" requred>{% endif%}</td></tr>
+            <tr><td class="highlight">Reviewers</td><td>JBS REC Members</td></tr>
+            <tr><td class="highlight">Ethical clearance code</td><td>{% if certificate_details.certificate_code %}{{certificate_details.certificate_code}}{% endif%}</td></tr>
+            <tr><td class="highlight">Rating of application</td><td>
+               <br> {% if certificate_details.rec_status=='Approved' or certificate_details.status=='Approved'%}
+            CODE 2
+            {% elif certificate_details.rec_status =='Approved with suggestions without re-submission' or certificate_details.status =='Approved with suggestions without re-submission'%}
+            CODE 2
+            {% elif certificate_details.rec_status=='Referred back' or certificate_details.status=='Referred back'%}
+            CODE 3
+            {% elif certificate_details.rec_status=='Disapproved, cannot re-submit' or certificate_details.status=='Disapproved, cannot re-submit'%}
+            CODE 4
+            {% endif %}
+            </td></tr>
+        </table>
+
+        <div class="conditions">
+            <p>The researcher may now commence with the study provided that:</p>
+            
+               <ol>
+                <li>The researcher ensures adherence to POPI Act.</li>
+                <li>The researcher ensures adherence to conditions of use of open source questionnaires.</li>
+                <li>The researcher ensures that the project adheres to ethical research requirements.</li>
+                <li>The researcher conducts the study as set out in the approval application.</li>
+                <li>The researcher ensures that the project adheres to all applicable legislation, scopes of practice, professional codes of conduct and scientific standards as they pertain to the field or study.</li>
+                <li>The researcher brings to the attention of the JBSREC any proposed changes, concerns that arise, and unexpected ethical management issues.</li>
+                <li>Any changes that can affect the study-related risks for participants or researchers must be reported to the JBSREC in writing.</li>
+                <li>All relevant permissions required to access data, organisations, etc. have been obtained.</li>
+                <li>No fieldwork activities may continue after the ethical clearance has expired. A request for an extension of ethical clearance can be made in writing to the JBSREC.</li>
+            </ol>
+        </div>
+
+        <div class="signature">
+            <p><strong>Date:</strong> {% if certificate_details.certificate_issued %}{{certificate_details.certificate_issued.strftime('%Y-%m-%d')}}{% else %}<input type="date" name="certificate_issued" requred>{% endif%}</p>
+            <!-- <p><strong>Name <input type="text" name="certificate_issuer" required></strong><br> -->
+               JBS Research Ethics Committee<br>
+               Email: <a href="mailto:user@example.com" class="text-primary">jbssubmissions@uj.ac.za</a>
+        </div>
+    </div>
+
+    
+</div>
+{% if not certificate_details.certificate_issued %}
+<button type="submit" 
+        style="padding: 10px 20px; background: #004785; color: white; text-decoration: none; border: none; border-radius: 5px; cursor: pointer; gap:1.5px;">
+        Create Certificate
+    </button>
+    {% endif %}
+    <a class="btn btn-warning ml-2" href="{{ url_for('modify_certificate', id=certificate_details.form_id) }}">Edit Certificate</a>
+    <a class="btn btn-primary ml-5" href="{{url_for('chair_landing')}}" class="btn btn-primary">Go Back</a>
+</form>
+<br>
+{% if certificate_details.certificate_issued and not certificate_details.certificate_received %}
+<form action="{{url_for('send_certificate',id=certificate_details.form_id)}}" method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button type="submit" class="btn btn-success">Send certificate</button>
+</form>
+{% endif%}
+<br>
+</body>
+</html>

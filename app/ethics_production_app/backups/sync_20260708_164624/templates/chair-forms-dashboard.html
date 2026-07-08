@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Ethics Admin Dashboard | JBS Ethics</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/supervisor.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/review.css') }}">
+  <style>
+    .status-pill {
+      padding: 5px 10px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      color: #fff;
+      text-align: center;
+      display: inline-block;
+    }
+
+    .approved {
+      background-color: #198754;
+      color: white;
+      padding: 0.5rem 0.5rem;
+      border-radius: 5px;
+    }
+
+    .minor-changes {
+      background-color: #f1c40f;
+      color: black;
+      padding: 0.5rem 0.5rem;
+      border-radius: 5px;
+    }
+
+    .resubmission {
+      background-color: #e67e22;
+      color: white;
+      padding: 0.5rem 0.5rem;
+      border-radius: 5px;
+    }
+
+    .rejected {
+      background-color: #e74c3c;
+      color: white;
+      padding: 0.5rem 0.5rem;
+      border-radius: 5px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="admin-wrapper">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <img src="/static/img/image.png" alt="UJ JBS Logo" class="sidebar-logo">
+        <h3>JBS Ethics Application</h3>
+      </div>
+   <nav class="sidebar-nav">
+      
+      {% if 'admin' == role|lower%}
+      <a href="{{url_for('chair_landing')}}" class="sidebar-link">
+        <i class="fas fa-clipboard-list"></i> Dashboard
+      </a>
+      <a href="{{url_for('admin_reassign_supervisors')}}" class="sidebar-link">
+        <i class="fas fa-user-gear"></i> Reassign Supervisors
+      </a>
+      <a href="{{url_for('admin_reassign_reviewers')}}" class="sidebar-link">
+        <i class="fas fa-users-gear"></i> Reassign Reviewers
+      </a>
+
+      <a href="{{url_for('reviewer_list')}}" class="sidebar-link">
+        <i class="fas fa-user"></i> Reviewer List
+      </a>
+
+      <a href="{{url_for('all_users')}}" class="sidebar-link">
+        <i class="fas fa-users-cog"></i> User Management
+      </a>
+      <a href="{{ url_for('admin_status_monitor') }}" class="sidebar-link"><i class="fas fa-filter"></i> Admin Status Monitor</a>
+      <a class="dropdown-toggle" href="#" data-bs-toggle="collapse" data-bs-target="#monitoringFormsAdmin">
+            <i class="fas fa-clipboard me-2"></i>Monitoring Forms
+        </a>
+      <div class="dropdown w-100">
+        <a class="dropdown-toggle" href="#" data-bs-toggle="collapse" data-bs-target="#monitoringFormsAdmin">
+            <i class="fas fa-clipboard me-2"></i>Monitoring Forms
+        </a>
+        <div class="collapse" id="monitoringFormsAdmin">
+            <a class="dropdown-item" href="{{ url_for('super_admin_monitoring_page_a') }}">Form A</a>
+            <a class="dropdown-item" href="{{ url_for('super_admin_monitoring_page_b') }}">Form B</a>
+            <a class="dropdown-item" href="{{ url_for('super_admin_monitoring_page_c') }}">Form C</a>
+        </div>
+      </div>
+      {% elif 'super_admin' == role|lower %}
+      <a href="{{url_for('chair_landing')}}" class="sidebar-link">
+        <i class="fas fa-clipboard-list"></i> Dashboard
+      </a>
+      <a href="{{url_for('admin_reassign_supervisors')}}" class="sidebar-link">
+        <i class="fas fa-user-gear"></i> Reassign Supervisors
+      </a>
+      <a href="{{url_for('admin_reassign_reviewers')}}" class="sidebar-link">
+        <i class="fas fa-users-gear"></i> Reassign Reviewers
+      </a>
+
+      <a href="{{url_for('reviewer_list')}}" class="sidebar-link">
+        <i class="fas fa-user"></i> Reviewer List
+      </a>
+
+      <a href="{{url_for('all_users')}}" class="sidebar-link">
+        <i class="fas fa-users-cog"></i> User Management
+      </a>
+      <a href="{{ url_for('admin_status_monitor') }}" class="sidebar-link"><i class="fas fa-filter"></i> Admin Status Monitor</a>
+      
+      <div class="dropdown w-100">
+        <a class="dropdown-toggle" href="#" data-bs-toggle="collapse" data-bs-target="#analyticsForms">
+            <i class="fas fa-chart-bar me-2"></i>Analytics Forms
+        </a>
+        <div class="collapse" id="analyticsForms">
+            <a class="dropdown-item" href="{{ url_for('super_admin_form_a') }}">Form A</a>
+            <a class="dropdown-item" href="{{ url_for('super_admin_form_b') }}">Form B</a>
+            <a class="dropdown-item" href="{{ url_for('super_admin_form_c') }}">Form C</a>
+        </div>
+    </div>
+
+    <div class="dropdown w-100">
+        <a class="dropdown-toggle" href="#" data-bs-toggle="collapse" data-bs-target="#monitoringForms">
+            <i class="fas fa-clipboard me-2"></i>Monitoring Forms
+        </a>
+        <div class="collapse" id="monitoringForms">
+            <a class="dropdown-item" href="{{ url_for('super_admin_monitoring_page_a') }}">Form A</a>
+            <a class="dropdown-item" href="{{ url_for('super_admin_monitoring_page_b') }}">Form B</a>
+            <a class="dropdown-item" href="{{ url_for('super_admin_monitoring_page_c') }}">Form C</a>
+        </div>
+    </div>
+      {% else %}
+      <a href="{{url_for('review_dashboard')}}" class="sidebar-link">
+        <i class="fas fa-clipboard-check"></i> My Reviews
+      </a>
+      {% endif %}
+      <a href="{{url_for('rec_dashboard')}}" class="sidebar-link">
+        <i class="fas fa-users"></i> Rec Team Dashboard
+      </a>
+      <a href="{{url_for('logout')}}" class="sidebar-link">
+        <i class="fas fa-sign-out-alt"></i> Logout
+      </a>
+
+    </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="admin-main">
+      <header class="topbar">
+        <h2>Ethics Application Overview</h2>
+      </header>
+
+      <section class="admin-content">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h3>Submitted Student Forms</h3>
+          {% if role and 'admin' == role|lower %}
+          <div>
+            <form method="POST" action="{{ url_for('send_missing_documents_reminder') }}" class="d-inline">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+              <button type="submit" class="btn btn-warning"
+                onclick="return confirm('Send reminder emails to all students with missing documents?')">
+                <i class="fas fa-envelope"></i> Send Missing Files Reminders
+              </button>
+            </form>
+          </div>
+          {% endif %}
+        </div>
+        {% if submitted_form %}
+        <!-- Table -->
+        <table class="status-table">
+          <h3>{{form_name}}</h3>
+          <thead>
+            <tr>
+              <th>Student Number</th>
+              <th>Student Name</th>
+              <th>Supervisor</th>
+              <th>Form Type</th>
+              <th>Student Submission Date</th>
+              <th>Supervisor Submission Date</th>
+              <th>Ethics Admin Submission Date</th>
+              <th>Reviwer Submission Date(s)</th>
+              <th>Review Status</th>
+              <th>Risk Level</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for form in submitted_form %}
+            {% set is_current_row = (current_form_id and form.form_id == current_form_id) %}
+            {% set awaiting_admin_review = is_current_row and (form.form_supervisor_status in ['Submitted',
+            'Resubmitted']) and not form.rejected_or_accepted %}
+            <tr>
+              <td>{{form.student_number}}</td>
+              <td>{{form.applicant_name}}</td>
+              <td>{% if form.supervisor%}{{form.supervisor}}{% elif form.supervisor_name%}{{form.supervisor_name}}{%
+                endif%}</td>
+              <td>{{form_name}}</td>
+              <td>{% if form.declaration_date%}{{form.declaration_date.strftime('%d/%m/%Y')}}{% elif
+                form.submission_date%}{{form.submission_date.strftime('%d/%m/%Y')}}{% elif
+                form.submitted_at%}{{form.submitted_at.strftime('%d/%m/%Y')}}{% elif form.created_at
+                %}{{form.created_at.strftime('%d/%m/%Y')}}{% endif%}</td>
+              <td>{% if form.supervisor_date %}{{form.supervisor_date.strftime('%d/%m/%Y')}}{% endif %}</td>
+              <td>{% if not awaiting_admin_review and form.ethics_supervisor_signature_date
+                %}{{form.ethics_supervisor_signature_date.strftime('%d/%m/%Y')}}{% elif not awaiting_admin_review and
+                form.review_signature_date %}{{form.review_signature_date.strftime('%d/%m/%Y')}}{% endif %}</td>
+              <td>
+                {% if form.review_date %}{{form.review_supervisor_signature}} : {{form.review_date}}{% endif %}
+                <br>
+                {% if form.review_date1 %}{{form.review_supervisor_signature1}} : {{form.review_date1}}{% endif %}
+              <td>
+                {% set review_comment = '' %}
+                {% set review_comment1 = '' %}
+                {% if form.form_review_comment in ['Approved with Minor Changes', 'Resubmission Required'] %}
+                {% set review_comment = form.form_review_comment %}
+                {% endif %}
+                {% if form.form_review_comment1 in ['Approved with Minor Changes', 'Resubmission Required'] %}
+                {% set review_comment1 = form.form_review_comment1 %}
+                {% endif %}
+                {# ðŸ–¨ï¸ Display the result if it was matched #}
+                {% if review_comment %}
+                <p class="btn btn-secondary text-white">Review Status: {{ review_comment }}</p>
+                {% endif %}
+                {% if review_comment1 %}
+                <p class="btn btn-secondary text-white">Review Status: {{ review_comment1 }}</p>
+
+                {% endif %}
+                <span class="status-pill approved m-2">
+                  <a href="{{url_for('ethics_view_feedback',id=form.form_id)}}"
+                    class="btn btn-sm btn-success text-white mt-2">View Feedback</a>
+                </span>
+                <br>
+                <span class="status-pill approved">
+                  {% set risk_level = (form.risk_level or form.risk_rating or '')|lower %}
+                  {% set assigned_reviewers = assigned_reviewer_count(form) %}
+                  {% set completed_reviews = completed_reviewer_count(form) %}
+                  {% if not is_current_row %}
+                  Previous version
+                  {% elif form.status == 'Submitted to Student for Corrections' %}
+                  Form was sent back to student
+                  {% elif form.submitted_to_rec and 'low' not in risk_level and not form.certificate_issued %}
+                  Form submitted to Rec
+
+                  {% elif form.review_recommendation == 'Approved' and
+                  form.review_recommendation1 == 'Approved' and not
+                  form.submitted_to_rec and 'low' not in risk_level %}
+                  Approved by both Reviewers
+                  <br>
+                  Awaiting Submission to REC
+                  {% elif form.review_recommendation == 'Approved' and
+                  form.review_recommendation1 == 'Approved' and not
+                  form.submitted_to_rec %}
+                  Approved by both Reviewers
+                  {% elif is_waiting_for_additional_reviewer(form) %}
+                  Awaiting for second reviewers feedback
+                  {% elif form.rejected_or_accepted and assigned_reviewers == 0 and not form.form_reviewed_by and not
+                  form.form_reviewed_by1 %}
+                  Awaiting review
+                  {% elif form.rejected_or_accepted and assigned_reviewers == 1 and completed_reviews == 0 %}
+                  Awaiting assigned reviewer feedback
+                  {% elif form.rejected_or_accepted and assigned_reviewers >= 1 and not form.form_reviewed_by and not
+                  form.form_reviewed_by1 %}
+                  Submitted to Reviewers
+                  {% elif assigned_reviewers >= 1 and not form.form_reviewed_by and not form.form_reviewed_by1 %}
+                  Submitted to Reviewers
+                  {% elif not form.supervisor_signature and form.review_date %}
+                  Rejected by Ethics Committee
+                  {% elif form.certificate_issued and form.certificate_received %}
+                  Certificate Issued
+                  {% elif form.certificate_issued and not form.certificate_received %}
+                  <form action="{{url_for('send_certificate',id=form.form_id)}}" method="post">
+                    <button type="submit" class="btn btn-success">Send certificate</button>
+                  </form>
+                  <br>
+                  {% elif form.review_status and form.review_status1 and form.rejected_or_accepted and
+                  form.recommendation=='Ready for submission' and form.supervisor_date and 'low' in risk_level %}
+                  <button type="button" class="btn btn-sm btn-success text-white open-certificate-status-modal" data-bs-toggle="modal" data-bs-target="#certificateStatusModal" data-action="{{ url_for('update_certificate_status', id=form.form_id) }}" data-form-label="{{ form_name }} for {{ form.full_name or form.applicant_name }}">
+                    Update Certificate Status
+                  </button>
+                  {% set review_comment = '' %}
+                  {% elif form.form_review_comment in ['Approved with Minor Changes', 'Resubmission Required'] %}
+                  {% set review_comment = form.form_review_comment %}
+                  {% elif form.form_review_comment1 in ['Approved with Minor Changes', 'Resubmission Required'] %}
+                  {% set review_comment = form.form_review_comment1 %}
+                  {# ðŸ–¨ï¸ Display the result if it was matched #}
+                  {% if review_comment %}
+                  <p>Review Status: {{ review_comment }}</p>
+                  {% endif %}
+                  <br>
+                  {% elif form.rejected_or_accepted and form.review_supervisor_signature and not
+                  form.certificate_issued%}
+                  Approved by Ethics Committee
+                  {% elif form.review_status %}
+                  Form was Approved by First Reviewer
+                  {% elif has_all_required_reviews(form) and 'low' not in risk_level %}
+                  All assigned reviewers approved the form
+                  <br>
+                  Awaiting Submission to REC
+                  {% else %}
+                  Awaiting review
+                  {% endif %}
+                </span>
+                <br>
+                {% if form.review_supervisor_signature%}
+                {{form.review_supervisor_signature}}: {{form.form_review_comment}}
+
+                {% endif %}
+                <br>
+                {% if form.review_supervisor_signature1%}
+                {{form.review_supervisor_signature1}}: {{form.form_review_comment1}}
+
+                {% endif %}
+              </td>
+              <td>{% if form.risk_level %}{{form.risk_level}}{% elif form.risk_rating %}{{ form.risk_rating}}{% endif%}
+              </td>
+              <td>
+                {% if not is_current_row %}
+                <a href="{{url_for('ethics_form_pdf',form_id=form.form_id,form_type=form_name)}}"
+                  class="btn btn-sm btn-success text-white">View Form</a>
+                {% elif has_dual_reviewer_approval(form) and not form.certificate_issued %}
+                <a href="{{url_for('ethics_form_pdf',form_id=form.form_id,form_type=form_name)}}"
+                  class="btn btn-sm btn-success text-white">View Form</a>
+                <br>
+                <button type="button" class="btn btn-sm btn-success text-white open-certificate-status-modal mt-4" data-bs-toggle="modal" data-bs-target="#certificateStatusModal" data-action="{{ url_for('update_certificate_status', id=form.form_id) }}" data-form-label="{{ form_name }} for {{ form.full_name or form.applicant_name }}">
+                    Update Certificate Status
+                </button>
+
+                {% elif form.certificate_received %}
+                ðŸŽ“ Certificate was issued
+                <br>
+                <a href="{{url_for('ethics_form_pdf',form_id=form.form_id,form_type=form_name)}}"
+                  class="btn btn-sm btn-success text-white">View Form</a>
+
+                {% else %}
+                <a href="{{url_for('chair_form_view',id=form.form_id,form_name=form_name)}}"
+                  class="btn btn-sm btn-success text-white">Review</a>
+                {% if is_current_row and not has_all_required_reviews(form) %}
+                <br>
+                <a href="{% if form_name == 'FORM A' %}{{ url_for('chair_forma_reassign_reviewers', form_id=form.form_id) }}{% elif form_name == 'FORM B' %}{{ url_for('chair_formb_reassign_reviewers', form_id=form.form_id) }}{% elif form_name == 'FORM C' %}{{ url_for('chair_formc_reassign_reviewers', form_id=form.form_id) }}{% endif %}"
+                  class="btn btn-sm btn-warning text-dark mt-2">
+                  {% if assigned_reviewer_count(form) > 0 %}Manage Reviewers{% else %}Assign Reviewers{% endif %}
+                </a>
+                {% endif %}
+                {% endif %}
+              </td>
+            </tr>
+
+            {% endfor %}
+            <hr>
+          </tbody>
+        </table>
+        {% else %}
+        No submissions
+        {% endif %}
+      </section>
+
+    </main>
+
+  </div>
+
+  <div class="modal fade" id="certificateStatusModal" tabindex="-1" aria-labelledby="certificateStatusModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <form method="post" id="certificateStatusModalForm">
+          <div class="modal-header">
+            <h5 class="modal-title" id="certificateStatusModalLabel">Confirm Final Status Submission</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <p class="mb-0" id="certificateStatusModalText">You are about to submit the student's final ethics status. This confirms that the ethics process has been completed and updates the certificate status.</p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-success">Submit Final Status</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- <footer class="footer">
+      <p>&copy; 2025 Johannesburg Business School | JBS Ethics System</p>
+    </footer> -->
+  <script>
+    const certificateStatusModal = document.getElementById('certificateStatusModal');
+    const certificateStatusModalForm = document.getElementById('certificateStatusModalForm');
+    const certificateStatusModalText = document.getElementById('certificateStatusModalText');
+
+    certificateStatusModal.addEventListener('show.bs.modal', function (event) {
+      const triggerButton = event.relatedTarget;
+      const action = triggerButton.getAttribute('data-action');
+      const formLabel = triggerButton.getAttribute('data-form-label') || 'this form';
+
+      certificateStatusModalForm.setAttribute('action', action);
+      certificateStatusModalText.textContent = `You are about to submit the final ethics status for ${formLabel}. This confirms that the student has completed the ethics process and updates the certificate status.`;
+    });
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>
+
+
+

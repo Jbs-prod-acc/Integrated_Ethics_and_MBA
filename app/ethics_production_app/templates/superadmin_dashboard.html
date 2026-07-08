@@ -195,7 +195,7 @@
 <body>
    <div class="sidebar">
     <div class="sidebar-header">
-        <img src="{{ url_for('static', filename='img/image.png') }}" alt="UJ JBS Logo" class="sidebar-logo">
+        <img src="/static/img/image.png" alt="UJ JBS Logo" class="sidebar-logo">
         <h3>JBS Ethics</h3>
     </div>
     <nav class="sidebar-nav">
@@ -203,14 +203,8 @@
       <a href="{{url_for('chair_landing')}}" class="sidebar-link">
         <i class="fas fa-clipboard-list"></i> Dashboard
       </a>
-      <a href="{{url_for('monitor')}}" class="sidebar-link">
-        <i class="fas fa-user me-2"></i>Student List
-      </a>
       <a href="{{url_for('admin_reassign_supervisors')}}" class="sidebar-link">
         <i class="fas fa-user-gear"></i> Reassign Supervisors
-      </a>
-      <a href="{{url_for('admin_reassign_reviewers')}}" class="sidebar-link">
-        <i class="fas fa-users-gear"></i> Reassign Reviewers
       </a>
       <a href="{{url_for('admin_student_password_resets')}}" class="sidebar-link">
         <i class="fas fa-key"></i> Student Password Resets
@@ -222,12 +216,6 @@
 
       <a href="{{url_for('all_users')}}" class="sidebar-link">
         <i class="fas fa-users-cog"></i> User Management
-      </a>
-      <a href="{{ url_for('admin_status_monitor') }}" class="sidebar-link">
-        <i class="fas fa-filter"></i> Admin Status Monitor
-      </a>
-      <a href="{{ url_for('archived_forms') }}" class="sidebar-link">
-        <i class="fas fa-box-archive"></i> Archived Forms
       </a>
       <div class="dropdown w-100">
         <a class="dropdown-toggle" href="#" data-bs-toggle="collapse" data-bs-target="#monitoringFormsAdmin">
@@ -243,14 +231,8 @@
       <a href="{{url_for('chair_landing')}}" class="sidebar-link">
         <i class="fas fa-clipboard-list"></i> Dashboard
       </a>
-      <a href="{{url_for('monitor')}}" class="sidebar-link">
-        <i class="fas fa-user me-2"></i>Student List
-      </a>
       <a href="{{url_for('admin_reassign_supervisors')}}" class="sidebar-link">
         <i class="fas fa-user-gear"></i> Reassign Supervisors
-      </a>
-      <a href="{{url_for('admin_reassign_reviewers')}}" class="sidebar-link">
-        <i class="fas fa-users-gear"></i> Reassign Reviewers
       </a>
       <a href="{{url_for('admin_student_password_resets')}}" class="sidebar-link">
         <i class="fas fa-key"></i> Student Password Resets
@@ -262,12 +244,6 @@
 
       <a href="{{url_for('all_users')}}" class="sidebar-link">
         <i class="fas fa-users-cog"></i> User Management
-      </a>
-      <a href="{{ url_for('admin_status_monitor') }}" class="sidebar-link">
-        <i class="fas fa-filter"></i> Admin Status Monitor
-      </a>
-      <a href="{{ url_for('archived_forms') }}" class="sidebar-link">
-        <i class="fas fa-box-archive"></i> Archived Forms
       </a>
       
       <div class="dropdown w-100">

@@ -92,28 +92,18 @@
 
               {% elif forma.certificate_issued and forma.certificate_received%}
               {% if forma.certificate_heading %}
-              <a href="{{ url_for('edited_certificate', id=forma.form_id) }}">View Certificate</a>
+              <!--<a href="{{ url_for('edited_certificate', id=forma.form_id) }}">View Certificate</a>
+            -->
+              Certificate Issued
               {% else %}
-              <a href="{{ url_for('view_certificate', id=forma.form_id) }}">View Certificate</a>
+              Certificate Issued
+              <!--<a href="{{ url_for('view_certificate', id=forma.form_id) }}">View Certificate</a>
+            -->
               {% endif %}
               {% else %}
               {{ get_supervisor_dashboard_status(forma) }}
               {% endif %}
-              {% set review_comment = '' %}
-              {% set review_comment1 = '' %}
-                {% if forma.form_review_comment in ['Approved','Approved with Minor Changes', 'Resubmission Required'] %}
-                  {% set review_comment = forma.form_review_comment %}
-                  {% endif %}
-                {% if forma.form_review_comment1 in ['Approved','Approved with Minor Changes', 'Resubmission Required'] %}
-                  {% set review_comment1 = forma.form_review_comment1 %}
-                  {% endif %}
-                {# 🖨️ Display the result if it was matched #}
-                  {% if review_comment %}
-                    <p>Review Status 1: {{ review_comment }}</p>
-                    {% endif %}
-                    {% if review_comment1%}
-                    <p>Review Status 2: {{ review_comment1 }}</p>
-                  {% endif %}
+              
             </span>
             <br>
             {% if forma_count > 1 %}
@@ -208,29 +198,19 @@
                 {% endif %}
               <br>
               {% elif formb.certificate_issued and formb.certificate_received%}
+              
               {% if formb.certificate_heading %}
               <a href="{{ url_for('edited_certificate', id=formb.form_id) }}">View Certificate</a>
               {% else %}
+              Certificate Issued
+              <!--
               <a href="{{ url_for('view_certificate', id=formb.form_id) }}">View Certificate</a>
+            -->
               {% endif %}
               {% else %}
               {{ get_supervisor_dashboard_status(formb) }}
               {% endif %}
-              {% set review_comment = '' %}
-              {% set review_comment1 = '' %}
-                {% if formb.form_review_comment in ['Approved','Approved with Minor Changes', 'Resubmission Required'] %}
-                  {% set review_comment = formb.form_review_comment %}
-                  {% endif %}
-                {% if formb.form_review_comment1 in ['Approved','Approved with Minor Changes', 'Resubmission Required'] %}
-                  {% set review_comment1 = formb.form_review_comment1 %}
-                  {% endif %}
-                {# 🖨️ Display the result if it was matched #}
-                  {% if review_comment %}
-                    <p>Review Status 1: {{ review_comment }}</p>
-                    {% endif %}
-                    {% if review_comment1%}
-                    <p>Review Status 2: {{ review_comment1 }}</p>
-                  {% endif %}
+              
             </span>
           <br>
             {% if formb_count > 1 %}
@@ -315,26 +295,15 @@
               {% if formc.certificate_heading %}
               <a href="{{ url_for('edited_certificate', id=formc.form_id) }}">View Certificate</a>
               {% else %}
+              Certificate Issued
+              <!--
               <a href="{{ url_for('view_certificate', id=formc.form_id) }}">View Certificate</a>
+            -->
               {% endif %}
               {% else %}
               {{ get_supervisor_dashboard_status(formc) }}
               {% endif %}
-              {% set review_comment = '' %}
-              {% set review_comment1 = '' %}
-                {% if formc.form_review_comment in ['Approved','Approved with Minor Changes', 'Resubmission Required'] %}
-                  {% set review_comment = formc.form_review_comment %}
-                  {% endif %}
-                {% if formc.form_review_comment1 in ['Approved','Approved with Minor Changes', 'Resubmission Required'] %}
-                  {% set review_comment1 = formc.form_review_comment1 %}
-                  {% endif %}
-                {# 🖨️ Display the result if it was matched #}
-                  {% if review_comment %}
-                    <p>Review Status 1: {{ review_comment }}</p>
-                    {% endif %}
-                    {% if review_comment1%}
-                    <p>Review Status 2: {{ review_comment1 }}</p>
-                  {% endif %}
+              
               </span>
               <br>
               {% if formc_count > 1 %}

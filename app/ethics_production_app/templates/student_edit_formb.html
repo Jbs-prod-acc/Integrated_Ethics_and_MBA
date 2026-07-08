@@ -494,7 +494,7 @@ try {
         
         declarationFields.forEach(f => formData.delete(f));
         console.log('[AUTOSAVE] Sending autosave request to /student_autosave_formb');
-        fetch("{{ url_for('student_autosave_formb') }}", {
+        fetch('/student_autosave_formb', {
           method: 'POST',
           body: formData,
         })

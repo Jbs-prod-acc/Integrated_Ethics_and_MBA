@@ -1,0 +1,533 @@
+{% extends "chair-base-layout.html" %}
+{% block title %}Enhanced Analytics Dashboard - Form {{ forma or formb or formc }}{% endblock %}
+{% block page_title %}Analytics Dashboard - Form {{ forma or formb or formc }}{% endblock %}
+{% block head %}
+<style>
+    /* Google Analytics-inspired styling */
+    .analytics-container {
+        background: #f8f9fa;
+        min-height: 100vh;
+        padding: 20px;
+    }
+    
+    .dashboard-header {
+        background: white;
+        padding: 24px;
+        margin-bottom: 24px;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        border-left: 4px solid #1f5582;
+    }
+    
+    .dashboard-title {
+        font-size: 28px;
+        font-weight: 600;
+        color: #1f5582;
+        margin: 0;
+        display: flex;
+        align-items: center;
+    }
+    
+    .dashboard-subtitle {
+        font-size: 14px;
+        color: #666;
+        margin: 8px 0 0 0;
+    }
+    
+    .kpi-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+    
+    .kpi-card {
+        background: white;
+        padding: 24px;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        border-left: 4px solid transparent;
+        transition: all 0.3s ease;
+    }
+    
+    .kpi-card:hover {
+        box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+        transform: translateY(-2px);
+    }
+    
+    .kpi-card.primary { border-left-color: #1f5582; }
+    .kpi-card.success { border-left-color: #28a745; }
+    .kpi-card.warning { border-left-color: #ffc107; }
+    .kpi-card.danger { border-left-color: #dc3545; }
+    .kpi-card.info { border-left-color: #17a2b8; }
+    
+    .kpi-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 12px;
+    }
+    
+    .kpi-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 16px;
+        font-size: 18px;
+        color: white;
+    }
+    
+    .kpi-icon.primary { background: #1f5582; }
+    .kpi-icon.success { background: #28a745; }
+    .kpi-icon.warning { background: #ffc107; }
+    .kpi-icon.danger { background: #dc3545; }
+    .kpi-icon.info { background: #17a2b8; }
+    
+    .kpi-title {
+        font-size: 14px;
+        color: #666;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 500;
+    }
+    
+    .kpi-value {
+        font-size: 32px;
+        font-weight: 700;
+        color: #333;
+        margin: 8px 0;
+    }
+    
+    .kpi-change {
+        font-size: 14px;
+        font-weight: 500;
+    }
+    
+    .kpi-change.positive { color: #28a745; }
+    .kpi-change.negative { color: #dc3545; }
+    .kpi-change.neutral { color: #666; }
+    
+    .charts-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+        gap: 24px;
+        margin-bottom: 30px;
+    }
+    
+    .chart-card {
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        overflow: hidden;
+        transition: all 0.3s ease;
+    }
+    
+    .chart-card:hover {
+        box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+    }
+    
+    .chart-header {
+        padding: 20px 24px 16px;
+        border-bottom: 1px solid #e9ecef;
+    }
+    
+    .chart-title {
+        font-size: 18px;
+        font-weight: 600;
+        color: #333;
+        margin: 0;
+    }
+    
+    .chart-subtitle {
+        font-size: 14px;
+        color: #666;
+        margin: 4px 0 0;
+    }
+    
+    .chart-body {
+        padding: 20px;
+    }
+    
+    .chart-full-width {
+        grid-column: 1 / -1;
+    }
+    
+    .interactive-chart {
+        min-height: 400px;
+    }
+    
+    .sunburst-container {
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        margin-bottom: 30px;
+        overflow: hidden;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    
+    .empty-state-icon {
+        font-size: 64px;
+        color: #ccc;
+        margin-bottom: 20px;
+    }
+    
+    .empty-state-title {
+        font-size: 24px;
+        font-weight: 600;
+        color: #666;
+        margin-bottom: 12px;
+    }
+    
+    .empty-state-text {
+        font-size: 16px;
+        color: #999;
+    }
+    
+    .tab-navigation {
+        display: flex;
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        margin-bottom: 20px;
+        overflow: hidden;
+    }
+    
+    .tab-btn {
+        flex: 1;
+        padding: 16px 24px;
+        background: transparent;
+        border: none;
+        font-size: 14px;
+        font-weight: 500;
+        color: #666;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border-bottom: 3px solid transparent;
+    }
+    
+    .tab-btn:hover {
+        background: #f8f9fa;
+        color: #333;
+    }
+    
+    .tab-btn.active {
+        color: #1f5582;
+        border-bottom-color: #1f5582;
+        background: #f8f9fa;
+    }
+    
+    @media (max-width: 768px) {
+        .analytics-container {
+            padding: 16px;
+        }
+        
+        .kpi-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .charts-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .dashboard-header {
+            padding: 20px;
+        }
+        
+        .dashboard-title {
+            font-size: 24px;
+        }
+    }
+</style>
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="analytics-container">
+    <!-- Dashboard Header -->
+    <div class="dashboard-header">
+        <h1 class="dashboard-title">
+            <i class="fas fa-chart-line" style="margin-right: 12px;"></i>
+            Form {{ forma or formb or formc or 'Analytics' }} Dashboard
+        </h1>
+        <p class="dashboard-subtitle">
+            Professional analytics and insights for ethics application Form {{ forma or formb or formc or 'Data' }}
+        </p>
+    </div>
+
+    {% if kpis %}
+    <!-- KPI Cards -->
+    <div class="kpi-grid">
+        <div class="kpi-card primary">
+            <div class="kpi-header">
+                <div class="kpi-icon primary">
+                    <i class="fas fa-file-alt"></i>
+                </div>
+                <div class="kpi-title">Total Applications</div>
+            </div>
+            <div class="kpi-value">{{ "{:,}".format(kpis.total_applications) }}</div>
+            <div class="kpi-change {% if kpis.growth_rate > 0 %}positive{% elif kpis.growth_rate < 0 %}negative{% else %}neutral{% endif %}">
+                <i class="fas {% if kpis.growth_rate > 0 %}fa-arrow-up{% elif kpis.growth_rate < 0 %}fa-arrow-down{% else %}fa-minus{% endif %}"></i>
+                {{ "{:.1f}".format(kpis.growth_rate) }}% this month
+            </div>
+        </div>
+
+        <div class="kpi-card success">
+            <div class="kpi-header">
+                <div class="kpi-icon success">
+                    <i class="fas fa-certificate"></i>
+                </div>
+                <div class="kpi-title">Certificates Issued</div>
+            </div>
+            <div class="kpi-value">{{ "{:,}".format(kpis.certificates_issued) }}</div>
+            <div class="kpi-change neutral">
+                {{ "{:.1f}".format(kpis.completion_rate) }}% completion rate
+            </div>
+        </div>
+
+        <div class="kpi-card info">
+            <div class="kpi-header">
+                <div class="kpi-icon info">
+                    <i class="fas fa-download"></i>
+                </div>
+                <div class="kpi-title">Certificates Received</div>
+            </div>
+            <div class="kpi-value">{{ "{:,}".format(kpis.certificates_received) }}</div>
+            <div class="kpi-change neutral">
+                {{ "{:.1f}".format((kpis.certificates_received / kpis.certificates_issued * 100) if kpis.certificates_issued > 0 else 0) }}% received
+            </div>
+        </div>
+
+        <div class="kpi-card warning">
+            <div class="kpi-header">
+                <div class="kpi-icon warning">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <div class="kpi-title">High Risk Applications</div>
+            </div>
+            <div class="kpi-value">{{ "{:,}".format(kpis.high_risk_count) }}</div>
+            <div class="kpi-change neutral">
+                {{ "{:.1f}".format((kpis.high_risk_count / kpis.total_applications * 100) if kpis.total_applications > 0 else 0) }}% of total
+            </div>
+        </div>
+
+        <div class="kpi-card primary">
+            <div class="kpi-header">
+                <div class="kpi-icon primary">
+                    <i class="fas fa-calendar-alt"></i>
+                </div>
+                <div class="kpi-title">This Month</div>
+            </div>
+            <div class="kpi-value">{{ "{:,}".format(kpis.this_month) }}</div>
+            <div class="kpi-change neutral">
+                New applications
+            </div>
+        </div>
+
+        <div class="kpi-card info">
+            <div class="kpi-header">
+                <div class="kpi-icon info">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <div class="kpi-title">Avg Processing Time</div>
+            </div>
+            <div class="kpi-value">{{ "{:.0f}".format(kpis.get('avg_processing_days', 0)) }}</div>
+            <div class="kpi-change neutral">
+                Days to complete
+            </div>
+        </div>
+    </div>
+
+    <!-- Interactive Charts Section -->
+    {% if sunburst_chart %}
+    <div class="sunburst-container">
+        <div class="chart-header">
+            <h3 class="chart-title">
+                <i class="fas fa-chart-pie" style="margin-right: 8px; color: #1f5582;"></i>
+                Application Flow Analysis - Sunburst Chart
+            </h3>
+            <p class="chart-subtitle">
+                Hierarchical view of application journey from submission to completion
+            </p>
+        </div>
+        <div class="chart-body">
+            <div class="interactive-chart">{{ sunburst_chart|safe }}</div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Tab Navigation -->
+    <div class="tab-navigation">
+        <button class="tab-btn active" onclick="showTab('overview')">
+            <i class="fas fa-chart-line"></i> Overview
+        </button>
+        <button class="tab-btn" onclick="showTab('timeline')">
+            <i class="fas fa-calendar-alt"></i> Timeline
+        </button>
+        <button class="tab-btn" onclick="showTab('risk')">
+            <i class="fas fa-shield-alt"></i> Risk Analysis
+        </button>
+        <button class="tab-btn" onclick="showTab('performance')">
+            <i class="fas fa-users"></i> Performance
+        </button>
+    </div>
+
+    <!-- Tab Content -->
+    <div id="overview-tab" class="tab-content">
+        <div class="charts-grid">
+            {% if risk_rating_distribution %}
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h3 class="chart-title">Risk Rating Distribution</h3>
+                    <p class="chart-subtitle">Applications categorized by risk level</p>
+                </div>
+                <div class="chart-body">{{ risk_rating_distribution|safe }}</div>
+            </div>
+            {% endif %}
+
+            {% if submissions_over_time %}
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h3 class="chart-title">Submissions Over Time</h3>
+                    <p class="chart-subtitle">Monthly application trends</p>
+                </div>
+                <div class="chart-body">{{ submissions_over_time|safe }}</div>
+            </div>
+            {% endif %}
+
+            {% if certificate_status %}
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h3 class="chart-title">Certificate Status</h3>
+                    <p class="chart-subtitle">Current certificate distribution</p>
+                </div>
+                <div class="chart-body">{{ certificate_status|safe }}</div>
+            </div>
+            {% endif %}
+
+            {% if review_recommendations %}
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h3 class="chart-title">Review Recommendations</h3>
+                    <p class="chart-subtitle">Reviewer decision patterns</p>
+                </div>
+                <div class="chart-body">{{ review_recommendations|safe }}</div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div id="timeline-tab" class="tab-content" style="display: none;">
+        {% if interactive_timeline %}
+        <div class="chart-card chart-full-width">
+            <div class="chart-header">
+                <h3 class="chart-title">
+                    <i class="fas fa-chart-line" style="margin-right: 8px; color: #1f5582;"></i>
+                    Interactive Timeline Analysis
+                </h3>
+                <p class="chart-subtitle">
+                    Detailed timeline view of submissions and processing patterns
+                </p>
+            </div>
+            <div class="chart-body">
+                <div class="interactive-chart">{{ interactive_timeline|safe }}</div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <div id="risk-tab" class="tab-content" style="display: none;">
+        {% if risk_analysis %}
+        <div class="chart-card chart-full-width">
+            <div class="chart-header">
+                <h3 class="chart-title">
+                    <i class="fas fa-shield-alt" style="margin-right: 8px; color: #dc3545;"></i>
+                    Advanced Risk Analysis
+                </h3>
+                <p class="chart-subtitle">
+                    Comprehensive risk assessment and patterns
+                </p>
+            </div>
+            <div class="chart-body">
+                <div class="interactive-chart">{{ risk_analysis|safe }}</div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <div id="performance-tab" class="tab-content" style="display: none;">
+        {% if reviewer_performance %}
+        <div class="chart-card chart-full-width">
+            <div class="chart-header">
+                <h3 class="chart-title">
+                    <i class="fas fa-users" style="margin-right: 8px; color: #28a745;"></i>
+                    Reviewer Performance Dashboard
+                </h3>
+                <p class="chart-subtitle">
+                    Comprehensive reviewer analytics and performance metrics
+                </p>
+            </div>
+            <div class="chart-body">
+                <div class="interactive-chart">{{ reviewer_performance|safe }}</div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    {% else %}
+    <!-- Empty State -->
+    <div class="empty-state">
+        <div class="empty-state-icon">
+            <i class="fas fa-chart-line"></i>
+        </div>
+        <h3 class="empty-state-title">No Data Available</h3>
+        <p class="empty-state-text">
+            There are no Form {{ forma or formb or formc }} applications to analyze yet.
+            Once applications are submitted, you'll see comprehensive analytics here.
+        </p>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+function showTab(tabName) {
+    // Hide all tab contents
+    document.querySelectorAll('.tab-content').forEach(content => {
+        content.style.display = 'none';
+    });
+    
+    // Remove active class from all buttons
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
+    // Show selected tab content
+    document.getElementById(tabName + '-tab').style.display = 'block';
+    
+    // Add active class to clicked button
+    event.target.classList.add('active');
+}
+
+// Initialize with overview tab
+document.addEventListener('DOMContentLoaded', function() {
+    showTab('overview');
+});
+
+// Resize Plotly charts on window resize
+window.addEventListener('resize', function() {
+    document.querySelectorAll('.interactive-chart').forEach(chart => {
+        if (chart.querySelector('.plotly-graph-div')) {
+            Plotly.Plots.resize(chart.querySelector('.plotly-graph-div'));
+        }
+    });
+});
+</script>
+{% endblock %}

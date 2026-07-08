@@ -104,15 +104,15 @@
                         {% endif %}
                     </td>
                     <td>
-                        {% if item.ethics_supervisor_form_status %}
-                        {{item.ethics_supervisor_form_status}}<br>
+                        {% if item.ethics_form_status %}
+                        {{item.ethics_form_status}}<br>
                         {% elif item.status%}
                         {{item.status}}<br>
                         {% endif %}
                         {% if item.signature_date %}
                         Decision Date: {{item.signature_date}}
-                        {% elif item.ethics_supervisor_signature_date %}
-                        Decision Date: {{ item.ethics_supervisor_signature_date.strftime('%Y-%m-%d')}}
+                        {% elif item.ethics_signature_date %}
+                        Decision Date: {{ item.ethics_signature_date.strftime('%Y-%m-%d')}}
                         {% endif %}
 
                     </td>

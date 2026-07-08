@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Form A – JBS Ethics Application</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="css/form_a.css" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/form_a.css') }}" />
+    <style>
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 1rem;
+      }
+
+      th,
+      td {
+        border: 1px solid #ccc;
+        padding: 0.75rem;
+        text-align: left;
+      }
+
+      .section {
+        margin: 2rem 0;
+      }
+
+      .save-btn {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 10px 20px;
+        background-color: #022169;
+        color: #fff;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-weight: bold;
+      }
+
+      label {
+        padding-bottom: 2px;
+      }
+
+    </style>
+  </head>
+
+  <body>
+    <!-- Navbar -->
+    <header class="navbar">
+      <div class="nav-content">
+        <img
+          src="{{ url_for('static',filename='img/image.png')}}"
+          alt="UJ JBS Logo"
+          class="logo uj"
+        />
+        <span class="nav-title"
+          >Form A – Section 3: Proposal Summary Sheet</span>
+
+        <!-- Logout -->
+        <div style="text-align: right">
+          <a href="{{url_for('logout')}}" class="btn-logout">Logout</a>
+        </div>
+      </div>
+    </header>
+
+    
+      <!-- Top Bar -->
+      <!-- <div class="form-header">
+        <button class="approve-btn">Save Draft</button>
+        <strong>Step 3 of 7</strong>
+      </div> -->
+
+ <main class="main-content">
+      <!-- Progress Bar -->
+      <div class="progress-bar">
+        <div class="progress-fill">42%</div>
+      </div>
+     
+      <h2>Section 3: Proposal Summary Sheet</h2>
+      <form action="{{url_for('form_a_sec3')}}" method="post" class="no-loading-indicator">
+        <!-- Main Content -->
+        
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="forma_id" value="{{ form_data.form_id if form_data and form_data.form_id else '' }}">
+        <div class="section">
+          <label>3.1 Title or provisional title of the research project:</label>
+          <input type="text" name="title_provision" placeholder="10 – 16 words" />
+
+          <label>3.2 Proposal abstract in nontechnical language and statement of research problem:</label>
+          <textarea name="abstract" rows="5" placeholder="Provide a non-technical summary and state the research problem"></textarea>
+
+          <label>3.3 Research Questions / Hypotheses:</label>
+          <textarea name="questions" rows="4" placeholder="List your main research questions or hypotheses"></textarea>
+
+          <label>3.4 Research Purpose and Objectives / Anticipated outcomes:</label>
+          <textarea name="purpose_objectives" rows="4" placeholder="State the purpose, objectives, and anticipated outcomes"></textarea>
+        </div>
+      
+        
+        <br>
+        
+
+        <h2>Section 4: Details of Proposed Research</h2>
+        <div class="section">
+          <label>4.1 Does your project involve organisations or institutions that need to grant permission for research activities?</label>
+          <div class="d-flex gap-4">  
+            <label class="form-check-label">
+              <input type="radio" name="grant_permission" value="No" class="form-check-input" required {% if form_data and (form_data.grant_permission|string|lower in ['no','false','0']) %}checked{% endif %}>
+              No
+            </label>
+            <label class="form-check-label">
+              <input type="radio" name="grant_permission" value="Yes" class="form-check-input" required {% if form_data and (form_data.grant_permission|string|lower in ['yes','true','1']) %}checked{% endif %}>
+              Yes
+            </label>
+          </div>
+          <div id="permission_table_wrapper" style="display:none; margin-top: 1rem;">
+          <p>Please complete the table below if permission is required.</p>
+          <table>
+            <thead>
+              <tr>
+                <th>Name of Organisation</th>
+                <th>Person Granting Permission & Contact</th>
+                <th>Role</th>
+                <th>Permission Granted?</th>
+              </tr>
+            </thead>
+            <tbody id="permission_table_body">
+              <tr>
+                <td><input type="text" name="org_name[]" placeholder="e.g., Department of Education" /></td>
+                <td><input type="text" name="org_contact[]" placeholder="e.g., Dr. John Doe, johndoe@example.com" /></td>
+                <td><input type="text" name="org_role[]" placeholder="e.g., Research Coordinator" /></td>
+                <td>
+                  <select name="org_permission[]">
+                    <option value="">-- Select --</option>
+                    <option value="Yes">Yes</option>
+                    <option value="No">No</option>
+                    <option value="Pending">Pending</option>
+                  </select>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <button type="button" id="addRowBtn" class="btn btn-secondary mt-2">Add Another Organisation</button>
+  </div>
+</div>
+
+          <label>4.2 Are any researchers affiliated with the organisations above?</label>
+
+          <div class="d-flex gap-4">
+            <label class="form-check-label">
+              <input type="radio" name="researcher_affiliation" value="No" class="form-check-input" required {% if form_data and (form_data.researcher_affiliation|string|lower in ['no','false','0']) %}checked{% endif %}>
+              No
+            </label>
+            <label class="form-check-label">
+              <input type="radio" name="researcher_affiliation" value="Yes" class="form-check-input" required {% if form_data and (form_data.researcher_affiliation|string|lower in ['yes','true','1']) %}checked{% endif %}>
+              Yes
+            </label>
+          </div>
+
+          <div id="affiliation_comment" style="display:none;" placeholder="Please provide details of the affiliation">
+            <textarea name="affiliation_details" rows="3" placeholder="Describe researcher’s affiliation to any listed organisation"></textarea>
+          </div>
+
+          <label>4.3 Does your research involve collectives or communities?
+            <p style="font-weight: normal;">(Group of people sharing social ties, similar interests and a geographic location)</p>
+          </label>
+          
+          <div class="d-flex gap-4">
+            <label class="form-check-label">
+              <input type="radio" name="collective_involvement" value="No" class="form-check-input" required {% if form_data and (form_data.collective_involvement|string|lower in ['no','false','0']) %}checked{% endif %}>
+              No
+            </label>
+            <label class="form-check-label">
+              <input type="radio" name="collective_involvement" value="Yes" class="form-check-input" required {% if form_data and (form_data.collective_involvement|string|lower in ['yes','true','1']) %}checked{% endif %}>
+              Yes
+            </label>
+          </div>
+            <div id="collective_comment" style="display:none;" placeholder="Please provide details of the collective/community involvement">
+              <textarea name="collective_details" rows="3" placeholder="Explain what measures you have taken to consult and engage with those communities and / or representative groups regarding your research project."></textarea>
+            </div>
+
+          <label>4.4 Is your project funded or sponsored?</label>
+          <div class="d-flex gap-4">
+            <label class="form-check-label">
+              <input type="radio" name="is_funded" value="No" class="form-check-input" required {% if form_data and (form_data.is_funded|string|lower in ['no','false','0']) %}checked{% endif %}> No
+            </label>
+            <label class="form-check-label">
+              <input type="radio" name="is_funded" value="Yes" class="form-check-input" required {% if form_data and (form_data.is_funded|string|lower in ['yes','true','1']) %}checked{% endif %}> Yes
+            </label>
+          </div>
+          <div id="funding_table" style="display: none;">
+          <p>Please complete the table below if your project is funded or sponsored.</p>
+          <table>
+            <thead>
+              <tr>
+                <th>Organisation Name</th>
+                <th>Contact Person & Details</th>
+                <th>Role</th>
+                <th>Funding Amount</th>
+              </tr>
+            </thead>
+            <tbody id="funding_body">
+              <tr>
+                <td><input type="text" name="fund_org[]" placeholder="e.g., NRF South Africa" /></td>
+                <td><input type="text" name="fund_contact[]" placeholder="e.g., Ms. Jane Doe, jane@nrf.ac.za" /></td>
+                <td><input type="text" name="fund_role[]" placeholder="e.g., Primary Sponsor" /></td>
+                <td><input type="text" name="fund_amount[]" placeholder="e.g., R100,000.00" /></td>
+
+              </tr>
+              <tr>
+                <td colspan="4">
+              <button type="button" class="btn btn-secondary mt-2" onclick="addFundingRow()">Add Another Funding Source</button>
+            </td>
+              </tr>
+            </tbody>
+          </table>
+          </div>
+
+          <label>4.5 Describe your arrangements regarding indemnity/compensation for adverse events:</label>
+          <textarea name="indemnity_arrangements" rows="3" required placeholder="Describe plans for indemnity or compensation in case of adverse events"></textarea>
+
+          <label>4.6 Has this proposal been submitted to another ethics committee?</label>
+          <textarea name="other_committee" rows="3" required placeholder="If yes, indicate the name of the institution and the outcome. If previously rejected, provide the reasons"></textarea>
+        </div>
+
+        <!-- Navigation Buttons -->        <!-- Autosave Indicator -->
+        <div id="autosave-status" style="position: fixed; top: 70px; right: 20px; padding: 8px 16px; background: #f0f0f0; border-radius: 4px; font-size: 14px; z-index: 1000;"></div>
+        <div class="form-navigation">
+          <a href="{{url_for('form_a_sec2')}}" class="revise-btn">⬅ Section 2</a>
+          <button type="submit" class="approve-btn">Next ➔ Section 4</button>
+        </div>
+      </form>
+    </main>
+
+    <!-- Footer -->
+ <footer class="footer">
+   
+</footer>
+<script>
+
+  // show/hide table
+  document.querySelectorAll('input[name="grant_permission"]').forEach(radio => {
+    radio.addEventListener('change', function () {
+      document.getElementById('permission_table_wrapper').style.display =
+        this.value === 'Yes' ? 'block' : 'none';
+      if (this.value !== 'Yes') {
+        document.querySelectorAll('#permission_table_body input').forEach(input => {
+          input.value = '';
+        });
+        document.querySelectorAll('#permission_table_body select[name="org_permission[]"]').forEach(select => {
+          select.value = '';
+        });
+      }
+    });
+  });
+
+  // 4.2 affiliation comment toggle
+  document.querySelectorAll('input[name="researcher_affiliation"]').forEach(radio => {
+    radio.addEventListener('change', function () {
+      document.getElementById('affiliation_comment').style.display = this.value === 'Yes' ? 'block' : 'none';
+    });
+  });
+
+  // 4.3 collective comment toggle
+  document.querySelectorAll('input[name="collective_involvement"]').forEach(radio => {
+    radio.addEventListener('change', function () {
+      document.getElementById('collective_comment').style.display = this.value === 'Yes' ? 'block' : 'none';
+    });
+  });
+
+  // 4.4 funding table toggle
+  document.querySelectorAll('input[name="is_funded"]').forEach(radio => {
+    radio.addEventListener('change', function () {
+      document.getElementById('funding_table').style.display = this.value === 'Yes' ? 'block' : 'none';
+    });
+  });
+
+  // Add funding row
+  function addFundingRow() {
+    const tbody = document.getElementById('funding_body');
+    const newRow = document.createElement('tr');
+    newRow.innerHTML = `
+      <td><input type="text" name="fund_org[]" placeholder="e.g., NRF South Africa" /></td>
+      <td><input type="text" name="fund_contact[]" placeholder="e.g., Ms. Jane Doe, jane@nrf.ac.za" /></td>
+      <td><input type="text" name="fund_role[]" placeholder="e.g., Primary Sponsor" /></td>
+      <td><input type="text" name="fund_amount[]" placeholder="e.g., R100,000.00" /></td>
+      <td><button type="button" class="remove-funding-row">✖</button></td>
+    `;
+    tbody.insertBefore(newRow, tbody.lastElementChild);
+  }
+
+  // remove funding row (event delegation)
+  const fundingBody = document.getElementById('funding_body');
+  if (fundingBody) {
+    fundingBody.addEventListener('click', (e) => {
+      if (e.target.classList.contains('remove-funding-row')) {
+        e.target.closest('tr').remove();
+      }
+    });
+  }
+
+  // add row
+document.getElementById('addRowBtn')?.addEventListener('click', function () {
+  const tbody = document.getElementById('permission_table_body');
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td><input type="text" name="org_name[]" placeholder="e.g., Department of Education" /></td>
+    <td><input type="text" name="org_contact[]" placeholder="e.g., Dr. John Doe, johndoe@example.com" /></td>
+    <td><input type="text" name="org_role[]" placeholder="e.g., Site Supervisor" /></td>
+    <td>
+      <select name="org_permission[]">
+        <option value="">-- Select --</option>
+        <option value="Yes">Yes</option>
+        <option value="No">No</option>
+        <option value="Pending">Pending</option>
+      </select>
+    </td>
+    <td><button type="button" class="remove-row">✖</button></td>
+  `;
+  tbody.appendChild(tr);
+});
+
+// remove row (event delegation)
+const permissionTableBody = document.getElementById('permission_table_body');
+if (permissionTableBody) {
+  permissionTableBody.addEventListener('click', (e) => {
+    if (e.target.classList.contains('remove-row')) {
+      e.target.closest('tr').remove();
+    }
+  });
+}
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('[FORM-A-SEC3] DOM ready');
+  const grantPermissionSelected = document.querySelector('input[name="grant_permission"]:checked');
+  if (grantPermissionSelected) {
+    document.getElementById('permission_table_wrapper').style.display =
+      grantPermissionSelected.value === 'Yes' ? 'block' : 'none';
+  }
+
+  const researcherAffSelected = document.querySelector('input[name="researcher_affiliation"]:checked');
+  if (researcherAffSelected) {
+    document.getElementById('affiliation_comment').style.display =
+      researcherAffSelected.value === 'Yes' ? 'block' : 'none';
+  }
+
+  const collectiveSelected = document.querySelector('input[name="collective_involvement"]:checked');
+  if (collectiveSelected) {
+    document.getElementById('collective_comment').style.display =
+      collectiveSelected.value === 'Yes' ? 'block' : 'none';
+  }
+
+  const fundedSelected = document.querySelector('input[name="is_funded"]:checked');
+  if (fundedSelected) {
+    document.getElementById('funding_table').style.display =
+      fundedSelected.value === 'Yes' ? 'block' : 'none';
+  }
+
+  const form = document.querySelector('form');
+  if (!form) {
+    console.warn('[FORM-A-SEC3] Form element not found; autosave not initialized');
+    return;
+  }
+  form.querySelectorAll('input[type="radio"]').forEach(radio => {
+    radio.addEventListener('mousedown', function() {
+      this.dataset.wasChecked = this.checked ? '1' : '0';
+    });
+    radio.addEventListener('click', function() {
+      if (this.dataset.wasChecked === '1') {
+        this.checked = false;
+        this.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+      delete this.dataset.wasChecked;
+    });
+  });
+  let autosaveTimeout = null;
+  const savingIndicator = document.getElementById('autosave-status');
+  const AUTOSAVE_DEBUG_SEC3 = true;
+  function debugLogSec3(...args) {
+    if (!AUTOSAVE_DEBUG_SEC3) return;
+    console.log('[FORM-A-SEC3]', ...args);
+  }
+  debugLogSec3('Autosave initialized');
+
+  const initialData = {{ {
+    'title_provision': form_data.title_provision if form_data else '',
+    'abstract': form_data.abstract if form_data else '',
+    'questions': form_data.questions if form_data else '',
+    'purpose_objectives': form_data.purpose_objectives if form_data else '',
+    'affiliation_details': form_data.affiliation_details if form_data else '',
+    'collective_details': form_data.collective_details if form_data else '',
+    'indemnity_arrangements': form_data.indemnity_arrangements if form_data else '',
+    'other_committee': form_data.other_committee if form_data else '',
+    'org_name': (form_data.org_name.split(',') if form_data and form_data.org_name else []),
+    'org_contact': (form_data.org_contact.split(',') if form_data and form_data.org_contact else []),
+    'org_role': (form_data.org_role.split(',') if form_data and form_data.org_role else []),
+    'org_permission': (form_data.org_permission.split(',') if form_data and form_data.org_permission else []),
+    'fund_org': (form_data.fund_org.split(',') if form_data and form_data.fund_org else []),
+    'fund_contact': (form_data.fund_contact.split(',') if form_data and form_data.fund_contact else []),
+    'fund_role': (form_data.fund_role.split(',') if form_data and form_data.fund_role else []),
+    'fund_amount': (form_data.fund_amount.split(',') if form_data and form_data.fund_amount else [])
+  } | tojson }};
+
+  function setFieldValue(name, value) {
+    const field = form.querySelector(`[name="${name}"]`);
+    if (field && value !== null && value !== undefined) {
+      field.value = value;
+    }
+  }
+
+  ['title_provision', 'abstract', 'questions', 'purpose_objectives', 'affiliation_details', 'collective_details', 'indemnity_arrangements', 'other_committee']
+    .forEach(name => setFieldValue(name, initialData[name] || ''));
+
+  function populateOrgTable() {
+    const rows = Math.max(initialData.org_name.length, initialData.org_contact.length, initialData.org_role.length, initialData.org_permission.length);
+    if (!rows) return;
+    const tbody = document.getElementById('permission_table_body');
+    tbody.innerHTML = '';
+    for (let i = 0; i < rows; i++) {
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td><input type="text" name="org_name[]" value="${(initialData.org_name[i] || '').replace(/"/g, '&quot;')}" placeholder="e.g., Department of Education" /></td>
+        <td><input type="text" name="org_contact[]" value="${(initialData.org_contact[i] || '').replace(/"/g, '&quot;')}" placeholder="e.g., Dr. John Doe, johndoe@example.com" /></td>
+        <td><input type="text" name="org_role[]" value="${(initialData.org_role[i] || '').replace(/"/g, '&quot;')}" placeholder="e.g., Site Supervisor" /></td>
+        <td>
+          <select name="org_permission[]">
+            <option value="Yes" ${(initialData.org_permission[i] || '') === 'Yes' ? 'selected' : ''}>Yes</option>
+            <option value="No" ${(initialData.org_permission[i] || '') === 'No' ? 'selected' : ''}>No</option>
+            <option value="Pending" ${(initialData.org_permission[i] || '') === 'Pending' ? 'selected' : ''}>Pending</option>
+          </select>
+        </td>
+        <td><button type="button" class="remove-row">✖</button></td>
+      `;
+      tbody.appendChild(row);
+    }
+  }
+
+  function populateFundTable() {
+    const rows = Math.max(initialData.fund_org.length, initialData.fund_contact.length, initialData.fund_role.length, initialData.fund_amount.length);
+    if (!rows) return;
+    const tbody = document.getElementById('funding_body');
+    const lastRow = tbody.lastElementChild;
+    tbody.innerHTML = '';
+    for (let i = 0; i < rows; i++) {
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td><input type="text" name="fund_org[]" value="${(initialData.fund_org[i] || '').replace(/"/g, '&quot;')}" placeholder="e.g., NRF South Africa" /></td>
+        <td><input type="text" name="fund_contact[]" value="${(initialData.fund_contact[i] || '').replace(/"/g, '&quot;')}" placeholder="e.g., Ms. Jane Doe, jane@nrf.ac.za" /></td>
+        <td><input type="text" name="fund_role[]" value="${(initialData.fund_role[i] || '').replace(/"/g, '&quot;')}" placeholder="e.g., Primary Sponsor" /></td>
+        <td><input type="text" name="fund_amount[]" value="${(initialData.fund_amount[i] || '').replace(/"/g, '&quot;')}" placeholder="e.g., R100,000.00" /></td>
+        <td><button type="button" class="remove-funding-row">✖</button></td>
+      `;
+      tbody.appendChild(row);
+    }
+    if (lastRow) tbody.appendChild(lastRow);
+  }
+
+  populateOrgTable();
+  populateFundTable();
+  
+  function showSaving() {
+    if (savingIndicator) savingIndicator.innerHTML = 'Autosaving...';
+  }
+  function showSaved() {
+    if (savingIndicator) {
+      savingIndicator.innerHTML = 'Saved';
+      setTimeout(() => { savingIndicator.innerHTML = ''; }, 1500);
+    }
+  }
+  function showError() {
+    if (savingIndicator) savingIndicator.innerHTML = '<span style="color:red">Error saving</span>';
+  }
+  
+  function autosave() {
+    showSaving();
+    debugLogSec3('Autosave start');
+    const formData = new FormData(form);
+
+    const checkboxes = form.querySelectorAll('input[type="checkbox"]');
+    const arrayCheckboxNames = new Set();
+    checkboxes.forEach(cb => {
+      if (cb.name && cb.name.endsWith('[]')) {
+        arrayCheckboxNames.add(cb.name);
+      }
+    });
+    arrayCheckboxNames.forEach(name => formData.delete(name));
+    checkboxes.forEach(cb => {
+      if (cb.name.endsWith('[]')) {
+        if (cb.checked) {
+          formData.append(cb.name, cb.value || 'Yes');
+        }
+      } else {
+        formData.set(cb.name, cb.checked ? 'Yes' : 'No');
+      }
+    });
+    
+    // Section 3 only has radio buttons and text inputs, no checkboxes
+    const radioButtons = form.querySelectorAll('input[type="radio"]');
+    debugLogSec3('Radio button count', radioButtons.length);
+    
+    radioButtons.forEach(rb => {
+      if (rb.checked) {
+        debugLogSec3('Radio selected', { name: rb.name, value: rb.value });
+        formData.set(rb.name, rb.value);
+      }
+    });
+    
+    debugLogSec3('Payload preview', {
+      grant_permission: formData.get('grant_permission')
+    });
+    debugLogSec3('Sending fetch request');
+    
+    fetch('{{ url_for("form_a_sec3_autosave") }}', {
+      method: 'POST',
+      body: formData,
+      headers: { 'Accept': 'application/json' }
+    })
+    .then(r => {
+      debugLogSec3('Response status', r.status, r.statusText);
+      return r.json().catch(() => ({ success: true }));
+    })
+    .then(data => {
+      debugLogSec3('Response data', data);
+      showSaved();
+    })
+    .catch(err => {
+      showError();
+      console.error('[FORM-A-SEC3] Fetch error:', err);
+    });
+  }
+  
+  // Attach autosave to all inputs
+  function attachAutosaveListeners() {
+    const allFields = Array.from(form.querySelectorAll('input:not([type="file"]), textarea, select'));
+    allFields.forEach(field => {
+      if (field.name === 'csrf_token') return;
+      if (field.dataset.autosaveBound === '1') return;
+      const eventType = (field.type === 'checkbox' || field.type === 'radio' || field.tagName === 'SELECT') ? 'change' : 'input';
+      field.addEventListener(eventType, function() {
+        const valuePreview = field.type === 'checkbox' ? field.checked : field.value;
+        debugLogSec3('Field event', {
+          name: field.name,
+          type: field.type,
+          eventType: eventType,
+          value: valuePreview
+        });
+        clearTimeout(autosaveTimeout);
+        autosaveTimeout = setTimeout(function() {
+          debugLogSec3('Debounced autosave trigger for field', field.name);
+          autosave();
+        }, 700);
+      });
+      field.dataset.autosaveBound = '1';
+    });
+  }
+  attachAutosaveListeners();
+  
+  // Re-attach after adding rows
+  const addRowBtn = document.getElementById('addRowBtn');
+  if (addRowBtn) {
+    addRowBtn.addEventListener('click', function() {
+      setTimeout(() => {
+        attachAutosaveListeners();
+        autosave();
+      }, 100);
+    });
+  }
+
+  // Row removals don't trigger input/change events
+  form.addEventListener('click', function(e) {
+    if (e.target.classList.contains('remove-row') || e.target.classList.contains('remove-funding-row')) {
+      setTimeout(() => autosave(), 0);
+    }
+  });
+});
+</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="{{ url_for('static', filename='js/form-submission-handler.js') }}"></script>  </body>
+</html>

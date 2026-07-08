@@ -88,7 +88,7 @@ def student_dashboard():
         user_id = session.get('id')
 
         if not user_id:
-            return redirect('/login?system=ethics')
+            return redirect(url_for('login_page'))
 
         user = db_session.query(User).filter_by(user_id=user_id).first()
 
@@ -148,7 +148,7 @@ def quiz():
 @app.route('/logout', methods=['GET'])
 def logout():
     clear_auth_session()
-    return redirect('/login?system=ethics')
+    return redirect(url_for('login_page'))
 
 # Auto-logout after 45 minutes of inactivity
 @app.before_request
@@ -172,7 +172,7 @@ def auto_logout():
                 # If inactive for more than 45 minutes
                 if now - last_active_dt > timedelta(minutes=60):
                     session.clear()
-                    return redirect('/login?system=ethics')
+                    return redirect(url_for('login_page'))
             # Always update last_active if not logging out
             session['last_active'] = now.isoformat()
 
@@ -260,9 +260,102 @@ def capture_logged_in_user_exceptions(exception=None):
 def login_page():
     if request.method == 'GET' and 'id' in session:
         clear_auth_session()
+
     if request.method == 'POST':
-        flash('Please sign in through the shared MBA & Ethics login page.', 'warning')
-    return redirect('/login?system=ethics')
+        email = request.form.get('email')
+        user_password = request.form.get('password')
+        email = request.form.get('email')
+        user_password = request.form.get('password')
+        user = db_session.query(User).filter_by(email=email).first()
+        
+        
+        if user:
+            if user.verify_password(user_password):
+                # Block unauthenticated user from logging in
+                # Check if authenticate_student is falsy (False, "False", "false", None, empty string, etc.)
+                if not user.authenticate_student or str(user.authenticate_student).lower() in ['false', '0', 'none']:
+                        clear_auth_session()
+                        flash("You are authenticated. Please wait for admin approval.", "danger")
+                        return render_template('login.html', messages=["You are authenticated. Please wait for admin approval."])
+                
+                clear_auth_session()
+                session['loggedin'] = True
+                session['id'] = user.user_id
+                session['name'] = user.full_name
+                # Set last_active on successful login
+                session['last_active'] = datetime.utcnow().isoformat()
+                # Store user role in session
+                session['role'] = user.role.value or 'student'
+
+                # Persist a login audit record for every successful sign-in.
+                db_session.add(UserActivityLog(
+                    user_id=user.user_id,
+                    action='login',
+                    page='login',
+                    timestamp=datetime.utcnow(),
+                    user_agent=request.user_agent.string
+                ))
+                db_session.commit()
+
+                # render appropriate template depending on role
+                # NB: role is an enum, hence the .value
+                role = user.role.value or 'student'
+
+                if role == 'STUDENT':
+                    
+                    
+
+                    #student_info = db_session.query(UserInfo).filter_by(user_id=session['id']).first()
+                    user_id = session.get('id')
+                    #if student_info and student_info.watched_demo and student_info.test_score is not None and student_info.test_score >= 80:
+                    watched_video = db_session.query(Watched).filter_by(user_id=user_id).first()
+                   
+                    if watched_video:
+                        if user.supervisor_id:
+                            student_id=user.user_id
+                            for model in [FormA, FormB, FormC]:
+                                student_details = db_session.query(model).filter_by(user_id=student_id).first()
+                                if student_details:
+                                    return redirect(url_for('student_dashboard'))
+                            return render_template('ethics_pack.html', name = session['name'])
+                        elif not user.supervisor_id and user.authenticate_student and str(user.authenticate_student).lower() not in ['false', '0', 'none']:
+                            return redirect(url_for('student_choose_supervisor'))
+                        else:
+                            flash("You are not yet Authenticated","danger")
+                            return redirect(url_for('login_page'))
+                    else:
+                        if not user.supervisor_id and user.authenticate_student and str(user.authenticate_student).lower() not in ['false', '0', 'none']:
+                            return redirect(url_for('student_choose_supervisor'))
+                        
+                        return render_template('video.html')
+                elif role == 'SUPERVISOR':
+                    session['supervisor_role']='SUPERVISOR'
+                    return redirect(url_for('supervisor_dashboard'))
+                elif role == 'ADMIN':
+                    session['admin_role']='ADMIN'
+                    return redirect(url_for('chair_landing'))
+                elif role == 'REC':
+                    session['rec_role']='REC'
+
+                    return redirect(url_for('rec_dashboard'))
+                elif role == 'REVIEWER':
+                    session['reviewer_role']='REVIEWER'
+                    session['supervisor_role']='REVIEWER'
+
+                    return redirect(url_for('review_dashboard'))
+                elif role == 'SUPER_ADMIN':
+                    session['super_role']='SUPER_ADMIN'
+                    return redirect(url_for('chair_landing'))
+                else:
+                    return render_template( 'video.html') #default fallback 
+            else:
+                error = 'Incorrect email or password'
+                return render_template('login.html', messages=[error])
+        else:
+            error = 'Incorrect email or password'
+            return render_template('login.html', messages=[error])
+
+    return render_template('login.html')
 
 
 
@@ -327,7 +420,7 @@ def register():
                     full_name=full_name,
                     student_number=student_number,
                     email=email,
-                    password=password,  # âš ï¸ Replace with hashed version
+                    password=password,  # ⚠️ Replace with hashed version
                     role=UserRole.STUDENT
                 )
 
@@ -366,7 +459,7 @@ def student_choose_supervisor():
     user_id = session.get('id')
     if not user_id:
         flash("Your session has expired. Please log in again.", "danger")
-        return redirect('/login?system=ethics')
+        return redirect(url_for('login_page'))
 
     supervisors = db_session.query(User).filter(
         or_(
@@ -379,7 +472,7 @@ def student_choose_supervisor():
     if not user:
         flash("Your account could not be found. Please log in again.", "danger")
         session.clear()
-        return redirect('/login?system=ethics')
+        return redirect(url_for('login_page'))
 
     if request.method == 'POST':
         supervisor_id = (request.form.get('supervisors') or '').strip()
@@ -674,18 +767,18 @@ def admin_reassign_supervisors():
     admin_id = session.get('id')
     if not admin_id:
         flash("Your session has expired. Please log in again.", "danger")
-        return redirect('/login?system=ethics')
+        return redirect(url_for('login_page'))
 
     user_profile = db_session.query(User).filter_by(user_id=admin_id).first()
     if not user_profile:
         session.clear()
         flash("Your account could not be found. Please log in again.", "danger")
-        return redirect('/login?system=ethics')
+        return redirect(url_for('login_page'))
 
     role = user_profile.role.value if user_profile.role else ''
     if role not in ['ADMIN', 'SUPER_ADMIN']:
         flash("You are not authorized to access that page.", "danger")
-        return redirect('/login?system=ethics')
+        return redirect(url_for('login_page'))
 
     supervisors = db_session.query(User).filter(
         or_(
@@ -776,18 +869,18 @@ def admin_reassign_reviewers():
     admin_id = session.get('id')
     if not admin_id:
         flash("Your session has expired. Please log in again.", "danger")
-        return redirect('/login?system=ethics')
+        return redirect(url_for('login_page'))
 
     user_profile = db_session.query(User).filter_by(user_id=admin_id).first()
     if not user_profile:
         session.clear()
         flash("Your account could not be found. Please log in again.", "danger")
-        return redirect('/login?system=ethics')
+        return redirect(url_for('login_page'))
 
     role = user_profile.role.value if user_profile.role else ''
     if role not in ['ADMIN', 'SUPER_ADMIN']:
         flash("You are not authorized to access that page.", "danger")
-        return redirect('/login?system=ethics')
+        return redirect(url_for('login_page'))
 
     reviewers = (
         db_session.query(User)
@@ -908,7 +1001,7 @@ def admin_student_password_resets():
 
     if not user_profile:
         flash("Session expired. Please login again.", "danger")
-        return redirect('/login?system=ethics')
+        return redirect(url_for('login_page'))
 
     role = user_profile.role.value if user_profile.role else ''
 
@@ -1190,7 +1283,7 @@ def super_admin_registration():
                 full_name=full_name,
                 staff_number=staff_number,
                 email=email,
-                password=password,  # ðŸ”’ TODO: hash properly with bcrypt
+                password=password,  # 🔒 TODO: hash properly with bcrypt
                 specialisation=specialisation,
                 role=role
             )
@@ -1209,7 +1302,7 @@ def super_admin_registration():
             except Exception as e:
                 print("Email sending error:", str(e))
 
-            return redirect('/login?system=ethics')
+            return redirect(url_for('login_page'))
 
         except Exception as e:
             db_session.rollback()
@@ -1372,7 +1465,7 @@ def edit_user(id):
     
     if not user_profile:
         flash("Session expired. Please login again.")
-        return redirect('/login?system=ethics')
+        return redirect(url_for('login_page'))
 
     role = user_profile.role.value
     return render_template(
@@ -1536,10 +1629,10 @@ from enhanced_analytics import analytics
 def super_admin_form_a():
     user_id = session.get('id')
     if not user_id:
-        return redirect('/login?system=ethics')
+        return redirect(url_for('login_page'))
     user = db_session.query(User).filter(User.user_id==user_id).first()
     if not user:
-        return redirect('/login?system=ethics')
+        return redirect(url_for('login_page'))
     role = user.role.value
 
     forma = 'A'
@@ -1552,7 +1645,7 @@ def super_admin_form_a():
         "submitted_at": form.submitted_at,
         "risk_rating": form.risk_rating or 'Not Assessed',
         "supervisor": form.supervisor,
-        "ethics_supervisor_signature_date": form.supervisor_date,
+        "ethics_signature_date": form.supervisor_date,
         "supervisor_recommendation": form.recommendation,
         "first_reviewer_name": form.form_reviewed_by,
         "second_reviewer_name": form.form_reviewed_by1,
@@ -1650,10 +1743,10 @@ create_sunburst_chart_b)
 def super_admin_form_b():
     user_id = session.get('id')
     if not user_id:
-        return redirect('/login?system=ethics')
+        return redirect(url_for('login_page'))
     user = db_session.query(User).filter(User.user_id==user_id).first()
     if not user:
-        return redirect('/login?system=ethics')
+        return redirect(url_for('login_page'))
     role = user.role.value
 
     formb = 'B'
@@ -1666,7 +1759,7 @@ def super_admin_form_b():
         "submitted_at": form.submitted_at,
         "risk_rating": form.risk_level or 'Not Assessed',  # Map risk_level to risk_rating for consistency
         "supervisor": getattr(form, 'supervisor', None),
-        "ethics_supervisor_signature_date": form.supervisor_date,
+        "ethics_signature_date": form.supervisor_date,
         "supervisor_recommendation": form.recommendation,
         "first_reviewer_name": form.form_reviewed_by,
         "second_reviewer_name": form.form_reviewed_by1,
@@ -1765,10 +1858,10 @@ create_sunburst_chart_c)
 def super_admin_form_c():
     user_id = session.get('id')
     if not user_id:
-        return redirect('/login?system=ethics')
+        return redirect(url_for('login_page'))
     user = db_session.query(User).filter(User.user_id==user_id).first()
     if not user:
-        return redirect('/login?system=ethics')
+        return redirect(url_for('login_page'))
     role = user.role.value
 
     formc = 'C'
@@ -1781,7 +1874,7 @@ def super_admin_form_c():
         "submitted_at": form.submission_date,  # Use submission_date for Form C
         "risk_rating": form.risk_level or 'Not Assessed',  # Map risk_level to risk_rating for consistency
         "supervisor": getattr(form, 'supervisor', None),
-        "ethics_supervisor_signature_date": form.supervisor_date,
+        "ethics_signature_date": form.supervisor_date,
         "supervisor_recommendation": form.recommendation,
         "first_reviewer_name": form.form_reviewed_by,
         "second_reviewer_name": form.form_reviewed_by1,
@@ -1867,10 +1960,10 @@ def super_admin_form_c():
 def admin_status_monitor():
     user_id = session.get('id')
     if not user_id:
-        return redirect('/login?system=ethics')
+        return redirect(url_for('login_page'))
     user = db_session.query(User).filter(User.user_id == user_id).first()
     if not user or user.role.value.lower() not in ['admin', 'super_admin']:
-        return redirect('/login?system=ethics')
+        return redirect(url_for('login_page'))
     role = user.role.value
 
     search_query = request.args.get('search', '').strip()
@@ -1972,7 +2065,7 @@ def admin_status_monitor():
                 "risk_rating": getattr(form, 'risk_rating', None) or getattr(form, 'risk_level', None),
                 "supervisor": getattr(form, 'supervisor', None) if hasattr(form, 'supervisor') else getattr(form, 'supervisor_name', None),
                 "supervisor_date": normalize_datetime(getattr(form, 'supervisor_date', None)),
-                "ethics_supervisor_signature_date": normalize_datetime(getattr(form, 'ethics_supervisor_signature_date', None)),
+                "ethics_signature_date": normalize_datetime(getattr(form, 'ethics_signature_date', None)),
                 "supervisor_recommendation": getattr(form, 'recommendation', None),
                 "status": getattr(form, 'status', None),
                 "first_reviewer_name": rev1_name,
@@ -1994,7 +2087,7 @@ def admin_status_monitor():
                 "rec_status": getattr(form, 'rec_status', None),
                 "rejected_or_accepted": getattr(form, 'rejected_or_accepted', None),
                 "form_supervisor_status": getattr(form, 'form_supervisor_status', None),
-                "ethics_supervisor_form_status": getattr(form, 'ethics_supervisor_form_status', None),
+                "ethics_form_status": getattr(form, 'ethics_form_status', None),
                 "form_review_comment": getattr(form, 'form_review_comment', None),
                 "form_review_comment1": getattr(form, 'form_review_comment1', None),
             }
@@ -2037,10 +2130,10 @@ def admin_status_monitor():
 def super_admin_monitoring_page_a():
     user_id = session.get('id')
     if not user_id:
-        return redirect('/login?system=ethics')
+        return redirect(url_for('login_page'))
     user=db_session.query(User).filter(User.user_id==user_id).first()
     if not user:
-        return redirect('/login?system=ethics')
+        return redirect(url_for('login_page'))
     role=user.role.value
 
     # Step 1: Subquery to get the latest submitted_at per student
@@ -2104,7 +2197,7 @@ def super_admin_monitoring_page_a():
                 "risk_rating": form.risk_rating,
                 "supervisor": form.supervisor,
                 "supervisor_date": form.supervisor_date,
-                "ethics_supervisor_signature_date": form.ethics_supervisor_signature_date,
+                "ethics_signature_date": form.ethics_signature_date,
                 "supervisor_recommendation": form.recommendation,
                 "first_reviewer_name": rev1_data["name"],
                 "first_reviewer_date": rev1_data["date"],
@@ -2124,7 +2217,7 @@ def super_admin_monitoring_page_a():
                 "rec_status": form.rec_status,
                 "rejected_or_accepted": form.rejected_or_accepted,
                 "form_supervisor_status": form.form_supervisor_status,
-                "ethics_supervisor_form_status": form.ethics_supervisor_form_status,
+                "ethics_form_status": form.ethics_form_status,
                 "form_review_comment": form.form_review_comment,
                 "form_review_comment1": form.form_review_comment1,
                 "rec_full_names": []  # Store list of REC full names
@@ -2143,10 +2236,10 @@ def super_admin_monitoring_page_a():
 def super_admin_monitoring_page_b():
     user_id = session.get('id')
     if not user_id:
-        return redirect('/login?system=ethics')
+        return redirect(url_for('login_page'))
     user=db_session.query(User).filter(User.user_id==user_id).first()
     if not user:
-        return redirect('/login?system=ethics')
+        return redirect(url_for('login_page'))
     role=user.role.value
     # Step 1: Subquery to get the latest submitted_at per student
     latest_subq = (
@@ -2217,7 +2310,7 @@ def super_admin_monitoring_page_b():
                 "risk_rating": form.risk_level,
                 "supervisor": form.supervisor,
                 "supervisor_date": form.supervisor_date,
-                "ethics_supervisor_signature_date": form.ethics_supervisor_signature_date,
+                "ethics_signature_date": form.ethics_signature_date,
                 "supervisor_recommendation": form.recommendation,
                 "first_reviewer": form.reviewer_name1,
                 "second_reviewer": form.reviewer_name2,
@@ -2237,7 +2330,7 @@ def super_admin_monitoring_page_b():
                 "rec_status": form.rec_status,
                 "rejected_or_accepted": form.rejected_or_accepted,
                 "form_supervisor_status": form.form_supervisor_status,
-                "ethics_supervisor_form_status": form.ethics_supervisor_form_status,
+                "ethics_form_status": form.ethics_form_status,
                 "form_review_comment": form.form_review_comment,
                 "form_review_comment1": form.form_review_comment1,
                 "rec_full_names": []  # Store list of REC full names
@@ -2320,7 +2413,7 @@ def super_admin_monitoring_page_c():
                 "risk_level": form.risk_level,
                 "supervisor_name": form.supervisor_name,
                 "supervisor_date": form.supervisor_date,
-                "ethics_supervisor_signature_date": form.ethics_supervisor_signature_date,
+                "ethics_signature_date": form.ethics_signature_date,
                 "supervisor_recommendation": form.recommendation,
                 "first_reviewer": form.reviewer_name1,
                 "second_reviewer": form.reviewer_name2,
@@ -2340,7 +2433,7 @@ def super_admin_monitoring_page_c():
                 "rec_status": form.rec_status,
                 "rejected_or_accepted": form.rejected_or_accepted,
                 "form_supervisor_status": form.form_supervisor_status,
-                "ethics_supervisor_form_status": form.ethics_supervisor_form_status,
+                "ethics_form_status": form.ethics_form_status,
                 "form_review_comment": form.form_review_comment,
                 "form_review_comment1": form.form_review_comment1,
                 "rec_full_names": []  # Store list of REC full names
@@ -2419,7 +2512,7 @@ def all_users():
     # If user_profile is None, redirect to login
     if not user_profile:
         flash("Session expired. Please login again.")
-        return redirect('/login?system=ethics')
+        return redirect(url_for('login_page'))
     
     # Pagination logic
     page = request.args.get('page', 1, type=int)
@@ -2548,7 +2641,7 @@ def ethics_pack():
     try:
         user_id = session.get('id')
         if not user_id:
-            return redirect('/login?system=ethics')
+            return redirect(url_for('login_page'))
 
         watched_video = db_session.query(Watched).filter_by(user_id=user_id).first()
 
@@ -2571,7 +2664,7 @@ def ethics_pack():
 def dashboard ():
     user_id = session.get('id')
     if not user_id:
-        return redirect('/login?system=ethics')
+        return redirect(url_for('login_page'))
     
     # Get form submission info
     form_a = db_session.query(FormA).filter_by(user_id=user_id).first()
@@ -2643,7 +2736,7 @@ def submit_form_a_requirements():
     # Get user ID
     user_id = session.get('id')
     if not user_id:
-        return redirect('/login?system=ethics')
+        return redirect(url_for('login_page'))
     
     form = db_session.query(FormARequirements).filter_by(user_id=user_id).first()
 
@@ -2906,7 +2999,7 @@ def submit_form_b_requirements():
     # Get user ID from session
     user_id = session.get('id')
     if not user_id:
-        return redirect('/login?system=ethics')
+        return redirect(url_for('login_page'))
         
     # Check if form exists for this user
     form = db_session.query(FormARequirements).filter_by(user_id=user_id).first()
@@ -3024,9 +3117,10 @@ def submit_form_b_requirements():
 @app.route('/edit-form-a/<form_id>', methods=['GET'])
 def edit_form_a(form_id):
     data = getFormAData(form_id)
-    return render_template('form-a-section1.html', formdata = data)
+    if data:
+        session['active_forma_id'] = data.form_id
+    return render_template('form-a-section1.html', form_data=data)
 
 
 
 # ---------------- Section 1 ------------------
-

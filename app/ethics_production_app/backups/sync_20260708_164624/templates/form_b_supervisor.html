@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Form B – Researcher's Details | JBS Ethics</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/form_a.css" />
+  <!-- <link rel="stylesheet" href="{{ url_for('static', filename='css/form_a.css') }}"> -->
+
+  <style>
+        .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.6);
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    .modal-content {
+      background: #fff;
+      padding: 2rem;
+      border-radius: 8px;
+      text-align: center;
+      width: 400px;
+      max-width: 90%;
+      box-shadow: 0 0 10px rgba(0,0,0,0.25);
+    }
+
+    .modal-content h3 {
+      margin-bottom: 1rem;
+      color: #2E1A46;
+    }
+
+    .modal-content button {
+      margin-top: 1rem;
+      background-color: #2E1A46;
+      color: #fff;
+      padding: 0.6rem 1.2rem;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    span{
+        font-weight: normal;
+        font-size:14px;
+    }
+</style>
+</head>
+
+<body>
+
+  <!-- Navbar -->
+  <header class="navbar">
+    <div class="nav-content">
+      <img src="{{ url_for('static',filename='img/image.png')}}" alt="UJ JBS Logo" class="logo uj">
+      <span class="nav-title">Form B – Researcher's Details</span>
+
+      <!-- Logout -->
+      <div style="text-align: right;">
+        <a href="{{url_for('logout')}}" class="btn-logout">Logout</a>
+      </div>
+    </div>
+  </header>
+<form action="{{url_for('reject_or_Accept_form_b',id=formB.form_id)}}" method="post">
+   
+
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      
+  <!-- Main Content -->
+    <main class="main-content">
+      <h2>Section 1: Researcher's Details</h2>
+      <label>Applicant Name <br>
+        <span class="form-answer">{{formB.applicant_name}}</span>
+    </label>
+      <label>Student/Staff Number <br>
+        <span class="form-answer">{{formB.student_number}}</span></label>
+      <label>Institution <br>
+        <span class="form-answer">{{formB.institution}}</span></label>
+      <label>UJ Department and School <br>
+        <span class="form-answer">{{formB.department}}</span></label>
+      <label>Degree Registered For <br>
+        <span class="form-answer">{{formB.degree}}</span></label>
+      <label>Title of Project or Study <br>
+        <span class="form-answer">{{formB.study_title}}</span></label>
+      <label>Mobile Number <br>
+        <span class="form-answer">{{formB.mobile}}</span></label>
+      <label>Email Address <br>
+        <span class="form-answer">{{formB.email}}</span></label>
+      <label>Supervisor(s) <br>
+        <span class="form-answer">{{formB.supervisor}}</span></label>
+      <label>Supervisor Email Address <br>
+        <span class="form-answer">{{formB.supervisor_email}}</span></label>
+  
+  </main>
+
+  <!-- Section 2 -->
+
+  
+    <!-- Main Content -->
+    <main class="main-content">
+
+      <h2>Section 2: Research Project and Data Information</h2>
+
+      <label>2.1 Provide short description of the research project (±200 words)
+        <br>
+        <span class="form-answer">{{formB.project_description}}</span>
+      </label>
+
+
+      <label>2.2 What is the nature of the data? <span class="info-icon" title="Archival sources, statistical, reports, etc">ℹ️</span>
+        <br>
+    <span class="form-answer">{{formB.data_nature}}</span>
+</label>
+ 
+
+      <label>2.3 What is the origin/source of the research data?
+        <br><span class="form-answer">{{formB.data_origin}}</span>
+      </label>
+ 
+
+      <div class="question-block">
+        <label>2.4 Are the sources of the research data in the public domain?
+            <br><span class="form-answer">{{'Yes' if formB.data_public else 'No'}}</span>
+        </label>
+        
+      </div>
+
+      <label>2.4.1 Provide explanation:
+        <br><span class="form-answer">Comment: {{formB.public_evidence or 'Not Applicable'}}</span>
+      </label>
+   
+
+      <label>2.4.2 If the data is in the public domain, what are the access conditions?
+        <br><span class="form-answer">Comment: {{formB.access_conditions or 'Not Applicable'}}</span>
+      </label>
+    
+
+      <div class="question-block">
+        <label>2.5 Does the database contain personal information/identifiers?</label>
+            <p>This information relates to the anonymity of data/confidentiality of the data</p>
+            <span class="form-answer">{{'Yes' if formB.personal_info else 'No'}}</span>
+
+            <br><span class="form-answer">Comment: {{formB.personal_info_comment or 'Not Applicable'}}</span>
+      </div>
+
+      <div class="question-block">
+        <label>2.6 If the database does contain personal information, do you have evidence that the data to be provided to you have been anonymized?
+            <br><span class="form-answer">{{formB.data_anonymized}}</span>
+        </label>
+       
+      </div>
+
+      <label>2.6.1 Comment / Justification:<br>
+    <span class="form-answer">{{formB.anonymization_comment}}</span></label>
+
+     
+      <div class="question-block">
+        <label>2.7 In the case of a private database, does it contain information on private firms/organisations for which permission is required?
+            <br><span class="form-answer">{{'Yes' if formB.private_permission else 'No'}}</span>
+        </label>
+      </div>
+
+      <label>2.7.1 Provide permission details:
+        <br><span class="form-answer">Comment: {{formB.permission_details or 'Not Applicable'}}</span>
+        {% if formB.private_permission_file %}
+        <br>
+        <a href="{{ url_for('view_form_file', form_type='B', form_id=formB.form_id, field_name='private_permission_file') }}" target="_blank">View Document</a>
+        {% endif %}
+      </label>
+     
+
+      <div class="question-block">
+        <label>2.8 Will data shortcomings/incompleteness be reported?
+            <br><span class="form-answer">{{'Yes' if formB.shortcomings_reported else 'No'}}</span>
+        </label>
+       
+      </div>
+
+      <label>2.9 Explain how data limitations will be reported OR Why they will not be reported?
+        <br><span class="form-answer">{{formB.limitations_reporting}}</span>
+      </label>
+    
+
+      <div class="question-block">
+        <label>2.10 Are the research methodology and research design in line with the answers of the preceding questions?
+            <br><span class="form-answer">{{'Yes' if formB.methodology_alignment else 'No'}}</span>
+        </label>
+       
+      </div>
+
+      <label>2.11 How are the original owners of the data going to be recognised/ referenced/ acknowledged?
+        <br><span class="form-answer">{{formB.data_acknowledgment}}</span>
+      </label>
+    
+   
+  </main>
+
+  <!-- Section 3 -->
+
+   <!-- Main Content -->
+  <main class="main-content">
+   
+      <h2>Section 3: Ethical Considerations</h2>
+
+      <div class="question-block">
+        <label>3.1 Was ethical clearance granted for the original data gathering phase?
+            <br><span class="form-answer">{{formB.original_clearance}}</span>
+        </label>
+        
+      </div>
+
+      <div class="question-block">
+        <label>3.2 Did participants in the original study grant permission for future use of the data?
+            <br><span class="form-answer">{{formB.participant_permission}}</span>
+        </label>
+       
+      </div>
+
+      <label>3.3 If the data is not in the public domain, explain how it will be safely stored and destroyed:
+        <br><span class="form-answer">{{formB.data_safekeeping}}</span>
+      </label>
+  </main>
+ 
+
+      <main class="main-content">
+
+      <h2>Section 4: Risk Assessment</h2>
+
+      <div class="question-block">
+        <label>4.1 The study presents:
+            <br><span class="form-answer">{{formB.risk_level}}</span>
+        </label>
+        
+      </div>
+
+      <label>4.2 Comments/Justification:
+        <br><span class="form-answer">{{formB.risk_comments}}</span>
+      </label>
+
+      </main>
+    
+
+      <main class="main-content">
+
+      <h2>Section 5: Declaration</h2>
+
+      <p class="form-note" style="text-align: justify;">
+        I, <strong><u>{{formB.declaration_name}}</u></strong>
+        (full name of main researcher), declare that I have read the Policy on Research Ethics of UJ and the contents of this document are a true and accurate reflection of the methodological and ethical implications of my proposed study. I shall carry out the study in strict accordance with the approved proposal and the Policy on Research Ethics of UJ. I further undertake to inform the relevant research ethics review committee of JBS in writing of any adverse events that occur arising from the research project. I shall also notify the relevant JBS research ethics review committee if any changes to the study are proposed. I shall deal with the data used in an ethical manner. I shall assimilate all data used for this research project in accordance with ethical guidelines outlined in my proposal. Paragraph 5 of the Policy on Research Ethics places huge emphasis on the integrity of the research and I shall ensure that I conduct the research with the highest integrity taking into account UJ’s Policy for Copyright Infringement and Plagiarism. Data that was gathered retrospectively will not be used. I acknowledge that as main researcher it is my responsibility to ensure that the co-researchers to this research project adhere to the ethics principles set out in the UJ Policy on Research Ethics.
+      </p>
+
+      <label>Full Name
+        <br><strong>{{formB.full_name}}</strong>
+      </label>
+
+      <label>Date
+        <br><span class="form-answer">{% if formB.declaration_date%}{{formB.declaration_date.strftime('%d/%m/%Y')}}{% endif %}</span>
+      </label>
+
+      <hr>
+   
+
+          <div id="supervisorDeclaration" >
+    
+      <h3>SUPERVISOR'S SECTION</h3>
+      <p><strong>Supervisor's Review and Declaration</strong></p>
+    
+      <div class="form-group">
+        <label for="student_name">Student Name:</label>
+        <span class="form-answer" id="student_name"  >{{formB.declaration_name}}</span>
+      </div>
+
+      <div class="form-group">
+        <label for="submission_date">Date of Submission:</label>
+        <span class="form-answer" id="submission_date" >{% if formB.submitted_at%}{{formB.submitted_at.strftime('%d/%m/%Y')}}{% endif %}</span>
+      </div>
+
+      <div class="form-group">
+        <label for="supervisor_name">Supervisor Name:</label>
+        <span class="form-answer" id="supervisor_name"  >{{formB.supervisor}}</span>
+      </div>
+
+      <div class="form-group">
+        <label for="research_title">Title of Research:</label>
+        <span class="form-answer" id="research_title" >{{formB.study_title}}</span>
+      </div>
+
+      <div class="form-group">
+        <label for="supervisor_date">Date of Review:</label>
+        <input type="date" class="form-control" id="supervisor_date" name="supervisor_date" required placeholder="dd/mm/yyyy">
+        <div class="date-format-hint">Format: yyyy-mm-dd</div>
+      </div>
+      <br>
+
+      <h5 class="mt-4">Checklist of Required Documents for Supervisor Review</h5>
+
+      <table>
+        <thead class="thead-light">
+          <tr>
+            <th style="width: 40%;">Document</th>
+            <th style="width: 60%;">Supervisor Comments</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Organisational Permission/Signed Waiver From Business</strong><br><small>Can be an email or formal letter. Ensure permission to access the organisation and relevant documents is included.</small></td>
+            <td><textarea name="org_permission_comment" class="form-control" rows="3"></textarea></td>
+          </tr>
+          
+          <tr>
+            <td><strong>Ethics Application Form</strong><br><small>Ensure all fields are complete and the form is co-signed by you as the supervisor. Any revisions made after your proposal review must be submitted.</small></td>
+            <td><textarea name="form_a_comment" class="form-control" rows="3"></textarea></td>
+          </tr>
+        
+          <tr>
+            <td><strong>Refined Concept Proposal</strong><br><small>This should match the approved version with the literature review.</small></td>
+            <td><textarea name="proposal_comment" class="form-control" rows="3"></textarea></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="form-group">
+        <label for="supervisor_feedback"><strong>Supervisor Comments & Recommendation:</strong></label>
+        <textarea class="form-control" id="supervisor_feedback" name="supervisor_feedback" rows="5" placeholder="Provide any feedback or required revisions..." required></textarea>
+      </div>
+      <br>
+
+      <h5>Recommendation:</h5>
+      <!-- Radio Buttons -->
+  <div class="form-check">
+    <input class="form-check-input" type="radio" name="recommendation" id="ready" value="Ready for submission" onchange="toggleFields()" required>
+    <label class="form-check-label" for="ready">
+      ✔ Ready for submission to JBS Ethics Admin
+    </label>
+  </div>
+
+  <div class="form-check mb-3">
+    <input class="form-check-input" type="radio" name="recommendation" id="revisions" value="Revisions required" onchange="toggleFields()">
+    <label class="form-check-label" for="revisions">
+      ↻ Revisions required before submission
+    </label>
+  </div>
+
+  <!-- Accept Fields (initially hidden) -->
+  <div id="acceptFields" style="display: none;">
+    <div class="form-group">
+      <label for="supervisor_signature">Supervisor Signature:</label>
+      <input type="text" class="form-control" id="supervisor_signature" name="supervisor_signature">
+    </div>
+
+    <div class="form-group">
+      <label for="signature_date">Date:</label>
+      <input type="date" class="form-control" id="signature_date" name="signature_date" placeholder="dd/mm/yyyy">
+      <div class="date-format-hint">Format: yyyy-mm-dd</div>
+    </div>
+    <br>
+
+    <button type="submit" name="accept" value="Accept" class="btn btn-success">Submit to Ethics Admin</button>
+  </div>
+
+  <!-- Reject Button (initially hidden) -->
+  <div id="rejectBtn" style="display: none;">
+    <button type="submit" name="reject" value="Reject" class="btn btn-danger">Submit back to Student (Requires Submission)</button>
+  </div>
+
+</div>
+ </form>
+  </main>
+
+<!-- Confirmation Modal -->
+<div id="confirmModal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);">
+  <div style="background-color: white; margin: 15% auto; padding: 20px; border-radius: 8px; width: 400px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+    <h3 style="margin-top: 0;">Confirm Submission</h3>
+    <p>Are you sure you want to submit your recommendation? This action cannot be undone.</p>
+    <div style="display: flex; justify-content: center; gap: 10px; margin-top: 20px;">
+      <button id="cancelBtn" type="button" style="padding: 10px 20px; border-radius: 4px; border: 1px solid #ccc; background: white; cursor: pointer;">Cancel</button>
+      <button id="proceedBtn" type="button" style="padding: 10px 20px; border-radius: 4px; border: none; background: #28a745; color: white; cursor: pointer;">Yes, Submit</button>
+    </div>
+  </div>
+</div>
+
+<footer class="footer">
+   
+</footer>
+<script src="{{ url_for('static', filename='js/datepicker-validation.js') }}"></script>
+
+  
+<!-- Script -->
+<script>
+  // Modal Confirmation Logic
+  document.addEventListener('DOMContentLoaded', function() {
+    const mainForm = document.querySelector('form[action*="reject_or_Accept_form_b"]');
+    const confirmModal = document.getElementById('confirmModal');
+    const proceedBtn = document.getElementById('proceedBtn');
+    const cancelBtn = document.getElementById('cancelBtn');
+    let currentSubmitter = null;
+
+    if (mainForm) {
+      mainForm.addEventListener('submit', function(e) {
+        if (!confirmModal.dataset.confirmed) {
+          e.preventDefault();
+          confirmModal.style.display = 'block';
+          currentSubmitter = e.submitter;
+        }
+      });
+    }
+
+    cancelBtn.addEventListener('click', function() {
+      confirmModal.style.display = 'none';
+      confirmModal.dataset.confirmed = "";
+    });
+
+    proceedBtn.addEventListener('click', function() {
+      confirmModal.dataset.confirmed = "true";
+      confirmModal.style.display = 'none';
+      
+      if (currentSubmitter) {
+        const hiddenInput = document.createElement('input');
+        hiddenInput.type = 'hidden';
+        hiddenInput.name = currentSubmitter.name;
+        hiddenInput.value = currentSubmitter.value;
+        mainForm.appendChild(hiddenInput);
+      }
+      mainForm.submit();
+    });
+  });
+
+  const supervisorDeclaration = document.getElementById("supervisorDeclaration");
+  const submitToEthicsBtn = document.getElementById("submitToEthics");
+  const submitToStudentBtn = document.getElementById("submitToStudent");
+
+  // Show declaration when "Submit for Ethics Approval" is clicked
+  submitToEthicsBtn.addEventListener("click", () => {
+    supervisorDeclaration.style.display = "block";
+  });
+
+  // Hide declaration when "Return to Student" is clicked
+  submitToStudentBtn.addEventListener("click", () => {
+    supervisorDeclaration.style.display = "none";
+  });
+
+  // Simulate submission
+  form.addEventListener("submit", function (e) {
+    e.preventDefault();
+    modal.style.display = "flex";
+  });
+
+  closeModalBtn.addEventListener("click", () => {
+    window.location.href = "supervisor-dashboard.html";
+  });
+function toggleFields() {
+  const ready = document.getElementById("ready").checked;
+  const revisions = document.getElementById("revisions").checked;
+
+  const acceptFields = document.getElementById("acceptFields");
+  const rejectBtn = document.getElementById("rejectBtn");
+
+  const signature = document.getElementById("supervisor_signature");
+  const date = document.getElementById("signature_date");
+  const feedback = document.getElementById("supervisor_feedback");
+
+  if (ready) {
+    acceptFields.style.display = "block";
+    rejectBtn.style.display = "none";
+    signature.required = true;
+    date.required = true;
+    feedback.required = true;
+  } else if (revisions) {
+    acceptFields.style.display = "none";
+    rejectBtn.style.display = "block";
+    signature.required = false;
+    date.required = false;
+    feedback.required = true;
+    signature.value = '';
+    date.value = '';
+  } else {
+    acceptFields.style.display = "none";
+    rejectBtn.style.display = "none";
+    feedback.required = true;
+  }
+}
+  
+</script>
+
+</body>
+</html>

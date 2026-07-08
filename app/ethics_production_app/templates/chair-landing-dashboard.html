@@ -187,8 +187,6 @@
         </a>
         <a href="{{ url_for('admin_status_monitor') }}" class="sidebar-link"><i class="fas fa-filter"></i> Admin Status
           Monitor</a>
-        <a href="{{ url_for('archived_forms') }}" class="sidebar-link"><i class="fas fa-box-archive"></i> Archived
-          Forms</a>
 
         <div class="dropdown w-100">
           <a class="dropdown-toggle" href="#" data-bs-toggle="collapse" data-bs-target="#analyticsForms">
@@ -270,45 +268,12 @@
       </header>
 
       <section class="admin-content container-fluid">
-        <div class="row mb-4">
-          <div class="col-md-3">
-            <label for="searchType">Search by</label>
-            <select id="searchType" class="form-select" onchange="updateSearchInput()">
-              <option value="">-- Select Filter Type --</option>
-              <option value="year">Year</option>
-              <option value="specialization">Qualification</option>
-
-            </select>
-          </div>
-          <div class="col-md-6">
-            <label for="searchInput">Search Input</label>
-            <input type="text" id="searchInput" class="form-control" placeholder="Enter Year or Qualification">
-            <select id="specializationDropdown" class="form-select d-none mt-2">
-              <option value="">-- Select Qualification--</option>
-              {% for spec in results %}
-              <option value="{{ spec|lower }}">{{ spec }}</option>
-              {% endfor %}
-            </select>
-            <select id="statusDropdown" class="form-select d-none mt-2">
-              <option value="">-- Select Status --</option>
-              <option value="student">Forms with Students</option>
-              <option value="supervisor">Forms with Supervisor</option>
-              <option value="admin">Forms with Ethics Admin</option>
-              <option value="reviewers">Forms with Reviewers</option>
-
-            </select>
-          </div>
-          <div class="col-md-3 d-flex align-items-end gap-2">
-            <button class="btn-search w-50" onclick="applyFilters()">Search</button>
-            <button class="btn btn-secondary w-50" onclick="clearFilters()">Clear</button>
-          </div>
-        </div>
-      </section>
-
-      <section class="admin-content container-fluid">
-        {% for form_type, sorted_years, forms_by_year in [('A', sorted_yearsA, forms_by_yearA), ('B', sorted_yearsB,
-        forms_by_yearB), ('C', sorted_yearsC, forms_by_yearC)] %}
-        {% if sorted_years %}
+        {% for form_type, folder_rows, current_page, total_pages, total_records, page_param in [
+          ('A', folder_rows_a, page_a, total_pages_a, total_records_a, 'page_a'),
+          ('B', folder_rows_b, page_b, total_pages_b, total_records_b, 'page_b'),
+          ('C', folder_rows_c, page_c, total_pages_c, total_records_c, 'page_c')
+        ] %}
+        {% if total_records %}
         <div class="table-container">
           <h2 class="mt-1 text-center">Form {{ form_type }}</h2>
           <div class="table-responsive">
@@ -321,37 +286,37 @@
                 </tr>
               </thead>
               <tbody>
-                {% for year in sorted_years %}
-                {% for month, forms in forms_by_year[year]|dictsort %}
-                {% for form, count, status in forms %}
-                {% if loop.index ==1 %}
-                <tr data-degree="{{ form.degree | lower }}"">
-                      <td>{{ year }}</td>
-                      <td>{{ month }}</td>
-                      <td>
-                        <a href=" {{ url_for('ethics_reviewer_committee_form_' + form_type|lower, year=year,
-                  month=month, filter_applied='true' if filter_applied else 'false' ) }}">📁 View</a>
-                  {# Only allow feedback/review if sent to admin (status == 'reviewers') #}
-                  {% if role|lower == 'admin' or role|lower == 'superadmin' %}
-                  <span class="ms-2"><a
-                      href="{{ url_for('review_version', user_id=form.user_id, form_name='FORM ' ~ form_type) }}">Review/Feedback</a></span>
-                  {% elif role|lower == 'admin' or role|lower == 'superadmin' %}
-                  <span class="ms-2 text-muted" title="Not sent to admin">Review/Feedback (disabled)</span>
-                  {% endif %}
+                {% for row in folder_rows %}
+                <tr data-degree="{{ (row.form.degree or '') | lower }}">
+                  <td>{{ row.year }}</td>
+                  <td>{{ row.month }}</td>
+                  <td>
+                    <a href="{{ url_for('ethics_reviewer_committee_form_' + form_type|lower, year=row.year, month=row.month, filter_applied='true' if filter_applied else 'false') }}">📁 View</a>
+                    
                   </td>
                 </tr>
-                {% endif %}
-                {% endfor %}
-                {% endfor %}
                 {% endfor %}
               </tbody>
             </table>
+            <div class="d-flex justify-content-between align-items-center mt-3 flex-wrap gap-2">
+              <small class="text-muted">Showing page {{ current_page }} of {{ total_pages }}. Total folders: {{ total_records }}</small>
+              <div class="d-flex gap-2">
+                {% if current_page > 1 %}
+                <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('chair_landing', year=year_filter, page_a=(current_page - 1 if page_param == 'page_a' else page_a), page_b=(current_page - 1 if page_param == 'page_b' else page_b), page_c=(current_page - 1 if page_param == 'page_c' else page_c)) }}">Previous</a>
+                {% endif %}
+                {% if current_page < total_pages %}
+                <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('chair_landing', year=year_filter, page_a=(current_page + 1 if page_param == 'page_a' else page_a), page_b=(current_page + 1 if page_param == 'page_b' else page_b), page_c=(current_page + 1 if page_param == 'page_c' else page_c)) }}">Next</a>
+                {% endif %}
+              </div>
+            </div>
             <p class="no-data">No data</p>
           </div>
         </div>
         {% endif %}
         {% endfor %}
       </section>
+
+      
     </main>
   </div>
 
@@ -440,3 +405,4 @@
 </body>
 
 </html>
+

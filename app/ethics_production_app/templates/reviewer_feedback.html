@@ -63,7 +63,7 @@
 <br>
     <label>Date of Re-submission:</label>
     <strong>{% if view_form.declaration_date%}{{view_form.declaration_date.strftime('%d/%m/%Y')}}
-        {% elif view_form.supervisor_date %}{{view_form.supervisor_date.strftime('%d/%m/%Y')}}
+        
         {% endif%}</strong>
 <br>
     <label>Supervisor:</label>
@@ -72,8 +72,7 @@
     <label>Title of Research:</label>
     <strong>{% if view_form.study_title%}{{view_form.study_title}} {% else%} {{view_form.project_title}}{% endif%}</strong>
 <br>
-    <label>Date of Review:</label>
-    <strong type="date" id="review_date">{{view_form.review_date}}</strong>
+    
   </div>
 <br>
 <hr>
@@ -84,6 +83,8 @@
     <h3>Checklist of Documents Required for Ethical Clearance Process</h3>
     <h4><strong>First Reviewer</strong></h4>
     <br>
+    <label>Date of Review:</label>
+  <strong type="date" id="review_date"> {{view_form.review_date}}</strong>
      <table class="table table-bordered mt-3">
         <thead class="thead-light">
         <tr>
@@ -171,6 +172,9 @@
   <div class="section">
     <h3>Checklist of Documents Required for Ethical Clearance Process</h3>
     <h4><strong>Second Reviewer</strong></h4>
+    <br>
+    <label>Date of Review:</label>
+  <strong type="date" id="review_date"> {{view_form.review_date1}}</strong>
      <table class="table table-bordered mt-3">
         <thead class="thead-light">
         <tr>

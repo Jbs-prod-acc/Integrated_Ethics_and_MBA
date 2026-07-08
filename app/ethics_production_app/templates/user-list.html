@@ -99,7 +99,12 @@
             <a href="{{ url_for('all_users') }}" class="btn btn-outline-secondary">Clear</a>
           {% endif %}
         </form>
-        <a href="{{url_for('register_reviewer')}}" class="approve-btn">+ Add User</a>
+        <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+          <a href="{{url_for('register_reviewer')}}" class="approve-btn">+ Add User</a>
+          {% if role|lower == 'super_admin' %}
+            <a href="{{ url_for('super_admin_registration') }}" class="btn btn-outline-primary">+ Add Super Admin</a>
+          {% endif %}
+        </div>
       </div>
 
       <!-- Flash Messages -->
@@ -157,11 +162,15 @@
                   <button type="submit" class="btn btn-success">Authenticate</button>
                 </form>
                 {% endif %}
-              <a class="btn btn-primary" href="{{ url_for('edit_user', id=user.user_id) }}">Edit</a>
-              <form action="{{ url_for('delete_user', id=user.user_id) }}" method="post" style="display:inline;" class="delete-form">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <button type="button" class="btn btn-danger" onclick="openDeleteModal('{{ user.user_id }}', '{{ user.full_name }}', this)">Delete</button>
-              </form>
+              {% if role|lower == 'super_admin' or user.role.value != 'SUPER_ADMIN' %}
+                <a class="btn btn-primary" href="{{ url_for('edit_user', id=user.user_id) }}">Edit</a>
+                <form action="{{ url_for('delete_user', id=user.user_id) }}" method="post" style="display:inline;" class="delete-form">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button type="button" class="btn btn-danger" onclick="openDeleteModal('{{ user.user_id }}', '{{ user.full_name }}', this)">Delete</button>
+                </form>
+              {% else %}
+                <span class="text-muted">Restricted</span>
+              {% endif %}
             </td>
           </tr>
           {% endfor %}
@@ -175,17 +184,12 @@
         {% if total_pages > 1 %}
           <nav aria-label="User list pagination">
             <ul class="pagination" style="display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 4px; list-style: none; padding: 0; margin: 0;">
-              {% if page > 1 %}
-                <li class="page-item"><a class="page-link" href="{{ url_for('all_users', page=1, search=search_query, auth_status=auth_status) }}">First</a></li>
-                <li class="page-item"><a class="page-link" href="{{ url_for('all_users', page=page - 1, search=search_query, auth_status=auth_status) }}">Previous</a></li>
-              {% endif %}
-              {% for p in range(1, total_pages + 1) %}
-                <li class="page-item {% if p == page %}active{% endif %}" style="display: inline;"><a class="page-link" href="{{ url_for('all_users', page=p, search=search_query, auth_status=auth_status) }}">{{ p }}</a></li>
-              {% endfor %}
-              {% if page < total_pages %}
-                <li class="page-item"><a class="page-link" href="{{ url_for('all_users', page=page + 1, search=search_query, auth_status=auth_status) }}">Next</a></li>
-                <li class="page-item"><a class="page-link" href="{{ url_for('all_users', page=total_pages, search=search_query, auth_status=auth_status) }}">Last</a></li>
-              {% endif %}
+              <li class="page-item {% if page <= 1 %}disabled{% endif %}">
+                <a class="page-link" href="{{ url_for('all_users', page=page - 1, search=search_query, auth_status=auth_status) }}">Previous</a>
+              </li>
+              <li class="page-item {% if page >= total_pages %}disabled{% endif %}">
+                <a class="page-link" href="{{ url_for('all_users', page=page + 1, search=search_query, auth_status=auth_status) }}">Next</a>
+              </li>
             </ul>
           </nav>
         {% endif %}

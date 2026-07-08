@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Dashboard | JBS Ethics System</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}?v=2">
+  <style>
+    html,
+    body {
+      height: 100%;
+      margin: 0;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .form-wrapper {
+      flex: 1;
+    }
+
+    .footer {
+      text-align: center;
+      padding: 1rem 0;
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="form-wrapper">
+
+    <!-- Navbar -->
+    <header class="navbar">
+      <div class="nav-content">
+
+        <div class="nav-left">
+          <img src="{{ url_for('static',filename='img/image.png')}}" alt="UJ JBS Logo" class="logo uj">
+          <span class="nav-title">Ethics Application System</span>
+        </div>
+
+        <div class="nav-right" style="margin-left: 700px;">
+          <h5>Welcome, {{full_name}}</h5>
+          <a href="{{ url_for('faq') }}" class="btn-logout">FAQ</a>
+          <a href="{{ url_for('logout') }}" class="btn-logout">Logout</a>
+
+        </div>
+
+      </div>
+    </header>
+
+
+    <!-- Main Content -->
+    <main class="main-content">
+
+      <!-- Missing Files Alert -->
+      {% if files_missing %}
+      <div class="alert alert-warning alert-dismissible fade show" role="alert">
+        <div class="d-flex align-items-center">
+          <i class="fas fa-exclamation-triangle me-3" style="font-size: 1.5rem;"></i>
+          <div class="flex-grow-1">
+            <h5 class="alert-heading mb-1">Files Missing</h5>
+            <p class="mb-2">Some of your uploaded files are missing due to system maintenance. Please re-upload them to
+              ensure your application is complete.</p>
+            <div class="mb-2">
+              <strong>Missing files:</strong>
+              <ul class="mb-0 mt-1">
+                {% for field, info in missing_files_info.items() %}
+                <li>{{ info.display_name }}</li>
+                {% endfor %}
+              </ul>
+            </div>
+          </div>
+          <div>
+            <a href="{{ url_for('ethics_pack') }}" class="btn btn-warning">
+              <i class="fas fa-upload"></i> Reupload Documents
+            </a>
+          </div>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+      {% endif %}
+
+      <!-- Submission Status Table -->
+      <section>
+        <h2>Submission Status</h2>
+
+        {% if (formA) or (formB) or (formC) %}
+        <table class="status-table">
+          <thead>
+            <tr>
+              <th>Form Type</th>
+              <th>My Uploads</th>
+              <th>Date Submitted</th>
+              <th>Status & Feedback</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+  {% if formA %}
+  {% for formA in formA %}
+  <tr>
+    <td>Form A</td>
+
+    <td>
+      {% if form_requirements %}
+      <ul class="doc-link">
+        {% if form_requirements.proposal_path %}
+        <li>
+          <a href="{{ url_for('view_requirement_file', req_id=form_requirements.id, field='proposal_path') }}"
+            target="_blank">Research Proposal</a>
+        </li>
+        {% endif %}
+
+        {% if form_requirements.permission_letter %}
+        <li>
+          <a href="{{ url_for('view_requirement_file', req_id=form_requirements.id, field='permission_letter') }}"
+            target="_blank">Permission Letter(s)</a>
+        </li>
+        {% endif %}
+
+        {% if form_requirements.ethics_evidence_path %}
+        <li>
+          <a href="{{ url_for('view_requirement_file', req_id=form_requirements.id, field='ethics_evidence_path') }}"
+            target="_blank">Ethical Compliance</a>
+        </li>
+        {% endif %}
+
+        {% if form_requirements.prior_clearance_path %}
+        <li>
+          <a href="{{ url_for('view_requirement_file', req_id=form_requirements.id, field='prior_clearance_path') }}"
+            target="_blank">Ethics Clearance</a>
+        </li>
+        {% endif %}
+
+        {% if form_requirements.research_tools_path %}
+        <li>
+          <a href="{{ url_for('view_requirement_file', req_id=form_requirements.id, field='research_tools_path') }}"
+            target="_blank">Survey/Interview/Focus Group Questions</a>
+        </li>
+        {% endif %}
+
+        {% if form_requirements.impact_assessment_path %}
+        <li>
+          <a href="{{ url_for('view_requirement_file', req_id=form_requirements.id, field='impact_assessment_path') }}"
+            target="_blank">Personal Assessment Impact Form</a>
+        </li>
+        {% endif %}
+
+        {% if form_requirements.prior_clearance %}
+        <li>
+          <a href="{{ url_for('view_requirement_file', req_id=form_requirements.id, field='prior_clearance') }}"
+            target="_blank">Prior Clearance</a>
+        </li>
+        {% endif %}
+
+        {% if form_requirements.prior_clearance1 %}
+        <li>
+          <a href="{{ url_for('view_requirement_file', req_id=form_requirements.id, field='prior_clearance1') }}"
+            target="_blank">POPIA Letter</a>
+        </li>
+        {% endif %}
+
+        {% if form_requirements.participation_info_sheet %}
+        <li>
+          <a href="{{ url_for('view_requirement_file', req_id=form_requirements.id, field='participation_info_sheet') }}"
+            target="_blank">Participation Info Sheet</a>
+        </li>
+        {% endif %}
+
+        {% if form_requirements.pending_note %}
+        <li>
+          <a href="{{ url_for('view_requirement_file', req_id=form_requirements.id, field='pending_note') }}"
+            target="_blank">Pending Note</a>
+        </li>
+        {% endif %}
+      </ul>
+      {% else %}
+      <p class="text-muted"><em>No documents uploaded</em></p>
+      {% endif %}
+    </td>
+
+    <td>
+      {% if formA.submitted_at %}
+      {{ formA.submitted_at.strftime('%d/%m/%Y %H:%M') }}
+      {% endif %}
+    </td>
+
+    <td>
+      {% if formA.supervisor_feedback %}
+      {{ formA.supervisor_feedback }}
+      {% endif %}
+
+      <br>
+
+      <em>
+        {% if formA.signature_date %}
+        {{ formA.signature_date.strftime('%d/%m/%Y') }}
+        {% endif %}
+      </em>
+
+      <br>
+
+      {% if formA.recommendation %}
+      <span>Feedback: </span>
+      <a href="{{ url_for('student_view_feedback', id=formA.form_id) }}">View Feedback</a>
+      <br>
+      {% endif %}
+
+      <span style="color:green; font-size:18px;">
+        {% set review_comment = '' %}
+        {% set review_comment1 = '' %}
+
+        {% if formA.form_review_comment in ['Approved with Minor Changes', 'Resubmission Required'] %}
+        {% set review_comment = formA.form_review_comment %}
+        {% endif %}
+
+        {% if formA.form_review_comment1 in ['Approved with Minor Changes', 'Resubmission Required'] %}
+        {% set review_comment1 = formA.form_review_comment1 %}
+        {% endif %}
+
+        {% if review_comment %}
+        <p>Review Status 1: {{ review_comment }}</p>
+        {% endif %}
+
+        {% if review_comment1 %}
+        <p>Review Status 2: {{ review_comment1 }}</p>
+        {% endif %}
+
+        {% set formA_correction_note = formA.review_form_status %}
+
+        {% if formA.status == 'Submitted to Student for Corrections' and formA_correction_note %}
+        <div class="alert alert-warning mt-2">
+          <strong>Submitted to Student for Corrections:</strong> {{ formA_correction_note }}
+        </div>
+        {% elif formA.status == 'Corrections Required' and formA_correction_note %}
+        <div class="alert alert-warning mt-2">
+          <strong>Corrections Required:</strong> {{ formA_correction_note }}
+        </div>
+        {% endif %}
+
+        {{ get_student_dashboard_status(formA) }}
+        <!--
+        {% if formA.rec_status == 'Approved' or formA.certificate_issued and formA.certificate_received %}
+          {% if formA.certificate_heading %}
+          <br>
+          <a href="{{ url_for('edited_certificate', id=formA.form_id) }}"
+            class="btn btn-sm btn-success text-white">View Certificate</a>
+          {% else %}
+          <br>
+          <a href="{{ url_for('view_certificate', id=formA.form_id) }}"
+            class="btn btn-sm btn-success text-white">View Certificate</a>
+          {% endif %}
+        {% elif 'low' in formA.risk_rating|lower and formA.certificate_issued and formA.certificate_received %}
+          {% if formA.certificate_heading %}
+          <br>
+          <a href="{{ url_for('edited_certificate', id=formA.form_id) }}"
+            class="btn btn-sm btn-success text-white">View Certificate</a>
+          {% else %}
+          <br>
+          <a href="{{ url_for('view_certificate', id=formA.form_id) }}"
+            class="btn btn-sm btn-success text-white">View Certificate</a>
+          {% endif %}
+        {% endif %}
+      -->
+      </span>
+
+      <br>
+    </td>
+
+    <td style="min-width: 420px;">
+      {% set has_form_a_documents =
+        form_requirements and (
+          form_requirements.proposal_path or
+          form_requirements.permission_letter or
+          form_requirements.ethics_evidence_path or
+          form_requirements.prior_clearance_path or
+          form_requirements.research_tools_path or
+          form_requirements.impact_assessment_path or
+          form_requirements.prior_clearance or
+          form_requirements.prior_clearance1 or
+          form_requirements.participation_info_sheet or
+          form_requirements.pending_note
+        )
+      %}
+
+      {% if formA.form_id == current_form_a_id %}
+
+        {% if is_student_correction_state(formA) %}
+        <div class="d-flex flex-row flex-nowrap gap-2 align-items-center">
+          {% if has_form_a_documents %}
+          <small class="text-danger d-block mt-2">
+          Please update your documents first, especially if revisions were requested in your feedback, before submitting the form.
+        </small>
+        <br>
+          <a href="{{ url_for('student_edit_forma') }}" class="btn btn-warning btn-sm text-nowrap">
+            Resubmit Corrected Form
+          </a>
+          {% else %}
+          <small class="text-danger d-block mt-2">
+          Please update your documents first, especially if revisions were requested in your feedback, before submitting the form.
+        </small>
+        <br>
+          <button type="button" class="btn btn-warning btn-sm text-nowrap" disabled
+            title="Please update your documents first before continuing.">
+            Resubmit Corrected Form
+          </button>
+          {% endif %}
+
+          <a href="{{ url_for('submit_form_a_requirements') }}"
+            class="btn btn-success btn-sm text-white text-nowrap">
+            Resubmit Documents
+          </a>
+        </div>
+
+        
+
+        {% elif is_student_form_locked(formA) %}
+        <div class="d-flex flex-row flex-nowrap gap-2 align-items-center">
+          <a href="{{ url_for('student_form_pdf', form_id=formA.form_id, form_type='A') }}"
+            class="btn btn-primary btn-sm text-nowrap">
+            View Form
+          </a>
+
+          <span class="text-warning fw-bold text-nowrap">
+            Form submitted to your supervisor, no action required
+          </span>
+        </div>
+
+        {% elif not get_student_submission_timestamp(formA) and not formA.declaration_name %}
+        <div class="d-flex flex-row flex-nowrap gap-2 align-items-center">
+          {% if has_form_a_documents %}
+          <a href="{{ url_for('student_edit_forma') }}"
+            class="btn btn-success btn-sm text-white text-nowrap">
+            Continue Filling Form
+          </a>
+          {% else %}
+          <button type="button" class="btn btn-success btn-sm text-white text-nowrap" disabled
+            title="Please update your documents first before continuing.">
+            Continue Filling Form
+          </button>
+          {% endif %}
+
+          <a href="{{ url_for('submit_form_a_requirements') }}"
+            class="btn btn-success btn-sm text-white text-nowrap">
+            Update Documents
+          </a>
+        </div>
+
+        {% if not has_form_a_documents %}
+        <small class="text-danger d-block mt-2">
+          Please update your documents first before continuing with the form.
+        </small>
+        {% endif %}
+
+        {% else %}
+        <div class="d-flex flex-row flex-nowrap gap-2 align-items-center">
+          <a href="{{ url_for('student_form_pdf', form_id=formA.form_id, form_type='A') }}"
+            class="btn btn-primary btn-sm text-nowrap">
+            View Form
+          </a>
+
+          <span class="text-muted text-nowrap">
+            No action to be executed at this stage
+          </span>
+        </div>
+        {% endif %}
+
+      {% else %}
+      <div class="d-flex flex-row flex-nowrap gap-2 align-items-center">
+        <a href="{{ url_for('student_form_pdf', form_id=formA.form_id, form_type='A') }}"
+          class="btn btn-primary btn-sm text-nowrap">
+          View Form
+        </a>
+
+        <span class="badge text-bg-secondary text-nowrap">
+          Previous version
+        </span>
+      </div>
+      {% endif %}
+    </td>
+  </tr>
+  {% endfor %}
+  {% endif %}
+
+  {% if formB %}
+  {% for formB in formB %}
+  <tr>
+    <td>Form B</td>
+
+    <td>
+      {% if form_requirements %}
+      <ul class="doc-link">
+        {% if form_requirements.proposal_path %}
+        <li>
+          <a href="{{ url_for('view_requirement_file', req_id=form_requirements.id, field='proposal_path') }}"
+            target="_blank">Proposal</a>
+        </li>
+        {% endif %}
+
+        {% if form_requirements.permission_letter %}
+        <li>
+          <a href="{{ url_for('view_requirement_file', req_id=form_requirements.id, field='permission_letter') }}"
+            target="_blank">Permission Letter(s)</a>
+        </li>
+        {% endif %}
+
+        {% if form_requirements.ethics_evidence_path %}
+        <li>
+          <a href="{{ url_for('view_requirement_file', req_id=form_requirements.id, field='ethics_evidence_path') }}"
+            target="_blank">Ethical Compliance</a>
+        </li>
+        {% endif %}
+
+        {% if form_requirements.prior_clearance_path %}
+        <li>
+          <a href="{{ url_for('view_requirement_file', req_id=form_requirements.id, field='prior_clearance_path') }}"
+            target="_blank">Ethical Clearance</a>
+        </li>
+        {% endif %}
+
+        {% if form_requirements.prior_clearance1 %}
+        <li>
+          <a href="{{ url_for('view_requirement_file', req_id=form_requirements.id, field='prior_clearance1') }}"
+            target="_blank">POPIA Letter</a>
+        </li>
+        {% endif %}
+
+        {% if form_requirements.pending_note %}
+        <li>
+          <a href="{{ url_for('view_requirement_file', req_id=form_requirements.id, field='pending_note') }}"
+            target="_blank">Pending Note</a>
+        </li>
+        {% endif %}
+      </ul>
+      {% else %}
+      <p class="text-muted"><em>No documents uploaded</em></p>
+      {% endif %}
+    </td>
+
+    <td>
+      {% if formB.submitted_at %}
+      {{ formB.submitted_at.strftime('%d/%m/%Y %H:%M') }}
+      {% endif %}
+    </td>
+
+    <td>
+      {% if formB.supervisor_feedback %}
+      {{ formB.supervisor_feedback }}
+      {% endif %}
+
+      <br>
+
+      <em>
+        {% if formB.signature_date %}
+        {{ formB.signature_date.strftime('%d/%m/%Y %H:%M') }}
+        {% endif %}
+      </em>
+
+      <br>
+
+      {% if formB.recommendation %}
+      <span>Feedback: </span>
+      <a href="{{ url_for('student_view_feedback', id=formB.form_id) }}">View Feedback</a>
+      <br>
+      {% endif %}
+
+      <span style="color:green; font-size:18px;">
+        {% set review_comment = '' %}
+        {% set review_comment1 = '' %}
+
+        {% if formB.form_review_comment in ['Approved with Minor Changes', 'Resubmission Required'] %}
+        {% set review_comment = formB.form_review_comment %}
+        {% endif %}
+
+        {% if formB.form_review_comment1 in ['Approved with Minor Changes', 'Resubmission Required'] %}
+        {% set review_comment1 = formB.form_review_comment1 %}
+        {% endif %}
+
+        {% if review_comment %}
+        <p>Review Status 1: {{ review_comment }}</p>
+        {% endif %}
+
+        {% if review_comment1 %}
+        <p>Review Status 2: {{ review_comment1 }}</p>
+        {% endif %}
+
+        {% set formB_correction_note = formB.review_form_status %}
+
+        {% if formB.status == 'Submitted to Student for Corrections' and formB_correction_note %}
+        <div class="alert alert-warning mt-2">
+          <strong>Submitted to Student for Corrections:</strong> {{ formB_correction_note }}
+        </div>
+        {% elif formB.status == 'Corrections Required' and formB_correction_note %}
+        <div class="alert alert-warning mt-2">
+          <strong>Corrections Required:</strong> {{ formB_correction_note }}
+        </div>
+        {% endif %}
+
+        {{ get_student_dashboard_status(formB) }}
+        <!--
+        {% if formB.rec_status == 'Approved' or formB.certificate_issued and formB.certificate_received %}
+          {% if formB.certificate_heading %}
+          <br>
+          <a href="{{ url_for('edited_certificate', id=formB.form_id) }}"
+            class="btn btn-sm btn-success text-white">View Certificate</a>
+          {% else %}
+          <br>
+          <a href="{{ url_for('view_certificate', id=formB.form_id) }}"
+            class="btn btn-sm btn-success text-white">View Certificate</a>
+          {% endif %}
+        {% elif 'low' in formB.risk_level|lower and formB.certificate_issued and formB.certificate_received %}
+          {% if formB.certificate_heading %}
+          <br>
+          <a href="{{ url_for('edited_certificate', id=formB.form_id) }}"
+            class="btn btn-sm btn-success text-white">View Certificate</a>
+          {% else %}
+          <br>
+          <a href="{{ url_for('view_certificate', id=formB.form_id) }}"
+            class="btn btn-sm btn-success text-white">View Certificate</a>
+          {% endif %}
+        {% endif %}
+      -->
+      </span>
+
+      <br>
+    </td>
+
+    <td style="min-width: 420px;">
+      {% set has_form_b_documents =
+        form_requirements and (
+          form_requirements.proposal_path or
+          form_requirements.permission_letter or
+          form_requirements.ethics_evidence_path or
+          form_requirements.prior_clearance_path or
+          form_requirements.prior_clearance1 or
+          form_requirements.pending_note
+        )
+      %}
+
+      {% if formB.form_id == current_form_b_id %}
+
+        {% if is_student_correction_state(formB) %}
+        <div class="d-flex flex-row flex-nowrap gap-2 align-items-center">
+          {% if has_form_b_documents %}
+          <small class="text-danger d-block mt-2">
+          Please update your documents first, especially if revisions were requested in your feedback, before submitting the form.
+        </small>
+        <br>
+          <a href="{{ url_for('student_edit_formb') }}" class="btn btn-warning btn-sm text-nowrap">
+            Resubmit Corrected Form
+          </a>
+          {% else %}
+          <small class="text-danger d-block mt-2">
+          Please update your documents first, especially if revisions were requested in your feedback, before submitting the form.
+        </small>
+        <br>
+          <button type="button" class="btn btn-warning btn-sm text-nowrap" disabled
+            title="Please update your documents first before continuing.">
+            Resubmit Corrected Form
+          </button>
+          {% endif %}
+
+          <a href="{{ url_for('submit_form_b_requirements') }}"
+            class="btn btn-success btn-sm text-white text-nowrap">
+            Resubmit Documents
+          </a>
+        </div>
+
+        {% if not has_form_b_documents %}
+        <small class="text-danger d-block mt-2">
+          Please update your documents first, especially if revisions were requested in your feedback, before submitting the form.
+        </small>
+        {% endif %}
+
+        {% elif is_student_form_locked(formB) %}
+        <div class="d-flex flex-row flex-nowrap gap-2 align-items-center">
+          <a href="{{ url_for('student_form_pdf', form_id=formB.form_id, form_type='B') }}"
+            class="btn btn-primary btn-sm text-nowrap">
+            View Form
+          </a>
+
+          <span class="text-warning fw-bold text-nowrap">
+            Form submitted to your supervisor, no action required
+          </span>
+        </div>
+
+        {% elif not get_student_submission_timestamp(formB) and not formB.declaration_name %}
+        <div class="d-flex flex-row flex-nowrap gap-2 align-items-center">
+          {% if has_form_b_documents %}
+          <a href="{{ url_for('student_edit_formb') }}"
+            class="btn btn-success btn-sm text-white text-nowrap">
+            Continue Filling Form
+          </a>
+          {% else %}
+          <button type="button" class="btn btn-success btn-sm text-white text-nowrap" disabled
+            title="Please update your documents first before continuing.">
+            Continue Filling Form
+          </button>
+          {% endif %}
+
+          <a href="{{ url_for('submit_form_b_requirements') }}"
+            class="btn btn-success btn-sm text-white text-nowrap">
+            Update Documents
+          </a>
+        </div>
+
+        {% if not has_form_b_documents %}
+        <small class="text-danger d-block mt-2">
+          Please update your documents first before continuing with the form.
+        </small>
+        {% endif %}
+
+        {% else %}
+        <div class="d-flex flex-row flex-nowrap gap-2 align-items-center">
+          <a href="{{ url_for('student_form_pdf', form_id=formB.form_id, form_type='B') }}"
+            class="btn btn-primary btn-sm text-nowrap">
+            View Form
+          </a>
+
+          <span class="text-muted text-nowrap">
+            No action to be executed at this stage
+          </span>
+        </div>
+        {% endif %}
+
+      {% else %}
+      <div class="d-flex flex-row flex-nowrap gap-2 align-items-center">
+        <a href="{{ url_for('student_form_pdf', form_id=formB.form_id, form_type='B') }}"
+          class="btn btn-primary btn-sm text-nowrap">
+          View Form
+        </a>
+
+        <span class="badge text-bg-secondary text-nowrap">
+          Previous version
+        </span>
+      </div>
+      {% endif %}
+    </td>
+  </tr>
+  {% endfor %}
+  {% endif %}
+
+  {% if formC %}
+  {% for formC in formC %}
+  <tr>
+    <td>Form C</td>
+
+    <td>
+      {% if form_requirements and form_requirements.files %}
+      <ul class="doc-link">
+        <li>
+          <a href="{{ url_for('view_requirement_file', req_id=form_requirements.id, field='files') }}"
+            target="_blank">Proposal</a>
+        </li>
+      </ul>
+      {% else %}
+      <p class="text-muted"><em>No documents uploaded</em></p>
+      {% endif %}
+    </td>
+
+    <td>
+      <em>
+        {% if formC.submission_date %}
+        {{ formC.submission_date.strftime('%d/%m/%Y %H:%M') }}
+        {% endif %}
+      </em>
+      <br>
+    </td>
+
+    <td>
+      {% if formC.supervisor_feedback %}
+      {{ formC.supervisor_feedback }}
+      {% endif %}
+
+      <br>
+
+      {% if formC.recommendation %}
+      <span>Feedback: </span>
+      <a href="{{ url_for('student_view_feedback', id=formC.form_id) }}">View Feedback</a>
+      <br>
+      {% endif %}
+
+      <span style="color:green; font-size:18px;">
+        {% set review_comment = '' %}
+        {% set review_comment1 = '' %}
+
+        {% if formC.form_review_comment in ['Approved with Minor Changes', 'Resubmission Required'] %}
+        {% set review_comment = formC.form_review_comment %}
+        {% endif %}
+
+        {% if formC.form_review_comment1 in ['Approved with Minor Changes', 'Resubmission Required'] %}
+        {% set review_comment1 = formC.form_review_comment1 %}
+        {% endif %}
+
+        {% if review_comment %}
+        <p>Review Status 1: {{ review_comment }}</p>
+        {% endif %}
+
+        {% if review_comment1 %}
+        <p>Review Status 2: {{ review_comment1 }}</p>
+        {% endif %}
+
+        {% set formC_correction_note = formC.review_form_status %}
+
+        {% if formC.status == 'Submitted to Student for Corrections' and formC_correction_note %}
+        <div class="alert alert-warning mt-2">
+          <strong>Submitted to Student for Corrections:</strong> {{ formC_correction_note }}
+        </div>
+        {% elif formC.status == 'Corrections Required' and formC_correction_note %}
+        <div class="alert alert-warning mt-2">
+          <strong>Corrections Required:</strong> {{ formC_correction_note }}
+        </div>
+        {% endif %}
+
+        {{ get_student_dashboard_status(formC) }}
+        <!--
+        {% if formC.rec_status == 'Approved' or formC.certificate_issued and formC.certificate_received %}
+          {% if formC.certificate_heading %}
+          <br>
+          <a href="{{ url_for('edited_certificate', id=formC.form_id) }}"
+            class="btn btn-sm btn-success text-white">View Certificate</a>
+          {% else %}
+          <br>
+          <a href="{{ url_for('view_certificate', id=formC.form_id) }}"
+            class="btn btn-sm btn-success text-white">View Certificate</a>
+          {% endif %}
+        {% elif 'low' in formC.risk_level|lower and formC.certificate_issued and formC.certificate_received %}
+          {% if formC.certificate_heading %}
+          <br>
+          <a href="{{ url_for('edited_certificate', id=formC.form_id) }}"
+            class="btn btn-sm btn-success text-white">View Certificate</a>
+          {% else %}
+          <br>
+          <a href="{{ url_for('view_certificate', id=formC.form_id) }}"
+            class="btn btn-sm btn-success text-white">View Certificate</a>
+          {% endif %}
+        {% endif %}
+      -->
+      </span>
+
+      <br>
+    </td>
+
+    <td style="min-width: 420px;">
+      {% set has_form_c_documents =
+        form_requirements and form_requirements.files
+      %}
+
+      {% if formC.form_id == current_form_c_id %}
+
+        {% if is_student_correction_state(formC) %}
+        <small class="text-danger d-block mt-2">
+          Please update your documents first, especially if revisions were requested in your feedback, before submitting the form.
+        </small>
+        <br>
+        <div class="d-flex flex-row flex-nowrap gap-2 align-items-center">
+          {% if has_form_c_documents %}
+          <a href="{{ url_for('student_edit_formc') }}" class="btn btn-warning btn-sm text-nowrap">
+            Resubmit Corrected Form
+          </a>
+          {% else %}
+          <small class="text-danger d-block mt-2">
+          Please update your documents first, especially if revisions were requested in your feedback, before submitting the form.
+        </small>
+        <br>
+          <button type="button" class="btn btn-warning btn-sm text-nowrap" disabled
+            title="Please update your documents first before continuing.">
+            Resubmit Corrected Form
+          </button>
+          {% endif %}
+
+          <a href="{{ url_for('submit_form_c_requirements') }}"
+            class="btn btn-success btn-sm text-white text-nowrap">
+            Resubmit Documents
+          </a>
+        </div>
+
+        {% if not has_form_c_documents %}
+        <small class="text-danger d-block mt-2">
+          Please update your documents first before continuing with the form.
+        </small>
+        {% endif %}
+
+        {% elif is_student_form_locked(formC) %}
+        <div class="d-flex flex-row flex-nowrap gap-2 align-items-center">
+          <a href="{{ url_for('student_form_pdf', form_id=formC.form_id, form_type='C') }}"
+            class="btn btn-primary btn-sm text-nowrap">
+            View Form
+          </a>
+
+          <span class="text-warning fw-bold text-nowrap">
+            Form submitted to your supervisor, no action required
+          </span>
+        </div>
+
+        {% elif not get_student_submission_timestamp(formC) and not formC.declaration_name %}
+        <div class="d-flex flex-row flex-nowrap gap-2 align-items-center">
+          {% if has_form_c_documents %}
+          <a href="{{ url_for('student_edit_formc') }}"
+            class="btn btn-success btn-sm text-white text-nowrap">
+            Continue Filling Form
+          </a>
+          {% else %}
+          <button type="button" class="btn btn-success btn-sm text-white text-nowrap" disabled
+            title="Please update your documents first before continuing.">
+            Continue Filling Form
+          </button>
+          {% endif %}
+
+          <a href="{{ url_for('submit_form_c_requirements') }}"
+            class="btn btn-success btn-sm text-white text-nowrap">
+            Update Documents
+          </a>
+        </div>
+
+        {% if not has_form_c_documents %}
+        <small class="text-danger d-block mt-2">
+          Please update your documents first before continuing with the form.
+        </small>
+        {% endif %}
+
+        {% else %}
+        <div class="d-flex flex-row flex-nowrap gap-2 align-items-center">
+          <a href="{{ url_for('student_form_pdf', form_id=formC.form_id, form_type='C') }}"
+            class="btn btn-primary btn-sm text-nowrap">
+            View Form
+          </a>
+
+          <span class="text-muted text-nowrap">
+            No action to be executed at this stage
+          </span>
+        </div>
+        {% endif %}
+
+      {% else %}
+      <div class="d-flex flex-row flex-nowrap gap-2 align-items-center">
+        <a href="{{ url_for('student_form_pdf', form_id=formC.form_id, form_type='C') }}"
+          class="btn btn-primary btn-sm text-nowrap">
+          View Form
+        </a>
+
+        <span class="badge text-bg-secondary text-nowrap">
+          Previous version
+        </span>
+      </div>
+      {% endif %}
+    </td>
+  </tr>
+  {% endfor %}
+  {% endif %}
+</tbody>
+        </table>
+        {% else %}
+        <Strong>There are currently no submissions made</strong>
+
+        <!--<p>Click on the links to start your form submission or edit your submission.</p>
+      <a href="{{ url_for('ethics_pack') }}" class="btn btn-primary mt-3">Start your form submission</a>
+    -->{% endif %}
+      </section>
+
+    </main>
+
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer">
+
+  </footer>
+
+  <!-- Bootstrap JS for alert dismissal -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

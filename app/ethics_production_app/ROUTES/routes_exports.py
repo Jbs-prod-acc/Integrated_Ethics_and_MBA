@@ -16,7 +16,7 @@ def export_forms_csv():
     
     if not user_id:
         flash('Please login to access this feature', 'error')
-        return redirect('/login?system=ethics')
+        return redirect(url_for('login_page'))
     
     user = db_session.query(User).filter(User.user_id == user_id).first()
     print(f"User found: {user.full_name if user else 'None'}")
@@ -48,7 +48,7 @@ def export_forms_csv():
             'student_submission': 'Student Submission Date',
             'recommendation': 'Supervisors Recommendation',
             'supervisor_date': 'Supervisor Recommendation Date',
-            'ethics_supervisor_form_status': 'Ethics Admin Decision',
+            'ethics_form_status': 'Ethics Admin Decision',
             'signature_date': 'Ethics Admin Decision Date',
             'review_supervisor_signature': 'First Reviewer Name',
             'review_recommendation': 'First Reviewer Recommendation',
@@ -78,7 +78,7 @@ def export_forms_csv():
             FormB.submitted_at,
             FormB.recommendation,
             FormB.supervisor_date,
-            FormB.ethics_supervisor_form_status,
+            FormB.ethics_form_status,
             FormB.signature_date,
             FormB.review_supervisor_signature,
             FormB.review_recommendation,
@@ -106,7 +106,7 @@ def export_forms_csv():
             proxy.submitted_at = result.submitted_at
             proxy.recommendation = result.recommendation
             proxy.supervisor_date = result.supervisor_date
-            proxy.ethics_supervisor_form_status = result.ethics_supervisor_form_status
+            proxy.ethics_form_status = result.ethics_form_status
             proxy.signature_date = result.signature_date
             proxy.review_supervisor_signature = result.review_supervisor_signature
             proxy.review_recommendation = result.review_recommendation
@@ -146,7 +146,7 @@ def export_forms_csv():
                 'student_submission': remove_tz(record.submitted_at) if record.submitted_at else '',
                 'recommendation': record.recommendation or '',
                 'supervisor_date': remove_tz(record.supervisor_date) if record.supervisor_date else '',
-                'ethics_supervisor_form_status': record.ethics_supervisor_form_status or '',
+                'ethics_form_status': record.ethics_form_status or '',
                 'signature_date': remove_tz(record.signature_date) if record.signature_date else '',
                 'review_supervisor_signature': record.review_supervisor_signature or '',
                 'review_recommendation': record.review_recommendation or '',
@@ -168,7 +168,7 @@ def export_forms_csv():
                 'student_submission': remove_tz(record.submitted_at) if record.submitted_at else '',
                 'recommendation': record.recommendation or '',
                 'supervisor_date': remove_tz(record.supervisor_date) if record.supervisor_date else '',
-                'ethics_supervisor_form_status': record.ethics_supervisor_form_status or '',
+                'ethics_form_status': record.ethics_form_status or '',
                 'signature_date': remove_tz(record.signature_date) if record.signature_date else '',
                 'review_supervisor_signature': record.review_supervisor_signature or '',
                 'review_recommendation': record.review_recommendation or '',
@@ -190,7 +190,7 @@ def export_forms_csv():
                 'student_submission': remove_tz(record.submission_date) if record.submission_date else '',
                 'recommendation': record.recommendation or '',
                 'supervisor_date': remove_tz(record.supervisor_date) if record.supervisor_date else '',
-                'ethics_supervisor_form_status': record.ethics_supervisor_form_status or '',
+                'ethics_form_status': record.ethics_form_status or '',
                 'signature_date': remove_tz(record.signature_date) if record.signature_date else '',
                 'review_supervisor_signature': record.review_supervisor_signature or '',
                 'review_recommendation': record.review_recommendation or '',
@@ -329,7 +329,7 @@ def export_agenda_csv():
     user_id = session.get('id')
     if not user_id:
         flash('Please login to access this feature', 'error')
-        return redirect('/login?system=ethics')
+        return redirect(url_for('login_page'))
     user = db_session.query(User).filter(User.user_id == user_id).first()
     if not user or not user.role or user.role.value.upper() not in ['ADMIN', 'SUPER_ADMIN']:
         flash('You do not have permission to export agenda', 'error')
@@ -520,7 +520,7 @@ def export_reviewer_assignments_csv():
     user_id = session.get('id')
     if not user_id:
         flash('Please login to access this feature', 'error')
-        return redirect('/login?system=ethics')
+        return redirect(url_for('login_page'))
 
     user = db_session.query(User).filter(User.user_id == user_id).first()
     if not user or not user.role or user.role.value.upper() not in ['ADMIN', 'SUPER_ADMIN']:
@@ -821,5 +821,4 @@ def export_reviewer_assignments_csv():
         traceback.print_exc()
         flash(f'Error exporting reviewer assignments: {str(e)}', 'error')
         return redirect(url_for('chair_landing'))
-
 

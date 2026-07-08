@@ -1,0 +1,195 @@
+{% extends "chair-base-layout.html" %}
+
+{% block title %}Admin - Upload student documents{% endblock %}
+{% block page_title %}Upload student documents{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Flashed Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <h5 class="card-title mb-4 text-primary">Upload Documents by ID</h5>
+            
+            <form action="{{ url_for('admin_upload_student_docs') }}" method="POST" enctype="multipart/form-data">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="id" class="form-label">Student Name</label>
+                        <select name="id" id="id" class="form-select" required>
+                            <option value="">-- Choose Student --</option>
+                            {% for req in requirements %}
+                                <option value="{{ req.id }}">{{ req.student_name }} ({{ req.form_type }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="form_type" class="form-label">form_type</label>
+                        <select name="form_type" id="form_type" class="form-select" onchange="toggleFormFields()">
+                            <option value="FormA">Form A</option>
+                            <option value="FormB">Form B</option>
+                            <option value="FormC">Form C</option>
+                        </select>
+                    </div>
+                </div>
+
+                <hr class="my-4">
+                
+                <div id="form-sections">
+                    <!-- SECTION: BOOLEANS -->
+                    <div class="row" id="section-booleans">
+                        <h6 class="text-secondary mb-3">Status Flags (Booleans)</h6>
+                        <div class="col-md-2 mb-3 flag-FormA flag-FormB">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="needs_permission" name="needs_permission">
+                                <label class="form-check-label" for="needs_permission">needs_permission</label>
+                            </div>
+                        </div>
+                        <div class="col-md-2 mb-3 flag-FormA flag-FormB">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="has_clearance" name="has_clearance">
+                                <label class="form-check-label" for="has_clearance">has_clearance</label>
+                            </div>
+                        </div>
+                        <div class="col-md-2 mb-3 flag-FormA">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="company_requires_jbs" name="company_requires_jbs">
+                                <label class="form-check-label" for="company_requires_jbs">company_requires_jbs</label>
+                            </div>
+                        </div>
+                        <div class="col-md-2 mb-3 flag-FormA">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="has_ethics_evidence" name="has_ethics_evidence">
+                                <label class="form-check-label" for="has_ethics_evidence">has_ethics_evidence</label>
+                            </div>
+                        </div>
+                        <div class="col-md-2 mb-3 flag-FormA">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="ethics_evidence" name="ethics_evidence">
+                                <label class="form-check-label" for="ethics_evidence">ethics_evidence</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+                    <h6 class="text-secondary mb-3">Document Uploads (Binary Fields)</h6>
+
+                    <div class="row">
+                        <div class="col-md-4 mb-3 upload-FormA upload-FormB">
+                            <label class="form-labelSmall">needs_permission_pending (maps to needs_permission_pending_filename)</label>
+                            <input type="file" name="needs_permission_pending" class="form-control form-control-sm">
+                        </div>
+                        <div class="col-md-4 mb-3 upload-FormA upload-FormB">
+                            <label class="form-labelSmall">pending_note (maps to pending_note_filename)</label>
+                            <input type="file" name="pending_note" class="form-control form-control-sm">
+                        </div>
+                        <div class="col-md-4 mb-3 upload-FormA upload-FormB">
+                            <label class="form-labelSmall">permission_letter (maps to permission_letter_filename)</label>
+                            <input type="file" name="permission_letter" class="form-control form-control-sm">
+                        </div>
+
+                        <div class="col-md-4 mb-3 upload-FormA upload-FormB">
+                            <label class="form-labelSmall">prior_clearance_path (maps to prior_clearance_path_filename)</label>
+                            <input type="file" name="prior_clearance_path" class="form-control form-control-sm">
+                        </div>
+                        <div class="col-md-4 mb-3 upload-FormA">
+                            <label class="form-labelSmall">prior_clearance (maps to prior_clearance_filename)</label>
+                            <input type="file" name="prior_clearance" class="form-control form-control-sm">
+                        </div>
+                        <div class="col-md-4 mb-3 upload-FormA">
+                            <label class="form-labelSmall">prior_clearance1 (maps to prior_clearance1_filename)</label>
+                            <input type="file" name="prior_clearance1" class="form-control form-control-sm">
+                        </div>
+
+                        <div class="col-md-4 mb-3 upload-FormA">
+                            <label class="form-labelSmall">need_jbs_clearance (maps to need_jbs_clearance_filename)</label>
+                            <input type="file" name="need_jbs_clearance" class="form-control form-control-sm">
+                        </div>
+                        <div class="col-md-4 mb-3 upload-FormA">
+                            <label class="form-labelSmall">need_jbs_clearance1 (maps to need_jbs_clearance1_filename)</label>
+                            <input type="file" name="need_jbs_clearance1" class="form-control form-control-sm">
+                        </div>
+                        <div class="col-md-4 mb-3 upload-FormA">
+                            <label class="form-labelSmall">research_tools_path (maps to research_tools_filename)</label>
+                            <input type="file" name="research_tools_path" class="form-control form-control-sm">
+                        </div>
+
+                        <div class="col-md-4 mb-3 upload-FormA upload-FormB upload-FormC">
+                            <label class="form-labelSmall">proposal_path (maps to proposal_filename)</label>
+                            <input type="file" name="proposal_path" class="form-control form-control-sm">
+                        </div>
+                        <div class="col-md-4 mb-3 upload-FormA">
+                            <label class="form-labelSmall">impact_assessment_path (maps to impact_assessment_filename)</label>
+                            <input type="file" name="impact_assessment_path" class="form-control form-control-sm">
+                        </div>
+                        <div class="col-md-4 mb-3 upload-FormA">
+                            <label class="form-labelSmall">participation_info_sheet (maps to participation_info_filename)</label>
+                            <input type="file" name="participation_info_sheet" class="form-control form-control-sm">
+                        </div>
+
+                        <div class="col-md-4 mb-3 upload-FormA">
+                            <label class="form-labelSmall">ethics_evidence_path (maps to ethics_evidence_path_filename)</label>
+                            <input type="file" name="ethics_evidence_path" class="form-control form-control-sm">
+                        </div>
+                        <div class="col-md-4 mb-3 upload-FormA upload-FormC">
+                            <label class="form-labelSmall">files (maps to files_filename)</label>
+                            <input type="file" name="files" class="form-control form-control-sm">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4 text-end">
+                    <button type="reset" class="btn btn-outline-secondary me-2">Reset Form</button>
+                    <button type="submit" class="btn btn-primary px-4">Upload Documents</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+    .form-labelSmall {
+        font-size: 0.85rem;
+        font-weight: 500;
+        color: #495057;
+    }
+</style>
+
+<script>
+    function toggleFormFields() {
+        const formType = document.getElementById('form_type').value;
+        
+        // Toggle flags (Booleans)
+        document.querySelectorAll('[class*="flag-"]').forEach(el => {
+            if (el.classList.contains('flag-' + formType)) {
+                el.style.display = 'block';
+            } else {
+                el.style.display = 'none';
+            }
+        });
+
+        // Toggle Uploads
+        document.querySelectorAll('[class*="upload-"]').forEach(el => {
+            if (el.classList.contains('upload-' + formType)) {
+                el.style.display = 'block';
+            } else {
+                el.style.display = 'none';
+            }
+        });
+    }
+
+    // Initialize on load
+    document.addEventListener('DOMContentLoaded', toggleFormFields);
+</script>
+{% endblock %}

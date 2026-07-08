@@ -88,7 +88,7 @@ def register_cli(app):
             "alter table ethcis_users drop constraint if exists ethcis_user_role_check",
             """
             alter table ethcis_users add constraint ethcis_user_role_check
-            check (role in ('super_admin','admin','reviewer','supervisor','student','rec','dean'))
+            check (role in ('super_admin','admin','reviewer','supervisor','student','rec'))
             """,
             "alter table ethcis_users add column if not exists student_number varchar(40)",
             "alter table ethcis_users add column if not exists supervisor_id integer",

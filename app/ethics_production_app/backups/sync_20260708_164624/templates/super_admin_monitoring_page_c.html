@@ -1,0 +1,173 @@
+{% extends "chair-base-layout.html" %}
+{% block title %}Form C Review Delay Tracker | JBS Ethics{% endblock %}
+{% block page_title %}Form C - Review Delay Tracker{% endblock %}
+{% block header_content %}
+<p>Monitor Form C application review delays and processing times</p>
+{% endblock %}
+{% block head %}
+<style>
+    table {
+        border-collapse: collapse;
+        width: 100%;
+        margin-top: 20px;
+    }
+    th, td {
+        border: 1px solid #ccc;
+        padding: 8px;
+        text-align: left;
+    }
+    th {
+        background: #f2f2f2;
+    }
+    .delayed {
+        background-color: #ffcccc;
+    }
+
+    /* Collapse header */
+    .collapse-header {
+        cursor: pointer;
+        color: #022169;
+    }
+
+    .bordered-card {
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        padding: 15px;
+        margin-bottom: 15px;
+        background: white;
+        box-shadow: 0 0 5px rgba(0,0,0,0.05);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+{% if forms_list %}
+<div class="d-flex justify-content-between align-items-center mb-2">
+    <div>
+        Showing {{ (page-1)*per_page+1 }} - {{ (page-1)*per_page+forms_list|length }} of {{ total }}
+    </div>
+    <div>
+        {% if page > 1 %}
+            <a href="?page={{ page-1 }}" class="btn btn-sm btn-outline-primary">Previous</a>
+        {% endif %}
+        {% if (page*per_page) < total %}
+            <a href="?page={{ page+1 }}" class="btn btn-sm btn-outline-primary">Next</a>
+        {% endif %}
+    </div>
+</div>
+{% for item in forms_list %}
+<h5 class="collapse-header d-flex justify-content-between align-items-center"
+    data-bs-toggle="collapse"
+    data-bs-target="#{{loop.index}}"
+    aria-expanded="false"
+    aria-controls="{{loop.index}}">
+    {{ item.applicant_name }}
+    <i class="fas fa-chevron-down ms-2"></i>
+</h5>
+
+<div class="bordered-card">
+    <div class="collapse" id="{{loop.index}}">
+        <table>
+            <thead>
+                <tr>
+                    <th>Applicant Name</th>
+                    <th>Current Location</th>
+                    <th>Risk Rating</th>
+                    <th>Student Submission Date</th>
+                    <th>Supervisor</th>
+                    <th>Ethics Decision</th>
+                    <th>1st Reviewer</th>
+                    <th>2nd Reviewer</th>
+                    <th>Submitted to REC</th>
+                    <th>Certificate Issued Date</th>
+                    <th>Certificate Received</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>{{item.applicant_name}}</td>
+                    <td><span class="badge bg-secondary">{{ get_workflow_location(item) }}</span></td>
+                    <td>{{item.risk_level}}</td>
+                    <td>
+                        {% if item.submission_date %}
+                            {{ item.submission_date.strftime('%Y-%m-%d') }}<br>
+                            <small>Submitted {{ (current_time - item.submission_date).days }} day(s) ago</small>
+                        {% else %}
+                            Not Submitted
+                        {% endif %}
+                    </td>
+                    <td>{{item.supervisor}}<br>
+                        {% if item.supervisor_date %}
+                            <small>Submitted: {{ item.supervisor_date.strftime('%Y-%m-%d') }}</small>
+                        {% else %}
+                            <small class="text-muted">Pending Review</small>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if item.ethics_supervisor_form_status %}
+                        {{item.ethics_supervisor_form_status}}<br>
+                        {% elif item.status%}
+                        {{item.status}}<br>
+                        {% endif %}
+                        {% if item.signature_date %}
+                        Decision Date: {{item.signature_date}}
+                        {% elif item.ethics_supervisor_signature_date %}
+                        Decision Date: {{ item.ethics_supervisor_signature_date.strftime('%Y-%m-%d')}}
+                        {% endif %}
+
+                    </td>
+                    <td>
+                        {{item.first_reviewer_name}}<br>
+                        {% if item.first_reviewer_date %}
+                            Submitted: {{ item.first_reviewer_date.strftime('%Y-%m-%d') }}
+                        {% else %}
+                            <span class="text-muted">Not yet Reviewed</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {{item.second_reviewer_name}}<br>
+                        {% if item.second_reviewer_date %}
+                            Submitted: {{ item.second_reviewer_date.strftime('%Y-%m-%d') }}
+                        {% else %}
+                            <span class="text-muted">Not yet Reviewed</span>
+                        {% endif %}
+                    </td>
+                    <td>{{item.submitted_to_rec}}</td>
+                    <td>{{item.certificate_issued}}</td>
+                    <td>{{item.certificate_received}}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endfor %}
+{% else %}
+<div class="alert alert-info">
+    <h4>No Data Available</h4>
+    <p>There are no Form C submissions to monitor at this time.</p>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const toggleHeaders = document.querySelectorAll('.collapse-header');
+    toggleHeaders.forEach(function (header) {
+        const targetSelector = header.getAttribute("data-bs-target");
+        const collapseEl = document.querySelector(targetSelector);
+        const icon = header.querySelector("i");
+        if (collapseEl && icon) {
+            collapseEl.addEventListener("show.bs.collapse", function () {
+                icon.classList.remove("fa-chevron-down");
+                icon.classList.add("fa-chevron-up");
+            });
+            collapseEl.addEventListener("hide.bs.collapse", function () {
+                icon.classList.remove("fa-chevron-up");
+                icon.classList.add("fa-chevron-down");
+            });
+        }
+    });
+});
+</script>
+{% endblock %}

@@ -69,7 +69,7 @@ body {
         <div class="auth-side-overlay">
           <h3 class="mb-2">Already registered?</h3>
           <p class="mb-4">Sign in to continue where you left off.</p>
-          <a class="btn btn-light fw-bold" href="/login?system=ethics">Login</a>
+          <a class="btn btn-light fw-bold" href="{{ url_for('login_page') }}">Login</a>
         </div>
       </aside>
 
@@ -96,7 +96,7 @@ body {
         </form>
 
         <p class="switch-link mt-3">Already have an account?
-          <a href="/login?system=ethics">Login</a>
+          <a href="{{ url_for('login_page') }}">Login</a>
         </p>
       </section>
 

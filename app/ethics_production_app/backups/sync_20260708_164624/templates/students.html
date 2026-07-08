@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Supervisor – Student List | JBS Ethics</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="css/styles.css" />
+  <link rel="stylesheet" href="css/supervisor.css" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/supervisor.css') }}">
+</head>
+<body>
+
+<div class="admin-wrapper">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <img src="{{ url_for('static',filename='img/image.png')}}" alt="UJ JBS Logo" class="logo uj">
+    </div>
+    <nav class="sidebar-nav">
+      <a href="{{url_for('supervisor_dashboard')}}" class="sidebar-link active">
+        <i class="fas fa-home"></i> Dashboard
+      </a>
+      <a href="{{url_for('supervisor_student')}}" class="sidebar-link">
+        <i class="fas fa-users"></i> My Students
+      </a>
+      <a href="{{url_for('logout')}}" class="sidebar-link">
+        <i class="fas fa-sign-out-alt"></i> Logout
+      </a>
+    </nav>
+  </aside>
+
+  <!-- Main -->
+  <main class="admin-main">
+    <header class="topbar">
+      <h2>My Students</h2>
+      <p>View all students under your supervision.</p>
+    </header>
+    <br>
+
+    <section class="admin-content">
+      <!-- <h3>Student List</h3> -->
+      {% if students %}
+      <table class="student-table">
+        <thead>
+          <tr>
+            <th>Student Number</th>
+            <th>Full Name</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for student in students %}
+          <tr>
+            <td>{{student.student_number}}</td>
+            <td>{{student.full_name}}</td>
+            <td><span class="badge status-complete">
+              
+              {{'SUBMITTED' if student.form_a else 'SUBMITTED' if student.form_b else 'SUBMITTED' if student.form_c else 'NO SUBMISSIONS'}}
+              
+            </span></td>
+          </tr>
+          {% endfor %}
+          
+        </tbody>
+      </table>
+      {% else %}
+      No Students available
+      {% endif %}
+    </section>
+
+  </main>
+</div>
+
+    <!-- <footer class="footer">
+      <p>&copy; 2025 Johannesburg Business School | University of Johannesburg</p>
+    </footer> -->
+
+</body>
+</html>

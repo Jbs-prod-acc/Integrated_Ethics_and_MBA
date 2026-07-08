@@ -1,0 +1,401 @@
+<!-- FORM A: SECTION 1-5 -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Form A – Human Research Ethics | JBS Ethics</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="css/form_a.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/form_a.css') }}">
+  <style>
+    /* Universal style for all checkboxes */
+input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;          /* Make them round */
+  border: 2px solid black;     /* Black border */
+  appearance: none;            /* Remove default OS styling */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-color: white;
+  cursor: pointer;
+  vertical-align: middle;
+  position: relative;
+}
+
+/* Checked style: black circle with white center */
+input[type="checkbox"]:checked {
+  background-color: black;
+}
+
+/* Inner dot for checked checkboxes */
+input[type="checkbox"]:checked::after {
+  content: "";
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 8px;
+  height: 8px;
+  background-color: white;
+  border-radius: 50%;
+}
+
+  </style><link rel="stylesheet" href="{{ url_for('static', filename='css/loading.css') }}"></head>
+<body>
+
+  <!-- Navbar -->
+  <header class="navbar">
+    <div class="nav-content">
+      <img src="{{ url_for('static',filename='img/image.png')}}" alt="UJ JBS Logo" class="logo uj">
+      <span class="nav-title">Form A – Section 6: Ethical Considerations</span>
+
+                <!-- Logout -->
+    <div style="text-align: right;">
+
+      <a href="{{url_for('logout')}}" class="btn-logout">Logout</a>
+    </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    
+    <!-- Top Bar -->
+    <!-- <div class="form-header">
+      <button class="approve-btn">Save Draft</button>
+      <strong>Step 6 of 7</strong>
+    </div> -->
+
+    <!-- Progress Bar -->
+    <div class="progress-bar">
+      <div class="progress-fill" style="width: 84%">84%</div>
+    </div>
+<form action="{{url_for('form_a_sec5')}}" method="post" class="no-loading-indicator">
+
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="forma_id" value="{{ form_data.form_id if form_data and form_data.form_id else '' }}">
+<!-- Section 6 – Ethical Considerations -->
+<div class="form-section" id="section6">
+    <h2>Section 6: Ethical Considerations</h2>
+
+    <div class="question-block">
+      <label for="informed-consent">6.1 Will informed consent be obtained? Explain the process:</label>
+      <textarea id="informed-consent" name="informed_consent" rows="4" placeholder="Describe how informed consent will be obtained from participants, including any documentation or verbal explanations provided."></textarea>
+    </div>
+  
+    <div class="question-block">
+      <label>6.2 Data storage and access to data</label><br>
+      <p>Tick all that apply:</p>
+        <input type="checkbox" name="data_storage[]" value="secure_location"> Paper-based records must be kept in a secure location<br>
+        <input type="checkbox" name="data_storage[]" value="password_protected"> Computer-based records must only be available to personnel involved in the study through access privileges<br>
+        <input type="checkbox" name="data_storage[]" value="protected_place"> Electronic data will be kept in a protected place<br>
+        <input type="checkbox" name="data_storage[]" value="retention"> Paper-based data will be kept for 5 years and then destroyed<br>
+    </div>
+  
+    <div class="question-block">
+      <label for="study-benefits">6.3 What are the benefits of the study?</label>
+      <textarea id="study-benefits" name="study_benefits" rows="3" placeholder="Describe the benefits of the study, both to participants and to society at large."></textarea>
+    </div>
+  
+    <div class="question-block">
+      <label for="participant-risks">6.4 Description of the risks participants may suffer and the level of risk:</label>
+      <textarea id="participant-risks" name="participant_risks" rows="3" placeholder="Describe any potential risks to participants, including physical, psychological, or social risks."></textarea>
+    </div>
+  
+    <div class="question-block">
+      <label for="adverse-steps">6.5 Description of steps to be taken in case of adverse events:</label>
+      <textarea id="adverse-steps" name="adverse_steps" rows="3" placeholder="Describe the procedures in place to address any adverse events that may occur during the study."></textarea>
+    </div>
+  
+    <div class="question-block">
+      <label for="community-participation">6.6 Description of anticipated community participation in the study:</label>
+      <textarea id="community-participation" name="community_participation" rows="3" placeholder="Describe how the community will be involved in the study, including any partnerships or collaborations."></textarea>
+    </div>
+  
+    <div class="question-block">
+      <label for="community-effects">6.7 Description of possible adverse effects on the community:</label>
+      <textarea id="community-effects" name="community_effects" rows="3" placeholder="Describe any potential negative impacts the study may have on the community, and how these will be mitigated."></textarea>
+    </div>
+  
+    <div class="question-block">
+      <label for="data-privacy-practices">6.8 Select all data privacy practices applied:</label><br>
+      <input type="checkbox" name="privacy[]" value="remove_identifiers"> Personal identifiers will be removed<br>
+      <input type="checkbox" name="privacy[]" value="encryption"> Encryption<br>
+      <input type="checkbox" name="privacy[]" value="pseudonyms"> Use of pseudonyms<br>
+      <input type="checkbox" name="privacy[]" value="focus_group_warning"> Participants in focus groups will be advised confidentiality cannot be assured<br>
+    </div>
+  
+    <div class="question-block">
+      <label>6.9 Checklist to ensure the covering letter meets ethical requirements</label>
+
+<table>
+  <thead>
+    <tr>
+      <th style="width: 80%;">Checklist Item</th>
+      <th style="width: 20%;">Select where applicable</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td>a) Identity and position of the researcher(s)?</td><td><input type="checkbox" name="q6_9a" value="yes" {% if form_data and form_data.q6_9a %}checked{% endif %}> </td></tr>
+    <tr><td>b) Purpose of the information collection?</td><td><input type="checkbox" name="q6_9b" value="yes" {% if form_data and form_data.q6_9b %}checked{% endif %}> </td></tr>
+    <tr><td>c) Reason for selection and procedures for selecting participants?</td><td><input type="checkbox" name="q6_9c" value="yes" {% if form_data and form_data.q6_9c %}checked{% endif %}>  </td></tr>
+    <tr><td>d) Participant’s role in the study?</td><td><input type="checkbox" name="q6_9d" value="yes" {% if form_data and form_data.q6_9d %}checked{% endif %}> </td></tr>
+    <tr><td>e) Expected duration of participation?</td><td><input type="checkbox" name="q6_9e" value="yes" {% if form_data and form_data.q6_9e %}checked{% endif %}></td></tr>
+    <tr><td>f) Statement of voluntary participation and no penalty?</td><td><input type="checkbox" name="q6_9f" value="yes" {% if form_data and form_data.q6_9f %}checked{% endif %}></td></tr>
+    <tr><td>g) Benefits to the participant and others?</td><td><input type="checkbox" name="q6_9g" value="yes" {% if form_data and form_data.q6_9g %}checked{% endif %}></td></tr>
+    <tr><td>h) Risks and steps for harm/injury?</td><td><input type="checkbox" name="q6_9h" value="yes" {% if form_data and form_data.q6_9h %}checked{% endif %}></td></tr>
+    <tr><td>i) Statement of right to withdraw?</td><td><input type="checkbox" name="q6_9i" value="yes" {% if form_data and form_data.q6_9i %}checked{% endif %}></td></tr>
+    <tr><td>j) Compensation/gifts/services?</td><td><input type="checkbox" name="q6_9j" value="yes" {% if form_data and form_data.q6_9j %}checked{% endif %}></td></tr>
+    <tr><td>k) Reimbursement for costs?</td><td><input type="checkbox" name="q6_9k" value="yes" {% if form_data and form_data.q6_9k %}checked{% endif %}></td></tr>
+    <tr><td>l) Indemnity if applicable?</td><td><input type="checkbox" name="q6_9l" value="yes" {% if form_data and form_data.q6_9l %}checked{% endif %}></td></tr>
+    <tr><td>m) Period for which records will be kept?</td><td><input type="checkbox" name="q6_9m" value="yes" {% if form_data and form_data.q6_9m %}checked{% endif %}></td></tr>
+    <tr><td>n) Steps for confidentiality and secure storage?</td><td><input type="checkbox" name="q6_9n" value="yes" {% if form_data and form_data.q6_9n %}checked{% endif %}></td></tr>
+    <tr><td>o) Disclosure of information to third parties?</td><td><input type="checkbox" name="q6_9o" value="yes" {% if form_data and form_data.q6_9o %}checked{% endif %}></td></tr>
+    <tr><td>p) Privacy protection in publications?</td><td><input type="checkbox" name="q6_9p" value="yes" {% if form_data and form_data.q6_9p %}checked{% endif %}></td></tr>
+    <tr><td>q) Feedback to participants?</td><td><input type="checkbox" name="q6_9q" value="yes" {% if form_data and form_data.q6_9q %}checked{% endif %}></td></tr>
+    <tr><td>r) Exclusions to confidentiality disclosed?</td><td><input type="checkbox" name="q6_9r" value="yes" {% if form_data and form_data.q6_9r %}checked{% endif %}></td></tr>
+    <tr><td>s) Consent for audio/video recording?</td><td><input type="checkbox" name="q6_9s" value="yes" {% if form_data and form_data.q6_9s %}checked{% endif %}></td></tr>
+  </tbody>
+</table>
+
+    </div>
+  
+    <div class="question-block">
+      <label for="results-feedback">6.10 How will participants be informed of findings?</label>
+      <textarea id="results-feedback" name="results_feedback" rows="3" required placeholder="Describe how you will provide feedback to participants about the study results, including any reports or publications."></textarea>
+    </div>
+  
+    <div class="question-block">
+      <label for="products-access">6.11 Description of participants’ access to products developed from the study:</label>
+      <textarea id="products-access" name="products_access" rows="3" required placeholder="Describe how participants will have access to any products or outcomes developed from the study, such as reports, publications, or other materials."></textarea>
+    </div>
+  
+    <div class="question-block">
+      <label for="publication-plans">6.12 Indicate how you envisage publishing this research:</label>
+      <textarea id="publication-plans" name="publication_plans" rows="3" required placeholder="Describe your plans for publishing the research findings, including any journals or conferences you plan to submit to."></textarea>
+    </div>
+  
+    <div class="question-block">
+      <label for="participant-comp">6.13 Describe compensation to participants (if applicable):</label>
+      <textarea id="participant-comp" name="participant_comp" rows="3" required placeholder="Describe any compensation or incentives that will be provided to participants for their involvement in the study."></textarea>
+    </div>
+  
+    <div class="question-block">
+      <label for="participant-costs">6.14 Describe any financial costs to participants (if applicable):</label>
+      <textarea id="participant-costs" name="participant_costs" rows="3" required placeholder="Describe any financial costs that participants may incur as a result of their participation in the study, such as travel expenses or time away from work."></textarea>
+    </div>
+  
+    <div class="question-block">
+      <label for="ethics-reporting">6.15 Description of reporting to ethics research committee:</label>
+      <textarea id="ethics-reporting" name="ethics_reporting" rows="3" required placeholder="Describe how you will report any adverse events or changes to the study to the ethics research committee, including timelines and procedures."></textarea>
+    </div>
+  
+        <!-- Navigation Buttons -->
+        <!-- Autosave Indicator -->
+        <div id="autosave-status" style="position: fixed; top: 70px; right: 20px; padding: 8px 16px; background: #f0f0f0; border-radius: 4px; font-size: 14px; z-index: 1000;"></div>
+
+        <div class="form-navigation">
+          <a href="{{url_for('form_a_sec4')}}" class="revise-btn">⬅ Section 5</a>
+          <button type="submit"   class="approve-btn">Next ➔ Section 7</button>
+        </div>
+      </form>
+  
+    </main>
+  
+    <!-- Footer -->
+<footer class="footer">
+   
+</footer>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    console.log('[FORM-A-SEC5] DOM ready');
+    const form = document.querySelector('form');
+    if (!form) {
+      console.warn('[FORM-A-SEC5] Form element not found; autosave not initialized');
+      return;
+    }
+    const initialData = {{ {
+      'informed_consent': form_data.informed_consent if form_data else '',
+      'study_benefits': form_data.study_benefits if form_data else '',
+      'participant_risks': form_data.participant_risks if form_data else '',
+      'adverse_steps': form_data.adverse_steps if form_data else '',
+      'community_participation': form_data.community_participation if form_data else '',
+      'community_effects': form_data.community_effects if form_data else '',
+      'results_feedback': form_data.results_feedback if form_data else '',
+      'products_access': form_data.products_access if form_data else '',
+      'publication_plans': form_data.publication_plans if form_data else '',
+      'participant_comp': form_data.participant_comp if form_data else '',
+      'participant_costs': form_data.participant_costs if form_data else '',
+      'ethics_reporting': form_data.ethics_reporting if form_data else '',
+      'data_storage': (form_data.data_storage.split(',') if form_data and form_data.data_storage else []),
+      'privacy': (form_data.privacy.split(',') if form_data and form_data.privacy else []),
+      'q6_9a': form_data.q6_9a if form_data else False,
+      'q6_9b': form_data.q6_9b if form_data else False,
+      'q6_9c': form_data.q6_9c if form_data else False,
+      'q6_9d': form_data.q6_9d if form_data else False,
+      'q6_9e': form_data.q6_9e if form_data else False,
+      'q6_9f': form_data.q6_9f if form_data else False,
+      'q6_9g': form_data.q6_9g if form_data else False,
+      'q6_9h': form_data.q6_9h if form_data else False,
+      'q6_9i': form_data.q6_9i if form_data else False,
+      'q6_9j': form_data.q6_9j if form_data else False,
+      'q6_9k': form_data.q6_9k if form_data else False,
+      'q6_9l': form_data.q6_9l if form_data else False,
+      'q6_9m': form_data.q6_9m if form_data else False,
+      'q6_9n': form_data.q6_9n if form_data else False,
+      'q6_9o': form_data.q6_9o if form_data else False,
+      'q6_9p': form_data.q6_9p if form_data else False,
+      'q6_9q': form_data.q6_9q if form_data else False,
+      'q6_9r': form_data.q6_9r if form_data else False,
+      'q6_9s': form_data.q6_9s if form_data else False
+    } | tojson }};
+
+    const textFields = [
+      'informed_consent','study_benefits','participant_risks','adverse_steps','community_participation','community_effects',
+      'results_feedback','products_access','publication_plans','participant_comp','participant_costs','ethics_reporting'
+    ];
+    textFields.forEach(name => {
+      const el = form.querySelector(`[name="${name}"]`);
+      if (el && initialData[name] != null && initialData[name] !== '') el.value = initialData[name];
+    });
+
+    (initialData.data_storage || []).forEach(v => {
+      const el = form.querySelector(`input[name="data_storage[]"][value="${v}"]`);
+      if (el) el.checked = true;
+    });
+    (initialData.privacy || []).forEach(v => {
+      const el = form.querySelector(`input[name="privacy[]"][value="${v}"]`);
+      if (el) el.checked = true;
+    });
+
+    function isTruthyCheckbox(val) {
+      if (val === true) return true;
+      if (val === false || val === null || val === undefined) return false;
+      const text = String(val).toLowerCase();
+      return ['yes', 'true', '1', 'on', 'checked'].includes(text);
+    }
+
+    ['a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s'].forEach(key => {
+      const name = `q6_9${key}`;
+      const el = form.querySelector(`input[name="${name}"]`);
+      if (el) el.checked = isTruthyCheckbox(initialData[name]);
+    });
+
+    let autosaveTimeout = null;
+    const savingIndicator = document.getElementById('autosave-status');
+    const AUTOSAVE_DEBUG_SEC5 = true;
+    function debugLogSec5(...args) {
+      if (!AUTOSAVE_DEBUG_SEC5) return;
+      console.log('[FORM-A-SEC5]', ...args);
+    }
+    debugLogSec5('Autosave initialized');
+    
+    function showSaving() {
+      if (savingIndicator) savingIndicator.innerHTML = 'Autosaving...';
+    }
+    function showSaved() {
+      if (savingIndicator) {
+        savingIndicator.innerHTML = 'Saved';
+        setTimeout(() => { savingIndicator.innerHTML = ''; }, 1500);
+      }
+    }
+    function showError() {
+      if (savingIndicator) savingIndicator.innerHTML = '<span style="color:red">Error saving</span>';
+    }
+    
+    function autosave() {
+      showSaving();
+      debugLogSec5('Autosave start');
+      const formData = new FormData(form);
+      
+      const checkboxes = form.querySelectorAll('input[type="checkbox"]');
+      debugLogSec5('Checkbox count', checkboxes.length);
+      const arrayCheckboxNames = new Set();
+      checkboxes.forEach(cb => {
+        if (cb.name && cb.name.endsWith('[]')) arrayCheckboxNames.add(cb.name);
+      });
+      arrayCheckboxNames.forEach(name => formData.delete(name));
+      checkboxes.forEach(cb => {
+        if (cb.name.endsWith('[]')) {
+          if (cb.checked) {
+            formData.append(cb.name, cb.value || 'Yes');
+          }
+        } else {
+          formData.set(cb.name, cb.checked ? 'Yes' : 'No');
+        }
+      });
+      
+      // Preserve radio button values
+      const radioButtons = form.querySelectorAll('input[type="radio"]');
+      radioButtons.forEach(rb => {
+        if (rb.checked) {
+          debugLogSec5('Radio selected', { name: rb.name, value: rb.value });
+          formData.set(rb.name, rb.value);
+        }
+      });
+
+      debugLogSec5('Payload preview', {
+        data_storage: formData.getAll('data_storage[]'),
+        privacy: formData.getAll('privacy[]')
+      });
+      debugLogSec5('Sending fetch request');
+      
+      fetch('{{ url_for("form_a_sec5_autosave") }}', {
+        method: 'POST',
+        body: formData,
+        headers: { 'Accept': 'application/json' }
+      })
+      .then(r => {
+        debugLogSec5('Response status', r.status, r.statusText);
+        return r.json().catch(() => ({ success: false, error: 'Invalid JSON response' }));
+      })
+      .then(data => {
+        debugLogSec5('Response data', data);
+        if (data && data.success) {
+          showSaved();
+        } else {
+          showError();
+          console.error('[FORM-A-SEC5] Save failed:', data && data.error ? data.error : 'Unknown error');
+        }
+      })
+      .catch(err => {
+        showError();
+        console.error('[FORM-A-SEC5] Fetch error:', err);
+      });
+    }
+    
+    function attachAutosaveListeners() {
+      const allFields = Array.from(form.querySelectorAll('input:not([type="file"]), textarea, select'));
+      allFields.forEach(field => {
+        if (field.name === 'csrf_token') return;
+        if (field.dataset.autosaveBound === '1') return;
+        const eventType = (field.type === 'checkbox' || field.type === 'radio' || field.tagName === 'SELECT') ? 'change' : 'input';
+        field.addEventListener(eventType, function() {
+          const valuePreview = field.type === 'checkbox' ? field.checked : field.value;
+          debugLogSec5('Field event', {
+            name: field.name,
+            type: field.type,
+            eventType: eventType,
+            value: valuePreview
+          });
+          clearTimeout(autosaveTimeout);
+          autosaveTimeout = setTimeout(function() {
+            debugLogSec5('Debounced autosave trigger for field', field.name);
+            autosave();
+          }, 700);
+        });
+        field.dataset.autosaveBound = '1';
+      });
+    }
+
+    attachAutosaveListeners();
+  });
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="{{ url_for('static', filename='js/form-submission-handler.js') }}"></script>
+    </body>
+    </html>
+  

@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Supervisor Feedback Form | JBS Ethics</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <style>
+    body {
+      padding: 2rem;
+      background-color: #f8f9fa;
+    }
+    h2 {
+      color: #022169;
+    }
+    table {
+      background-color: white;
+    }
+    textarea {
+      resize: vertical;
+    }
+  </style>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/loading.css') }}">
+</head>
+<body>
+
+  <div class="container">
+    <h2 class="mb-4 text-center">Johannesburg Business School<br>Supervisor Feedback Form</h2>
+
+    <form method="POST" action="/submit_supervisor_feedback">
+      <div class="form-group">
+        <label for="student_name">Student Name:</label>
+        <input type="text" class="form-control" id="student_name" name="student_name" required>
+      </div>
+
+      <div class="form-group">
+        <label for="submission_date">Date of Submission:</label>
+        <input type="date" class="form-control" id="submission_date" name="submission_date" required>
+      </div>
+
+      <div class="form-group">
+        <label for="supervisor_name">Supervisor Name:</label>
+        <input type="text" class="form-control" id="supervisor_name" name="supervisor_name" required>
+      </div>
+
+      <div class="form-group">
+        <label for="research_title">Title of Research:</label>
+        <input type="text" class="form-control" id="research_title" name="research_title" required>
+      </div>
+
+      <div class="form-group">
+        <label for="review_date">Date of Review:</label>
+        <input type="date" class="form-control" id="review_date" name="review_date" required>
+      </div>
+
+      <h5 class="mt-4">Checklist of Required Documents for Supervisor Review</h5>
+
+      <table class="table table-bordered mt-3">
+        <thead class="thead-light">
+          <tr>
+            <th>Document</th>
+            <th>Supervisor Comments</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Organisational Permission<br><small>Can be an email or formal letter. Ensure permission to access the organisation and relevant documents is included.</small></td>
+            <td><textarea name="org_permission_comment" class="form-control" rows="3"></textarea></td>
+          </tr>
+          <tr>
+            <td>Signed Waiver from Business<br><small>Template available under “Ethical Clearance Templates” in the system.</small></td>
+            <td><textarea name="waiver_comment" class="form-control" rows="3"></textarea></td>
+          </tr>
+          <tr>
+            <td>Ethics Application Form<br><small>Ensure all fields are complete and the form is co-signed by you as the supervisor. Any revisions made after your proposal review must be submitted.</small></td>
+            <td><textarea name="form_a_comment" class="form-control" rows="3"></textarea></td>
+          </tr>
+          <tr>
+            <td>Interview Questions and/or Questionnaire<br><small>Review for clarity, appropriateness, and ethical sensitivity. Preliminary versions may be accepted if noted.</small></td>
+            <td><textarea name="questions_comment" class="form-control" rows="3"></textarea></td>
+          </tr>
+          <tr>
+            <td>Participant Information Sheet and Informed Consent Form<br><small>Ensure the correct template has been used and tailored to the student’s study.</small></td>
+            <td><textarea name="consent_comment" class="form-control" rows="3"></textarea></td>
+          </tr>
+          <tr>
+            <td>Refined Concept Proposal<br><small>This should match the approved version with the literature review.</small></td>
+            <td><textarea name="proposal_comment" class="form-control" rows="3"></textarea></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="form-group">
+        <label for="supervisor_feedback"><strong>Supervisor Comments & Recommendation:</strong></label>
+        <textarea class="form-control" id="supervisor_feedback" name="supervisor_feedback" rows="5" placeholder="Provide any feedback or required revisions..."></textarea>
+      </div>
+
+      <h5>Recommendation:</h5>
+      <div class="form-check">
+        <input class="form-check-input" type="radio" name="recommendation" id="ready" value="Ready for submission" onchange="toggleFields()" required>
+        <label class="form-check-label" for="ready">
+          ✔ Ready for submission to JBS ETHICS ADMIN
+        </label>
+      </div>
+      <div class="form-check mb-3">
+        <input class="form-check-input" type="radio" name="recommendation" id="revisions" value="Revisions required" onchange="toggleFields()">
+        <label class="form-check-label" for="revisions">
+          ✏️ Revisions required before submission
+        </label>
+      </div>
+
+      <div class="form-group">
+        <label for="supervisor_signature">Supervisor Signature:</label>
+        <input type="text" class="form-control" id="supervisor_signature" name="supervisor_signature">
+      </div>
+
+      <div class="form-group">
+        <label for="signature_date">Date:</label>
+        <input type="date" class="form-control" id="signature_date" name="signature_date">
+      </div>
+
+      <button type="submit" class="btn btn-primary mt-3">Submit Feedback</button>
+    </form>
+  </div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="{{ url_for('static', filename='js/form-submission-handler.js') }}"></script>
+<script>
+  function toggleFields() {
+    const ready = document.getElementById('ready').checked;
+    const revisions = document.getElementById('revisions').checked;
+    const signature = document.getElementById('supervisor_signature');
+    const date = document.getElementById('signature_date');
+    const feedback = document.getElementById('supervisor_feedback');
+
+    if (ready) {
+      signature.required = true;
+      date.required = true;
+      feedback.required = false;
+    } else if (revisions) {
+      signature.required = false;
+      date.required = false;
+      signature.value = '';
+      date.value = '';
+      feedback.required = true;
+    } else {
+      signature.required = false;
+      date.required = false;
+      feedback.required = false;
+    }
+  }
+</script>
+</body>
+</html>

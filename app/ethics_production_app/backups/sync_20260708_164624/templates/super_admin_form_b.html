@@ -1,0 +1,520 @@
+{% extends "chair-base-layout.html" %}
+
+{% block title %}Analytics - Form B{% endblock %}
+{% block page_title %}Analytics - Form B{% endblock %}
+
+{% block head %}
+<style>
+    /* Google Analytics inspired colors and styling */
+    .analytics-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        border: 1px solid #e8eaed;
+        transition: all 0.3s ease;
+        overflow: hidden;
+    }
+    
+    .analytics-card:hover {
+        box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+        transform: translateY(-2px);
+    }
+    
+    .kpi-card {
+        background: linear-gradient(135deg, #ff6d01 0%, #ff9500 100%);
+        color: white;
+        border-radius: 12px;
+        padding: 24px;
+        margin-bottom: 20px;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .kpi-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 100px;
+        height: 100px;
+        background: rgba(255,255,255,0.1);
+        border-radius: 50%;
+        transform: translate(30%, -30%);
+    }
+    
+    .kpi-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin: 0;
+        line-height: 1;
+    }
+    
+    .kpi-label {
+        font-size: 0.95rem;
+        opacity: 0.9;
+        margin-top: 8px;
+        font-weight: 500;
+    }
+    
+    .chart-container {
+        background: white;
+        padding: 24px;
+        border-radius: 12px;
+        margin-bottom: 24px;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        border: 1px solid #e8eaed;
+    }
+    
+    .chart-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #202124;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .chart-title i {
+        color: #ff6d01;
+        font-size: 1.1rem;
+    }
+    
+    /* Responsive grid */
+    .analytics-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 24px;
+        margin: 24px 0;
+    }
+    
+    .kpi-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+        margin: 24px 0;
+    }
+    
+    /* Interactive elements */
+    .interactive-chart {
+        min-height: 400px;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+    
+    /* Form B specific styling */
+    .form-b-header {
+        background: linear-gradient(135deg, #ff6d01 0%, #ff9500 100%);
+        color: white;
+        padding: 32px 24px;
+        border-radius: 16px 16px 0 0;
+        text-align: center;
+        margin: -24px -24px 24px -24px;
+    }
+    
+    .form-b-header h1 {
+        margin: 0;
+        font-size: 2.5rem;
+        font-weight: 300;
+        letter-spacing: -0.5px;
+    }
+    
+    .form-b-header p {
+        margin: 8px 0 0 0;
+        opacity: 0.9;
+        font-size: 1.1rem;
+    }
+    
+    /* Status indicators */
+    .status-high { color: #ea4335; }
+    .status-medium { color: #fbbc04; }
+    .status-low { color: #34a853; }
+    .status-success { color: #34a853; }
+    .status-pending { color: #ff6d01; }
+    
+    /* Loading states */
+    .chart-loading {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 200px;
+        color: #5f6368;
+    }
+    
+    /* Mobile responsiveness */
+    @media (max-width: 768px) {
+        .kpi-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        
+        .analytics-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .kpi-value {
+            font-size: 2rem;
+        }
+        
+        .form-b-header h1 {
+            font-size: 2rem;
+        }
+    }
+    
+    /* Full screen modal styles */
+    .modal-fullscreen .modal-content {
+        border: none;
+        border-radius: 0;
+    }
+    
+    .modal-fullscreen .modal-body img {
+        transition: transform 0.3s ease;
+        cursor: zoom-in;
+    }
+    
+    .modal-fullscreen .modal-body img:hover {
+        transform: scale(1.02);
+    }
+    
+    .modal-fullscreen .modal-header {
+        background: rgba(0, 0, 0, 0.8);
+        backdrop-filter: blur(10px);
+    }
+    
+    .modal-fullscreen .modal-footer {
+        background: rgba(0, 0, 0, 0.8);
+        backdrop-filter: blur(10px);
+    }
+</style>
+{% endblock %}
+
+{% block header_content %}
+<div class="form-b-header">
+    <h1><i class="fas fa-chart-area"></i> Form B Analytics Dashboard</h1>
+    <p>Comprehensive insights into Ethics Application Form B submissions, reviews, and approvals</p>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    {% if kpis %}
+    
+    <!-- No Data Warning -->
+    {% if kpis.total_applications == 0 %}
+    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+        <div class="d-flex align-items-center">
+            <i class="fas fa-exclamation-triangle me-3" style="font-size: 2rem;"></i>
+            <div class="flex-grow-1">
+                <h5 class="alert-heading mb-1">No Analytics Data Available</h5>
+                <p class="mb-0">There are currently no submitted Form B applications in the system. Analytics will appear once students submit their forms.</p>
+                <small class="text-muted">Data is only included after students complete and submit their applications with a submitted_at timestamp.</small>
+            </div>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endif %}
+    
+    <!-- KPI Cards -->
+    <div class="kpi-grid">
+        <div class="kpi-card">
+            <div class="kpi-value">{{ kpis.total_applications }}</div>
+            <div class="kpi-label"><i class="fas fa-file-alt"></i> Total Applications</div>
+        </div>
+        
+        <div class="kpi-card">
+            <div class="kpi-value">{{ kpis.this_month }}</div>
+            <div class="kpi-label"><i class="fas fa-calendar-month"></i> This Month</div>
+        </div>
+        
+        <div class="kpi-card">
+            <div class="kpi-value">{{ "%.1f"|format(kpis.growth_rate) }}%</div>
+            <div class="kpi-label"><i class="fas fa-arrow-trend-up"></i> Growth Rate</div>
+        </div>
+        
+        <div class="kpi-card">
+            <div class="kpi-value">{{ kpis.certificates_issued }}</div>
+            <div class="kpi-label"><i class="fas fa-certificate"></i> Certificates Issued</div>
+        </div>
+        
+        <div class="kpi-card">
+            <div class="kpi-value">{{ "%.1f"|format(kpis.completion_rate) }}%</div>
+            <div class="kpi-label"><i class="fas fa-check-circle"></i> Completion Rate</div>
+        </div>
+        
+        <div class="kpi-card">
+            <div class="kpi-value status-high">{{ kpis.high_risk_count }}</div>
+            <div class="kpi-label"><i class="fas fa-exclamation-triangle"></i> High Risk Forms</div>
+        </div>
+    </div>
+
+    <!-- Interactive Plotly Charts -->
+    {% if sunburst_chart %}
+    <div class="chart-container">
+        <h2 class="chart-title"><i class="fas fa-chart-pie"></i> Application Flow Overview</h2>
+        <div class="interactive-chart">
+            {{ sunburst_chart|safe }}
+        </div>
+    </div>
+    {% endif %}
+
+    {% if interactive_timeline %}
+    <div class="chart-container">
+        <h2 class="chart-title"><i class="fas fa-timeline"></i> Submission Timeline Analysis</h2>
+        <div class="interactive-chart">
+            {{ interactive_timeline|safe }}
+        </div>
+    </div>
+    {% endif %}
+
+    {% if risk_analysis %}
+    <div class="chart-container">
+        <h2 class="chart-title"><i class="fas fa-shield-alt"></i> Advanced Risk Analysis</h2>
+        <div class="interactive-chart">
+            {{ risk_analysis|safe }}
+        </div>
+    </div>
+    {% endif %}
+
+    {% if reviewer_performance %}
+    <div class="chart-container">
+        <h2 class="chart-title"><i class="fas fa-users-cog"></i> Reviewer Performance Dashboard</h2>
+        <div class="interactive-chart">
+            {{ reviewer_performance|safe }}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Static Charts Grid -->
+    <div class="analytics-grid">
+        <!-- Risk Rating Distribution Chart -->
+        <div class="chart-container">
+            <h3 class="chart-title"><i class="fas fa-chart-bar"></i> Risk Rating Distribution</h3>
+            {% if risk_rating_distribution %}
+                <img src="{{ risk_rating_distribution }}" alt="Risk Rating Distribution" class="img-fluid" onerror="this.parentElement.innerHTML='<div class=\'text-center py-4\'><i class=\'fas fa-chart-bar fa-3x text-muted mb-2\'></i><p class=\'text-muted\'>No data available for Risk Rating Distribution</p></div>'">
+            {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-chart-bar fa-3x text-muted mb-2"></i>
+                    <p class="text-muted">No data available for Risk Rating Distribution</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Review Recommendations Chart -->
+        <div class="chart-container">
+            <h3 class="chart-title"><i class="fas fa-thumbs-up"></i> Review Recommendations</h3>
+            {% if review_recommendations %}
+                <img src="{{ review_recommendations }}" alt="Review Recommendations" class="img-fluid" onerror="this.parentElement.innerHTML='<div class=\'text-center py-4\'><i class=\'fas fa-thumbs-up fa-3x text-muted mb-2\'></i><p class=\'text-muted\'>No data available for Review Recommendations</p></div>'">
+            {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-thumbs-up fa-3x text-muted mb-2"></i>
+                    <p class="text-muted">No data available for Review Recommendations</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Supervisor Recommendations Chart -->
+        <div class="chart-container">
+            <h3 class="chart-title"><i class="fas fa-user-tie"></i> Supervisor Recommendations</h3>
+            {% if supervisor_recommendations %}
+                <img src="{{ supervisor_recommendations }}" alt="Supervisor Recommendations" class="img-fluid" onerror="this.parentElement.innerHTML='<div class=\'text-center py-4\'><i class=\'fas fa-user-tie fa-3x text-muted mb-2\'></i><p class=\'text-muted\'>No data available for Supervisor Recommendations</p></div>'">
+            {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-user-tie fa-3x text-muted mb-2"></i>
+                    <p class="text-muted">No data available for Supervisor Recommendations</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Certificate Status Chart -->
+        <div class="chart-container">
+            <h3 class="chart-title"><i class="fas fa-certificate"></i> Certificate Status</h3>
+            {% if certificate_status %}
+                <img src="{{ certificate_status }}" alt="Certificate Status" class="img-fluid" onerror="this.parentElement.innerHTML='<div class=\'text-center py-4\'><i class=\'fas fa-certificate fa-3x text-muted mb-2\'></i><p class=\'text-muted\'>No data available for Certificate Status</p></div>'">
+            {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-certificate fa-3x text-muted mb-2"></i>
+                    <p class="text-muted">No data available for Certificate Status</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Submissions Over Time Chart -->
+        <div class="chart-container">
+            <h3 class="chart-title"><i class="fas fa-calendar-alt"></i> Submissions Over Time</h3>
+            {% if submissions_over_time %}
+                <img src="{{ submissions_over_time }}" alt="Submissions Over Time" class="img-fluid" onerror="this.parentElement.innerHTML='<div class=\'text-center py-4\'><i class=\'fas fa-calendar-alt fa-3x text-muted mb-2\'></i><p class=\'text-muted\'>No data available for Submissions Over Time</p></div>'">
+            {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-calendar-alt fa-3x text-muted mb-2"></i>
+                    <p class="text-muted">No data available for Submissions Over Time</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- REC Member Distribution Chart -->
+        <div class="chart-container">
+            <h3 class="chart-title"><i class="fas fa-users"></i> REC Member Distribution</h3>
+            {% if rec_member_distribution %}
+                <img src="{{ rec_member_distribution }}" alt="REC Member Distribution" class="img-fluid" onerror="this.parentElement.innerHTML='<div class=\'text-center py-4\'><i class=\'fas fa-users fa-3x text-muted mb-2\'></i><p class=\'text-muted\'>No data available for REC Member Distribution</p></div>'">
+            {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-users fa-3x text-muted mb-2"></i>
+                    <p class="text-muted">No data available for REC Member Distribution</p>
+                </div>
+            {% endif %}
+        </div>
+
+        {% if review_by_risk_rating %}
+        <div class="chart-container">
+            <h3 class="chart-title"><i class="fas fa-balance-scale"></i> Reviews by Risk Rating</h3>
+            <img src="{{ review_by_risk_rating }}" alt="Reviews by Risk Rating" class="img-fluid">
+        </div>
+        {% endif %}
+
+        {% if certificate_received_percentage %}
+        <div class="chart-container">
+            <h3 class="chart-title"><i class="fas fa-percentage"></i> Certificate Reception Rate</h3>
+            <img src="{{ certificate_received_percentage }}" alt="Certificate Reception Rate" class="img-fluid">
+        </div>
+        {% endif %}
+
+        {% if review_recommendation_comparison %}
+        <div class="chart-container">
+            <h3 class="chart-title"><i class="fas fa-compare"></i> Review Recommendation Comparison</h3>
+            <img src="{{ review_recommendation_comparison }}" alt="Review Recommendation Comparison" class="img-fluid">
+        </div>
+        {% endif %}
+
+        {% if plot_applications_vs_certificates %}
+        <div class="chart-container">
+            <h3 class="chart-title"><i class="fas fa-chart-line"></i> Applications vs Certificates</h3>
+            <img src="{{ plot_applications_vs_certificates }}" alt="Applications vs Certificates" class="img-fluid">
+        </div>
+        {% endif %}
+    </div>
+
+    {% else %}
+    <!-- Empty State -->
+    <div class="text-center py-5">
+        <i class="fas fa-chart-area fa-4x text-muted mb-3"></i>
+        <h3 class="text-muted">No Form B Data Available</h3>
+        <p class="text-muted">There are currently no Form B submissions to display analytics for.</p>
+        <a href="{{ url_for('form_b_section1') }}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Create First Form B
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+    
+    // Add loading states for charts
+    const chartContainers = document.querySelectorAll('.interactive-chart');
+    chartContainers.forEach(container => {
+        if (container.innerHTML.trim() === '') {
+            container.innerHTML = '<div class="chart-loading"><i class="fas fa-spinner fa-spin"></i> Loading chart...</div>';
+        }
+    });
+    
+    // Enhanced chart interactions
+    setTimeout(() => {
+        // Add click handlers for full-screen image viewing
+        document.querySelectorAll('.chart-container img').forEach(img => {
+            img.style.cursor = 'pointer';
+            img.addEventListener('click', function() {
+                showFullScreenImage(this.src, this.alt);
+            });
+            
+            // Add tooltip
+            img.setAttribute('data-bs-toggle', 'tooltip');
+            img.setAttribute('title', 'Click to view full size');
+        });
+        
+        // Reinitialize tooltips for new elements
+        var newTooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        newTooltipTriggerList.forEach(function (tooltipTriggerEl) {
+            if (!tooltipTriggerEl._tooltip) {
+                new bootstrap.Tooltip(tooltipTriggerEl);
+            }
+        });
+    }, 1000);
+    
+    console.log('📊 Form B Analytics Dashboard initialized');
+});
+
+// Full screen image modal function
+function showFullScreenImage(src, alt) {
+    // Remove existing modal if any
+    const existingModal = document.getElementById('imageModal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    // Create modal HTML
+    const modalHTML = `
+        <div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-fullscreen">
+                <div class="modal-content bg-dark">
+                    <div class="modal-header border-0">
+                        <h5 class="modal-title text-white" id="imageModalLabel">
+                            <i class="fas fa-expand-alt me-2"></i>${alt}
+                        </h5>
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-outline-light btn-sm" onclick="downloadImage('${src}', '${alt}')" title="Download Image">
+                                <i class="fas fa-download"></i>
+                            </button>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                    </div>
+                    <div class="modal-body d-flex justify-content-center align-items-center p-2" onclick="this.querySelector('.btn-close').click()">
+                        <img src="${src}" alt="${alt}" class="img-fluid" style="max-height: 95vh; max-width: 95vw; object-fit: contain; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+                    </div>
+                    <div class="modal-footer border-0 justify-content-center">
+                        <small class="text-light opacity-75">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Click anywhere to close • Press ESC to close • Click download to save
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Add modal to body
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('imageModal'));
+    modal.show();
+    
+    // Add keyboard navigation
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            modal.hide();
+        }
+    });
+    
+    // Clean up when modal is hidden
+    document.getElementById('imageModal').addEventListener('hidden.bs.modal', function () {
+        this.remove();
+        // Remove event listeners
+        document.removeEventListener('keydown', arguments.callee);
+    });
+}
+
+// Download image function
+function downloadImage(src, alt) {
+    const link = document.createElement('a');
+    link.href = src;
+    link.download = alt.replace(/\s+/g, '_').toLowerCase() + '.png';
+    link.click();
+}
+</script>
+{% endblock %}

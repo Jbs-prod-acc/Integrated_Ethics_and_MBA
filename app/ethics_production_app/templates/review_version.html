@@ -64,7 +64,7 @@
             <td>{{item.applicant_name}}</td>
             <td>Form A</td>
             <td>{{item.risk_rating}}</td>
-            <td>{% if item.ethics_supervisor_signature_date %}{{item.ethics_supervisor_signature_date.strftime('%d/%m/%Y')}}
+            <td>{% if item.ethics_signature_date %}{{item.ethics_signature_date.strftime('%d/%m/%Y')}}
               {% elif item.signature_date%}{{item.signature_date.strftime('%d/%m/%Y')}}{% endif%}</td>
             <td><span class="badge status-pending">{{ get_reviewer_dashboard_status(item, user_id) }}</span>
             <br>
@@ -112,7 +112,7 @@
                   {% endif %}
                   
                 <br>
-   Â Â Â Â Â Â Â Â Â Â Â </ul>
+              </ul>
             </td>
             <td>
               {% if loop.first%}
@@ -150,7 +150,7 @@
             <td>{{item.applicant_name}}</td>
             <td>Form B</td>
             <td>{{item.risk_level}}</span></td>
-            <td>{% if item.ethics_supervisor_signature_date %}{{item.ethics_supervisor_signature_date.strftime('%d/%m/%Y')}}
+            <td>{% if item.ethics_signature_date %}{{item.ethics_signature_date.strftime('%d/%m/%Y')}}
               {% elif item.signature_date%}{{item.signature_date.strftime('%d/%m/%Y')}}{% endif%}</td>
             <td><span class="badge status-pending">{{ get_reviewer_dashboard_status(item, user_id) }}</span>
           
@@ -231,7 +231,7 @@
             <td>Form C</td>
             <td>{{item.risk_level}}</td>
             <td>
-              {% if item.ethics_supervisor_signature_date %}{{item.ethics_supervisor_signature_date.strftime('%d/%m/%Y')}}
+              {% if item.ethics_signature_date %}{{item.ethics_signature_date.strftime('%d/%m/%Y')}}
               {% elif item.signature_date%}{{item.signature_date.strftime('%d/%m/%Y')}}{% endif%}</td>
             <td><span class="badge status-pending">{{ get_reviewer_dashboard_status(item, user_id) }}</span>
               </td>

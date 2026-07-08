@@ -50,7 +50,7 @@
         showSaving();
         const formData = new FormData(form);
         declarationFields.forEach(f => formData.delete(f));
-        fetch("{{ url_for('student_autosave_formb') }}", {
+        fetch('/student_autosave_formb', {
             method: 'POST',
             body: formData,
         })
@@ -535,7 +535,7 @@
         // Radio buttons are automatically captured by FormData
         
         declarationFields.forEach(f => formData.delete(f));
-        fetch("{{ url_for('student_autosave_formb') }}", {
+        fetch('/student_autosave_formb', {
           method: 'POST',
           body: formData,
         })

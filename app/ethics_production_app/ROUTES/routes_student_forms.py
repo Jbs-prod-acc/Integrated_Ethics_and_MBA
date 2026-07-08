@@ -1,5 +1,41 @@
 from app_support import *
 
+
+def _normalize_sampling_size_list(sample_sizes):
+    cleaned_sizes = []
+
+    for index, raw_value in enumerate(sample_sizes, start=1):
+        value = str(raw_value or '').strip()
+        if not value:
+            cleaned_sizes.append('')
+            continue
+
+        compact_value = value.replace(' ', '')
+        if compact_value.isdigit():
+            if int(compact_value) < 1:
+                return None, f"Sampling size row {index} must be a positive number."
+            cleaned_sizes.append(compact_value)
+            continue
+
+        parts = compact_value.split('-')
+        if len(parts) == 2 and parts[0].isdigit() and parts[1].isdigit():
+            start_value = int(parts[0])
+            end_value = int(parts[1])
+
+            if start_value < 1 or end_value < 1:
+                return None, f"Sampling size row {index} must use positive numbers only."
+            if end_value < start_value:
+                return None, f"Sampling size row {index} must use an interval like 100-150 where the second number is not smaller than the first."
+            if end_value > (start_value * 2):
+                return None, f"Sampling size row {index} is invalid: in an interval like 100-n, n cannot be more than twice the first number."
+
+            cleaned_sizes.append(f"{start_value}-{end_value}")
+            continue
+
+        return None, f"Sampling size row {index} must be a single number like 100 or an interval like 100-150."
+
+    return cleaned_sizes, None
+
 @app.route('/form_a_sec1', methods=['GET', 'POST'])
 def form_a_sec1 ():
 
@@ -73,7 +109,7 @@ def form_a_sec1 ():
 
     except Exception as e:
         db_session.rollback()
-        print(f"âš ï¸ Error in form_a_section1: {str(e)}")  # Optional: use logging
+        print(f"⚠️ Error in form_a_section1: {str(e)}")  # Optional: use logging
         flash("An unexpected error occurred while submitting the form. Please try again.", "danger")
         return redirect(url_for("student_dashboard"))
 
@@ -118,13 +154,13 @@ def submit_form_a_sec1():
     except KeyError as ke:
         db_session.rollback()
         flash(f"Missing required field: {ke}", "danger")
-        print(f"âš ï¸ Missing key in form submission: {ke}")
+        print(f"⚠️ Missing key in form submission: {ke}")
         return redirect(url_for("form_a_sec1"))
 
     except Exception as e:
         db_session.rollback()
         flash("An unexpected error occurred while submitting your form. Please try again.", "danger")
-        print(f"âš ï¸ Error in /submit_form_a_sec1: {str(e)}")
+        print(f"⚠️ Error in /submit_form_a_sec1: {str(e)}")
 
         return redirect(url_for("form_a_sec1"))
 
@@ -145,13 +181,13 @@ def form_a_sec2():
                     return False
                 return str(val).lower() in ['yes', 'true', '1', 'on', 'checked']
 
-            # âœ… Ensure user session exists
+            # ✅ Ensure user session exists
             user_id = session.get('id')
             if not user_id:
                 flash("You must be logged in to fill this form.", "warning")
                 return redirect(url_for("login"))
 
-            # âœ… Check if the user already filled other forms
+            # ✅ Check if the user already filled other forms
             formB = db_session.query(FormB).options(
                 defer(FormB.permission_letter),
                 defer(FormB.prior_clearance),
@@ -169,7 +205,7 @@ def form_a_sec2():
                 flash("You are not permitted to fill this form", "warning")
                 return redirect(url_for("student_dashboard"))
 
-            # âœ… Fetch the existing Form A record
+            # ✅ Fetch the existing Form A record
             form = _get_latest_forma_for_user(user_id)
             if not form:
                 flash("No existing Form A record found for this user.", "danger")
@@ -177,7 +213,7 @@ def form_a_sec2():
 
             _apply_forma_autosave_payload(form, data, section='sec2', include_declaration=False)
 
-            # âœ… Commit to DB
+            # ✅ Commit to DB
             db_session.add(form)
             db_session.commit()
 
@@ -192,13 +228,13 @@ def form_a_sec2():
     except KeyError as ke:
         db_session.rollback()
         flash(f"Missing required session or field: {ke}", "danger")
-        print(f"âš ï¸ Missing key in /form_a_sec2: {ke}")
+        print(f"⚠️ Missing key in /form_a_sec2: {ke}")
         return redirect(url_for("form_a_section2"))
 
     except Exception as e:
         db_session.rollback()
         flash("An unexpected error occurred while submitting Form A Section 2. Please try again.", "danger")
-        print(f"âš ï¸ Error in /form_a_sec2: {str(e)}")
+        print(f"⚠️ Error in /form_a_sec2: {str(e)}")
         return redirect(url_for("form_a_section2"))
 
     finally:
@@ -261,13 +297,13 @@ def submit_form_a_sec2():
     except KeyError as ke:
         db_session.rollback()
         flash(f"Missing required data: {ke}", "danger")
-        print(f"âš ï¸ KeyError in /submit_form_a_sec2: {ke}")
+        print(f"⚠️ KeyError in /submit_form_a_sec2: {ke}")
         return redirect(url_for("form_a_section2"))
 
     except Exception as e:
         db_session.rollback()
         flash("An unexpected error occurred while submitting the form. Please try again.", "danger")
-        print(f"âš ï¸ Exception in /submit_form_a_sec2: {e}")
+        print(f"⚠️ Exception in /submit_form_a_sec2: {e}")
         return redirect(url_for("form_a_section2"))
 
     finally:
@@ -288,12 +324,12 @@ def form_a_sec3():
 
             user_id = session.get('id')
 
-            # âœ… Check user authentication
+            # ✅ Check user authentication
             if not user_id:
                 flash("Unauthorized access. Please log in to continue.", "warning")
                 return redirect(url_for("login"))
 
-            # âœ… Retrieve existing Form A record
+            # ✅ Retrieve existing Form A record
             form = _get_latest_forma_for_user(user_id)
             if not form:
                 flash("No existing Form A record found for this user.", "danger")
@@ -301,14 +337,14 @@ def form_a_sec3():
 
             _apply_forma_autosave_payload(form, data, section='sec3', include_declaration=False)
 
-            # âœ… Save updates
+            # ✅ Save updates
             db_session.add(form)
             db_session.commit()
 
             flash("Form A Section 3 submitted successfully!", "success")
             return redirect(url_for("form_a_sec4"))
 
-        # âœ… Handle GET request
+        # ✅ Handle GET request
         user_id = session.get('id')
         form_data = _get_latest_forma_for_user(user_id)
         return render_template('form-a-section3.html', form_data=form_data)
@@ -316,13 +352,13 @@ def form_a_sec3():
     except KeyError as ke:
         db_session.rollback()
         flash(f"Missing field or session key: {ke}", "danger")
-        print(f"âš ï¸ KeyError in /form_a_sec3: {ke}")
+        print(f"⚠️ KeyError in /form_a_sec3: {ke}")
         return redirect(url_for("form_a_sec3"))
 
     except Exception as e:
         db_session.rollback()
         flash("An unexpected error occurred while submitting Form A Section 3. Please try again.", "danger")
-        print(f"âš ï¸ Exception in /form_a_sec3: {e}")
+        print(f"⚠️ Exception in /form_a_sec3: {e}")
         return redirect(url_for("form_a_sec3"))
 
     finally:
@@ -432,7 +468,7 @@ def form_a_sec4():
             traceback.print_exc()
             return render_template('form-a-section4.html', messages=["An unexpected error occurred. Please try again."])
 
-    # If GET request â†’ render Section 4 with existing values
+    # If GET request → render Section 4 with existing values
     user_id = session.get('id')
     form_data = _get_latest_forma_for_user(user_id)
     return render_template('form-a-section4.html', form_data=form_data)
@@ -533,7 +569,7 @@ def submit_form_a_sec4 ():
 
     except Exception as e:
         db_session.rollback()
-        print(f"âš ï¸ Exception in /submit_form_a_sec4: {e}")
+        print(f"⚠️ Exception in /submit_form_a_sec4: {e}")
         return render_template('form-a-section4.html', messages=["An unexpected error occurred. Please try again."])
 
 # ---------------- Section 5 ------------------
@@ -557,10 +593,14 @@ def form_a_sec5 ():
         form = _get_latest_forma_for_user(user_id)
         if not form:
             return "No existing Form A record found for this user.", 404
-        
-        
-        
+
+        cleaned_sample_sizes, sample_size_error = _normalize_sampling_size_list(request.form.getlist('sample_size[]'))
+        if sample_size_error:
+            flash(sample_size_error, "danger")
+            return redirect(url_for("form_a_sec5"))
+
         _apply_forma_autosave_payload(form, request.form, section='sec5', include_declaration=False)
+        form.sampling_size = ','.join(cleaned_sample_sizes)
     
         db_session.add(form)
         db_session.commit()
@@ -615,7 +655,7 @@ def submit_form_a_sec5 ():
 
     except Exception as e:
         db_session.rollback()
-        print(f"âš ï¸ Exception in /submit_form_a_sec5: {e}")
+        print(f"⚠️ Exception in /submit_form_a_sec5: {e}")
         return render_template('form-a-section5.html')
 
 # ---------------- Section 6 ------------------
@@ -656,27 +696,27 @@ def form_a_sec6():
                 message = f"{form.declaration_name or 'Applicant'} has submitted Form A for review."
                 send_email(app, mail, message, [form.supervisor_email])
             except Exception as e:
-                app.logger.error(f"âš ï¸ Failed to send email to {form.supervisor_email}: {e}")
+                app.logger.error(f"⚠️ Failed to send email to {form.supervisor_email}: {e}")
                 traceback.print_exc()
 
-            flash("âœ… Form A submitted successfully.", "success")
+            flash("✅ Form A submitted successfully.", "success")
             return redirect(url_for('student_dashboard'))
 
         except SQLAlchemyError as e:
             db_session.rollback()
             app.logger.error(f"Database error during Form A submission: {e}")
             traceback.print_exc()
-            flash("âŒ Database error occurred. Please try again.", "danger")
+            flash("❌ Database error occurred. Please try again.", "danger")
             return render_template('form-a-section6.html')
 
         except Exception as e:
             db_session.rollback()
             app.logger.error(f"Unexpected error in Form A submission: {e}")
             traceback.print_exc()
-            flash("âš ï¸ An unexpected error occurred. Please try again.", "danger")
+            flash("⚠️ An unexpected error occurred. Please try again.", "danger")
             return render_template('form-a-section6.html')
 
-    # GET request â†’ Render the section
+    # GET request → Render the section
     user_id = session.get('id')
     form_data = _get_latest_forma_for_user(user_id)
     return render_template('form-a-section6.html', form_data=form_data)
@@ -964,7 +1004,7 @@ def form_b_sec2():
             if not form:
                 form = FormB(user_id=user_id)
 
-            # âœ… Assign form fields safely
+            # ✅ Assign form fields safely
             form.project_description = form_data.get('project_description')
             form.data_nature = form_data.get('data_nature')
             form.data_origin = form_data.get('data_origin')
@@ -988,7 +1028,7 @@ def form_b_sec2():
                 form.private_permission_file = file.read()
                 form.private_permission_filename = file.filename
 
-            # âœ… Commit to database
+            # ✅ Commit to database
             db_session.add(form)
             db_session.commit()
 
@@ -1041,10 +1081,10 @@ def form_b_sec3():
                 message = f"{form.applicant_name} has submitted the form and it needs to be reviewed."
                 send_email(app, mail, message, [form.supervisor_email])
             except Exception as e:
-                app.logger.error(f"âš ï¸ Failed to send email to {form.supervisor_email}: {e}")
+                app.logger.error(f"⚠️ Failed to send email to {form.supervisor_email}: {e}")
                 traceback.print_exc()
 
-            flash("âœ… Form submitted successfully.", "success")
+            flash("✅ Form submitted successfully.", "success")
             return redirect(url_for('student_dashboard'))
 
         # GET request
@@ -1054,14 +1094,14 @@ def form_b_sec3():
         db_session.rollback()
         app.logger.error(f"Database error in form_b_sec3: {e}")
         traceback.print_exc()
-        flash("âŒ Database error occurred. Please try again.", "danger")
+        flash("❌ Database error occurred. Please try again.", "danger")
         return render_template('form_b_section3.html', messages=[], show_modal=False), 500
 
     except Exception as e:
         db_session.rollback()
         app.logger.error(f"Unexpected error in form_b_sec3: {e}")
         traceback.print_exc()
-        flash("âš ï¸ An unexpected error occurred. Please try again.", "danger")
+        flash("⚠️ An unexpected error occurred. Please try again.", "danger")
         return render_template('form_b_section3.html', messages=[], show_modal=False), 500
 
 
@@ -1737,6 +1777,10 @@ def student_edit_forma():
         inherit_previous_reviewers(form, FormA, user_id, FormA.submitted_at)
     if request.method == 'POST':
         was_in_corrections = is_student_correction_state(source_form)
+        cleaned_sample_sizes, sample_size_error = _normalize_sampling_size_list(request.form.getlist('sample_size[]'))
+        if sample_size_error:
+            flash(sample_size_error, "danger")
+            return redirect(url_for('student_edit_forma'))
       
         if request.form.get('survey')=='Yes':
             survey=True
@@ -2109,7 +2153,7 @@ def student_edit_forma():
         form.participants_description = request.form.get('participants_description')
         form.population = ','.join(request.form.getlist('population[]'))
         form.sampling_method = ','.join(request.form.getlist('sampling_method[]'))
-        form.sampling_size = ','.join(request.form.getlist('sample_size[]'))
+        form.sampling_size = ','.join(cleaned_sample_sizes)
         form.inclusion_criteria = ','.join(request.form.getlist('inclusion_criteria[]'))
         form.duration_timing = request.form.get('duration_timing')
         form.contact_details_method = request.form.get('contact_details_method')
@@ -2174,8 +2218,25 @@ def student_edit_forma():
         form.community_effects = request.form.get('community_effects')
         
         form.privacy = ','.join(request.form.getlist('privacy[]'))
-        for key in ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's']:
-            setattr(form, f'q6_9{key}', is_yes(f'q6_9{key}'))
+        form.q6_9a = request.form.get("q6_9a") == 'yes'
+        form.q6_9b = request.form.get("q6_9b") == 'yes'
+        form.q6_9c = request.form.get("q6_9c") == 'yes'
+        form.q6_9d = request.form.get("q6_9d") == 'yes'
+        form.q6_9e = request.form.get("q6_9e") == 'yes'
+        form.q6_9f = request.form.get("q6_9f") == 'yes'
+        form.q6_9g = request.form.get("q6_9g") == 'yes'
+        form.q6_9h = request.form.get("q6_9h") == 'yes'
+        form.q6_9i = request.form.get("q6_9i") == 'yes'
+        form.q6_9j = request.form.get("q6_9j") == 'yes'
+        form.q6_9k = request.form.get("q6_9k") == 'yes'
+        form.q6_9l = request.form.get("q6_9l") == 'yes'
+        form.q6_9m = request.form.get("q6_9m") == 'yes'
+        form.q6_9n = request.form.get("q6_9n") == 'yes'
+        form.q6_9o = request.form.get("q6_9o") == 'yes'
+        form.q6_9p = request.form.get("q6_9p") == 'yes'
+        form.q6_9q = request.form.get("q6_9q") == 'yes'
+        form.q6_9r = request.form.get("q6_9r") == 'yes'
+        form.q6_9s = request.form.get("q6_9s") == 'yes'
         form.results_feedback = request.form.get('results_feedback')
         form.products_access = request.form.get('products_access')
         form.publication_plans = request.form.get('publication_plans')
@@ -2196,7 +2257,7 @@ def student_edit_forma():
             form.rejected_or_accepted = False
             form.status = 'Resubmitted' if was_in_corrections else 'Submitted'
             form.visible_to_student = False
-            form.ethics_supervisor_form_status = 'Resubmitted' if was_in_corrections else 'Submitted'
+            form.ethics_form_status = 'Resubmitted' if was_in_corrections else 'Submitted'
             form.form_supervisor_status = 'Resubmitted' if was_in_corrections else 'Submitted'
             reset_form_review_feedback(form)
         else:
@@ -2274,6 +2335,11 @@ def student_continue_forma():
         
     if request.method == 'POST':
         try:
+            cleaned_sample_sizes, sample_size_error = _normalize_sampling_size_list(request.form.getlist('sample_size[]'))
+            if sample_size_error:
+                flash(sample_size_error, "danger")
+                return redirect(url_for('student_continue_forma'))
+
             if request.form.get('survey')=='Yes':
                 survey=True
             else:
@@ -2636,7 +2702,7 @@ def student_continue_forma():
             form.participants_description = request.form.get('participants_description')
             form.population = ','.join(request.form.getlist('population[]'))
             form.sampling_method = ','.join(request.form.getlist('sampling_method[]'))
-            form.sampling_size = ','.join(request.form.getlist('sample_size[]'))
+            form.sampling_size = ','.join(cleaned_sample_sizes)
             form.inclusion_criteria =','.join(request.form.getlist('inclusion_criteria[]'))
             form.duration_timing = request.form.get('duration_timing')
             form.contact_details_method = request.form.get('contact_details_method')
@@ -2798,6 +2864,7 @@ def submit_form_a(form_id):
         applicant_signature = request.form.get('applicant_signature')
         declaration_date=get_local_time()
         was_in_corrections = is_student_correction_state(form)
+        cleaned_sample_sizes, sample_size_error = _normalize_sampling_size_list(request.form.getlist('sample_size[]'))
         
         print(f"DEBUG submit_form_a: declaration_name={declaration_name}, applicant_signature={applicant_signature}")
         print(f"DEBUG submit_form_a: form_id={form_id}, form_exists={form_exists}")
@@ -2805,6 +2872,9 @@ def submit_form_a(form_id):
         # Validate Section 7 is complete
         if not (declaration_name and applicant_signature):
             flash("Please complete all Section 7 (Declaration) fields before submitting.", "error")
+            return redirect(url_for('student_continue_forma', form_id=form_id))
+        if sample_size_error:
+            flash(sample_size_error, "danger")
             return redirect(url_for('student_continue_forma', form_id=form_id))
         
         # First, call the same processing logic as student_continue_forma to save all sections
@@ -2965,7 +3035,7 @@ def submit_form_a(form_id):
             form.paradigm_explanation = request.form.get('paradigm_explanation')
             form.population = ','.join(request.form.getlist('population[]'))
             form.sampling_method = ','.join(request.form.getlist('sampling_method[]'))
-            form.sampling_size = ','.join(request.form.getlist('sample_size[]'))
+            form.sampling_size = ','.join(cleaned_sample_sizes)
             form.inclusion_criteria = ','.join(request.form.getlist('inclusion_criteria[]'))
             form.translator = to_bool(request.form.get('translator'))
             form.translator_details = request.form.get('translator_details')
@@ -3013,7 +3083,7 @@ def submit_form_a(form_id):
             form.rejected_or_accepted = False
             form.status = 'Resubmitted' if was_in_corrections else 'Submitted'
             form.visible_to_student = False
-            form.ethics_supervisor_form_status = 'Resubmitted' if was_in_corrections else 'Submitted'
+            form.ethics_form_status = 'Resubmitted' if was_in_corrections else 'Submitted'
             form.form_supervisor_status = 'Resubmitted' if was_in_corrections else 'Submitted'
             reset_form_review_feedback(form)
             
@@ -3147,7 +3217,7 @@ def student_edit_formb():
         was_in_corrections = is_student_correction_state(form)
         form.status = 'Resubmitted' if was_in_corrections else (form.status or 'Submitted')
         form.visible_to_student = False
-        form.ethics_supervisor_form_status = 'Resubmitted' if was_in_corrections else (form.ethics_supervisor_form_status or 'Submitted')
+        form.ethics_form_status = 'Resubmitted' if was_in_corrections else (form.ethics_form_status or 'Submitted')
         form.form_supervisor_status = 'Resubmitted' if was_in_corrections else (form.form_supervisor_status or 'Submitted')
         reset_form_review_feedback(form)
         # Handle file upload
@@ -3416,7 +3486,7 @@ def submit_form_b(form_id):
             form.rejected_or_accepted = False
             was_in_corrections = is_student_correction_state(form)
             form.status = 'Resubmitted' if was_in_corrections else 'Submitted'
-            form.ethics_supervisor_form_status = 'Resubmitted' if was_in_corrections else 'Submitted'
+            form.ethics_form_status = 'Resubmitted' if was_in_corrections else 'Submitted'
             form.form_supervisor_status = 'Resubmitted' if was_in_corrections else 'Submitted'
             reset_form_review_feedback(form)
             print(f"[DEBUG] FormB updated: declaration_name={form.declaration_name}, full_name={form.full_name}, declaration_date={form.declaration_date}, submitted_at={form.submitted_at}")
@@ -3544,7 +3614,7 @@ def student_edit_formc():
             was_in_corrections = is_student_correction_state(form)
             form.status = 'Resubmitted' if was_in_corrections else (form.status or 'Submitted')
             form.visible_to_student = False
-            form.ethics_supervisor_form_status = 'Resubmitted' if was_in_corrections else (form.ethics_supervisor_form_status or 'Submitted')
+            form.ethics_form_status = 'Resubmitted' if was_in_corrections else (form.ethics_form_status or 'Submitted')
             form.form_supervisor_status = 'Resubmitted' if was_in_corrections else (form.form_supervisor_status or 'Submitted')
             reset_form_review_feedback(form)
             db_session.commit()
@@ -3804,7 +3874,7 @@ def submit_form_c(form_id):
             was_in_corrections = is_student_correction_state(form)
             form.status = 'Resubmitted' if was_in_corrections else 'Submitted'
             form.visible_to_student = False
-            form.ethics_supervisor_form_status = 'Resubmitted' if was_in_corrections else 'Submitted'
+            form.ethics_form_status = 'Resubmitted' if was_in_corrections else 'Submitted'
             form.form_supervisor_status = 'Resubmitted' if was_in_corrections else 'Submitted'
             reset_form_review_feedback(form)
             
@@ -3833,3 +3903,8 @@ def submit_form_c(form_id):
 
 @app.route('/form_c_answers', methods=['GET','POST'])
 def form_c_answers():
+    user_id=session.get('id')
+    if not user_id:
+        return jsonify({'error': 'Unauthorized'}), 401
+    form = db_session.query(FormC).filter_by(user_id=user_id).first()
+    return render_template("form_c_answers.html",formc=form)

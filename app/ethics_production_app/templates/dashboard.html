@@ -79,7 +79,7 @@
           </div>
           <div>
             <a href="{{ url_for('ethics_pack') }}" class="btn btn-warning">
-              <i class="fas fa-upload"></i> Reupload Documents
+              <i class="fas fa-upload"></i> Re-upload Documents
             </a>
           </div>
         </div>
@@ -214,24 +214,7 @@
       {% endif %}
 
       <span style="color:green; font-size:18px;">
-        {% set review_comment = '' %}
-        {% set review_comment1 = '' %}
-
-        {% if formA.form_review_comment in ['Approved with Minor Changes', 'Resubmission Required'] %}
-        {% set review_comment = formA.form_review_comment %}
-        {% endif %}
-
-        {% if formA.form_review_comment1 in ['Approved with Minor Changes', 'Resubmission Required'] %}
-        {% set review_comment1 = formA.form_review_comment1 %}
-        {% endif %}
-
-        {% if review_comment %}
-        <p>Review Status 1: {{ review_comment }}</p>
-        {% endif %}
-
-        {% if review_comment1 %}
-        <p>Review Status 2: {{ review_comment1 }}</p>
-        {% endif %}
+        
 
         {% set formA_correction_note = formA.review_form_status %}
 
@@ -247,26 +230,18 @@
 
         {{ get_student_dashboard_status(formA) }}
 
-        {% if formA.rec_status == 'Approved' or formA.certificate_issued and formA.certificate_received %}
+        {% if formA.certificate_issued %}
           {% if formA.certificate_heading %}
           <br>
           <a href="{{ url_for('edited_certificate', id=formA.form_id) }}"
             class="btn btn-sm btn-success text-white">View Certificate</a>
           {% else %}
           <br>
+          <!--
           <a href="{{ url_for('view_certificate', id=formA.form_id) }}"
             class="btn btn-sm btn-success text-white">View Certificate</a>
-          {% endif %}
-        {% elif 'low' in formA.risk_rating|lower and formA.certificate_issued and formA.certificate_received %}
-          {% if formA.certificate_heading %}
-          <br>
-          <a href="{{ url_for('edited_certificate', id=formA.form_id) }}"
-            class="btn btn-sm btn-success text-white">View Certificate</a>
-          {% else %}
-          <br>
-          <a href="{{ url_for('view_certificate', id=formA.form_id) }}"
-            class="btn btn-sm btn-success text-white">View Certificate</a>
-          {% endif %}
+      -->
+            {% endif %}
         {% endif %}
       </span>
 
@@ -314,7 +289,7 @@
 
           <a href="{{ url_for('submit_form_a_requirements') }}"
             class="btn btn-success btn-sm text-white text-nowrap">
-            Resubmit Documents
+            Re-upload Documents
           </a>
         </div>
 
@@ -379,7 +354,11 @@
         </a>
 
         <span class="badge text-bg-secondary text-nowrap">
+          {% if not get_student_submission_timestamp(formA) and not formA.declaration_name %}
+          Draft version
+          {% else %}
           Previous version
+          {% endif %}
         </span>
       </div>
       {% endif %}
@@ -471,25 +450,7 @@
       {% endif %}
 
       <span style="color:green; font-size:18px;">
-        {% set review_comment = '' %}
-        {% set review_comment1 = '' %}
-
-        {% if formB.form_review_comment in ['Approved with Minor Changes', 'Resubmission Required'] %}
-        {% set review_comment = formB.form_review_comment %}
-        {% endif %}
-
-        {% if formB.form_review_comment1 in ['Approved with Minor Changes', 'Resubmission Required'] %}
-        {% set review_comment1 = formB.form_review_comment1 %}
-        {% endif %}
-
-        {% if review_comment %}
-        <p>Review Status 1: {{ review_comment }}</p>
-        {% endif %}
-
-        {% if review_comment1 %}
-        <p>Review Status 2: {{ review_comment1 }}</p>
-        {% endif %}
-
+        
         {% set formB_correction_note = formB.review_form_status %}
 
         {% if formB.status == 'Submitted to Student for Corrections' and formB_correction_note %}
@@ -504,25 +465,17 @@
 
         {{ get_student_dashboard_status(formB) }}
 
-        {% if formB.rec_status == 'Approved' or formB.certificate_issued and formB.certificate_received %}
+        {% if formB.certificate_issued %}
           {% if formB.certificate_heading %}
           <br>
           <a href="{{ url_for('edited_certificate', id=formB.form_id) }}"
             class="btn btn-sm btn-success text-white">View Certificate</a>
           {% else %}
           <br>
+          <!--
           <a href="{{ url_for('view_certificate', id=formB.form_id) }}"
             class="btn btn-sm btn-success text-white">View Certificate</a>
-          {% endif %}
-        {% elif 'low' in formB.risk_level|lower and formB.certificate_issued and formB.certificate_received %}
-          {% if formB.certificate_heading %}
-          <br>
-          <a href="{{ url_for('edited_certificate', id=formB.form_id) }}"
-            class="btn btn-sm btn-success text-white">View Certificate</a>
-          {% else %}
-          <br>
-          <a href="{{ url_for('view_certificate', id=formB.form_id) }}"
-            class="btn btn-sm btn-success text-white">View Certificate</a>
+          -->
           {% endif %}
         {% endif %}
       </span>
@@ -567,7 +520,7 @@
 
           <a href="{{ url_for('submit_form_b_requirements') }}"
             class="btn btn-success btn-sm text-white text-nowrap">
-            Resubmit Documents
+            Re-upload Documents
           </a>
         </div>
 
@@ -636,7 +589,11 @@
         </a>
 
         <span class="badge text-bg-secondary text-nowrap">
+          {% if not get_student_submission_timestamp(formB) and not formB.declaration_name %}
+          Draft version
+          {% else %}
           Previous version
+          {% endif %}
         </span>
       </div>
       {% endif %}
@@ -686,25 +643,7 @@
       {% endif %}
 
       <span style="color:green; font-size:18px;">
-        {% set review_comment = '' %}
-        {% set review_comment1 = '' %}
-
-        {% if formC.form_review_comment in ['Approved with Minor Changes', 'Resubmission Required'] %}
-        {% set review_comment = formC.form_review_comment %}
-        {% endif %}
-
-        {% if formC.form_review_comment1 in ['Approved with Minor Changes', 'Resubmission Required'] %}
-        {% set review_comment1 = formC.form_review_comment1 %}
-        {% endif %}
-
-        {% if review_comment %}
-        <p>Review Status 1: {{ review_comment }}</p>
-        {% endif %}
-
-        {% if review_comment1 %}
-        <p>Review Status 2: {{ review_comment1 }}</p>
-        {% endif %}
-
+        
         {% set formC_correction_note = formC.review_form_status %}
 
         {% if formC.status == 'Submitted to Student for Corrections' and formC_correction_note %}
@@ -719,25 +658,17 @@
 
         {{ get_student_dashboard_status(formC) }}
 
-        {% if formC.rec_status == 'Approved' or formC.certificate_issued and formC.certificate_received %}
+        {% if formC.certificate_issued %}
           {% if formC.certificate_heading %}
           <br>
           <a href="{{ url_for('edited_certificate', id=formC.form_id) }}"
             class="btn btn-sm btn-success text-white">View Certificate</a>
           {% else %}
           <br>
+          <!--
           <a href="{{ url_for('view_certificate', id=formC.form_id) }}"
             class="btn btn-sm btn-success text-white">View Certificate</a>
-          {% endif %}
-        {% elif 'low' in formC.risk_level|lower and formC.certificate_issued and formC.certificate_received %}
-          {% if formC.certificate_heading %}
-          <br>
-          <a href="{{ url_for('edited_certificate', id=formC.form_id) }}"
-            class="btn btn-sm btn-success text-white">View Certificate</a>
-          {% else %}
-          <br>
-          <a href="{{ url_for('view_certificate', id=formC.form_id) }}"
-            class="btn btn-sm btn-success text-white">View Certificate</a>
+          -->
           {% endif %}
         {% endif %}
       </span>
@@ -775,7 +706,7 @@
 
           <a href="{{ url_for('submit_form_c_requirements') }}"
             class="btn btn-success btn-sm text-white text-nowrap">
-            Resubmit Documents
+            Re-upload Documents
           </a>
         </div>
 
@@ -844,7 +775,11 @@
         </a>
 
         <span class="badge text-bg-secondary text-nowrap">
+          {% if not get_student_submission_timestamp(formC) and not formC.declaration_name %}
+          Draft version
+          {% else %}
           Previous version
+          {% endif %}
         </span>
       </div>
       {% endif %}

@@ -18,6 +18,9 @@ from ..mail import send_bulk_emails
 from ..models import (
     EthicsRole,
     EthicsUser,
+    FormA,
+    FormB,
+    FormC,
     MbaDiscipline,
     MbaForm,
     MbaProject,
@@ -112,6 +115,34 @@ STUDENT_TEMPLATE_FIELDS = [
 ]
 
 
+def _attach_ethics_certificate_status(students):
+    student_list = list(students or [])
+    if not student_list:
+        return
+
+    legacy_user_ids = [student.legacy_user_id for student in student_list if getattr(student, "legacy_user_id", None)]
+    issued_user_ids = set()
+
+    if legacy_user_ids:
+        for form_model in (FormA, FormB, FormC):
+            rows = (
+                db.session.query(form_model.user_id)
+                .filter(
+                    form_model.user_id.in_(legacy_user_ids),
+                    form_model.certificate_issued.isnot(None),
+                )
+                .all()
+            )
+            issued_user_ids.update(row[0] for row in rows if row and row[0])
+
+    for student in student_list:
+        student.ethics_certificate_status = (
+            "Ethics certificate issued"
+            if getattr(student, "legacy_user_id", None) in issued_user_ids
+            else "-"
+        )
+
+
 def _shared_access_mode_label(user):
     if user.mba_access and user.ethics_access:
         return "Both"
@@ -194,6 +225,106 @@ def _apply_shared_access_mode(user, access_mode):
                     "last_name": user.last_name,
                 },
             )
+
+
+MBA_ROLE_CHOICES = [
+    ("student", "Student"),
+    ("supervisor", "Supervisor"),
+    ("examiner", "Examiner"),
+    ("supervisor_examiner", "Supervisor & Examiner"),
+    ("hdc", "HDC"),
+    ("admin", "Admin"),
+    ("main_admin", "Main Admin"),
+]
+
+ETHICS_ROLE_CHOICES = [
+    (EthicsRole.STUDENT.value, "Student"),
+    (EthicsRole.SUPERVISOR.value, "Supervisor"),
+    (EthicsRole.REVIEWER.value, "Reviewer"),
+    (EthicsRole.REC.value, "REC"),
+    (EthicsRole.ADMIN.value, "Admin"),
+    (EthicsRole.SUPER_ADMIN.value, "Super Admin"),
+]
+
+
+def _mba_role_form_value(user):
+    if not user or not user.role:
+        return ""
+    if user.role == MbaRole.STUDENT.value:
+        return "student"
+    if user.role == MbaRole.HDC.value:
+        return "hdc"
+    if user.role == MbaRole.ADMIN.value:
+        return "admin"
+    if user.role == MbaRole.MAIN_ADMIN.value:
+        return "main_admin"
+    if user.scholar_role == MbaScholarRole.BOTH.value:
+        return "supervisor_examiner"
+    if user.scholar_role == MbaScholarRole.SUPERVISOR.value:
+        return "supervisor"
+    if user.role == MbaRole.EXAMINER.value or user.scholar_role == MbaScholarRole.EXAMINER.value:
+        return "examiner"
+    return ""
+
+
+def _mba_role_label(user):
+    selected = _mba_role_form_value(user)
+    for value, label in MBA_ROLE_CHOICES:
+        if value == selected:
+            return label
+    return "-"
+
+
+def _apply_selected_mba_role(user, selected_role):
+    selected_role = (selected_role or "").strip().lower()
+    if not selected_role:
+        if not user.role:
+            user.role = MbaRole.STUDENT.value
+        return
+
+    if selected_role == "student":
+        user.role = MbaRole.STUDENT.value
+        user.scholar_role = None
+    elif selected_role == "supervisor":
+        user.role = MbaRole.SCHOLAR.value
+        user.scholar_role = MbaScholarRole.SUPERVISOR.value
+    elif selected_role == "examiner":
+        user.role = MbaRole.EXAMINER.value
+        user.scholar_role = None
+    elif selected_role == "supervisor_examiner":
+        user.role = MbaRole.SCHOLAR.value
+        user.scholar_role = MbaScholarRole.BOTH.value
+    elif selected_role == "hdc":
+        user.role = MbaRole.HDC.value
+        user.scholar_role = None
+    elif selected_role == "admin":
+        user.role = MbaRole.ADMIN.value
+        user.scholar_role = None
+    elif selected_role == "main_admin":
+        user.role = MbaRole.MAIN_ADMIN.value
+        user.scholar_role = None
+
+
+def _apply_selected_ethics_role(user, selected_role):
+    selected_role = (selected_role or "").strip().lower()
+    if not selected_role:
+        if not user.ethics_role:
+            user.ethics_role = EthicsRole.STUDENT.value
+        return
+
+    allowed_roles = {value for value, _ in ETHICS_ROLE_CHOICES}
+    if selected_role in allowed_roles:
+        user.ethics_role = selected_role
+        user.authenticated_student = selected_role == EthicsRole.STUDENT.value
+
+
+def _ethics_role_label(user):
+    if not user or not user.ethics_role:
+        return "-"
+    for value, label in ETHICS_ROLE_CHOICES:
+        if user.ethics_role == value:
+            return label
+    return str(user.ethics_role).replace("_", " ").title()
 
 
 def _profile_url():
@@ -751,6 +882,7 @@ def admin_dashboard():
         per_page_param="student_per_page",
         base_args=student_pagination_args,
     )
+    _attach_ethics_certificate_status(students)
 
     supervisor_query = supervisors_query().order_by(MbaUser.email)
     supervisor_pagination_args = request_query_args({"supervisor_page", "supervisor_per_page"})
@@ -924,9 +1056,14 @@ def admin_dashboard():
         user_pagination=user_pagination,
         shared_access_mode_label=_shared_access_mode_label,
         shared_access_mode_key=_shared_access_mode_key,
+        mba_role_label=_mba_role_label,
+        mba_role_form_value=_mba_role_form_value,
+        ethics_role_label=_ethics_role_label,
         user_search=user_search,
         user_access_filter=user_access_filter,
         shared_user_access_counts=shared_user_access_counts,
+        mba_role_choices=MBA_ROLE_CHOICES,
+        ethics_role_choices=ETHICS_ROLE_CHOICES,
         suggestions_by_project=suggestions_by_project,
         invitation_state_by_project=invitation_state_by_project,
         selected_view=selected_view,
@@ -981,8 +1118,16 @@ def admin_user_access_action():
 
     user_id = parse_positive_int(request.form.get("user_id"), 0)
     access_mode = (request.form.get("access_mode") or "").strip().lower()
+    current_access_mode = (request.form.get("current_access_mode") or "").strip().lower()
+    selected_mba_role = (request.form.get("mba_role") or "").strip().lower()
+    selected_ethics_role = (request.form.get("ethics_role") or "").strip().lower()
+    if access_mode == "update":
+        access_mode = current_access_mode
     if access_mode not in {"mba", "ethics", "both", "none"}:
         flash("Select a valid access mode.", "error")
+        return redirect(url_for("mba.admin_dashboard", panel="users"))
+    if access_mode == "none" and (selected_mba_role or selected_ethics_role):
+        flash("Grant MBA, Ethics, or Both access before updating system roles.", "error")
         return redirect(url_for("mba.admin_dashboard", panel="users"))
 
     user = db.session.get(MbaUser, user_id)
@@ -994,7 +1139,15 @@ def admin_user_access_action():
         flash("You cannot revoke your own MBA admin access from this screen.", "error")
         return redirect(url_for("mba.admin_dashboard", panel="users"))
 
+    if user.id == current_user.id and access_mode in {"mba", "both"} and selected_mba_role not in {"", "admin", "main_admin"}:
+        flash("You cannot remove your own MBA admin role from this screen.", "error")
+        return redirect(url_for("mba.admin_dashboard", panel="users"))
+
     _apply_shared_access_mode(user, access_mode)
+    if user.mba_access:
+        _apply_selected_mba_role(user, selected_mba_role)
+    if user.ethics_access:
+        _apply_selected_ethics_role(user, selected_ethics_role)
     db.session.commit()
     flash(f"Updated access for {user.email} to {_shared_access_mode_label(user)}.", "success")
     return redirect(

@@ -1,5 +1,7 @@
 from app_support import *
 
+@app.route('/form_c_answers', methods=['GET','POST'])
+def form_c_answers():
     user_id=session.get('id')
     if not user_id:
         return jsonify({'error': 'Unauthorized'}), 401
@@ -648,12 +650,12 @@ def review_feedback(form_id):
 def chair_form_view(id,form_name):
     user_id=session.get('id')
     if not user_id:
-        return redirect('/login?system=ethics')
+        return redirect(url_for('login_page'))
 
     user_name=db_session.query(User).filter_by(user_id=user_id).first()
     if not user_name:
         session.clear()
-        return redirect('/login?system=ethics')
+        return redirect(url_for('login_page'))
 
     user_role = getattr(getattr(user_name, 'role', None), 'value', '')
     forma = db_session.query(FormA).filter_by(form_id=id).first()
@@ -1588,7 +1590,7 @@ def chair_landing():
     user_id = session.get('id')
     user = db_session.query(User).filter(User.user_id == user_id).first()
     if not user:
-        return redirect('/login?system=ethics')
+        return redirect(url_for('login_page'))
 
     # Get year from query parameters
     year_param = request.args.get('year')
@@ -1728,12 +1730,12 @@ def chair_landing():
 def admin_login_logs():
     user_id = session.get('id')
     if not user_id:
-        return redirect('/login?system=ethics')
+        return redirect(url_for('login_page'))
 
     current_user = db_session.query(User).filter(User.user_id == user_id).first()
     if not current_user or not current_user.role or current_user.role.value not in ['ADMIN', 'SUPER_ADMIN']:
         flash('You are not authorized to view login logs.', 'danger')
-        return redirect('/login?system=ethics')
+        return redirect(url_for('login_page'))
 
     user_search = (request.args.get('search') or request.args.get('email') or '').strip()
     start_date_raw = (request.args.get('start_date') or '').strip()
@@ -2269,11 +2271,11 @@ def reviewer_form_c(id):
 def rec_dashboard():
     user_id = session.get('id')
     if not user_id:
-        return redirect('/login?system=ethics')
+        return redirect(url_for('login_page'))
 
     user = db_session.query(User).filter(User.user_id == user_id).first()
     if not user:
-        return redirect('/login?system=ethics')
+        return redirect(url_for('login_page'))
     
     
     today = date.today()
@@ -2363,11 +2365,11 @@ def admin_rec_form(form_id):
   
     user_id = session.get('id')
     if not user_id:
-        return redirect('/login?system=ethics')
+        return redirect(url_for('login_page'))
 
     user=db_session.query(User).filter(User.user_id==user_id).first()
     if not user:
-        return redirect('/login?system=ethics')
+        return redirect(url_for('login_page'))
 
     form = None
     Rec_team = db_session.query(Rec).filter(Rec.form_id == form_id).all()
@@ -2475,7 +2477,7 @@ def rec_response(id):
     user_id=session.get('id')
     if request.method == 'POST':
         status = request.form.get('status')
-        comments = request.form.get('rec_comments')  # âœ… corrected from 'additional_comments'
+        comments = request.form.get('rec_comments')  # ✅ corrected from 'additional_comments'
 
         # Loop through models to find the correct form by ID
         
@@ -2698,9 +2700,9 @@ def ethics_reviewer_committee_forms(id,form_name):
 
             forma.reviewer_name1 = effective_reviewer_ids[0] if len(effective_reviewer_ids) >= 1 else None
             forma.reviewer_name2 = effective_reviewer_ids[1] if len(effective_reviewer_ids) >= 2 else None
-            forma.ethics_supervisor_signature_date=datetime.now()
+            forma.ethics_signature_date=datetime.now()
             forma.review_form_comments=request.form.get('additional_comments')
-            forma.ethics_supervisor_form_status=request.form.get('recommendation')
+            forma.ethics_form_status=request.form.get('recommendation')
             if request.form.get('accept') in ['Accept','Approved with Minor Changes']:
                 if Assigned_reviewer:
                     #Uncomment the code bellow for testing
@@ -2793,9 +2795,9 @@ def ethics_reviewer_committee_forms(id,form_name):
 
             formb.reviewer_name1 = effective_reviewer_ids[0] if len(effective_reviewer_ids) >= 1 else None
             formb.reviewer_name2 = effective_reviewer_ids[1] if len(effective_reviewer_ids) >= 2 else None
-            formb.ethics_supervisor_signature_date=datetime.now()
+            formb.ethics_signature_date=datetime.now()
             formb.review_form_comments=request.form.get('additional_comments')
-            formb.ethics_supervisor_form_status=request.form.get('recommendation')
+            formb.ethics_form_status=request.form.get('recommendation')
             
             if request.form.get('accept') in ['Accept','Approved with Minor Changes']:
                 if Assigned_reviewer:
@@ -2900,9 +2902,9 @@ def ethics_reviewer_committee_forms(id,form_name):
 
             formc.reviewer_name1 = effective_reviewer_ids[0] if len(effective_reviewer_ids) >= 1 else None
             formc.reviewer_name2 = effective_reviewer_ids[1] if len(effective_reviewer_ids) >= 2 else None
-            formc.ethics_supervisor_signature_date=datetime.now()
+            formc.ethics_signature_date=datetime.now()
             formc.review_form_comments=request.form.get('additional_comments')
-            formc.ethics_supervisor_form_status=request.form.get('recommendation')
+            formc.ethics_form_status=request.form.get('recommendation')
             
             if request.form.get('accept') in ['Accept','Approved with Minor Changes']:
                 if Assigned_reviewer:
@@ -2979,7 +2981,7 @@ def supervisor_dashboard():
     
     role=session.get('supervisor_role')
     if not role:
-        return redirect('/login?system=ethics')
+        return redirect(url_for('login_page'))
     #supervisor_id="bea65156-03ff-45c8-bd41-9d07f4bc48d2"
     if not supervisor_id:
         return jsonify({'error': 'Unauthorized'}), 401
@@ -2991,7 +2993,7 @@ def supervisor_dashboard():
     formB_results = db_session.query(
         FormB.form_id, FormB.user_id, FormB.applicant_name, FormB.student_number,
         FormB.email, FormB.supervisor, FormB.supervisor_email, FormB.submitted_at,
-        FormB.recommendation, FormB.supervisor_date, FormB.ethics_supervisor_form_status,
+        FormB.recommendation, FormB.supervisor_date, FormB.ethics_form_status,
         FormB.signature_date, FormB.review_supervisor_signature, FormB.review_date,
         FormB.review_supervisor_signature1, FormB.review_date1, FormB.created_at, FormB.declaration_date
     ).filter(FormB.submitted_at != None).order_by(FormB.submitted_at.desc()).limit(5).all()
@@ -3012,7 +3014,7 @@ def supervisor_dashboard():
         proxy.submitted_at = result.submitted_at
         proxy.recommendation = result.recommendation
         proxy.supervisor_date = result.supervisor_date
-        proxy.ethics_supervisor_form_status = result.ethics_supervisor_form_status
+        proxy.ethics_form_status = result.ethics_form_status
         proxy.signature_date = result.signature_date
         proxy.review_supervisor_signature = result.review_supervisor_signature
         proxy.review_date = result.review_date
@@ -3128,7 +3130,7 @@ def supervisor_dashboard_previous_forms(user_id):
     formB_results = db_session.query(
         FormB.form_id, FormB.user_id, FormB.applicant_name, FormB.student_number,
         FormB.email, FormB.supervisor, FormB.supervisor_email, FormB.submitted_at,
-        FormB.recommendation, FormB.supervisor_date, FormB.ethics_supervisor_form_status,
+        FormB.recommendation, FormB.supervisor_date, FormB.ethics_form_status,
         FormB.signature_date, FormB.review_supervisor_signature, FormB.review_date,
         FormB.review_supervisor_signature1, FormB.review_date1, FormB.created_at, FormB.declaration_date,
         FormB.status, FormB.review_form_status, FormB.rejected_or_accepted
@@ -3150,7 +3152,7 @@ def supervisor_dashboard_previous_forms(user_id):
         proxy.submitted_at = result.submitted_at
         proxy.recommendation = result.recommendation
         proxy.supervisor_date = result.supervisor_date
-        proxy.ethics_supervisor_form_status = result.ethics_supervisor_form_status
+        proxy.ethics_form_status = result.ethics_form_status
         proxy.signature_date = result.signature_date
         proxy.review_supervisor_signature = result.review_supervisor_signature
         proxy.review_date = result.review_date
@@ -3176,7 +3178,7 @@ def supervisor_dashboard_previous_forms(user_id):
     supervisor_formB_results = db_session.query(
         FormB.form_id, FormB.user_id, FormB.applicant_name, FormB.student_number,
         FormB.email, FormB.supervisor, FormB.supervisor_email, FormB.submitted_at,
-        FormB.recommendation, FormB.supervisor_date, FormB.ethics_supervisor_form_status,
+        FormB.recommendation, FormB.supervisor_date, FormB.ethics_form_status,
         FormB.signature_date, FormB.review_supervisor_signature, FormB.review_date,
         FormB.review_supervisor_signature1, FormB.review_date1, FormB.created_at, FormB.declaration_date,
         FormB.status, FormB.review_form_status, FormB.rejected_or_accepted,
@@ -3203,7 +3205,7 @@ def supervisor_dashboard_previous_forms(user_id):
         proxy.submitted_at = result.submitted_at
         proxy.recommendation = result.recommendation
         proxy.supervisor_date = result.supervisor_date
-        proxy.ethics_supervisor_form_status = result.ethics_supervisor_form_status
+        proxy.ethics_form_status = result.ethics_form_status
         proxy.signature_date = result.signature_date
         proxy.review_supervisor_signature = result.review_supervisor_signature
         proxy.review_date = result.review_date
@@ -3236,7 +3238,7 @@ def dean_dashboard():
     supervisor_formB_results = db_session.query(
         FormB.form_id, FormB.user_id, FormB.applicant_name, FormB.student_number,
         FormB.email, FormB.supervisor, FormB.supervisor_email, FormB.submitted_at,
-        FormB.recommendation, FormB.supervisor_date, FormB.ethics_supervisor_form_status,
+        FormB.recommendation, FormB.supervisor_date, FormB.ethics_form_status,
         FormB.signature_date, FormB.review_supervisor_signature, FormB.review_date,
         FormB.review_supervisor_signature1, FormB.review_date1, FormB.created_at, FormB.declaration_date
     ).join(User, FormB.user_id == User.user_id).all()
@@ -3257,7 +3259,7 @@ def dean_dashboard():
         proxy.submitted_at = result.submitted_at
         proxy.recommendation = result.recommendation
         proxy.supervisor_date = result.supervisor_date
-        proxy.ethics_supervisor_form_status = result.ethics_supervisor_form_status
+        proxy.ethics_form_status = result.ethics_form_status
         proxy.signature_date = result.signature_date
         proxy.review_supervisor_signature = result.review_supervisor_signature
         proxy.review_date = result.review_date
@@ -3337,7 +3339,7 @@ def download_file(filename):
                 file_path = os.path.join(upload_dir, clean_filename)
         
         if not os.path.exists(file_path):
-            print(f"âš ï¸ File not found: {file_path}")
+            print(f"⚠️ File not found: {file_path}")
             flash("File not found. It may have been deleted during deployment.", "danger")
             return redirect(url_for('dashboard'))
             
@@ -3351,7 +3353,7 @@ def download_file(filename):
         )
         
     except Exception as e:
-        print(f"âš ï¸ File download error: {str(e)}")
+        print(f"⚠️ File download error: {str(e)}")
         flash("Error accessing file", "danger")
         return redirect(url_for('dashboard'))
 
@@ -3479,11 +3481,11 @@ Ethics Committee
                 )
                 
                 emails_sent += 1
-                print(f"âœ… Reminder email sent to {user.email}")
+                print(f"✅ Reminder email sent to {user.email}")
                 
             except Exception as e:
                 failed_emails += 1
-                print(f"âš ï¸ Failed to send email to {user.email}: {str(e)}")
+                print(f"⚠️ Failed to send email to {user.email}: {str(e)}")
                 continue
         
         # Flash success/failure message
@@ -3495,7 +3497,7 @@ Ethics Committee
         return redirect(request.referrer or url_for('dashboard'))
         
     except Exception as e:
-        print(f"âš ï¸ Error sending reminder emails: {str(e)}")
+        print(f"⚠️ Error sending reminder emails: {str(e)}")
         flash("Error sending reminder emails. Please try again later.", "danger")
         return redirect(request.referrer or url_for('dashboard'))
 
@@ -3530,7 +3532,7 @@ def get_missing_documents_count():
         })
         
     except Exception as e:
-        print(f"âš ï¸ Error getting missing documents count: {str(e)}")
+        print(f"⚠️ Error getting missing documents count: {str(e)}")
         return jsonify({'error': 'Internal server error'}), 500
 
 # =====================================================================================================
@@ -3546,6 +3548,5 @@ def upload_to():
     file = request.files["file"]
     file.save(os.path.join(UPLOAD_FOLDER, file.filename))
     return "File uploaded!"
-
 
 

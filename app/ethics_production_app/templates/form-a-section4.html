@@ -92,7 +92,7 @@
         <tr>
           <td><input type="text" name="population[]" class="form-control" /></td>
           <td><input type="text" name="sampling_method[]" class="form-control" /></td>
-          <td><input type="number" name="sample_size[]" class="form-control" /></td>
+          <td><input type="text" name="sample_size[]" class="form-control" inputmode="numeric" pattern="^\d+(\s*-\s*\d+)?$" title="Enter a number like 100 or an interval like 100-150. The second number cannot be more than twice the first." placeholder="e.g., 100 or 100-150" /></td>
           <td><textarea name="inclusion_criteria[]" rows="2" class="form-control"></textarea></td>
           <td><button type="button" class="btn btn-danger btn-sm" onclick="removeRow(this)">Remove</button></td>
         </tr>
@@ -736,7 +736,7 @@
         row.innerHTML = `
           <td><input type="text" name="population[]" class="form-control" value="${escapeHtml(initialData.population[index] || '')}" /></td>
           <td><input type="text" name="sampling_method[]" class="form-control" value="${escapeHtml(initialData.sampling_method[index] || '')}" /></td>
-          <td><input type="number" name="sample_size[]" class="form-control" value="${escapeHtml(initialData.sampling_size[index] || '')}" /></td>
+          <td><input type="text" name="sample_size[]" class="form-control" inputmode="numeric" pattern="^\\d+(\\s*-\\s*\\d+)?$" title="Enter a number like 100 or an interval like 100-150. The second number cannot be more than twice the first." placeholder="e.g., 100 or 100-150" value="${escapeHtml(initialData.sampling_size[index] || '')}" /></td>
           <td><textarea name="inclusion_criteria[]" rows="2" class="form-control">${escapeHtml(initialData.inclusion_criteria[index] || '')}</textarea></td>
           <td><button type="button" class="btn btn-danger btn-sm" onclick="removeRow(this)">Remove</button></td>
         `;
@@ -838,6 +838,12 @@
       .then(data => {
         debugLogSec4('Response data', data);
         if (data && data.success) {
+          if (data.form_id) {
+            const formIdField = form.querySelector('input[name="forma_id"]');
+            if (formIdField) {
+              formIdField.value = data.form_id;
+            }
+          }
           showSaved();
         } else {
           showError();

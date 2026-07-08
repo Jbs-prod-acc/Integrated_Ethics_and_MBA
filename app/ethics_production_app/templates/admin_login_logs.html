@@ -10,21 +10,28 @@
 
 {% block content %}
 <style>
+  .admin-main,
+  .admin-content,
+  .card,
+  .card-body {
+    min-width: 0;
+  }
+
   .log-table-wrapper {
     width: 100%;
+    max-width: 100%;
     overflow-x: auto;
     overflow-y: auto;
   }
 
   .log-table {
     width: 100%;
-    min-width: 720px;
-    table-layout: auto;
+    max-width: 100%;
+    table-layout: fixed;
     font-size: 0.9rem;
   }
 
   .log-table.log-table-activity {
-    min-width: 1100px;
     font-size: 0.85rem;
   }
 
@@ -38,57 +45,57 @@
 
   .log-table th:nth-child(1),
   .log-table td:nth-child(1) {
-    min-width: 180px;
+    width: 14%;
   }
 
   .log-table th:nth-child(2),
   .log-table td:nth-child(2) {
-    min-width: 220px;
+    width: 16%;
   }
 
   .log-table th:nth-child(3),
   .log-table td:nth-child(3) {
-    min-width: 120px;
+    width: 10%;
   }
 
   .log-table th:nth-child(4),
   .log-table td:nth-child(4) {
-    min-width: 180px;
+    width: 16%;
   }
 
   .log-table.log-table-activity th:nth-child(1),
   .log-table.log-table-activity td:nth-child(1) {
-    min-width: 160px;
+    width: 12%;
   }
 
   .log-table.log-table-activity th:nth-child(2),
   .log-table.log-table-activity td:nth-child(2) {
-    min-width: 120px;
+    width: 10%;
   }
 
   .log-table.log-table-activity th:nth-child(3),
   .log-table.log-table-activity td:nth-child(3) {
-    min-width: 160px;
+    width: 12%;
   }
 
   .log-table.log-table-activity th:nth-child(4),
   .log-table.log-table-activity td:nth-child(4) {
-    min-width: 160px;
+    width: 12%;
   }
 
   .log-table.log-table-activity th:nth-child(5),
   .log-table.log-table-activity td:nth-child(5) {
-    min-width: 160px;
+    width: 12%;
   }
 
   .log-table.log-table-activity th:nth-child(6),
   .log-table.log-table-activity td:nth-child(6) {
-    min-width: 110px;
+    width: 8%;
   }
 
   .log-table.log-table-activity th:nth-child(7),
   .log-table.log-table-activity td:nth-child(7) {
-    min-width: 320px;
+    width: 34%;
   }
 
   .log-table td pre {
@@ -98,6 +105,15 @@
     font-size: 0.85rem;
   }
 
+  .pagination {
+    flex-wrap: wrap;
+  }
+
+  .form-control,
+  .form-select {
+    min-width: 0;
+  }
+
   @media (max-width: 1200px) {
     .log-table {
       font-size: 0.82rem;
@@ -105,6 +121,16 @@
 
     .log-table.log-table-activity {
       font-size: 0.78rem;
+    }
+  }
+
+  @media (max-width: 992px) {
+    .log-table {
+      min-width: 720px;
+    }
+
+    .log-table.log-table-activity {
+      min-width: 980px;
     }
   }
 </style>
@@ -192,11 +218,6 @@
         <li class="page-item {% if iu_page == 1 %}disabled{% endif %}">
           <a class="page-link" href="{{ url_for('admin_login_logs', iu_page=iu_page-1, iu_per_page=iu_per_page, log_page=log_page, log_per_page=log_per_page, **filters) }}">Previous</a>
         </li>
-        {% for p in range(1, iu_pages+1) %}
-        <li class="page-item {% if p == iu_page %}active{% endif %}">
-          <a class="page-link" href="{{ url_for('admin_login_logs', iu_page=p, iu_per_page=iu_per_page, log_page=log_page, log_per_page=log_per_page, **filters) }}">{{ p }}</a>
-        </li>
-        {% endfor %}
         <li class="page-item {% if iu_page == iu_pages %}disabled{% endif %}">
           <a class="page-link" href="{{ url_for('admin_login_logs', iu_page=iu_page+1, iu_per_page=iu_per_page, log_page=log_page, log_per_page=log_per_page, **filters) }}">Next</a>
         </li>
@@ -245,6 +266,7 @@
           value="{{ filters.end_date }}"
         >
         <div class="date-format-hint">Please enter the date in dd/mm/yyyy format.</div>
+      <script src="{{ url_for('static', filename='js/datepicker-validation.js') }}"></script>
       </div>
       <div class="col-md-2 d-flex gap-2">
         <button type="submit" class="btn btn-primary w-100">Filter</button>
@@ -282,7 +304,7 @@
             {% endfor %}
           {% else %}
             <tr>
-              <td colspan="4" class="text-center text-muted">No login logs found for the selected filters.</td>
+              <td colspan="5" class="text-center text-muted">No login logs found for the selected filters.</td>
             </tr>
           {% endif %}
         </tbody>
@@ -294,11 +316,6 @@
         <li class="page-item {% if log_page == 1 %}disabled{% endif %}">
           <a class="page-link" href="{{ url_for('admin_login_logs', log_page=log_page-1, log_per_page=log_per_page, iu_page=iu_page, iu_per_page=iu_per_page, **filters) }}">Previous</a>
         </li>
-        {% for p in range(1, log_pages+1) %}
-        <li class="page-item {% if p == log_page %}active{% endif %}">
-          <a class="page-link" href="{{ url_for('admin_login_logs', log_page=p, log_per_page=log_per_page, iu_page=iu_page, iu_per_page=iu_per_page, **filters) }}">{{ p }}</a>
-        </li>
-        {% endfor %}
         <li class="page-item {% if log_page == log_pages %}disabled{% endif %}">
           <a class="page-link" href="{{ url_for('admin_login_logs', log_page=log_page+1, log_per_page=log_per_page, iu_page=iu_page, iu_per_page=iu_per_page, **filters) }}">Next</a>
         </li>
@@ -383,11 +400,6 @@
         <li class="page-item {% if activity_page == 1 %}disabled{% endif %}">
           <a class="page-link" href="{{ url_for('admin_login_logs', activity_page=activity_page-1, activity_per_page=activity_per_page, log_page=log_page, log_per_page=log_per_page, iu_page=iu_page, iu_per_page=iu_per_page, **filters) }}">Previous</a>
         </li>
-        {% for p in range(1, activity_pages+1) %}
-        <li class="page-item {% if p == activity_page %}active{% endif %}">
-          <a class="page-link" href="{{ url_for('admin_login_logs', activity_page=p, activity_per_page=activity_per_page, log_page=log_page, log_per_page=log_per_page, iu_page=iu_page, iu_per_page=iu_per_page, **filters) }}">{{ p }}</a>
-        </li>
-        {% endfor %}
         <li class="page-item {% if activity_page == activity_pages %}disabled{% endif %}">
           <a class="page-link" href="{{ url_for('admin_login_logs', activity_page=activity_page+1, activity_per_page=activity_per_page, log_page=log_page, log_per_page=log_per_page, iu_page=iu_page, iu_per_page=iu_per_page, **filters) }}">Next</a>
         </li>
@@ -396,7 +408,6 @@
     </nav>
   </div>
 </div>
-<script src="{{ url_for('static', filename='js/datepicker-validation.js') }}"></script>
 {% endblock %}
  
 

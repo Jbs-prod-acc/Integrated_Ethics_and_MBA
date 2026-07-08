@@ -6,6 +6,7 @@
   <title>Form A – Section 1 | JBS Ethics</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
   <link rel="stylesheet" href="/static/css/form_a.css" />
   <!-- <link rel="stylesheet" href="{{ url_for('static', filename='css/form_a.css') }}"> -->
   <style>
@@ -922,9 +923,12 @@
                     name="sampling_method[]" class="form-control" />
                 </td>
                 <td>
-                  <input type="number"
+                  <input type="text"
                     value="{% if data_sampling['sampling_size'][i] and data_sampling['sampling_size'][i]|string|lower != 'none' %}{{ data_sampling['sampling_size'][i] }}{% endif %}"
-                    name="sample_size[]" class="form-control" />
+                    name="sample_size[]" class="form-control" inputmode="numeric"
+                    pattern="^\d+(\s*-\s*\d+)?$"
+                    title="Enter a number like 100 or an interval like 100-150. The second number cannot be more than twice the first."
+                    placeholder="e.g., 100 or 100-150" />
                 </td>
                 <td>
                   <textarea name="inclusion_criteria[]"
@@ -938,7 +942,10 @@
                 <td><input type="text" name="population[]" class="form-control" placeholder="e.g., Students" /></td>
                 <td><input type="text" name="sampling_method[]" class="form-control"
                     placeholder="e.g., Random sampling" /></td>
-                <td><input type="number" name="sample_size[]" class="form-control" placeholder="e.g., 50" /></td>
+                <td><input type="text" name="sample_size[]" class="form-control" inputmode="numeric"
+                    pattern="^\d+(\s*-\s*\d+)?$"
+                    title="Enter a number like 100 or an interval like 100-150. The second number cannot be more than twice the first."
+                    placeholder="e.g., 100 or 100-150" /></td>
                 <td><textarea name="inclusion_criteria[]" class="form-control"
                     placeholder="e.g., Must be enrolled"></textarea></td>
                 <td><button type="button" class="btn btn-danger btn-sm" onclick="removeRow(this)">Remove</button></td>
@@ -1177,7 +1184,7 @@
               <input type="radio" name="uses_secondary_data" value="Yes" {% if formA.uses_secondary_data %}checked{% endif %} onchange="handleSecondaryData()"> Yes
             </label>
             <label class="form-check-label">
-              <input type="radio" name="uses_secondary_data" value="No" {% if formA.uses_secondary_data is sameas false %}checked{% endif %} onchange="handleSecondaryData()"> No
+              <input type="radio" name="uses_secondary_data" value="No" {% if not formA.uses_secondary_data %}checked{% endif %} onchange="handleSecondaryData()"> No
             </label>
           </div>
 
@@ -1602,7 +1609,14 @@
 
         <div class="form-group">
           <label>Date</label>
-          <input type="date" required name="declaration_date">
+          <input
+            type="text"
+            required
+            name="declaration_date"
+            class="js-ddmmyyyy-datepicker"
+            autocomplete="off"
+            placeholder="DD/MM/YYYY"
+            value="{{ formA.declaration_date.strftime('%d/%m/%Y') if formA.declaration_date and formA.declaration_date.strftime is defined else (formA.declaration_date or '') }}">
         </div>
 
         <div class="form-navigation">
@@ -1921,7 +1935,10 @@
       newRow.innerHTML = `
       <td><input type="text" name="population[]" class="form-control" placeholder="e.g., Students" /></td>
       <td><input type="text" name="sampling_method[]" class="form-control" placeholder="e.g., Random sampling" /></td>
-      <td><input type="number" name="sample_size[]" class="form-control" placeholder="e.g., 50" /></td>
+      <td><input type="text" name="sample_size[]" class="form-control" inputmode="numeric"
+        pattern="^\\d+(\\s*-\\s*\\d+)?$"
+        title="Enter a number like 100 or an interval like 100-150. The second number cannot be more than twice the first."
+        placeholder="e.g., 100 or 100-150" /></td>
       <td><textarea name="inclusion_criteria[]" class="form-control" placeholder="e.g., Must be enrolled"></textarea></td>
       <td><button type="button" class="btn btn-danger btn-sm" onclick="removeRow(this)">Remove</button></td>
     `;
@@ -2167,14 +2184,14 @@
 
         function getAutosaveEndpoint(changedFieldName) {
           const fieldName = normalizeFieldName(changedFieldName);
-          if (!fieldName) return "{{ url_for('student_autosave_forma') }}";
-          if (sec1Fields.has(fieldName)) return "{{ url_for('form_a_sec1_autosave') }}";
-          if (sec2Fields.has(fieldName)) return "{{ url_for('form_a_sec2_autosave') }}";
-          if (sec3Fields.has(fieldName)) return "{{ url_for('form_a_sec3_autosave') }}";
-          if (sec4Fields.has(fieldName)) return "{{ url_for('form_a_sec4_autosave') }}";
-          if (sec5Fields.has(fieldName)) return "{{ url_for('form_a_sec5_autosave') }}";
+          if (!fieldName) return '/student_autosave_forma';
+          if (sec1Fields.has(fieldName)) return '/form_a_sec1_autosave';
+          if (sec2Fields.has(fieldName)) return '/form_a_sec2_autosave';
+          if (sec3Fields.has(fieldName)) return '/form_a_sec3_autosave';
+          if (sec4Fields.has(fieldName)) return '/form_a_sec4_autosave';
+          if (sec5Fields.has(fieldName)) return '/form_a_sec5_autosave';
           if (declarationFields.has(fieldName)) return null;
-          return "{{ url_for('student_autosave_forma') }}";
+          return '/student_autosave_forma';
         }
         function showSaving() {
           if (savingIndicator) savingIndicator.innerHTML = '<span class="autosave-spinner"></span>Autosaving your progress...';
@@ -2246,6 +2263,12 @@
             .then(data => {
               console.log('[AUTOSAVE] Response data:', data);
               if (data.success) {
+                if (data.form_id) {
+                  const formIdField = form.querySelector('input[name="forma_id"]');
+                  if (formIdField) {
+                    formIdField.value = data.form_id;
+                  }
+                }
                 showSaved();
               } else {
                 showError();
@@ -2405,245 +2428,8 @@
     </script>
 
 
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="{{ url_for('static', filename='js/ddmmyyyy-datepicker.js') }}"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script>
-  try {
-    document.addEventListener('DOMContentLoaded', function () {
-      try {
-        const form = document.querySelector('form[action*="student_edit_forma"]') || document.querySelector('form');
-
-        if (!form) {
-          console.warn('[AUTOSAVE] No form found for autosave.');
-          return;
-        }
-
-        const endpoint = form.getAttribute('action');
-        let autosaveTimeout = null;
-        let savedMessageTimeout = null;
-
-        const declarationFields = new Set([
-          'declaration_name',
-          'applicant_signature',
-          'declaration_date'
-        ]);
-
-        const autosaveStatus = document.createElement('div');
-        autosaveStatus.id = 'autosaveStatus';
-        autosaveStatus.style.position = 'fixed';
-        autosaveStatus.style.right = '20px';
-        autosaveStatus.style.bottom = '20px';
-        autosaveStatus.style.zIndex = '3000';
-        autosaveStatus.style.display = 'none';
-        autosaveStatus.style.padding = '10px 16px';
-        autosaveStatus.style.borderRadius = '8px';
-        autosaveStatus.style.fontWeight = '600';
-        autosaveStatus.style.boxShadow = '0 6px 18px rgba(0,0,0,0.18)';
-        document.body.appendChild(autosaveStatus);
-
-        function showAutosaveStatus(message, backgroundColor, textColor) {
-          autosaveStatus.textContent = message;
-          autosaveStatus.style.backgroundColor = backgroundColor;
-          autosaveStatus.style.color = textColor;
-          autosaveStatus.style.display = 'block';
-
-          clearTimeout(savedMessageTimeout);
-          savedMessageTimeout = setTimeout(function () {
-            autosaveStatus.style.display = 'none';
-          }, 1800);
-        }
-
-        function showSaving() {
-          showAutosaveStatus('Saving...', '#fff3cd', '#664d03');
-        }
-
-        function showSaved() {
-          showAutosaveStatus('Saved', '#d1e7dd', '#0f5132');
-        }
-
-        function showError() {
-          showAutosaveStatus('Autosave failed', '#f8d7da', '#842029');
-        }
-
-        function autosave(changedFieldName) {
-          if (!endpoint) {
-            console.warn('[AUTOSAVE] No endpoint found.');
-            return;
-          }
-
-          showSaving();
-
-          const formData = new FormData(form);
-          formData.set('autosave_only', '1');
-
-          /*
-            Do not autosave declaration submit fields.
-            They must only be handled when the user finally submits to supervisor.
-          */
-          declarationFields.forEach(function (fieldName) {
-            formData.delete(fieldName);
-          });
-
-          /*
-            Avoid sending file inputs during normal text/radio/checkbox autosave.
-            This prevents empty file fields from interfering with already uploaded files.
-          */
-          form.querySelectorAll('input[type="file"]').forEach(function (fileInput) {
-            if (fileInput.name) {
-              formData.delete(fileInput.name);
-            }
-          });
-
-          /*
-            Explicitly handle all checkboxes.
-            Normal checkboxes must send Yes or No.
-            Array checkboxes must send only selected values.
-          */
-          const checkboxes = form.querySelectorAll('input[type="checkbox"]');
-          const arrayCheckboxNames = new Set();
-
-          checkboxes.forEach(function (cb) {
-            if (!cb.name) return;
-            if (cb.name && cb.name.endsWith('[]')) {
-              arrayCheckboxNames.add(cb.name);
-            }
-          });
-
-          arrayCheckboxNames.forEach(function (name) {
-            formData.delete(name);
-          });
-
-          checkboxes.forEach(function (cb) {
-            if (!cb.name) return;
-
-            if (cb.name.endsWith('[]')) {
-              if (cb.checked) {
-                formData.append(cb.name, cb.value || 'Yes');
-              }
-            } else {
-              formData.set(cb.name, cb.checked ? 'Yes' : 'No');
-            }
-          });
-
-          console.log('[AUTOSAVE] Sending autosave request to', endpoint, 'for field:', changedFieldName);
-
-          fetch(endpoint, {
-            method: 'POST',
-            body: formData,
-            headers: {
-              'X-Requested-With': 'XMLHttpRequest'
-            }
-          })
-            .then(function (response) {
-              console.log('[AUTOSAVE] Response:', response.status, response.statusText);
-
-              return response.json().catch(function () {
-                return {
-                  success: response.ok,
-                  ok: response.ok
-                };
-              });
-            })
-            .then(function (data) {
-              console.log('[AUTOSAVE] Response data:', data);
-
-              if (data.success || data.ok) {
-                showSaved();
-              } else {
-                showError();
-                console.error('[AUTOSAVE] Autosave error:', data.error || data.message || data);
-              }
-            })
-            .catch(function (error) {
-              showError();
-              console.error('[AUTOSAVE] Fetch/network error:', error);
-            });
-        }
-
-        function attachAutosaveListeners() {
-          const allFields = Array.from(
-            form.querySelectorAll('input:not([type="file"]), textarea, select')
-          );
-
-          allFields.forEach(function (field) {
-            if (!field.name) return;
-
-            if (declarationFields.has(field.name)) {
-              return;
-            }
-
-            field.oninput = null;
-            field.onchange = null;
-
-            const eventType = (
-              field.type === 'checkbox' ||
-              field.type === 'radio' ||
-              field.tagName === 'SELECT'
-            ) ? 'change' : 'input';
-
-            field.addEventListener(eventType, function (event) {
-              clearTimeout(autosaveTimeout);
-
-              autosaveTimeout = setTimeout(function () {
-                autosave(event.target.name);
-              }, 700);
-            });
-          });
-        }
-
-        attachAutosaveListeners();
-
-        window.formAAutosave = autosave;
-        window.formAReattachAutosaveListeners = attachAutosaveListeners;
-
-        /*
-          Dynamic rows do not always trigger input/change immediately.
-          This ensures autosave still works after rows are added or removed.
-        */
-        form.addEventListener('click', function (event) {
-          if (
-            event.target.classList.contains('remove-row') ||
-            event.target.classList.contains('remove-funding-row') ||
-            event.target.matches('button[onclick*="removeRow"]')
-          ) {
-            setTimeout(function () {
-              autosave('dynamic_row_removed');
-            }, 100);
-          }
-
-          if (
-            event.target.id === 'addRowBtn' ||
-            event.target.matches('button[onclick*="addRow"]') ||
-            event.target.matches('button[onclick*="addFundingRow"]')
-          ) {
-            setTimeout(function () {
-              attachAutosaveListeners();
-              autosave('dynamic_row_added');
-            }, 250);
-          }
-        });
-
-        /*
-          If your existing addFundingRow() or addRow() functions add new inputs,
-          this watches the form and automatically attaches autosave to new fields.
-        */
-        const observer = new MutationObserver(function () {
-          attachAutosaveListeners();
-        });
-
-        observer.observe(form, {
-          childList: true,
-          subtree: true
-        });
-
-        console.log('[AUTOSAVE] Autosave initialized successfully.');
-
-      } catch (error) {
-        console.error('[AUTOSAVE] Error in autosave setup:', error);
-      }
-    });
-  } catch (error) {
-    console.error('[AUTOSAVE] Critical autosave script error:', error);
-  }
-</script>
-
+</body>
 </html>

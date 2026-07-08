@@ -1,7 +1,7 @@
-from models import db_session, User, UserRole, FormB, FormC, FormA, FormUploads, Documents
+from app.models import db_session, User, UserRole, FormB, FormC, FormA, FormUploads, Documents
 
 def getFormAData(id):
-    db_session.query(FormA).filter_by(id=id).all()
+    return db_session.query(FormA).filter_by(form_id=id).first()
 
 def getSupervisorsList():
     supervisors = db_session.query(User).filter(User.role == UserRole.SUPERVISOR).all()

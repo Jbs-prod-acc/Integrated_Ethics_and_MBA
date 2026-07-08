@@ -76,7 +76,7 @@
             <td>{{item.forma.applicant_name}}</td>
             <td>Form A</td>
             <td>{{item.forma.risk_rating}}</td>
-            <td>{% if item.forma.ethics_supervisor_signature_date %}{{item.forma.ethics_supervisor_signature_date.strftime('%d/%m/%Y')}}
+            <td>{% if item.forma.ethics_signature_date %}{{item.forma.ethics_signature_date.strftime('%d/%m/%Y')}}
               {% elif item.forma.signature_date%}{{item.forma.signature_date.strftime('%d/%m/%Y')}}{% endif%}</td>
             <td><span class="badge status-pending">{{ get_reviewer_dashboard_status(item.forma, user_id) }}</span>
            <br>
@@ -124,7 +124,7 @@
                   {% endif %}
                   
                 <br>
-   Â Â Â Â Â Â Â Â Â Â Â </ul>
+              </ul>
             </td>
             <td>
               <a href="{{url_for('review_version',user_id=item.forma.user_id,form_name='A')}}" class="view-btn">View</a>
@@ -158,7 +158,7 @@
             <td>{{item.formb.applicant_name}}</td>
             <td>Form B</td>
             <td>{{item.formb.risk_level}}</span></td>
-            <td>{% if item.formb.ethics_supervisor_signature_date %}{{item.formb.ethics_supervisor_signature_date.strftime('%d/%m/%Y')}}
+            <td>{% if item.formb.ethics_signature_date %}{{item.formb.ethics_signature_date.strftime('%d/%m/%Y')}}
               {% elif item.formb.signature_date%}{{item.formb.signature_date.strftime('%d/%m/%Y')}}{% endif%}</td>
             <td><span class="badge status-pending">{{ get_reviewer_dashboard_status(item.formb, user_id) }}</span>
            <br>
@@ -248,7 +248,7 @@
             <td>{{item.formc.applicant_name}}</td>
             <td>Form C</td>
             <td>{{item.formc.risk_level}}</td>
-            <td>{% if item.formc.ethics_supervisor_signature_date %}{{item.formc.ethics_supervisor_signature_date.strftime('%d/%m/%Y')}}
+            <td>{% if item.formc.ethics_signature_date %}{{item.formc.ethics_signature_date.strftime('%d/%m/%Y')}}
               {% elif item.formc.signature_date%}{{item.formc.signature_date.strftime('%d/%m/%Y')}}{% endif%}</td>
             <td><span class="badge status-pending">{{ get_reviewer_dashboard_status(item.formc, user_id) }}</span>
              <br>

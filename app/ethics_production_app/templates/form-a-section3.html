@@ -517,11 +517,22 @@ document.addEventListener('DOMContentLoaded', function() {
     })
     .then(r => {
       debugLogSec3('Response status', r.status, r.statusText);
-      return r.json().catch(() => ({ success: true }));
+      return r.json().catch(() => ({ success: false, error: 'Invalid JSON response' }));
     })
     .then(data => {
       debugLogSec3('Response data', data);
-      showSaved();
+      if (data && data.success) {
+        if (data.form_id) {
+          const formIdField = form.querySelector('input[name="forma_id"]');
+          if (formIdField) {
+            formIdField.value = data.form_id;
+          }
+        }
+        showSaved();
+      } else {
+        showError();
+        console.error('[FORM-A-SEC3] Save failed:', data && data.error ? data.error : 'Unknown error');
+      }
     })
     .catch(err => {
       showError();

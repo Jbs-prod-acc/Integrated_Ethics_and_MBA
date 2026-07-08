@@ -174,13 +174,6 @@
                   <i class="nav-icon fas fa-chart-bar" aria-hidden="true"></i><span>Analytics</span>
                 </a>
               {% endif %}
-            {% elif current_user.role == 'dean' %}
-              <a href="{{ url_for('ethics.chair_landing') }}#admin-queue" class="ethics-sidebar__item">
-                <i class="nav-icon fas fa-clipboard-list" aria-hidden="true"></i><span>Admin Queue</span>
-              </a>
-              <a href="{{ url_for('ethics.chair_landing') }}#old-forms" class="ethics-sidebar__item">
-                <i class="nav-icon fas fa-certificate" aria-hidden="true"></i><span>Certificates</span>
-              </a>
             {% elif current_user.role == 'reviewer' %}
               <a href="{{ url_for('ethics.review_dashboard') }}#reviewer-queue" class="ethics-sidebar__item">
                 <i class="nav-icon fas fa-clipboard-check" aria-hidden="true"></i><span>My Reviews</span>

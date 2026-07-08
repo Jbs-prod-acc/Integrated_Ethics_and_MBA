@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>JBS Ethics Form A</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/form_a.css" />
+  <style>
+    /* Universal style for all checkboxes */
+input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;          /* Make them round */
+  border: 2px solid black;     /* Black border */
+  appearance: none;            /* Remove default OS styling */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-color: white;
+  cursor: pointer;
+  vertical-align: middle;
+  position: relative;
+}
+
+/* Checked style: black circle with white center */
+input[type="checkbox"]:checked {
+  background-color: black;
+}
+
+/* Inner dot for checked checkboxes */
+input[type="checkbox"]:checked::after {
+  content: "";
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 8px;
+  height: 8px;
+  background-color: white;
+  border-radius: 50%;
+}
+
+  </style>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/loading.css') }}">
+
+</head>
+
+<body>
+
+  <!-- Navbar -->
+  <header class="navbar">
+    <div class="nav-content">
+      <img src="{{ url_for('static',filename='img/image.png')}}" alt="UJ JBS Logo" class="logo uj">
+      <span class="nav-title">Form A – Section 2: Risk Assessment</span>
+
+      <!-- Logout -->
+      <div style="text-align: right;">
+
+        <a href="{{url_for('logout')}}" class="btn-logout">Logout</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="main-content">
+<div id="autosave-status" style="position: fixed; top: 70px; right: 20px; padding: 8px 16px; background: #f0f0f0; border-radius: 4px; font-size: 14px; z-index: 1000;"></div>
+<form id="formAsection2" action="{{url_for('form_a_sec2')}}" method="post" enctype="multipart/form-data" class="no-loading-indicator">
+
+
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="forma_id" value="{{ form_data.form_id if form_data and form_data.form_id else '' }}">
+   
+    <h3>1. Ethical Clearance Aspects</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Aspect</th>
+          <th>Check all that is applicable:</th>
+
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Survey/Questionnaire</td>
+          <td><input type="checkbox" value="Yes" name="survey"></td>
+
+        </tr>
+        <tr>
+          <td>Focus groups</td>
+          <td><input type="checkbox" value="Yes" name="focus_groups"></td>
+
+        </tr>
+        <tr>
+          <td>Observations</td>
+          <td><input type="checkbox" value="Yes" name="observations"></td>
+
+        </tr>
+        <tr>
+          <td>Interviews</td>
+          <td><input type="checkbox" value="Yes" name="interviews"></td>
+
+        </tr>
+        <tr>
+          <td>Documents</td>
+          <td><input type="checkbox" value="Yes" name="documents"></td>
+
+        </tr>
+        <tr>
+          <td>Other</td>
+          <td>
+            <input type="text" class="form-control d-inline" name="vulnerable_other_specify" placeholder="Specify">
+          </td>
+
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>2. Risk Assessment</h3>
+    <table>
+      <thead>
+        <tr>
+          <th width="80%">2.1 Does your research include the direct involvement of any of the following groups of participants?</th>
+          <th width="20%">Select where applicable</th>
+
+        </tr>
+      </thead>
+             <tbody>
+        <tr>
+          <td>a) Communities that may be considered as vulnerable</td>
+          <td><input type="checkbox" value="Yes" name="vulnerable_communities"></td>
+
+        </tr>
+        <tr>
+          <td>b) People under the age of 18 or over 65</td>
+          <td><input type="checkbox" value="Yes" name="age_range"></td>
+
+        </tr>
+        <tr>
+          <td>c) UJ employees or students</td>
+          <td><input type="checkbox" value="Yes" name="uj_employees"></td>
+
+        </tr>
+        <tr>
+          <td>d) Persons not usually considered to be vulnerable but would be considered vulnerable in the context of this
+            research project</td>
+          <td><input type="checkbox" value="Yes" name="vulnerable"></td>
+
+        </tr>
+        <tr>
+          <td>e) Non-English-speaking participants</td>
+          <td><input type="checkbox" value="Yes" name="non_english"></td>
+
+        </tr>
+        <tr>
+          <td>f) A researcher’s own students</td>
+          <td><input type="checkbox" value="Yes" name="own_students"></td>
+
+        </tr>
+        <tr>
+          <td>g) People living in poverty</td>
+          <td><input type="checkbox" value="Yes" name="poverty"></td>
+
+        </tr>
+        <tr>
+          <td>h) People with little or no education </td>
+          <td><input type="checkbox" value="Yes" name="no_education"></td>
+
+        </tr>
+        <tr>
+          <td>i) Other: Provide a description</td>
+          <td><input type="text" class="form-control d-inline" name="assessment_other_specify" placeholder="Specify">
+          </td>
+
+        </tr>
+      </tbody>
+    </table>
+    
+    <hr>
+
+    <table>
+      <thead>
+        <tr>
+          <th width="80%">2.2 Does your research involve any of the following types of activity?</th>
+          <th width="20%">Select where applicable</th>
+
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>a) Collection, use or disclosure of information WITHOUT the consent of the individual whose information it
+            is, with the exception of aggregated data or data from official databases such as StatsSA, SARS, etc.</td>
+          <td><input type="checkbox" value="Yes" name="disclosure"></td>
+
+        </tr>
+        <tr>
+          <td>b) Causing discomfiture to participants beyond normal levels of inconvenience</td>
+          <td><input type="checkbox" value="Yes" name="discomfiture"></td>
+
+        </tr>
+        <tr>
+          <td>c) Deception of participants, concealment or covert observation</td>
+          <td><input type="checkbox" value="Yes" name="deception"></td>
+
+        </tr>
+        <tr>
+          <td>d) Examining potentially sensitive or contentious issues</td>
+          <td><input type="checkbox" value="Yes" name="sensitive"></td>
+
+        </tr>
+        <tr>
+          <td>e) Seeking disclosure of information which may be prejudicial to participants</td>
+          <td><input type="checkbox" value="Yes" name="prejudice"></td>
+
+        </tr>
+        <tr>
+          <td>f) Using intrusive techniques</td>
+          <td><input type="checkbox" value="Yes" name="intrusive_techniques"></td>
+
+        </tr>
+        <tr>
+          <td>g) Study of or participation in illegal activities</td>
+          <td><input type="checkbox" value="Yes" name="illegal_activities"></td>
+
+        </tr>
+        <tr>
+          <td>h) Personal and social information collected directly from participants</td>
+          <td><input type="checkbox" value="Yes" name="personal"></td>
+
+        </tr>
+        <tr>
+          <td>i) Identifiable information to be collected about people from available records (e.g., staff records, student
+            records, etc.)</td>
+          <td><input type="checkbox" value="Yes" name="available_records"></td>
+
+        </tr>
+        <tr>
+          <td>j) Psychology inventories / scales / tests</td>
+          <td><input type="checkbox" value="Yes" name="inventories"></td>
+
+        </tr>
+        <tr>
+          <td>k) Activities which may place the researcher(s) / data collector at risk</td>
+          <td><input type="checkbox" value="Yes" name="risk_activities"></td>
+
+        </tr>
+        <tr>
+          <td>l) Other: Provide a description</td>
+          <td><input type="text" class="form-control d-inline" name="activity_specify" placeholder="Specify"></td>
+
+        </tr>
+
+      </tbody>
+    </table>
+    <label for="vulnerable_comments_2">Comments</label>
+    <textarea name="vulnerable_comments_2" rows="3" placeholder="Comments (if any)..."></textarea>
+    <hr>
+
+    <table>
+      <thead>
+        <tr>
+          <th width="80%">2.3 Do any of the following apply to your research project?</th>
+          <th width="20%">Select where applicable</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>a) Reimbursement or incentives to any participants. </td>
+          <td><input type="checkbox" value="Yes" name="incentives"></td>
+
+        </tr>
+        <tr>
+          <td>b) The participants will incur financial costs by participating in the study.</td>
+          <td><input type="checkbox" value="Yes" name="financial_costs"></td>
+
+        </tr>
+        <tr>
+          <td>c) At least one of the researchers has a financial or other involvement in the research (apart from their
+            research role) or may receive a reward.</td>
+          <td><input type="checkbox" value="Yes" name="reward"></td>
+
+        </tr>
+        <tr>
+          <td>d) Any other potential conflict of interest for any of the researchers (real or perceived financial or
+            personal considerations that may compromise a researcher’s professional judgement in carrying out or
+            reporting research, such as conducting research with colleagues, peers or students).</td>
+          <td><input type="checkbox" value="Yes" name="conflict"></td>
+
+        </tr>
+        <tr>
+          <td>e) Research is done on the premises of UJ or any of its units.</td>
+          <td><input type="checkbox" value="Yes" name="uj_premises"></td>
+
+        </tr>
+        <tr>
+          <td>f) Research will make use of some of UJs facilities (venues, software, hardware, etc.)</td>
+          <td><input type="checkbox" value="Yes" name="uj_facilities"></td>
+
+        </tr>
+        <tr>
+          <td>g) Research will be funded by UJ or funding for it was acquired through UJ.</td>
+          <td><input type="checkbox" value="Yes" name="uj_funding"></td>
+
+        </tr>
+        <tr>
+          <td>h) Other (Specify)</td>
+          <td><input type="text" name="vulnerable_comments_3" placeholder="Specify"></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <label for="apply_comments">Comments</label>
+
+    <textarea name="apply_comments" rows="3" placeholder="Comments (if any)..."></textarea>
+    <br>
+  <div class="mb-3">
+                        <label><strong>2.4 Rate your project (Low, Medium, High Risk):</strong>
+                          <span class="info-icon" title="Low risk: The research has little to no impact on people (e.g., using existing public data); Medium risk: The research involves people but with minimal chance of harm (e.g., anonymous surveys); High risk: The research could cause significant harm or distress to people (e.g., sensitive interviews or medical tests)">ℹ️</span>
+                        </label>
+                        <select name="risk_rating" id="risk-rating" class="form-select" required>
+                          <option value="">-- Select Risk Level --</option>
+                          <option value="low">Low</option>
+                          <option value="medium">Medium</option>
+                          <option value="high">High</option>
+                        </select>
+                          <label for="risk_justification">2.4.1 Please justify your risk level</label>
+                          <input type="text" name="risk_justification" required placeholder="Justification for risk level">
+                        <div id="risk-fields">
+                          
+
+                          <label for="benefits_description">2.4.2 For medium and high risk, describe the potential benefits of the study:</label>
+                          <input type="text" name="benefits_description" placeholder="Describe potential benefits">
+
+                          <label for="risk_mitigation">2.4.3 For medium and high risk, describe how potential risks will be mitigated against:</label>
+                          <input type="text" name="risk_mitigation" placeholder="Describe risk mitigation strategies">
+                        </div>
+                      </div>
+
+
+    <!-- Navigation Buttons -->
+    <div class="form-navigation">
+      <a href="{{url_for('form_a_sec1')}}" class="revise-btn">⬅ Section 1</a>
+      <button type="submit" class="approve-btn">Next ➔ Section 3-4</button>
+    </div>
+    </form>
+
+  </main>
+
+  <!-- Footer -->
+ <footer class="footer">
+   
+</footer>
+
+  <script>
+  const AUTOSAVE_DEBUG_SEC2 = true;
+  function debugLogSec2() {
+    if (!AUTOSAVE_DEBUG_SEC2) return;
+    console.log('[FORM-A-SEC2]', ...arguments);
+  }
+
+function toggleRiskFields() {
+  const riskLevel = document.getElementById('risk-rating')?.value;
+  const riskFields = document.getElementById('risk-fields');
+  if (!riskFields) return;
+
+  if (!riskLevel || riskLevel === 'low') {
+    riskFields.style.display = 'none';
+    if (riskLevel === 'low') {
+      riskFields.querySelectorAll('input').forEach(input => {
+        input.value = '';
+      });
+    }
+    return;
+  }
+
+  riskFields.style.display = 'block';
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  debugLogSec2('Autosave script initialized');
+  const form = document.getElementById('formAsection2');
+  if (!form) return;
+
+  const riskRatingSelect = form.querySelector('#risk-rating');
+  if (riskRatingSelect && riskRatingSelect.dataset.riskToggleBound !== '1') {
+    riskRatingSelect.addEventListener('change', function() {
+      debugLogSec2('Risk rating changed', riskRatingSelect.value);
+      toggleRiskFields();
+    });
+    riskRatingSelect.dataset.riskToggleBound = '1';
+  }
+
+  const initialData = {{ {
+    'survey': form_data.survey if form_data else False,
+    'focus_groups': form_data.focus_groups if form_data else False,
+    'observations': form_data.observations if form_data else False,
+    'interviews': form_data.interviews if form_data else False,
+    'documents': form_data.documents if form_data else False,
+    'vulnerable_communities': form_data.vulnerable_communities if form_data else False,
+    'age_range': form_data.age_range if form_data else False,
+    'uj_employees': form_data.uj_employees if form_data else False,
+    'vulnerable': form_data.vulnerable if form_data else False,
+    'non_english': form_data.non_english if form_data else False,
+    'own_students': form_data.own_students if form_data else False,
+    'poverty': form_data.poverty if form_data else False,
+    'no_education': form_data.no_education if form_data else False,
+    'disclosure': form_data.disclosure if form_data else False,
+    'discomfiture': form_data.discomfiture if form_data else False,
+    'deception': form_data.deception if form_data else False,
+    'sensitive': form_data.sensitive if form_data else False,
+    'prejudice': form_data.prejudice if form_data else False,
+    'intrusive_techniques': form_data.intrusive_techniques if form_data else False,
+    'illegal_activities': form_data.illegal_activities if form_data else False,
+    'personal': form_data.personal if form_data else False,
+    'available_records': form_data.available_records if form_data else False,
+    'inventories': form_data.inventories if form_data else False,
+    'risk_activities': form_data.risk_activities if form_data else False,
+    'incentives': form_data.incentives if form_data else False,
+    'financial_costs': form_data.financial_costs if form_data else False,
+    'reward': form_data.reward if form_data else False,
+    'conflict': form_data.conflict if form_data else False,
+    'uj_premises': form_data.uj_premises if form_data else False,
+    'uj_facilities': form_data.uj_facilities if form_data else False,
+    'uj_funding': form_data.uj_funding if form_data else False,
+    'vulnerable_other_specify': form_data.vulnerable_other_specify if form_data else '',
+    'assessment_other_specify': form_data.assessment_other_specify if form_data else '',
+    'activity_specify': form_data.activity_specify if form_data else '',
+    'vulnerable_comments_2': form_data.vulnerable_comments_2 if form_data else '',
+    'vulnerable_comments_3': form_data.vulnerable_comments_3 if form_data else '',
+    'apply_comments': form_data.apply_comments if form_data else '',
+    'risk_rating': form_data.risk_rating if form_data else '',
+    'risk_justification': form_data.risk_justification if form_data else '',
+    'benefits_description': form_data.benefits_description if form_data else '',
+    'risk_mitigation': form_data.risk_mitigation if form_data else ''
+  } | tojson }};
+
+  function isTruthyCheckbox(value) {
+    if (value === true) return true;
+    if (value === false || value === null || value === undefined) return false;
+    return ['yes', 'true', '1', 'on', 'checked'].includes(String(value).toLowerCase());
+  }
+
+  Object.entries(initialData).forEach(([name, value]) => {
+    const field = form.querySelector(`[name="${name}"]`);
+    if (!field) return;
+    if (field.type === 'checkbox') {
+      field.checked = isTruthyCheckbox(value);
+      return;
+    }
+    if (value !== null && value !== undefined) {
+      field.value = value;
+    }
+  });
+
+  toggleRiskFields();
+
+  let autosaveTimeout = null;
+  const savingIndicator = document.getElementById('autosave-status');
+
+  function showSaving() {
+    if (savingIndicator) savingIndicator.innerHTML = 'Autosaving...';
+  }
+
+  function showSaved() {
+    if (!savingIndicator) return;
+    savingIndicator.innerHTML = 'Saved';
+    setTimeout(() => {
+      savingIndicator.innerHTML = '';
+    }, 1500);
+  }
+
+  function showError() {
+    if (savingIndicator) savingIndicator.innerHTML = '<span style="color:red">Error saving</span>';
+  }
+
+  function autosave() {
+    showSaving();
+    const formData = new FormData(form);
+    debugLogSec2('Autosave start');
+
+    const checkboxes = form.querySelectorAll('input[type="checkbox"]');
+    const arrayCheckboxNames = new Set();
+    checkboxes.forEach(cb => {
+      if (cb.name && cb.name.endsWith('[]')) {
+        arrayCheckboxNames.add(cb.name);
+      }
+    });
+    arrayCheckboxNames.forEach(name => formData.delete(name));
+
+    checkboxes.forEach(cb => {
+      if (cb.name.endsWith('[]')) {
+        if (cb.checked) {
+          formData.append(cb.name, cb.value || 'Yes');
+        }
+      } else {
+        formData.set(cb.name, cb.checked ? 'Yes' : 'No');
+      }
+    });
+
+    const radioButtons = form.querySelectorAll('input[type="radio"]');
+    radioButtons.forEach(rb => {
+      if (rb.checked) {
+        formData.set(rb.name, rb.value);
+      }
+    });
+
+    fetch('{{ url_for("form_a_sec2_autosave") }}', {
+      method: 'POST',
+      body: formData,
+      headers: { 'Accept': 'application/json' }
+    })
+      .then(response => {
+        debugLogSec2('Autosave response status', response.status, response.statusText);
+        return response.json().catch(() => ({ success: false, error: 'Invalid JSON response' }));
+      })
+      .then(data => {
+        debugLogSec2('Autosave response data', data);
+        if (data && data.success) {
+          showSaved();
+        } else {
+          showError();
+        }
+      })
+      .catch((error) => {
+        console.error('[FORM-A-SEC2] Fetch error:', error);
+        showError();
+      });
+  }
+
+  function attachAutosaveListeners() {
+    const allFields = Array.from(form.querySelectorAll('input:not([type="file"]), textarea, select'));
+    allFields.forEach(field => {
+      if (field.name === 'csrf_token') return;
+      if (field.dataset.autosaveBound === '1') return;
+      const eventType = (field.type === 'checkbox' || field.type === 'radio' || field.tagName === 'SELECT') ? 'change' : 'input';
+      field.addEventListener(eventType, function() {
+        const valuePreview = field.type === 'checkbox' ? field.checked : field.value;
+        debugLogSec2('Field event', {
+          name: field.name,
+          type: field.type,
+          eventType: eventType,
+          value: valuePreview
+        });
+        clearTimeout(autosaveTimeout);
+        autosaveTimeout = setTimeout(function() {
+          debugLogSec2('Debounced autosave trigger for field', field.name);
+          autosave();
+        }, 700);
+      });
+      field.dataset.autosaveBound = '1';
+    });
+  }
+
+  attachAutosaveListeners();
+
+});
+  </script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="{{ url_for('static', filename='js/form-submission-handler.js') }}"></script>
+</body>
+
+</html>

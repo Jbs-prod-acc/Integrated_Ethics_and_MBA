@@ -198,7 +198,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     debugLog('Sending autosave request', '/form_a_sec1_autosave');
-    fetch("{{ url_for('form_a_sec1_autosave') }}", {
+    fetch('/form_a_sec1_autosave', {
       method: 'POST',
       body: formData,
     })
@@ -212,6 +212,12 @@ document.addEventListener('DOMContentLoaded', function() {
     .then(data => {
       debugLog('Autosave response data', data);
       if (data.success) {
+        if (data.form_id) {
+          const formIdField = form.querySelector('input[name="forma_id"]');
+          if (formIdField) {
+            formIdField.value = data.form_id;
+          }
+        }
         showSaved();
       } else {
         showError();

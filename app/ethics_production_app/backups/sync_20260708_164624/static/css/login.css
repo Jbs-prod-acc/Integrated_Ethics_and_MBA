@@ -1,0 +1,268 @@
+:root {
+  /* --jbs-orange: #F26522; */
+  --jbs-orange: #ed820e;
+  --jbs-teal: #022169;
+  --jbs-purple: #4F2365;
+  --jbs-yellow: #FFCB05;
+  --jbs-grey: #939598;
+  --jbs-lightgrey: #DCDDDE;
+  --white: #ffffff;
+  --black: #000000;
+  --accent: #F26522;
+
+}
+
+
+body {
+  font-family: 'Arial', sans-serif;
+  background-color: var(--white);
+  margin: 0;
+  padding: 0;
+  color: var(--jbs-orange);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+  h2, label, input, select, textarea {
+    color: black;
+  }
+  
+
+.navbar {
+  background-color: var(--jbs-orange);
+  color: var(--white);
+  padding: 1rem;
+}
+
+.nav-content {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.logo.uj {
+  height: 60px;
+}
+
+.nav-title {
+  font-size: 1.25rem;
+  font-weight: bold;
+}
+
+.main-content {
+  max-width: 500px;
+  margin: 2rem auto;
+  background: var(--white);
+  padding: 0.5rem 3.5rem;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(2, 33, 105, 0.15);
+  flex: 0;
+}
+
+
+input,
+select {
+  width: 100%;
+  padding: 0.75rem;
+  margin-top: 0.5rem;
+  margin-bottom: 1rem;
+  border: 1px solid var(--jbs-grey);
+  border-radius: 6px;
+  font-size: 1rem;
+}
+
+button {
+  background-color: var(--jbs-orange);
+  color: var(--white);
+  padding: 1rem 1.5rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 1rem;
+  width: 100%;
+}
+
+button:hover {
+  background-color: var(--black);
+}
+
+.footer {
+  text-align: center;
+  /* margin-top: 2rem; */
+  padding: 1rem;
+  background-color: var(--jbs-orange);
+  color: var(--white);
+}
+
+.main-content .container {
+  margin-top: -0.5rem;
+}
+
+.image-container img {
+  border-radius: 8px;
+  max-height: 400px;
+  margin-left: 24px;
+}
+
+/* img.img-fluid {
+  border-radius: 8px;
+  max-width: 100%;
+} */
+
+#message {
+  margin: 1rem 0;
+  font-weight: bold;
+}
+
+.switch-link {
+  text-align: center;
+  margin-top: 1rem;
+  font-size: 0.95rem;
+}
+
+.switch-link a {
+  color: var(--black);
+  font-weight: bold;
+  text-decoration: none;
+}
+
+.switch-link a:hover {
+  text-decoration: underline;
+}
+
+.centered-text {
+  text-align: center;
+  margin-top: 1rem;
+}
+
+.input-tooltip {
+  display: none;
+  background: #eee;
+  color: #333;
+  padding-left: 10px;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  font-size: 0.9em;
+  white-space: nowrap;
+  z-index: 99;
+  font-size: x-small;
+  transition: opacity 0.3s, visibility 0.3s;
+}
+
+.input-tooltip>li {
+  padding-left: 10px;
+}
+
+.input-tooltip.visible {
+  display: block;
+}
+
+/* Split auth layout */
+.auth-wrapper {
+  padding: 2rem 1rem;
+  min-height: 100vh;              /* fill viewport */
+  /* display: flex; */
+  align-items: center;            /* vertical center */
+  justify-content: center;        /* horizontal center */
+  padding: 2rem 1rem;             /* breathing room on small screens */
+}
+
+.auth-card {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(2, 33, 105, 0.12);
+  background: var(--white);
+  min-height: 520px; /* makes both sides equal height */
+}
+
+/* Form side */
+.auth-form {
+  padding: 2rem 3rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.auth-logo {
+  height: 48px;     /* adjust to taste */
+  width: auto;      /* preserve aspect ratio */
+  display: block;
+  margin-left: auto;     /* push to the right */
+  margin-bottom: 8px;    /* space under the logo */
+  object-fit: contain;   /* safe if you ever set both w & h */
+  border-radius: 4px;
+}
+
+/* bump it up a bit on large screens if you like */
+@media (min-width: 992px){
+  .auth-logo { height: 56px; }
+}
+
+/* Image side with CTA overlay */
+.auth-side {
+  position: relative;
+  background-image: var(--auth-image);
+  background-size: cover;
+  background-position: center;
+  opacity: 0.8;
+}
+
+.auth-side::after {
+  /* subtle brand overlay */
+  content: "";
+  position: absolute; inset: 0;
+  background: linear-gradient(135deg, rgba(79,35,101,0.6), rgba(2,33,105,0.55));
+}
+
+.auth-side-overlay {
+  position: relative;
+  z-index: 1;
+  color: #fff;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 2.5rem;
+  text-align: left;
+}
+
+.auth-side .btn {
+  align-self: flex-start;
+  border-radius: 8px;
+}
+
+/* Make inputs/buttons match full width nicely in this layout */
+.auth-form input,
+.auth-form select,
+.auth-form button {
+  width: 100%;
+}
+
+/* Responsive: stack on small screens */
+@media (max-width: 992px) {
+  .auth-card {
+    grid-template-columns: 1fr; /* stack */
+    min-height: unset;
+  }
+  .auth-side {
+    height: 220px;
+  }
+  .auth-form {
+    padding: 1.5rem;
+  }
+}
+
+/* Optional: tighten your main-content card spacing on standalone pages */
+.main-content {
+  max-width: 900px; /* wider than before since we're using split */
+  margin: 2rem auto;
+  padding: 0; /* the auth-card handles padding */
+  background: transparent;
+  box-shadow: none;
+}

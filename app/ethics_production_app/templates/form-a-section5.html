@@ -354,6 +354,12 @@ input[type="checkbox"]:checked::after {
       .then(data => {
         debugLogSec5('Response data', data);
         if (data && data.success) {
+          if (data.form_id) {
+            const formIdField = form.querySelector('input[name="forma_id"]');
+            if (formIdField) {
+              formIdField.value = data.form_id;
+            }
+          }
           showSaved();
         } else {
           showError();

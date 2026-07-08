@@ -20,7 +20,6 @@ USER_ROLE_ENUM = ENUM(
     "SUPERVISOR",
     "STUDENT",
     "REC",
-    "DEAN",
     name="userrole",
     create_type=False,
 )
@@ -166,7 +165,7 @@ class EthicsUser(UserAuthMixin, db.Model):
     __tablename__ = "ethcis_users"
     __table_args__ = (
         CheckConstraint(
-            "role in ('super_admin','admin','reviewer','supervisor','student','rec','dean')",
+            "role in ('super_admin','admin','reviewer','supervisor','student','rec')",
             name="ethcis_user_role_check",
         ),
     )
@@ -185,7 +184,7 @@ class EthicsUser(UserAuthMixin, db.Model):
         return self.role in {EthicsRole.SUPER_ADMIN.value, EthicsRole.ADMIN.value}
 
     def is_committee_role(self):
-        return self.role in {EthicsRole.REC.value, EthicsRole.DEAN.value}
+        return self.role == EthicsRole.REC.value
 
 
 class MbaStudentProfile(db.Model):
@@ -718,8 +717,6 @@ def _legacy_role_for_mba_user(target):
         return "ADMIN"
     if getattr(target, "ethics_access", False) and getattr(target, "ethics_role", None) == EthicsRole.REC.value:
         return "REC"
-    if getattr(target, "ethics_access", False) and getattr(target, "ethics_role", None) == EthicsRole.DEAN.value:
-        return "DEAN"
     if getattr(target, "ethics_access", False) and getattr(target, "ethics_role", None) == EthicsRole.REVIEWER.value:
         return "REVIEWER"
     if getattr(target, "ethics_access", False) and getattr(target, "ethics_role", None) == EthicsRole.SUPERVISOR.value:
@@ -767,3 +764,26 @@ def _before_insert_mba_user(mapper, connection, target):
 @event.listens_for(MbaUser, "before_update")
 def _before_update_mba_user(mapper, connection, target):
     _sync_mba_user_columns(target)
+
+
+from .ethics_legacy import (  # noqa: E402
+    Base,
+    Documents,
+    FlexibleBinary,
+    FormA,
+    FormARequirements,
+    FormB,
+    FormC,
+    FormD,
+    FormUploads,
+    LoginLog,
+    Rec,
+    Session,
+    User,
+    UserActivityLog,
+    UserInfo,
+    UserRole,
+    Watched,
+    db_session,
+    engine,
+)

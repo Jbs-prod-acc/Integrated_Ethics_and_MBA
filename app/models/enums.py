@@ -23,7 +23,6 @@ class EthicsRole(enum.Enum):
     SUPERVISOR = "supervisor"
     STUDENT = "student"
     REC = "rec"
-    DEAN = "dean"
 
 
 class EthicsFormType(enum.Enum):

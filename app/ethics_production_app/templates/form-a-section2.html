@@ -515,6 +515,12 @@ document.addEventListener('DOMContentLoaded', function() {
       .then(data => {
         debugLogSec2('Autosave response data', data);
         if (data && data.success) {
+          if (data.form_id) {
+            const formIdField = form.querySelector('input[name="forma_id"]');
+            if (formIdField) {
+              formIdField.value = data.form_id;
+            }
+          }
           showSaved();
         } else {
           showError();

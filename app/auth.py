@@ -1,18 +1,16 @@
-import importlib.util
 import secrets
 import time
 from collections import defaultdict, deque
-from functools import lru_cache
-from pathlib import Path
 from datetime import datetime
 from urllib.parse import urlsplit
 
 from flask import Blueprint, current_app, flash, redirect, render_template, request, session, url_for
 from flask_login import current_user, login_required, login_user, logout_user
 from itsdangerous import URLSafeTimedSerializer
-from sqlalchemy import text
+from sqlalchemy import func, text
 from sqlalchemy.exc import IntegrityError
 
+from . import models as production_ethics_models
 from .extensions import db, oauth
 from .models import (
     EthicsActivityLog,
@@ -134,8 +132,6 @@ def _legacy_role_for_unified_user(*, ethics_role=None, mba_role=None, scholar_ro
         return "ADMIN"
     if ethics_role == EthicsRole.REC.value:
         return "REC"
-    if ethics_role == EthicsRole.DEAN.value:
-        return "DEAN"
     if ethics_role == EthicsRole.REVIEWER.value:
         return "REVIEWER"
     if ethics_role == EthicsRole.SUPERVISOR.value:
@@ -354,9 +350,9 @@ def _ensure_integrated_ethics_user_for_mba_user(mba_user):
 
 def _ensure_legacy_ethics_user(email, *, ethics_role, first_name=None, last_name=None, student_number=None, staff_number=None):
     module = _load_production_ethics_models()
-    db_session = module.Session()
+    db_session = module.db_session
     try:
-        user = db_session.query(module.User).filter(module.func.lower(module.User.email) == normalize_email(email)).first()
+        user = db_session.query(module.User).filter(func.lower(module.User.email) == normalize_email(email)).first()
         full_name = _full_name(first_name, last_name, email=email)
         legacy_role = module.UserRole(ethics_role.upper())
         legacy_student_number = int(student_number) if str(student_number or "").isdigit() else None
@@ -394,7 +390,7 @@ def _ensure_legacy_ethics_user(email, *, ethics_role, first_name=None, last_name
         db_session.rollback()
         raise
     finally:
-        db_session.close()
+        db_session.remove()
 
 
 def _ensure_mba_user_for_ethics_identity(email, *, ethics_role, first_name=None, last_name=None, student_number=None, staff_number=None):
@@ -502,9 +498,9 @@ def _ensure_mba_access_for_ethics_user(ethics_user):
 
 def _find_production_ethics_user_by_email(email):
     module = _load_production_ethics_models()
-    db_session = module.Session()
+    db_session = module.db_session
     try:
-        user = db_session.query(module.User).filter(module.func.lower(module.User.email) == normalize_email(email)).first()
+        user = db_session.query(module.User).filter(func.lower(module.User.email) == normalize_email(email)).first()
         if not user:
             return None
         return {
@@ -515,7 +511,7 @@ def _find_production_ethics_user_by_email(email):
             "role": getattr(user.role, "value", user.role).lower(),
         }
     finally:
-        db_session.close()
+        db_session.remove()
 
 
 def _ensure_mba_access_for_production_ethics_identity(identity):
@@ -541,24 +537,16 @@ def _ensure_shared_access_for_registered_user(user):
     return None
 
 
-@lru_cache(maxsize=1)
 def _load_production_ethics_models():
-    module_path = Path(__file__).resolve().parent / "ethics_production_app" / "models.py"
-    spec = importlib.util.spec_from_file_location("integrated_ethics_production_models", module_path)
-    if spec is None or spec.loader is None:
-        raise RuntimeError(f"Unable to load ethics models from {module_path}")
-
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
+    return production_ethics_models
 
 
 def authenticate_production_ethics_user(email, password):
     clean_email = normalize_email(email)
     module = _load_production_ethics_models()
-    db_session = module.Session()
+    db_session = module.db_session
     try:
-        user = db_session.query(module.User).filter(module.func.lower(module.User.email) == clean_email).first()
+        user = db_session.query(module.User).filter(func.lower(module.User.email) == clean_email).first()
         if not user or not user.verify_password(password):
             return None, "Invalid email or password."
 
@@ -567,7 +555,7 @@ def authenticate_production_ethics_user(email, password):
 
         return user, None
     finally:
-        db_session.close()
+        db_session.remove()
 
 
 def find_mba_profile_by_student_number(student_number):
@@ -772,11 +760,29 @@ def build_ethics_sso_token_for_email(email, source_system=""):
 
 @auth_bp.route("/login", methods=["GET", "POST"])
 def login():
-    if current_user.is_authenticated:
-        return post_login_redirect(current_user)
+    if request.method == "GET":
+        logout_user()
+        for key in (
+            "_user_id",
+            "_fresh",
+            "_id",
+            "loggedin",
+            "id",
+            "name",
+            "last_active",
+            "role",
+            "supervisor_role",
+            "admin_role",
+            "rec_role",
+            "reviewer_role",
+            "super_role",
+            "active_forma_id",
+        ):
+            session.pop(key, None)
+        return render_template("auth/login.html", system=request.args.get("system"))
 
     if request.method == "POST":
-        system = request.form.get("system", "mba").lower()
+        system = request.form.get("system", request.args.get("system", "mba")).lower()
         email = normalize_email(request.form.get("email"))
         password = request.form.get("password") or ""
         if not _check_auth_attempt_limits("login", email):
@@ -811,7 +817,7 @@ def login():
         db.session.commit()
         return post_login_redirect(user)
 
-    return render_template("auth/login.html")
+    return render_template("auth/login.html", system=request.args.get("system"))
 
 
 @auth_bp.route("/forgot-password", methods=["POST"])

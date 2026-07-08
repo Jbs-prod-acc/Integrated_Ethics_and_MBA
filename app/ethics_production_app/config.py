@@ -1,18 +1,12 @@
 import os
-from pathlib import Path
 from urllib.parse import parse_qsl, quote_plus, urlencode, urlparse, urlunparse
 
 # PRODUCTION CONFIG - All credentials must come from environment variables
 class Config:
-    _BASE_DIR = Path(__file__).resolve().parent
-    _ETHICS_DB_PATH = _BASE_DIR / "ethics.db"
-
     @staticmethod
     def _normalize_database_url(db_url):
         """Normalize Postgres URLs and ensure hosted Render connections use SSL."""
         if not db_url:
-            return db_url
-        if db_url.startswith("sqlite:"):
             return db_url
 
         if db_url.startswith("postgres://"):
@@ -30,27 +24,30 @@ class Config:
 
         return urlunparse(parsed._replace(query=urlencode(query_params)))
 
-    # Database configuration for the mounted ethics app.
-    SQLALCHEMY_DATABASE_URI = os.getenv('ETHICS_DATABASE_URL') or os.getenv('DATABASE_URL')
+    # Database Configuration - Prefer full DATABASE_URL if available
+    SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL')
     
     if not SQLALCHEMY_DATABASE_URI:
         required_db_vars = ['DB_USER', 'DB_PASSWORD', 'DB_SERVER', 'DB_PORT', 'DB_NAME']
         missing_db_vars = [name for name in required_db_vars if not os.getenv(name)]
         if missing_db_vars:
-            SQLALCHEMY_DATABASE_URI = f"sqlite:///{_ETHICS_DB_PATH.as_posix()}"
-        else:
-            db_server = os.getenv('DB_SERVER')
-            db_sslmode = os.getenv('DB_SSLMODE') or ('require' if 'render.com' in db_server else 'disable')
-            db_user = quote_plus(os.getenv('DB_USER'))
-            db_password = quote_plus(os.getenv('DB_PASSWORD'))
-            SQLALCHEMY_DATABASE_URI = (
-                f"postgresql+psycopg2://{db_user}:"
-                f"{db_password}@"
-                f"{db_server}:"
-                f"{os.getenv('DB_PORT')}/"
-                f"{os.getenv('DB_NAME')}"
-                f"?sslmode={db_sslmode}"
+            raise ValueError(
+                "Missing required database environment variables: "
+                + ", ".join(missing_db_vars)
             )
+
+        db_server = os.getenv('DB_SERVER')
+        db_sslmode = os.getenv('DB_SSLMODE') or ('require' if 'render.com' in db_server else 'disable')
+        db_user = quote_plus(os.getenv('DB_USER'))
+        db_password = quote_plus(os.getenv('DB_PASSWORD'))
+        SQLALCHEMY_DATABASE_URI = (
+            f"postgresql+psycopg2://{db_user}:"
+            f"{db_password}@"
+            f"{db_server}:"
+            f"{os.getenv('DB_PORT')}/"
+            f"{os.getenv('DB_NAME')}"
+            f"?sslmode={db_sslmode}"
+        )
 
     SQLALCHEMY_DATABASE_URI = _normalize_database_url.__func__(SQLALCHEMY_DATABASE_URI)
 
@@ -69,4 +66,3 @@ class Config:
     CORS_ORIGINS = os.getenv('CORS_ORIGINS', 'https://jbs-ethics.onrender.com').split(',')
 
     
-  

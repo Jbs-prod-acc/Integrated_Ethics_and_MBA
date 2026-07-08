@@ -1641,6 +1641,7 @@
           <tr>
             <th>Name</th>
             <th>Active</th>
+            <th>Status</th>
             <th>Projects</th>
           </tr>
         </thead>
@@ -1650,11 +1651,12 @@
             <td><span class="name-email" tabindex="0">{{ person_name(student) }}<span class="hover-email">{{
                   student.email }}</span></span></td>
             <td>{{ 'Yes' if student.is_active else 'No' }}</td>
+            <td>{{ student.ethics_certificate_status }}</td>
             <td>{{ student.projects|length }}</td>
           </tr>
           {% else %}
           <tr>
-            <td colspan="3" class="muted">No students yet.</td>
+            <td colspan="4" class="muted">No students yet.</td>
           </tr>
           {% endfor %}
         </tbody>
@@ -1734,17 +1736,41 @@
                 {{ shared_access_mode_label(user) }}
               </span>
             </td>
-            <td>{{ (user.role or '-')|replace('_', ' ')|title }}</td>
-            <td>{{ (user.ethics_role or '-')|replace('_', ' ')|title }}</td>
+            <td>{{ mba_role_label(user) }}</td>
+            <td>{{ ethics_role_label(user) }}</td>
             <td>
-              <form action="{{ url_for('mba.admin_user_access_action') }}" method="post" class="inline-action" style="display:flex; gap:0.4rem; flex-wrap:wrap;">
+              <form action="{{ url_for('mba.admin_user_access_action') }}" method="post" class="inline-action" style="display:grid; gap:0.55rem;">
                 <input type="hidden" name="user_id" value="{{ user.id }}">
                 <input type="hidden" name="user_q" value="{{ user_search or '' }}">
                 <input type="hidden" name="user_access" value="{{ user_access_filter or 'all' }}">
-                <button class="secondary-button small-button" type="submit" name="access_mode" value="mba">MBA</button>
-                <button class="secondary-button small-button" type="submit" name="access_mode" value="ethics">Ethics</button>
-                <button class="primary-button small-button" type="submit" name="access_mode" value="both">Both</button>
-                <button class="secondary-button small-button" type="submit" name="access_mode" value="none">Revoke</button>
+                <input type="hidden" name="current_access_mode" value="{{ access_key }}">
+                <div style="display:grid; grid-template-columns:repeat(2, minmax(180px, 1fr)); gap:0.5rem;">
+                  <label class="admin-filter-field" style="margin:0;">
+                    <span>MBA role</span>
+                    <select name="mba_role" class="admin-filter-input">
+                      <option value="">Choose MBA role</option>
+                      {% for value, label in mba_role_choices %}
+                      <option value="{{ value }}" {% if mba_role_form_value(user) == value %}selected{% endif %}>{{ label }}</option>
+                      {% endfor %}
+                    </select>
+                  </label>
+                  <label class="admin-filter-field" style="margin:0;">
+                    <span>Ethics role</span>
+                    <select name="ethics_role" class="admin-filter-input">
+                      <option value="">Choose Ethics role</option>
+                      {% for value, label in ethics_role_choices %}
+                      <option value="{{ value }}" {% if user.ethics_role == value %}selected{% endif %}>{{ label }}</option>
+                      {% endfor %}
+                    </select>
+                  </label>
+                </div>
+                <div style="display:flex; gap:0.4rem; flex-wrap:wrap;">
+                  <button class="primary-button small-button" type="submit" name="access_mode" value="update">Update</button>
+                  <button class="secondary-button small-button" type="submit" name="access_mode" value="mba">MBA</button>
+                  <button class="secondary-button small-button" type="submit" name="access_mode" value="ethics">Ethics</button>
+                  <button class="primary-button small-button" type="submit" name="access_mode" value="both">Both</button>
+                  <button class="secondary-button small-button" type="submit" name="access_mode" value="none">Revoke</button>
+                </div>
               </form>
             </td>
           </tr>

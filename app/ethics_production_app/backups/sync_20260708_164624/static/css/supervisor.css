@@ -1,0 +1,550 @@
+/* Supervisor Dashboard Styles */
+
+:root {
+  --jbs-orange: #ef820d;
+  --jbs-teal: #022169;
+  --jbs-purple: #4F2365;
+  --jbs-yellow: #FFCB05;
+  --jbs-grey: #939598;
+  --white: #ffffff;
+  --black: #000000;
+  --accent: #F26522;
+}
+
+
+/* Reset */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: 'Arial', sans-serif;
+}
+
+body {
+  background-color: #ffffff;
+  color: #000000;
+}
+
+h2, label, input, select, textarea {
+    color: black;
+}
+  
+
+.admin-wrapper {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* Sidebar */
+.sidebar {
+  width: 250px;
+  background-color: var(--jbs-orange);
+  color: white;
+  padding: 2rem 1rem;
+  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+  font-family: 'Arial', sans-serif;
+  font-weight: bold;
+}
+
+/* Header Section */
+.sidebar-link.active,
+.sidebar-nav a.active {
+  background-color: #4F2365;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  color: white;
+}
+
+.sidebar-link.active:hover,
+.sidebar-nav a.active:hover {
+  background-color: #4F2365;
+}
+.sidebar-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.sidebar-logo {
+  width: 100px;
+  height: auto;
+  margin-bottom: 1rem;
+}
+
+  .logo.uj {
+  height: 55px;
+  border-radius: 8%; /* makes it round */
+  object-fit: cover;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15); /* soft shadow */
+}
+
+/* Navigation Links */
+.sidebar-nav a {
+  display: block;
+  color: white;
+  text-decoration: none;
+  margin: 1rem 0;
+  padding: 0.7rem 1rem;
+  border-radius: 6px;
+  transition: background-color 0.3s ease, border 0.3s ease;
+  font-weight: 500;
+}
+
+/* Hover Effect */
+.sidebar-nav a:hover {
+  background-color: #022169;
+  border: 1px solid #ffffff30;
+  text-decoration: none;
+}
+
+/* Sidebar Dropdown Styling */
+.sidebar .dropdown-toggle {
+  display: block;
+  color: white;
+  text-decoration: none;
+  margin: 1rem 0;
+  padding: 0.7rem 1rem;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.sidebar .dropdown-toggle:hover {
+  background-color: #022169;
+}
+
+.sidebar .dropdown-item {
+  color: white;
+  padding: 0.5rem 2.5rem;
+  display: block;
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: background-color 0.3s;
+}
+
+.sidebar .dropdown-item:hover {
+  background-color: #022169;
+  border-radius: 4px;
+}
+
+.sidebar .collapse {
+  background-color: rgba(0, 0, 0, 0.1);
+  border-radius: 6px;
+  margin-bottom: 0.5rem;
+}
+
+
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  color: white;
+  text-decoration: none;
+  padding: 0.7rem 1rem;
+  border-radius: 6px;
+  font-weight: 500;
+  transition: background-color 0.3s;
+}
+
+.sidebar-link i {
+  color: white; /* makes icon white */
+  font-size: 1.1rem;
+}
+
+
+/* Main Area */
+.admin-main {
+  flex: 1;
+  padding: 2rem;
+}
+
+.topbar {
+  background-color: #f1f4f9;
+  border-left: 4px solid #ef820d;
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.topbar h2 {
+  font-size: 1.6rem;
+  margin-bottom: 0.5rem;
+  color: #000000;
+}
+
+.topbar p {
+  font-size: 0.95rem;
+  color: #444;
+  line-height: 1.5;
+  margin-bottom: 0;
+}
+
+
+.admin-content {
+
+  /* Admin Content Container */
+  .admin-content {
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
+    overflow-x: auto;
+  }
+
+  /* Table Styling */
+  .status-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    background-color: #f9fafb;
+    border-radius: 10px;
+    overflow: hidden;
+    font-size: 0.95rem;
+  }
+
+  /* Table Head */
+  .status-table thead th {
+    background-color: #a09e9e;
+    color: #ffffff;
+    padding: 1rem;
+    text-align: left;
+    font-weight: 600;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+  }
+
+  /* Table Cells */
+  .status-table td {
+    padding: 1rem;
+    border-bottom: 1px solid #e0e0e0;
+    vertical-align: top;
+  }
+
+  /* Table Row Hover */
+  .status-table tbody tr:hover {
+    background-color: #f1f5ff;
+  }
+
+
+  /* Status Badges */
+  .badge {
+    padding: 0.4rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    display: inline-block;
+    white-space: nowrap;
+  }
+
+  .status-pending {
+    background-color: #fff3cd;
+    color: #856404;
+  }
+
+  .status-approved {
+    background-color: #d4edda;
+    color: #155724;
+  }
+
+  .status-rejected {
+    background-color: #f8d7da;
+    color: #721c24;
+  }
+
+  /* Buttons */
+  .view-btn {
+    background-color: #ef820d;
+    color: white;
+    padding: 0.4rem 0.9rem;
+    text-decoration: none;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    transition: background-color 0.3s ease;
+  }
+
+  .view-btn:hover {
+    background-color: #ef820d;
+  }
+
+  /* Document Links */
+  .doc-link {
+    list-style-type: disc;
+    padding-left: 1.25rem;
+    margin: 0;
+  }
+
+  .doc-link li {
+    margin-bottom: 0.25rem;
+  }
+
+  .doc-link a {
+    color: #022169;
+    font-weight: 500;
+    text-decoration: none;
+  }
+
+  /* Heading */
+  .admin-content h3 {
+    font-size: 1.4rem;
+    color: #022169;
+  }
+
+  /* Footer */
+.footer {
+  text-align: center;
+  margin-top: 2rem;
+  padding: 1rem;
+  background-color: var(--jbs-orange);
+  color: var(--white);
+}
+
+  /* supervisor-students.css */
+  .student-table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: #fff;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+  }
+
+  .student-table th,
+  .student-table td {
+    padding: 0.75rem 1rem;
+    border: 1px solid #ddd;
+    text-align: left;
+  }
+
+  .student-table th {
+    background-color: #f9fafb;
+    font-weight: bold;
+  }
+
+.student-table tr:nth-child(even) {
+  background-color: #f3eded; /* light grey */
+}
+
+.student-table tr:nth-child(odd) {
+  background-color: #ffffff; /* white */
+}
+
+.status-table tr:nth-child(even) {
+  background-color: #f3eded; /* light grey */
+}
+
+.status-table tr:nth-child(odd) {
+  background-color: #ffffff; /* white */
+}
+
+  .badge {
+    padding: 0.3rem 0.6rem;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    color: #fff;
+    display: inline-block;
+  }
+
+  .status-complete {
+    background-color: #27ae60;
+  }
+
+  .status-pending {
+    background-color: #F26522;
+  }
+
+  .view-btn,
+  .disabled-btn {
+    padding: 0.4rem 0.8rem;
+    text-decoration: none;
+    color: #fff;
+    border-radius: 4px;
+    font-size: 0.9rem;
+  }
+
+  .view-btn {
+    background-color: #022169;
+  }
+
+  .disabled-btn {
+    background-color: #aaa;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+
+
+  /* supervisor.css + admin modal overrides */
+
+  /* Modal Overlay */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.6);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+  }
+
+  /* Modal Content Styling */
+  .modal-content {
+    background-color: #fff;
+    border-radius: 8px;
+    padding: 2rem;
+    width: 400px;
+    max-width: 90%;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    text-align: left;
+  }
+
+  .modal-content h3 {
+    margin-top: 0;
+    font-size: 1.25rem;
+    color: #022169;
+    margin-bottom: 1rem;
+  }
+
+  .modal-content label {
+    display: block;
+    margin: 0.75rem 0 0.25rem;
+    font-weight: 600;
+  }
+
+  .modal-content input,
+  .modal-content select,
+  .modal-content textarea {
+    width: 100%;
+    padding: 0.5rem;
+    margin-bottom: 1rem;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 0.95rem;
+  }
+
+  .modal-buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+  }
+
+  .modal-buttons button {
+    padding: 0.6rem 1.2rem;
+    border: none;
+    border-radius: 5px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+
+  .modal-buttons .cancel-btn {
+    background-color: #ccc;
+    color: #333;
+  }
+
+  .modal-buttons .approve-btn {
+    background-color: #022169;
+    color: #fff;
+  }
+
+  /* Show modal */
+  .modal-overlay.active {
+    display: flex;
+  }
+
+  .btn-search {
+    background-color: #ef820d;
+    color: white;
+    padding: 0.6rem 1rem;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+
+  /* Optional utility class for button look consistency */
+  .view-btn {
+    background-color: #F26522;
+    color: white;
+    padding: 0.4rem 0.8rem;
+    border-radius: 5px;
+    text-decoration: none;
+    font-size: 0.9rem;
+    margin-right: 0.3rem;
+    display: inline-block;
+  }
+
+  .view-btn:hover {
+    background-color: #d45018;
+  }
+
+  .delete-btn {
+    background-color: #e74c3c;
+    color: white;
+    border: none;
+    padding: 0.4rem 0.75rem;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-left: 0.5rem;
+  }
+
+  .delete-btn:hover {
+    background-color: #c0392b;
+  }
+
+    /* Table Styling for comments */
+  .table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    background-color: #f9fafb;
+    border-radius: 10px;
+    overflow: hidden;
+    font-size: 0.95rem;
+  }
+
+  /* Table Head */
+  .table thead th {
+    background-color: #a09e9e;
+    color: #ffffff;
+    padding: 1rem;
+    text-align: left;
+    font-weight: 600;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+  }
+
+  /* Table Cells */
+  .table td {
+    padding: 1rem;
+    border-bottom: 1px solid #e0e0e0;
+    vertical-align: top;
+  }
+
+  /* Table Row Hover */
+  .table tbody tr:hover {
+    background-color: #f1f5ff;
+  }
+
+
+.table tr:nth-child(even) {
+  background-color: #f3eded; /* light grey */
+}
+
+.table tr:nth-child(odd) {
+  background-color: #ffffff; /* white */
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: url('/static/img/dash.jpeg');
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-attachment: fixed;
+  opacity: 10%;
+  z-index: -1;
+}

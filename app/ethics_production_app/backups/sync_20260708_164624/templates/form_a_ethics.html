@@ -1,0 +1,1705 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Form A – Section 1 | JBS Ethics</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/form_a.css" />
+
+  <!-- <link rel="stylesheet" href="{{ url_for('static', filename='css/form_a.css') }}"> -->
+  <style>
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.6);
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    .modal-content {
+      background: #fff;
+      padding: 2rem;
+      border-radius: 8px;
+      text-align: center;
+      width: 400px;
+      max-width: 90%;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.25);
+    }
+
+    .modal-content h3 {
+      margin-bottom: 1rem;
+      color: #2E1A46;
+    }
+
+    .modal-content button {
+      margin-top: 1rem;
+      background-color: #2E1A46;
+      color: #fff;
+      padding: 0.6rem 1.2rem;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      margin: 30px;
+      background-color: #f8f8f8;
+    }
+
+    h1 {
+      text-align: center;
+      color: #022169;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      background-color: white;
+    }
+
+    th,
+    td {
+      border: 1px solid #ccc;
+      padding: 12px;
+      vertical-align: top;
+    }
+
+    th {
+      background-color: #f0f0f0;
+      text-align: left;
+    }
+
+    label {
+      font-weight: bold;
+    }
+
+    .section {
+      margin-top: 30px;
+    }
+
+    textarea {
+      width: 100%;
+      height: 120px;
+      padding: 10px;
+      font-family: Arial, sans-serif;
+      font-size: 14px;
+      resize: vertical;
+    }
+
+    input[type="text"],
+    input[type="date"] {
+      width: 100%;
+      padding: 8px;
+      margin-top: 4px;
+      margin-bottom: 15px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+
+    .dropdown-checkboxes {
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    .form-step {
+      display: none;
+    }
+
+    .form-step.active {
+      display: block;
+    }
+
+    .form-step-tabs {
+      position: sticky;
+      top: 0;
+      z-index: 900;
+      background: #f8f9fa;
+      padding: 15px 0;
+      border-bottom: 1px solid #dee2e6;
+      margin-bottom: 20px;
+    }
+
+    .form-step-tabs .nav-link {
+      font-weight: 600;
+      border-radius: 30px;
+      padding: 8px 16px;
+      color: #2E1A46;
+      border: 1px solid #dee2e6;
+      background: #fff;
+    }
+
+    .form-step-tabs .nav-link.active {
+      background: #2E1A46;
+      color: #fff;
+      border-color: #2E1A46;
+    }
+
+    .section-navigation {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 30px;
+      padding-top: 20px;
+      border-top: 1px solid #dee2e6;
+    }
+
+    .section-navigation .btn {
+      min-width: 180px;
+    }
+
+    @media (max-width: 768px) {
+      .form-step-tabs {
+        position: static;
+      }
+
+      .section-navigation {
+        flex-direction: column;
+      }
+
+      .section-navigation .btn {
+        width: 100%;
+      }
+    }
+  </style>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/loading.css') }}">
+</head>
+
+<body>
+
+  <!-- Navbar -->
+  <header class="navbar">
+    <div class="nav-content">
+      <img src="/static/img/image.png" alt="UJ JBS Logo" class="logo uj">
+      <span class="nav-title">Form A – Section 1: Researcher’s Details</span>
+
+      <!-- Logout -->
+      <div style="text-align: right;">
+
+        <a href="{{url_for('logout')}}" class="btn-logout">Logout</a>
+      </div>
+    </div>
+  </header>
+  <!-- Form -->
+  <form id="formAsection1" action="{{url_for('ethics_reviewer_committee_forms',id=formA.form_id,form_name='FORM A')}}"
+    method="post" enctype="multipart/form-data">
+
+
+    <!-- Toggle Section Tabs -->
+    <section class="form-step-tabs">
+      <div class="container-fluid">
+        <ul class="nav nav-pills flex-wrap gap-2" id="formStepTabs">
+          <li class="nav-item">
+            <button type="button" class="nav-link active" data-step="1">Section 1</button>
+          </li>
+          <li class="nav-item">
+            <button type="button" class="nav-link" data-step="2">Section 2</button>
+          </li>
+          <li class="nav-item">
+            <button type="button" class="nav-link" data-step="3">Section 3</button>
+          </li>
+          <li class="nav-item">
+            <button type="button" class="nav-link" data-step="4">Section 4</button>
+          </li>
+          <li class="nav-item">
+            <button type="button" class="nav-link" data-step="5">Section 5</button>
+          </li>
+          <li class="nav-item">
+            <button type="button" class="nav-link" data-step="6">Section 6</button>
+          </li>
+          <li class="nav-item">
+            <button type="button" class="nav-link" data-step="7">Section 7</button>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+
+
+
+    <!-- Section 1-->
+    <section class="form-step active" id="form-step-1">
+
+      <!--section 1-->
+
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <!-- Main Content -->
+      <main class="main-content">
+
+
+        <div class="form-section">
+          <h2>Section 1: Researcher’s Details</h2>
+          <label for="applicant-name">Applicant Name
+            <br><span class="form-answer">{{formA.applicant_name}}</span>
+          </label>
+          <label for="student-number">Student / Staff Number
+            <br><span class="form-answer">{{formA.student_number}}</span>
+          </label>
+          <label for="institution">Institution
+            <br><span class="form-answer">{{formA.institution}}</span>
+          </label>
+          <label for="department">UJ Department and School
+            <br><span class="form-answer">{{formA.department}}</span>
+          </label>
+          <label for="degree">Degree Registered For
+            <br><span class="form-answer">{{formA.degree}}</span>
+          </label>
+          <label for="title">Title / Working Title of Study
+            <br><span class="form-answer">{{formA.study_title}}</span>
+          </label>
+          <label for="mobile">Mobile Number
+            <br><span class="form-answer">{{formA.mobile}}</span>
+          </label>
+          <label for="email">Email Address
+            <br><span class="form-answer">{{formA.email}}</span>
+          </label>
+          <label for="supervisor">Supervisor Name(s)
+            <br><span class="form-answer">{{formA.supervisor}}</span>
+          </label>
+          <label for="supervisor_email">Supervisor Email
+            <br><span class="form-answer">{{formA.supervisor_email}}</span>
+          </label>
+        </div>
+
+
+
+      </main>
+
+
+      <div class="section-navigation">
+        <span></span>
+
+        <button type="button" class="btn btn-primary" onclick="goToFormStep(2)">
+          Proceed to Section 2
+        </button>
+      </div>
+
+    </section>
+
+    <!-- Section 2-->
+    <section class="form-step" id="form-step-2">
+
+      <!-- Section 2 -->
+
+      <!-- Main Content -->
+      <main class="main-content">
+
+        <h2>Section 2: Ethical Considerations</h2>
+
+        <h3>1. Ethical Clearance Aspects</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Aspect</th>
+              <th>Check all that is applicable:</th>
+
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Survey/questionnaire</td>
+              <td><span class="form-answer">{{'Yes' if formA.survey else 'No'}}</span></td>
+
+            </tr>
+            <tr>
+              <td>Focus groups</td>
+              <td><span class="form-answer">{{'Yes' if formA.focus_groups else 'No'}}</span></td>
+
+            </tr>
+            <tr>
+              <td>Observations</td>
+              <td><span class="form-answer">{{'Yes' if formA.observations else 'No'}}</span></td>
+
+            </tr>
+            <tr>
+              <td>Interviews</td>
+              <td><span class="form-answer">{{'Yes' if formA.interviews else 'No'}}</span></td>
+
+            </tr>
+            <tr>
+              <td>Documents</td>
+              <td><span class="form-answer">{{'Yes' if formA.documents else 'No'}}</span></td>
+
+            </tr>
+            <tr>
+              <td>Other</td>
+              <td>
+                <span class="form-answer">{{formA.vulnerable_other_specify or 'Not Applicable'}}</span>
+              </td>
+
+            </tr>
+          </tbody>
+        </table>
+
+        <br>
+
+        <table>
+          <thead>
+            <tr>
+              <th>2.1 Does your research include the direct involvement of any of the following groups of participants?
+              </th>
+              <th>Tick where applicable</th>
+
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>a) Communities that may be considered as vulnerable</td>
+              <td><span class="form-answer">{{'Yes' if formA.vulnerable_communities else 'No'}}</span></td>
+
+            </tr>
+            <tr>
+              <td>b) People under the age of 18 or over 65</td>
+              <td><span class="form-answer">{{'Yes' if formA.age_range else 'No'}}</span></td>
+
+            </tr>
+            <tr>
+              <td>c) UJ employees or students</td>
+              <td><span class="form-answer">{{'Yes' if formA.uj_employees else 'No'}}</span></td>
+
+            </tr>
+            <tr>
+              <td>d) Persons not usually considered to be vulnerable but would be considered vulnerable in the context
+                of
+                this
+                research project</td>
+              <td><span class="form-answer">{{'Yes' if formA.vulnerable else 'No'}}</span></td>
+
+            </tr>
+            <tr>
+              <td>e) Non-English-speaking participants</td>
+              <td><span class="form-answer">{{'Yes' if formA.non_english else 'No'}}</span></td>
+
+            </tr>
+            <tr>
+              <td>f) A researcher’s own students</td>
+              <td><span class="form-answer">{{'Yes' if formA.own_students else 'No'}}</span></td>
+
+            </tr>
+            <tr>
+              <td>g) People living in poverty</td>
+              <td><span class="form-answer">{{'Yes' if formA.poverty else 'No'}}</span></td>
+
+            </tr>
+            <tr>
+              <td>h) People with little or no education </td>
+              <td><span class="form-answer">{{'Yes' if formA.no_education else 'No'}}</span></td>
+
+            </tr>
+            <tr>
+              <td>i) Other: Provide a description</td>
+              <td><span class="form-answer">{{formA.assessment_other_specify or 'Not Applicable'}}</span>
+              </td>
+
+            </tr>
+          </tbody>
+        </table>
+
+
+        <hr>
+
+        <table>
+          <thead>
+            <tr>
+              <th>2.2 Does your research involve any of the following types of activity?</th>
+              <th>Tick where applicable</th>
+
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>a) Collection, use or disclosure of information WITHOUT the consent of the individual whose
+                information
+                it
+                is, with the exception of aggregated data or data from official databases such as StatsSA, SARS, etc.
+              </td>
+              <td><span class="form-answer">{{'Yes' if formA.disclosure else 'No'}}</span></td>
+
+            </tr>
+            <tr>
+              <td>b) Causing discomfiture to participants beyond normal levels of inconvenience</td>
+              <td><span class="form-answer">{{'Yes' if formA.discomfiture else 'No'}}</span></td>
+
+            </tr>
+            <tr>
+              <td>c) Deception of participants, concealment or covert observation</td>
+              <td><span class="form-answer">{{'Yes' if formA.deception else 'No'}}</span></td>
+
+            </tr>
+            <tr>
+              <td>d) Examining potentially sensitive or contentious issues</td>
+              <td><span class="form-answer">{{'Yes' if formA.sensitive else 'No'}}</span></td>
+
+            </tr>
+            <tr>
+              <td>e) Seeking disclosure of information which may be prejudicial to participants</td>
+              <td><span class="form-answer">{{'Yes' if formA.prejudice else 'No'}}</span></td>
+
+            </tr>
+            <tr>
+              <td>f) Using intrusive techniques</td>
+              <td><span class="form-answer">{{'Yes' if formA.intrusive_techniques else 'No'}}</span></td>
+
+            </tr>
+            <tr>
+              <td>g) Study of or participation in illegal activities</td>
+              <td><span class="form-answer">{{'Yes' if formA.illegal_activities else 'No'}}</span></td>
+
+            </tr>
+            <tr>
+              <td>h) Personal and social information collected directly from participants</td>
+              <td><span class="form-answer">{{'Yes' if formA.personal else 'No'}}</span></td>
+
+            </tr>
+            <tr>
+              <td>i) Identifiable information to be collected about people from available records (e.g., staff records,
+                student
+                records, etc.)</td>
+              <td><span class="form-answer">{{'Yes' if formA.available_records else 'No'}}</span></td>
+
+            </tr>
+            <tr>
+              <td>j) Psychology inventories / scales / tests</td>
+              <td><span class="form-answer">{{'Yes' if formA.inventories else 'No'}}</span></td>
+
+            </tr>
+            <tr>
+              <td>k) Activities which may place the researcher(s) / data collector at risk</td>
+              <td><span class="form-answer">{{'Yes' if formA.risk_activities else 'No'}}</span></td>
+
+            </tr>
+            <tr>
+              <td>l) Other: Provide a description</td>
+              <td><span class="form-answer">{{formA.activity_specify or 'Not Applicable'}}</span></td>
+
+            </tr>
+
+          </tbody>
+        </table>
+        <label for="vulnerable_comments_2">Comments: <span class="form-answer">{{formA.vulnerable_comments_2 or 'Not
+            Applicable'}}</span></label>
+        <hr>
+
+        <table>
+          <thead>
+            <tr>
+              <th>2.3 Do any of the following apply to your research project?</th>
+              <th>Tick where applicable</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>a) Reimbursement or incentives to any participants. </td>
+              <td><span class="form-answer">{{'Yes' if formA.incentives else 'No'}}</span></td>
+
+            </tr>
+            <tr>
+              <td>b) The participants will incur financial costs by participating in the study.</td>
+              <td><span class="form-answer">{{'Yes' if formA.financial_costs else 'No'}}</span></td>
+
+            </tr>
+            <tr>
+              <td>c) At least one of the researchers has a financial or other involvement in the research (apart from
+                their
+                research role) or may receive a reward.</td>
+              <td><span class="form-answer">{{'Yes' if formA.reward else 'No'}}</span></td>
+
+            </tr>
+            <tr>
+              <td>d) Any other potential conflict of interest for any of the researchers (real or perceived financial or
+                personal considerations that may compromise a researcher’s professional judgement in carrying out or
+                reporting research, such as conducting research with colleagues, peers or students).</td>
+              <td><span class="form-answer">{{'Yes' if formA.conflict else 'No'}}</span></td>
+
+            </tr>
+            <tr>
+              <td>e) Research is done on the premises of UJ or any of its units.</td>
+              <td><span class="form-answer">{{'Yes' if formA.uj_premises else 'No'}}</span></td>
+
+            </tr>
+            <tr>
+              <td>f) Research will make use of some of UJs facilities (venues, software, hardware, etc.)</td>
+              <td><span class="form-answer">{{'Yes' if formA.uj_facilities else 'No'}}</span></td>
+
+            </tr>
+            <tr>
+              <td>g) Research will be funded by UJ or funding for it was acquired through UJ.</td>
+              <td><span class="form-answer">{{'Yes' if formA.uj_funding else 'No'}}</span></td>
+
+            </tr>
+            <tr>
+              <td>h) Other (Specify)</td>
+              <td>
+                <span class="form-answer">{{formA.vulnerable_comments_3 or 'Not Applicable'}}</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <label for="apply_comments">Comments: <span class="form-answer">{{formA.apply_comments or 'Not
+            Applicable'}}</span></label>
+        <div class="mb-3">
+          <label><strong>2.4 Rate your project (Negligible, Low, Medium, High Risk):
+              <br><span class="form-answer">{{formA.risk_rating}}</span>
+            </strong>
+            <label for="risk_justification"> 2.4.1 Please justify your risk level (Mandatory): <span
+                class="form-answer">{{formA.risk_justification}}</span></label>
+            <label for="benefits_description"> 2.4.2 For medium and high risk, describe the potential benefits of the
+              study: <span class="form-answer">{{formA.benefits_description or 'Not applicable'}}</span></label>
+            <label for="risk_mitigation"> 2.4.3 For medium and high risk, describe how potential risks will be mitigated
+              against: <span class="form-answer">{{formA.risk_mitigation or 'Not applicable'}}</span></label>
+        </div>
+
+      </main>
+
+
+      <div class="section-navigation">
+        <button type="button" class="btn btn-outline-secondary" onclick="goToFormStep(1)">
+          Back to Section 1
+        </button>
+
+        <button type="button" class="btn btn-primary" onclick="goToFormStep(3)">
+          Proceed to Section 3
+        </button>
+      </div>
+
+    </section>
+
+
+
+    <!-- Section 3-->
+    <section class="form-step" id="form-step-3">
+
+      <!-- Section 3 -->
+
+      <!-- Main Content -->
+      <main class="main-content">
+
+        <h2>Section 3: Proposal Summary Sheet</h2>
+        <div class="section">
+          <label>3.1 Title or provisional title of the research project:
+            <br><span class="form-answer">{{formA.title_provision}}</span>
+          </label>
+
+
+          <label>3.2 Proposal abstract in nontechnical language and statement of research problem:
+            <br><span class="form-answer">{{formA.abstract}}</span>
+          </label>
+
+
+          <label>3.3 Research Questions / Hypotheses:
+            <br><span class="form-answer">{{formA.questions}}</span>
+          </label>
+
+
+          <label>3.4 Research Purpose and Objectives / Anticipated outcomes:
+            <br><span class="form-answer">{{formA.purpose_objectives}}</span>
+          </label>
+
+        </div>
+      </main>
+
+
+      <div class="section-navigation">
+        <button type="button" class="btn btn-outline-secondary" onclick="goToFormStep(2)">
+          Back to Section 2
+        </button>
+
+        <button type="button" class="btn btn-primary" onclick="goToFormStep(4)">
+          Proceed to Section 4
+        </button>
+      </div>
+
+    </section>
+
+
+    <!-- Section 4-->
+    <section class="form-step" id="form-step-4">
+
+      <!-- Section 4 -->
+
+      <main class="main-content">
+
+        <h2>Section 4: Details of Proposed Research</h2>
+        <div class="section">
+          <label>4.1 Does your project involve organisations or institutions that need to grant permission for research
+            activities?</label>
+          <span class="form-answer">{{formA.grant_permission}}</span>
+        <br>
+          <table>
+            <thead>
+              <tr>
+                <th>Name of Organisation</th>
+                <th>Person Granting Permission & Contact</th>
+                <th>Role</th>
+                <th>Permission Granted?</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                {% if data %}
+                <td>{% for items in data.org_name%}<span class="form-answer">{{items}}</span>{% endfor %}</td>
+                <td>{% for items in data.org_contact%}<span class="form-answer">{{items}}</span>{% endfor %}</td>
+                <td>{% for items in data.org_role %}<span class="form-answer">{{items}}</span>{% endfor %}</td>
+                <td>{% for items in data.org_permission%}<span class="form-answer">{{items}}</span>{% endfor %}</td>
+                {% endif %}
+              </tr>
+            </tbody>
+          </table>
+
+          <label>4.2 Are any researchers affiliated with the organisations above?
+            <br><span class="form-answer">{{'Yes' if formA.researcher_affiliation else 'No'}}</span>
+            <span class="form-answer">{{formA.affiliation_details or 'Not Applicable'}}</span>
+          </label>
+
+          <label>4.3 Does your research involve collectives or communities?
+            <br><span class="form-answer">{{ formA.collective_involvement}}</span>
+            <span class="form-answer">Comment: {{formA.collective_details or 'Not Applicable'}}</span>
+          </label>
+
+          <label>4.4 Is your project funded or sponsored?
+            <br><span class="form-answer">{{formA.is_funded}}</span>
+          </label>
+          <br>
+
+          <table>
+            <thead>
+              <tr>
+                <th>Organisation Name</th>
+                <th>Contact Person & Details</th>
+                <th>Role</th>
+                <th>Funding Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                {% if data%}
+                <td>{% for items in data.fund_org %}<span class="form-answer">{{items}}</span>{% endfor %}</td>
+                <td>{% for items in data.fund_contact %}<span class="form-answer">{{items}}</span>{% endfor %}</td>
+                <td>{% for items in data.fund_role %}<span class="form-answer">{{items}}</span>{% endfor %}</td>
+                <td>{% for items in data.fund_amount %}<span class="form-answer">{{items}}</span>{% endfor %}</td>
+                {% endif %}
+              </tr>
+              <!-- add button to add row -->
+              <tr>
+                <td colspan="4">
+                </td>
+            </tbody>
+          </table>
+
+          <label>4.5 Describe your arrangements regarding indemnity/compensation for adverse events:
+            <br><span class="form-answer">{{formA.indemnity_arrangements}}</span>
+          </label>
+
+
+          <label>4.6 Has this proposal been submitted to another ethics committee?
+            <br><span class="form-answer">{{formA.other_committee}}</span>
+          </label>
+
+        </div>
+
+      </main>
+
+
+      <div class="section-navigation">
+        <button type="button" class="btn btn-outline-secondary" onclick="goToFormStep(3)">
+          Back to Section 3
+        </button>
+
+        <button type="button" class="btn btn-primary" onclick="goToFormStep(5)">
+          Proceed to Section 5
+        </button>
+      </div>
+
+    </section>
+
+
+    <!-- Section 5-->
+    <section class="form-step" id="form-step-5">
+
+      <!-- Section 5 -->
+
+      <!-- Main Content -->
+      <main class="main-content">
+
+        <!-- Section 5: Methodology -->
+        <section id="section-5">
+          <h2>Section 5: Methodology</h2>
+
+          <label>5.1 Research Paradigm (Substantiate your choice of paradigm)</label><br>
+          <table id="methodTypeTable" class="table table-bordered">
+            <thead>
+              <tr>
+                <th>Quantitative Methods</th>
+                <th>Qualitative Methods</th>
+                <th>Mixed Methods</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="text-center">{{'Yes' if formA.quantitative else 'No'}}</td>
+                <td class="text-center">{{'Yes' if formA.qualitative else 'No'}}</td>
+                <td class="text-center">{{'Yes' if formA.mixed_methods else 'No'}}</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <label>Explain your paradigm selection: <span
+              class="form-answer">{{formA.paradigm_explanation}}</span></label>
+          <label>5.2 Research Design / Approach
+            <br><span class="form-answer">{{formA.design}}</span>
+          </label>
+          <br>
+
+
+          <label>5.3 Details of the participants</label>
+
+          <label>5.3.1 Participant Group Description</label>
+          <br><span class="form-answer">{{formA.participants_description}}</span>
+          <br>
+
+          <table id="participantsTable" class="table table-bordered">
+            <thead>
+              <tr>
+                <th>Population</th>
+                <th>Sampling Method</th>
+                <th>Sample Size</th>
+                <th>Inclusion Criteria</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                {% if data %}
+                <td><br>{% for items in data.population %}<span class="form-answer">{{items}}</span>{% endfor %}</td>
+                <td><br>{% for items in data.sampling_method %}<span class="form-answer">{{items}}</span>{% endfor %}
+                </td>
+                <td><br>{% for items in data.sampling_size%}<span class="form-answer">{{items}}</span>{% endfor %}</td>
+                <td><br>{% for items in data.inclusion_criteria%}<span class="form-answer">{{items}}</span>{% endfor
+                  %}</textarea></td>
+                {% endif %}
+              </tr>
+            </tbody>
+          </table>
+
+
+          <label>5.3.2 Describe how much time you require of participants in each group and when the data will be
+            collected/ when the interviews will take place.
+            <br><span class="form-answer">{{formA.duration_timing}}</span>
+          </label>
+          <br>
+
+          <label>5.3.3 Explain how you will obtain the contact details of participants</label>
+          <br><span class="form-answer">{{formA.contact_details_method}}</span>
+          </label>
+          <br>
+          <label>5.3.4 Conflict of interest or unequal relationship between researcher and participants? <span
+              class="info-icon"
+              title="A conflict of interest may arise where financial, personal or other considerations could directly and significantly affect, or appear to affect, a researcher's research conduct and judgement.">ℹ️</span></label>
+          <br><span class="form-answer">{{'Yes' if formA.conflict_interest else 'No'}}</span>
+          <br><span class="form-answer">Comment: {{formA.conflict_explanation or 'Not Applicable'}}</span>
+          <br>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<label>5.4 Research Instruments for Data Collection</label>
+<label for="data-collection-methods">5.4.1 Indicate which data collection methods will be used</label><br>
+
+{% set selected_methods = formA.data_methods or [] %}
+
+<table id="data_methods" class="table table-bordered">
+  <tr>
+    <th>Questionnaire</th>
+    <th>Interview</th>
+    <th>Focus Group</th>
+    <th>Observation</th>
+    <th>Documents</th>
+    <th>Other</th>
+  </tr>
+  <tr>
+    <td>{{ 'Yes' if 'questionnaire' in selected_methods else 'No' }}</td>
+    <td>{{ 'Yes' if 'interview' in selected_methods else 'No' }}</td>
+    <td>{{ 'Yes' if 'focus' in selected_methods or 'focus_group' in selected_methods else 'No' }}</td>
+    <td>{{ 'Yes' if 'observation' in selected_methods else 'No' }}</td>
+    <td>{{ 'Yes' if 'documents' in selected_methods else 'No' }}</td>
+    <td>{{ 'Yes' if 'other' in selected_methods else 'No' }}</td>
+  </tr>
+</table>
+
+
+{% if 'questionnaire' in selected_methods %}
+<!-- 5.4.1.1 Questionnaire(s) -->
+<div class="section">
+  <label>5.4.1.1 Questionnaire(s):</label><br>
+
+  {% if formA.questionnaire_type %}
+  <span class="form-answer">Questionnaire Type: {{ formA.questionnaire_type }}</span><br>
+  {% endif %}
+
+  {% if (formA.questionnaire_type|string)|trim|lower == 'existing' %}
+  <label>If existing, permission obtained?</label><br>
+
+  <span class="form-answer">
+    {% set perm = (formA.permission_obtained|string)|trim|lower %}
+    {% if perm in ['yes','true','on','1'] %}
+      Yes
+    {% elif perm in ['no','false','off','0'] %}
+      No
+    {% else %}
+      Not Applicable
+    {% endif %}
+  </span><br>
+
+  <span class="form-answer">
+    {% set os = (formA.open_source|string)|trim|lower %}
+    {% if os in ['yes','true','on','1'] %}
+      Open Source
+    {% elif os in ['no','false','off','0'] %}
+      Not open source
+    {% else %}
+      Not Applicable
+    {% endif %}
+  </span><br>
+  {% endif %}
+
+  <label>Justification: </label>
+  <span class="form-answer">{{ formA.instrument_attachment_reason or 'Not Applicable' }}</span>
+</div>
+{% endif %}
+
+
+{% if 'interview' in selected_methods %}
+<!-- 5.4.1.2 Interviews -->
+<div class="section">
+  <label>5.4.1.2 Interviews</label><br>
+
+  {% if formA.interview_type %}
+  <span class="form-answer">Interview Type: {{ formA.interview_type }}</span><br>
+  {% endif %}
+
+  <label>How will the interviews be recorded?</label><br>
+
+  {% set irec = (formA.interview_recording|string)|trim|lower %}
+  <span class="form-answer">
+    {% if irec == 'audio' %}
+      Audio
+    {% elif irec == 'video' %}
+      Video
+    {% elif irec == 'both' %}
+      Audio & Video
+    {% else %}
+      Not Applicable
+    {% endif %}
+  </span><br>
+</div>
+{% endif %}
+
+
+{% if 'focus' in selected_methods or 'focus_group' in selected_methods %}
+<!-- 5.4.1.3 Focus Groups -->
+<div class="section">
+  <label>5.4.1.3 Focus Groups</label><br>
+
+  <label>How will the focus groups be recorded?</label><br>
+
+  {% set frec = (formA.focus_recording|string)|trim|lower %}
+  <span class="form-answer">
+    {% if frec == 'audio' %}
+      Audio
+    {% elif frec == 'video' %}
+      Video
+    {% elif frec == 'both' %}
+      Audio & Video
+    {% else %}
+      Not Applicable
+    {% endif %}
+  </span><br>
+</div>
+{% endif %}
+
+
+{% if 'observation' in selected_methods %}
+<!-- 5.4.1.4 Observation -->
+<div class="section">
+  <label>5.4.1.4 Please describe your observation protocol:</label>
+  <br>
+  <span class="form-answer">{{ formA.observation_details or 'Not Applicable' }}</span>
+</div>
+{% endif %}
+
+
+{% if 'documents' in selected_methods %}
+<!-- 5.4.1.5 Documents -->
+<div class="section">
+  <label>5.4.1.5 What type of documents will be analyzed?</label><br>
+  <span class="form-answer">{{ formA.documents_details or 'Not Applicable' }}</span>
+</div>
+{% endif %}
+
+
+{% if 'other' in selected_methods %}
+<!-- 5.4.1.6 Other -->
+<div class="section">
+  <label>5.4.1.6 Please describe other data collection method(s):</label>
+  <br>
+  <span class="form-answer">{{ formA.other_details or 'Not Applicable' }}</span>
+</div>
+{% endif %}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+          <!-- General Data Collection Procedure -->
+          <label style="margin-top: 1.5rem;">5.4.2 Describe the data collection procedure</label>
+          <br>
+          <span class="form-answer">{{formA.data_collection_procedure}}</span>
+
+          <label>5.4.3 Who will collect the data (Researcher and/or field workers/external company)?
+            <br><span class="form-answer">{{formA.data_collectors}}</span>
+          </label>
+          <br>
+
+          <label>5.4.4 Will participants be subjected to any form of intervention (manipulation of the participant or
+            the
+            participants' environment)?
+            <br><span class="form-answer">{{'Yes' if formA.intervention else 'No'}}</span>
+          </label><br>
+
+
+          <label>5.4.5 Sensitive data or vulnerable populations?
+            <br><span class="form-answer">{{formA.sensitive_data}}</span>
+          </label>
+          <br>
+
+          <label>5.4.6 Will a translator be required?
+            <br><span class="form-answer">{{ 'Yes' if formA.translator else 'No' }}</span>
+            <span class="form-answer">Comment: {{formA.translator_procedure or 'Not Applicable'}}</span>
+          </label>
+
+
+          <label>5.5 Secondary Data Usage</label>
+
+          <label>5.5.1 Will secondary data be used?</label><br>
+          <span class="form-answer">{{ 'Yes' if formA.uses_secondary_data else 'No' }}</span>
+
+          <label>5.5.2 Is the data public, private, or both?</label><br>
+          <span class="form-answer">{{ formA.secondary_data_type }}</span>
+
+
+          <label>5.5.3 Nature of the Data</label><br>
+          <span class="form-answer">{{ formA.data_nature or 'Not Applicable' }}</span>
+
+          <label>5.5.4 Origin/Source of Research Data</label><br>
+          <span class="form-answer">{{ formA.data_origin or 'Not Applicable' }}</span>
+
+
+          <label>5.5.5 What are the access conditions?</label><br>
+          <span class="form-answer">{{ formA.access_conditions or 'Not Applicable' }}</span>
+
+
+          <label>5.5.6 Does the database contain personal information/identifiers?</label><br>
+          <span class="form-answer">{{ formA.personal_info or 'Not Applicable' }}</span>
+
+          {% if formA.personal_info == 'Yes' %}
+          <label>5.5.6.1 Specify the personal info/identifiers:</label><br>
+          <span class="form-answer">{{ formA.personal_info_comment or 'Not Applicable' }}</span>
+          {% endif %}
+
+
+          <label>5.5.7 Has the data been anonymized?</label><br>
+          <span class="form-answer">{{ formA.data_anonymized or 'Not Applicable' }}</span>
+
+
+          <label>5.5.7.1 Comment / Justification:</label><br>
+          <span class="form-answer">{{ formA.anonymization_comment or 'Not Applicable' }}</span>
+
+
+          <!-- <label>5.5.8 Is the data from a company that has provided permission?</label><br>
+<span class="form-answer">{{ formA.org_permision or 'Not Applicable' }}</span>
+
+<br><br>
+
+<label>5.5.8.1 Uploaded permission document:</label><br>
+{% if formA.private_permission_file %}
+  <a href="{{ url_for('view_form_file', form_type='A', form_id=formA.form_id, field_name='private_permission_file') }}" target="_blank">View Document</a>
+{% else %}
+  <span class="form-answer">No file uploaded</span>
+{% endif %} -->
+
+
+          <label>5.5.8 What type of public data will be used?</label><br>
+          <span class="form-answer">{{ formA.public_data_description or 'Not Applicable' }}</span>
+
+
+          <label>5.5.9 Will data shortcomings/incompleteness be reported?</label><br>
+          <span class="form-answer">{{ formA.shortcomings_reported or 'Not Applicable' }}</span>
+
+
+          <label>5.5.10 How will data limitations be reported?</label><br>
+          <span class="form-answer">{{ formA.limitations_reporting or 'Not Applicable' }}</span>
+
+
+          <label>5.5.11 Is the research methodology and design aligned with secondary data use?</label><br>
+          <span class="form-answer">{{ formA.methodology_alignment or 'Not Applicable' }}</span>
+
+          <label>5.5.12 How will the original owners of the data be acknowledged?</label><br>
+          <span class="form-answer">{{ formA.data_acknowledgment or 'Not Applicable' }}</span>
+
+        </section>
+
+      </main>
+
+      <div class="section-navigation">
+        <button type="button" class="btn btn-outline-secondary" onclick="goToFormStep(4)">
+          Back to Section 4
+        </button>
+
+        <button type="button" class="btn btn-primary" onclick="goToFormStep(6)">
+          Proceed to Section 6
+        </button>
+      </div>
+
+    </section>
+
+
+    <!-- Section 6-->
+    <section class="form-step" id="form-step-6">
+
+      <!-- Section 6 -->
+
+      <!-- Main Content -->
+      <main class="main-content">
+
+        <!-- Section 6 – Ethical Considerations -->
+        <div class="form-section" id="section6">
+          <h2>Section 6: Ethical Considerations</h2>
+
+          <div class="question-block">
+            <label for="informed-consent">6.1 Will informed consent be obtained? Explain the process:</label>
+            <br><span class="form-answer">{{formA.informed_consent}}</span>
+            <br>
+          </div>
+
+          <div class="question-block">
+            <label>6.2 Data storage and access to data</label><br>
+
+            <table class="table table-bordered table-striped">
+              <thead class="thead-light">
+                <tr>
+                  <th>Requirement</th>
+                  <th>Response</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Paper-based records must be kept in a secure location</td>
+                  <td>{{ 'Yes' if 'secure_location' in (formA.data_storage or []) else 'No' }}</td>
+                </tr>
+                <tr>
+                  <td>Computer-based records must only be available to personnel involved in the study through access
+                    privileges</td>
+                  <td>{{ 'Yes' if 'password_protected' in (formA.data_storage or []) else 'No' }}</td>
+                </tr>
+                <tr>
+                  <td>Electronic data will be kept in a protected place</td>
+                  <td>{{ 'Yes' if 'protected_place' in (formA.data_storage or []) else 'No' }}</td>
+                </tr>
+                <tr>
+                  <td>Paper-based data will be kept for 5 years and then destroyed</td>
+                  <td>{{ 'Yes' if 'retention' in (formA.data_storage or []) else 'No' }}</td>
+                </tr>
+              </tbody>
+            </table>
+
+          </div>
+
+          <div class="question-block">
+            <label for="study-benefits">6.3 What are the benefits of the study?
+              <br><span class="form-answer">{{formA.study_benefits}}</span>
+            </label>
+            <br>
+          </div>
+
+          <div class="question-block">
+            <label for="participant-risks">6.4 Description of the risks participants may suffer and the level of risk:
+              <br><span class="form-answer">{{formA.participant_risks}}</span>
+            </label>
+            <br>
+          </div>
+
+          <div class="question-block">
+            <label for="adverse-steps">6.5 Description of steps to be taken in case of adverse events:
+              <br><span class="form-answer">{{formA.adverse_steps}}</span>
+            </label>
+            <br>
+          </div>
+
+          <div class="question-block">
+            <label for="community-participation">6.6 Description of anticipated community participation in the study:
+              <span class="form-answer">{{formA.community_participation}}</span>
+            </label>
+            <br>
+          </div>
+
+          <div class="question-block">
+            <label for="community-effects">6.7 Description of possible adverse effects on the community:
+              <br><span class="form-answer">{{formA.community_effects}}</span>
+            </label>
+            <br>
+          </div>
+
+          <div class="question-block">
+            <label>6.8 Select all data privacy practices applied:</label><br>
+
+            <table class="table table-bordered table-striped">
+              <thead class="thead-light">
+                <tr>
+                  <th>Data Privacy Practice</th>
+                  <th>Response</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Personal identifiers will be removed</td>
+                  <td>{{ 'Yes' if 'remove_identifiers' in (formA.privacy or []) else 'No' }}</td>
+                </tr>
+                <tr>
+                  <td>Data encryption will be applied</td>
+                  <td>{{ 'Yes' if 'encryption' in (formA.privacy or []) else 'No' }}</td>
+                </tr>
+                <tr>
+                  <td>Use of pseudonyms</td>
+                  <td>{{ 'Yes' if 'pseudonyms' in (formA.privacy or []) else 'No' }}</td>
+                </tr>
+                <tr>
+                  <td>Participants in focus groups will be advised confidentiality cannot be assured</td>
+                  <td>{{ 'Yes' if 'focus_group_warning' in (formA.privacy or []) else 'No' }}</td>
+                </tr>
+              </tbody>
+            </table>
+
+          </div>
+
+          <div class="question-block">
+            <label>6.9 Checklist to ensure the covering letter meets ethical requirements</label>
+
+            <table>
+              <thead>
+                <tr>
+                  <th style="width: 70%;">Checklist Item</th>
+                  <th style="width: 30%;">Select</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>a) Identity and position of the researcher(s)?</td>
+                  <td><br><span class="form-answer">{{'Yes' if formA.q6_9a else 'No'}}</span></td>
+                </tr>
+                <tr>
+                  <td>b) Purpose of the information collection?</td>
+                  <td><br><span class="form-answer">{{'Yes' if formA.q6_9b else 'No'}}</span></td>
+                </tr>
+                <tr>
+                  <td>c) Reason for selection and procedures for selecting participants?</td>
+                  <td><br><span class="form-answer">{{'Yes' if formA.q6_9c else 'No'}}</span></td>
+                </tr>
+                <tr>
+                  <td>d) Participant’s role in the study?</td>
+                  <td><br><span class="form-answer">{{'Yes' if formA.q6_9d else 'No'}}</span></td>
+                </tr>
+                <tr>
+                  <td>e) Expected duration of participation?</td>
+                  <td><br><span class="form-answer">{{'Yes' if formA.q6_9e else 'No'}}</span></td>
+                </tr>
+                <tr>
+                  <td>f) Statement of voluntary participation and no penalty?</td>
+                  <td><br><span class="form-answer">{{'Yes' if formA.q6_9f else 'No'}}</span></td>
+                </tr>
+                <tr>
+                  <td>g) Benefits to the participant and others?</td>
+                  <td><br><span class="form-answer">{{'Yes' if formA.q6_9g else 'No'}}</span></td>
+                </tr>
+                <tr>
+                  <td>h) Risks and steps for harm/injury?</td>
+                  <td><br><span class="form-answer">{{'Yes' if formA.q6_9h else 'No'}}</span></td>
+                </tr>
+                <tr>
+                  <td>i) Statement of right to withdraw?</td>
+                  <td><br><span class="form-answer">{{'Yes' if formA.q6_9i else 'No'}}</span></td>
+                </tr>
+                <tr>
+                  <td>j) Compensation/gifts/services?</td>
+                  <td><br><span class="form-answer">{{'Yes' if formA.q6_9j else 'No'}}</span></td>
+                </tr>
+                <tr>
+                  <td>k) Reimbursement for costs?</td>
+                  <td><br><span class="form-answer">{{'Yes' if formA.q6_9k else 'No'}}</span></td>
+                </tr>
+                <tr>
+                  <td>l) Indemnity if applicable?</td>
+                  <td><br><span class="form-answer">{{'Yes' if formA.q6_9l else 'No'}}</span></td>
+                </tr>
+                <tr>
+                  <td>m) Period for which records will be kept?</td>
+                  <td><br><span class="form-answer">{{'Yes' if formA.q6_9m else 'No'}}</span></td>
+                </tr>
+                <tr>
+                  <td>n) Steps for confidentiality and secure storage?</td>
+                  <td><br><span class="form-answer">{{'Yes' if formA.q6_9n else 'No'}}</span></td>
+                </tr>
+                <tr>
+                  <td>o) Disclosure of information to third parties?</td>
+                  <td><br><span class="form-answer">{{'Yes' if formA.q6_9o else 'No'}}</span></td>
+                </tr>
+                <tr>
+                  <td>p) Privacy protection in publications?</td>
+                  <td><br><span class="form-answer">{{'Yes' if formA.q6_9p else 'No'}}</span></td>
+                </tr>
+                <tr>
+                  <td>q) Feedback to participants?</td>
+                  <td><br><span class="form-answer">{{'Yes' if formA.q6_9q else 'No'}}</span></td>
+                </tr>
+                <tr>
+                  <td>r) Exclusions to confidentiality disclosed?</td>
+                  <td><br><span class="form-answer">{{'Yes' if formA.q6_9r else 'No'}}</span></td>
+                </tr>
+                <tr>
+                  <td>s) Consent for audio/video recording?</td>
+                  <td><br><span class="form-answer">{{'Yes' if formA.q6_9s else 'No'}}</span></td>
+                </tr>
+
+              </tbody>
+            </table>
+
+          </div>
+
+          <div class="question-block">
+            <label for="results-feedback">6.10 How will participants be informed of findings?
+              <br><span class="form-answer">{{formA.results_feedback}}</span>
+            </label>
+
+          </div>
+
+          <div class="question-block">
+            <label for="products-access">6.11 Description of participants’ access to products developed from the study:
+              <br><span class="form-answer">{{formA.products_access}}</span>
+            </label>
+
+          </div>
+
+          <div class="question-block">
+            <label for="publication-plans">6.12 Indicate how you envisage publishing this research:
+              <span class="form-answer">{{formA.publication_plans}}</span>
+            </label>
+
+          </div>
+
+          <div class="question-block">
+            <label for="participant-comp">6.13 Describe compensation to participants (if applicable):
+              <br><span class="form-answer">{{formA.participant_comp}}</span>
+            </label>
+
+          </div>
+
+          <div class="question-block">
+            <label for="participant-costs">6.14 Describe any financial costs to participants (if applicable):
+              <span class="form-answer">{{formA.participant_costs}}</span>
+            </label>
+
+          </div>
+
+          <div class="question-block">
+            <label for="ethics-reporting">6.15 Description of reporting to ethics research committee:
+              <br><span class="form-answer">{{formA.ethics_reporting}}</span>
+            </label>
+
+          </div>
+
+      </main>
+
+
+      <div class="section-navigation">
+        <button type="button" class="btn btn-outline-secondary" onclick="goToFormStep(5)">
+          Back to Section 5
+        </button>
+
+        <button type="button" class="btn btn-primary" onclick="goToFormStep(7)">
+          Proceed to Section 7
+        </button>
+      </div>
+
+    </section>
+
+
+    <!-- Section 7-->
+    <section class="form-step" id="form-step-7">
+
+      <!-- Section 7 -->
+
+      <main class="main-content">
+
+        <h2>Section 7: Declaration</h2>
+        <p><strong>Statement Agreeing To Comply With Ethical Principles Set Out In UJ Policy On Research Ethics</strong>
+        </p>
+
+        <div class="form-group">
+          <label for="declaration-name">
+            I, <u>{{formA.declaration_name}}</u>
+            (full name of main researcher), declare that I have read the Policy on Research Ethics of UJ and the
+            contents
+            of this document are a true and accurate reflection of the methodological and ethical implications of my
+            proposed study. I shall carry out the study in strict accordance with the approved proposal and the Policy
+            on
+            Research Ethics of UJ. I further undertake to inform the relevant research ethics review committee of JBS in
+            writing of any adverse events that occur arising from the injury or harm experienced by the participants in
+            the study. I shall also notify the relevant JBS research ethics review committee if any changes to the study
+            are proposed. I shall maintain the confidentiality of all data collected from or about the research
+            participants and impose strict controls in the maintenance of privacy. I shall record all data captured
+            during
+            interviews in accordance with ethical guidelines outlined in my proposal. Paragraph 5 of the Policy on
+            Research Ethics places huge emphasis on the integrity of the research and I shall ensure that I conduct the
+            research with the highest integrity considering UJ’s Policy for Copyright Infringement and Plagiarism. Data
+            that was gathered retrospectively will not be used. I acknowledge that as main researcher it is my
+            responsibility to ensure that the co-researchers to this research project adhere to the ethical principles
+            set
+            out in the UJ Policy on Research Ethics.
+          </label>
+        </div>
+
+        <div class="form-group">
+          <label>Signature of Applicant</label>
+          <span class="form-answer">{{formA.applicant_signature}}</span>
+        </div>
+
+        <div class="form-group">
+          <label>Date</label>
+          <span class="form-answer">{% if formA.declaration_date%}{{formA.declaration_date}}{% endif %}</span>
+        </div>
+
+        <hr>
+        <div id="supervisorDeclaration">
+
+          <h1>JOHANNESBURG BUSINESS SCHOOL<br>RESEARCH ETHICS COMMITTEE<br>REVIEWER REPORT</h1>
+
+          <div class="section">
+            <label>Student Name:</label>
+            <span class="form-answer">{{formA.declaration_name}}</span>
+
+            <label>Date of Submission:</label>
+            <span class="form-answer">{% if formA.submitted_at%}{{formA.submitted_at.strftime('%d/%m/%Y')}}{%
+              endif%}</span>
+
+            <label>Date of Re-submission:</label>
+            <span class="form-answer">{% if formA.declaration_date%}{{formA.declaration_date}}{% endif %}</span>
+
+            <label>Supervisor:</label>
+            <span class="form-answer">{{formA.supervisor}}</span>
+
+            <label>Title of Research:</label>
+            <span class="form-answer">{{formA.study_title}}</span>
+
+
+            <label>Date of Review:</label>
+
+            {% set saved_review_date = formA.review_date|string|trim if formA.review_date else '' %}
+
+            <input type="date" name="review_date" class="form-control" required placeholder="dd/mm/yyyy"
+              value="{% if saved_review_date and '-' in saved_review_date %}{{ saved_review_date[:10] }}{% elif formA.review_signature_date %}{{ formA.review_signature_date.strftime('%Y-%m-%d') }}{% endif %}">
+
+            <div class="date-format-hint">
+              Format: yyyy-mm-dd
+              {% if saved_review_date and '-' not in saved_review_date %}
+              <br>
+              <span class="text-muted">Saved date: {{ saved_review_date }}</span>
+              {% endif %}
+            </div>
+            <script>
+              document.addEventListener('DOMContentLoaded', function () {
+                var acceptFields = document.getElementById('acceptFields');
+                if (!acceptFields) return;
+                var submitBtn = acceptFields.querySelector('button[type="submit"]');
+                if (!submitBtn) return;
+                var errorDiv = document.createElement('div');
+                errorDiv.style.color = 'red';
+                errorDiv.style.display = 'none';
+                errorDiv.id = 'reviewer-error';
+                submitBtn.parentNode.insertBefore(errorDiv, submitBtn);
+
+              });
+            </script>
+
+
+            <div class="section">
+              <h3>Comments</h3>
+              <textarea name="additional_comments" required class="form-control" rows="5"
+                placeholder="Provide any feedback or required revisions...">{% if formA.review_additional_comments and formA.review_additional_comments|string|lower != 'none' %}{{ formA.review_additional_comments }}{% elif formA.review_form_comments and formA.review_form_comments|string|lower != 'none' %}{{ formA.review_form_comments }}{% endif %}</textarea>
+            </div>
+
+            <!-- Radio Buttons -->
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="recommendation" id="ready" value="Ready for submission"
+                onchange="toggleFields()" required>
+              <label class="form-check-label" for="ready">
+                ✔ Ready for submission to Reviewers
+              </label>
+            </div>
+
+            <div class="form-check mb-3">
+              <input class="form-check-input" type="radio" name="recommendation" id="revisions"
+                value="Revisions required" onchange="toggleFields()">
+              <label class="form-check-label" for="revisions">
+                ↻ Revisions required before submission
+              </label>
+            </div>
+
+            <!-- Accept Fields (initially hidden) -->
+            <div id="acceptFields" style="display: none;">
+              <label>Reviewer(s):</label>
+              <p class="text-muted small mb-2">Assign at least one reviewer. A second reviewer is optional.</p>
+              <div class="dropdown">
+                <button class="btn btn-outline-primary dropdown-toggle" type="button" id="dropdownMenuButton"
+                  data-bs-toggle="dropdown" aria-expanded="false">
+                  Select Reviewers
+                </button>
+                <ul class="dropdown-menu dropdown-checkboxes p-2" aria-labelledby="dropdownMenuButton">
+                  {% for item in formReviewers %}
+                  <li><label class="form-check"><input class="form-check-input" type="checkbox" name="reviewer_names[]"
+                        value="{{item.user_id}}" {% if item.user_id in [latest_forma.reviewer_name1,
+                        latest_forma.reviewer_name2] %}checked{% endif %}> {{item.full_name}}</label></li>
+                  {% endfor %}
+                </ul>
+              </div>
+
+              <div class="form-group">
+                <label for="supervisor_signature">Ethics Admin Signature:</label>
+                <input type="text" class="form-control" id="supervisor_signature" name="supervisor_signature">
+              </div>
+
+              <div class="form-group">
+                <label for="signature_date">Date:</label>
+                <input type="date" class="form-control" id="signature_date" name="signature_date"
+                  placeholder="dd/mm/yyyy">
+                <div class="date-format-hint">Format: yyyy-mm-dd</div>
+              </div>
+              <br>
+
+              <button type="submit" name="accept" value="Accept" class="btn btn-success">Submit to Reviewers</button>
+            </div>
+
+            <!-- Reject Button (initially hidden) -->
+            <div id="rejectBtn" style="display: none;">
+              <div class="submit-row" id="rejectBtn" style="display: none;">
+                <label for="statusReject">Select Rejection Status:</label>
+                <select id="statusReject" name="status" class="form-select">
+                  <option value="">-- Choose --</option>
+                  <option value="Resubmission Required">↻ Resubmission Required</option>
+                  <option value="Reject">✖ Reject</option>
+                </select>
+                <br>
+              </div>
+              <br>
+
+              <button type="submit" name="reject" value="Reject" class="btn btn-danger">Submit back to Student (Requires
+                Submission)</button>
+            </div>
+      </main>
+
+      <div class="section-navigation">
+        <button type="button" class="btn btn-outline-secondary" onclick="goToFormStep(6)">
+          Back to Section 6
+        </button>
+
+        <span></span>
+      </div>
+
+    </section>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  </form>
+  <!-- Footer -->
+  <footer class="footer">
+
+  </footer>
+  <script src="{{ url_for('static', filename='js/datepicker-validation.js') }}"></script>
+
+
+  <script>
+
+    document.getElementById('supervisor').addEventListener('change', function () {
+      const selected = this.options[this.selectedIndex];
+      const email = selected.getAttribute('sup-email') || '';
+      document.getElementById('supervisor_email').value = email;
+    });
+
+    document.getElementById("formAsection1").addEventListener("submit", async function (event) {
+      event.preventDefault();
+      const form = event.target;
+      const formData = new FormData(form);
+      const csrfToken = document.querySelector('input[name="csrf_token"]').value;
+      const response = await fetch('{{ url_for("submit_form_a_sec1") }}', {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'X-CSRFToken': csrfToken
+        }
+      });
+      if (response.ok) {
+        window.location.href = '{{ url_for("form_a_sec2") }}';
+      } else {
+        const result = await response.json();
+        document.getElementById("message").textContent = result.message;
+      }
+    });
+
+    const form = document.getElementById("formA");
+
+    const supervisorDeclaration = document.getElementById("supervisorDeclaration");
+    const submitToEthicsBtn = document.getElementById("submitToEthics");
+    const submitToStudentBtn = document.getElementById("submitToStudent");
+
+    // Show declaration when "Submit for Ethics Approval" is clicked
+    submitToEthicsBtn.addEventListener("click", () => {
+      supervisorDeclaration.style.display = "block";
+    });
+
+    // Hide declaration when "Return to Student" is clicked
+    submitToStudentBtn.addEventListener("click", () => {
+      supervisorDeclaration.style.display = "none";
+    });
+    function toggleFields() {
+      const ready = document.getElementById("ready").checked;
+      const revisions = document.getElementById("revisions").checked;
+
+      const acceptFields = document.getElementById("acceptFields");
+      const rejectBtn = document.getElementById("rejectBtn");
+
+      const signature = document.getElementById("supervisor_signature");
+      const date = document.getElementById("signature_date");
+
+      if (ready) {
+        acceptFields.style.display = "block";
+        rejectBtn.style.display = "none";
+        signature.required = true;
+        date.required = true;
+      } else if (revisions) {
+        acceptFields.style.display = "none";
+        rejectBtn.style.display = "block";
+        signature.required = false;
+        date.required = false;
+        signature.value = '';
+        date.value = '';
+      } else {
+        acceptFields.style.display = "none";
+        rejectBtn.style.display = "none";
+      }
+    }
+
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="{{ url_for('static', filename='js/form-submission-handler.js') }}"></script>
+
+
+  <script>
+    function goToFormStep(stepNumber) {
+      const allSteps = document.querySelectorAll('.form-step');
+      const allTabs = document.querySelectorAll('#formStepTabs .nav-link');
+
+      allSteps.forEach(function (step) {
+        step.classList.remove('active');
+      });
+
+      allTabs.forEach(function (tab) {
+        tab.classList.remove('active');
+      });
+
+      const selectedStep = document.getElementById('form-step-' + stepNumber);
+      const selectedTab = document.querySelector('#formStepTabs .nav-link[data-step="' + stepNumber + '"]');
+
+      if (selectedStep) {
+        selectedStep.classList.add('active');
+      }
+
+      if (selectedTab) {
+        selectedTab.classList.add('active');
+      }
+
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+      const tabs = document.querySelectorAll('#formStepTabs .nav-link');
+
+      tabs.forEach(function (tab) {
+        tab.addEventListener('click', function () {
+          const stepNumber = this.getAttribute('data-step');
+          goToFormStep(stepNumber);
+        });
+      });
+    });
+  </script>
+</body>
+
+</html>

@@ -333,49 +333,80 @@ class AnalyticsDashboard:
         """Create comprehensive reviewer performance analysis"""
         if df.empty:
             return "<div>No data available</div>"
-        
-        # Prepare reviewer data
-        reviewer_data = []
-        
-        # First reviewer analysis
-        if 'first_reviewer_name' in df.columns and 'review_signature_date' in df.columns:
-            for reviewer in df['first_reviewer_name'].dropna().unique():
-                reviewer_forms = df[df['first_reviewer_name'] == reviewer]
-                
-                # Calculate metrics
-                total_reviews = len(reviewer_forms)
-                avg_time = self._calculate_reviewer_avg_time(reviewer_forms, 'review_signature_date', form_type)
-                approval_rate = self._calculate_approval_rate(reviewer_forms, 'review_recommendation')
-                
-                reviewer_data.append({
-                    'reviewer': reviewer,
-                    'position': 'Primary',
-                    'total_reviews': total_reviews,
-                    'avg_review_time': avg_time,
-                    'approval_rate': approval_rate
-                })
-        
-        # Second reviewer analysis
-        if 'second_reviewer_name' in df.columns and 'review_signature_date1' in df.columns:
-            for reviewer in df['second_reviewer_name'].dropna().unique():
-                reviewer_forms = df[df['second_reviewer_name'] == reviewer]
-                
-                total_reviews = len(reviewer_forms)
-                avg_time = self._calculate_reviewer_avg_time(reviewer_forms, 'review_signature_date1', form_type)
-                approval_rate = self._calculate_approval_rate(reviewer_forms, 'review_recommendation1')
-                
-                reviewer_data.append({
-                    'reviewer': reviewer,
-                    'position': 'Secondary',
-                    'total_reviews': total_reviews,
-                    'avg_review_time': avg_time,
-                    'approval_rate': approval_rate
-                })
-        
-        if not reviewer_data:
+
+        submit_col = 'submitted_at' if form_type in ['A', 'B'] else 'submission_date'
+        if submit_col not in df.columns and 'submitted_at' in df.columns:
+            submit_col = 'submitted_at'
+        if submit_col not in df.columns:
+            return "<div>No reviewer timing data available</div>"
+
+        review_events = []
+        slot_configs = [
+            ('first_reviewer_name', 'review_signature_date', 'review_recommendation', 'Primary'),
+            ('second_reviewer_name', 'review_signature_date1', 'review_recommendation1', 'Secondary'),
+        ]
+
+        for reviewer_col, date_col, recommendation_col, position in slot_configs:
+            if reviewer_col not in df.columns:
+                continue
+
+            slot_df = df.copy()
+            if date_col in slot_df.columns:
+                slot_df[date_col] = pd.to_datetime(slot_df[date_col], errors='coerce')
+            if recommendation_col in slot_df.columns:
+                slot_df[recommendation_col] = slot_df[recommendation_col].fillna('')
+            slot_df[submit_col] = pd.to_datetime(slot_df[submit_col], errors='coerce')
+
+            completed_mask = slot_df[reviewer_col].notna()
+            if date_col in slot_df.columns:
+                completed_mask = completed_mask & (
+                    slot_df[date_col].notna() | slot_df[recommendation_col].ne('')
+                )
+            else:
+                completed_mask = completed_mask & slot_df[recommendation_col].ne('')
+
+            completed_reviews = slot_df[completed_mask].copy()
+            if completed_reviews.empty:
+                continue
+
+            if date_col in completed_reviews.columns and completed_reviews[date_col].dt.tz is not None:
+                completed_reviews[date_col] = completed_reviews[date_col].dt.tz_localize(None)
+            if completed_reviews[submit_col].dt.tz is not None:
+                completed_reviews[submit_col] = completed_reviews[submit_col].dt.tz_localize(None)
+
+            if date_col in completed_reviews.columns:
+                completed_reviews['review_time_days'] = (
+                    completed_reviews[date_col] - completed_reviews[submit_col]
+                ).dt.days
+            else:
+                completed_reviews['review_time_days'] = np.nan
+
+            completed_reviews['approved'] = completed_reviews[recommendation_col].str.contains('Approved', na=False)
+            completed_reviews['position'] = position
+
+            review_events.extend(
+                completed_reviews[
+                    [reviewer_col, 'review_time_days', 'approved', 'position']
+                ].rename(columns={reviewer_col: 'reviewer'}).to_dict('records')
+            )
+
+        if not review_events:
             return "<div>No reviewer data available</div>"
-        
-        reviewer_df = pd.DataFrame(reviewer_data)
+
+        reviewer_events_df = pd.DataFrame(review_events)
+        reviewer_df = (
+            reviewer_events_df.groupby('reviewer', dropna=False)
+            .agg(
+                total_reviews=('reviewer', 'size'),
+                avg_review_time=('review_time_days', 'mean'),
+                approval_rate=('approved', 'mean'),
+                positions=('position', lambda values: ', '.join(sorted(set(values))))
+            )
+            .reset_index()
+        )
+        reviewer_df['approval_rate'] = (reviewer_df['approval_rate'] * 100).round(1)
+        reviewer_df['avg_review_time'] = reviewer_df['avg_review_time'].round(1)
+        reviewer_df = reviewer_df.sort_values(['total_reviews', 'reviewer'], ascending=[False, True])
         
         # Create performance dashboard
         fig = make_subplots(
@@ -389,32 +420,40 @@ class AnalyticsDashboard:
         # Review Volume
         fig.add_trace(
             go.Bar(x=reviewer_df['reviewer'], y=reviewer_df['total_reviews'], 
-                   name="Total Reviews", showlegend=False, marker_color=UJ_COLORS[0]),
+                   name="Total Reviews", showlegend=False, marker_color=UJ_COLORS[0],
+                   customdata=reviewer_df[['positions']].values,
+                   hovertemplate='<b>%{x}</b><br>Total Reviews: %{y}<br>Roles: %{customdata[0]}<extra></extra>'),
             row=1, col=1
         )
         
         # Average Review Time
         fig.add_trace(
             go.Bar(x=reviewer_df['reviewer'], y=reviewer_df['avg_review_time'], 
-                   name="Avg Days", showlegend=False, marker_color=UJ_COLORS[1]),
+                   name="Avg Days", showlegend=False, marker_color=UJ_COLORS[1],
+                   customdata=reviewer_df[['positions']].values,
+                   hovertemplate='<b>%{x}</b><br>Average Review Time: %{y} days<br>Roles: %{customdata[0]}<extra></extra>'),
             row=1, col=2
         )
         
         # Approval Rates
         fig.add_trace(
             go.Bar(x=reviewer_df['reviewer'], y=reviewer_df['approval_rate'], 
-                   name="Approval %", showlegend=False, marker_color=UJ_COLORS[2]),
+                   name="Approval %", showlegend=False, marker_color=UJ_COLORS[2],
+                   customdata=reviewer_df[['positions']].values,
+                   hovertemplate='<b>%{x}</b><br>Approval Rate: %{y}%<br>Roles: %{customdata[0]}<extra></extra>'),
             row=2, col=1
         )
         
         # Efficiency Score (inverse of time * volume)
-        reviewer_df['efficiency'] = reviewer_df['total_reviews'] / (reviewer_df['avg_review_time'] + 1)
+        reviewer_df['efficiency'] = reviewer_df['total_reviews'] / (reviewer_df['avg_review_time'].fillna(0) + 1)
         fig.add_trace(
             go.Scatter(x=reviewer_df['total_reviews'], y=reviewer_df['avg_review_time'],
                       text=reviewer_df['reviewer'], mode='markers+text',
                       marker=dict(size=reviewer_df['approval_rate']/2, 
                                 color=reviewer_df['efficiency'],
                                 colorscale='Viridis', showscale=True),
+                      customdata=reviewer_df[['positions']].values,
+                      hovertemplate='<b>%{text}</b><br>Total Reviews: %{x}<br>Average Review Time: %{y} days<br>Roles: %{customdata[0]}<extra></extra>',
                       name="Efficiency", showlegend=False),
             row=2, col=2
         )

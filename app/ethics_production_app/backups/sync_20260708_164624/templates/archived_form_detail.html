@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Archived Form Detail | JBS Ethics System</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f8f9fa;
+    }
+
+    .navbar {
+      background-color: #ef820d;
+      color: white;
+      padding: 10px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      height: 40px;
+      margin-right: 10px;
+    }
+
+    .btn-logout {
+      color: white;
+      margin-left: 10px;
+      text-decoration: none;
+    }
+
+    .admin-wrapper {
+      display: flex;
+      min-height: calc(100vh - 60px);
+    }
+
+    .sidebar {
+      width: 250px;
+      background-color: #ef820d;
+      color: #fff;
+      padding: 20px 0;
+      position: fixed;
+      top: 60px;
+      bottom: 0;
+      left: 0;
+      overflow-y: auto;
+    }
+
+    .sidebar-nav {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sidebar-link,
+    .dropdown-toggle {
+      color: #fff;
+      text-decoration: none;
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      border-radius: 4px;
+      margin: 4px 8px;
+    }
+
+    .sidebar-link:hover,
+    .dropdown-toggle:hover,
+    .dropdown-item:hover,
+    .sidebar-link.active {
+      background-color: #022169;
+      color: #fff;
+      text-decoration: none;
+    }
+
+    .dropdown-item {
+      color: #fff;
+      text-decoration: none;
+      padding: 10px 40px;
+      display: block;
+    }
+
+    .collapse {
+      background-color: rgba(0, 0, 0, 0.05);
+    }
+
+    .form-wrapper {
+      margin-left: 250px;
+      flex: 1;
+      padding: 30px;
+    }
+
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+    }
+
+    .meta-card {
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      padding: 16px;
+    }
+
+    .meta-label {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: #6c757d;
+      margin-bottom: 6px;
+    }
+
+    .meta-value {
+      font-size: 1rem;
+      color: #212529;
+      word-break: break-word;
+    }
+
+    .answer-table th {
+      width: 28%;
+      white-space: normal;
+    }
+
+    .answer-value {
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-family: Consolas, 'Courier New', monospace;
+      font-size: 0.92rem;
+      margin: 0;
+    }
+  </style>
+</head>
+
+<body>
+  <header class="navbar">
+    <div class="d-flex align-items-center">
+      <img src="{{ url_for('static', filename='img/image.png') }}" alt="UJ JBS Logo" class="logo">
+      <span>JBS Ethics Application</span>
+    </div>
+    <div class="d-flex align-items-center">
+      <h5 class="mb-0 me-3">Welcome, {{ full_name }}</h5>
+      <a href="{{ url_for('faq') }}" class="btn-logout">FAQ</a>
+      <a href="{{ url_for('logout') }}" class="btn-logout">Logout</a>
+    </div>
+  </header>
+
+  <div class="admin-wrapper">
+    <aside class="sidebar">
+      <nav class="sidebar-nav">
+        <a href="{{url_for('chair_landing')}}" class="sidebar-link">
+          <i class="fas fa-clipboard-list me-2"></i>Dashboard
+        </a>
+        <a href="{{url_for('monitor')}}" class="sidebar-link">
+          <i class="fas fa-user me-2"></i>Student List
+        </a>
+        <a href="{{url_for('admin_reassign_supervisors')}}" class="sidebar-link">
+          <i class="fas fa-user-gear me-2"></i>Reassign Supervisors
+        </a>
+        <a href="{{url_for('admin_reassign_reviewers')}}" class="sidebar-link">
+          <i class="fas fa-users-gear me-2"></i>Reassign Reviewers
+        </a>
+        <a href="{{url_for('reviewer_list')}}" class="sidebar-link">
+          <i class="fas fa-user me-2"></i>Reviewer List
+        </a>
+        <a href="{{url_for('admin_student_password_resets')}}" class="sidebar-link">
+          <i class="fas fa-key me-2"></i>Student Password Resets
+        </a>
+        <a href="{{url_for('all_users')}}" class="sidebar-link">
+          <i class="fas fa-users-cog me-2"></i>User Management
+        </a>
+        <a href="{{ url_for('admin_status_monitor') }}" class="sidebar-link">
+          <i class="fas fa-filter me-2"></i>Admin Status Monitor
+        </a>
+        <a href="{{ url_for('archived_forms') }}" class="sidebar-link active">
+          <i class="fas fa-box-archive me-2"></i>Archived Forms
+        </a>
+
+        <div class="dropdown w-100">
+          <a class="dropdown-toggle" href="#" data-bs-toggle="collapse" data-bs-target="#analyticsForms">
+            <i class="fas fa-chart-bar me-2"></i>Analytics Forms
+          </a>
+          <div class="collapse" id="analyticsForms">
+            <a class="dropdown-item" href="{{ url_for('super_admin_form_a') }}">Form A</a>
+            <a class="dropdown-item" href="{{ url_for('super_admin_form_b') }}">Form B</a>
+            <a class="dropdown-item" href="{{ url_for('super_admin_form_c') }}">Form C</a>
+          </div>
+        </div>
+
+        <div class="dropdown w-100">
+          <a class="dropdown-toggle" href="#" data-bs-toggle="collapse" data-bs-target="#monitoringForms">
+            <i class="fas fa-clipboard me-2"></i>Monitoring Forms
+          </a>
+          <div class="collapse" id="monitoringForms">
+            <a class="dropdown-item" href="{{ url_for('super_admin_monitoring_page_a') }}">Form A</a>
+            <a class="dropdown-item" href="{{ url_for('super_admin_monitoring_page_b') }}">Form B</a>
+            <a class="dropdown-item" href="{{ url_for('super_admin_monitoring_page_c') }}">Form C</a>
+          </div>
+        </div>
+
+        <a href="{{url_for('rec_dashboard')}}" class="sidebar-link">
+          <i class="fas fa-users me-2"></i>Rec Team Dashboard
+        </a>
+        <a href="{{url_for('logout')}}" class="sidebar-link">
+          <i class="fas fa-sign-out-alt me-2"></i>Logout
+        </a>
+      </nav>
+    </aside>
+
+    <main class="form-wrapper">
+      <div class="container mt-4">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+          <div>
+            <h3 class="mb-1">{{ form_type }} Archived Record</h3>
+            <p class="text-muted mb-0">Read-only snapshot of the archived submission, including saved answers and timestamps.</p>
+          </div>
+          <a href="{{ url_for('archived_forms') }}" class="btn btn-outline-secondary">Back to Archived Forms</a>
+        </div>
+
+        {% with flashed_messages = get_flashed_messages(with_categories=true) %}
+          {% if flashed_messages %}
+            {% for category, message in flashed_messages %}
+              <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <div class="card border-0 shadow-sm mb-4">
+          <div class="card-body">
+            <h5 class="mb-3">Archive Metadata</h5>
+            <div class="meta-grid">
+              <div class="meta-card">
+                <div class="meta-label">Archive ID</div>
+                <div class="meta-value">{{ archive.archive_id }}</div>
+              </div>
+              <div class="meta-card">
+                <div class="meta-label">Original Form ID</div>
+                <div class="meta-value">{{ archive.original_form_id }}</div>
+              </div>
+              <div class="meta-card">
+                <div class="meta-label">Student Name</div>
+                <div class="meta-value">{{ archive.student_name or 'Not captured' }}</div>
+              </div>
+              <div class="meta-card">
+                <div class="meta-label">Student Email</div>
+                <div class="meta-value">{{ archive.student_email or 'Not captured' }}</div>
+              </div>
+              <div class="meta-card">
+                <div class="meta-label">Original Created At</div>
+                <div class="meta-value">
+                  {% if archive.original_created_at %}
+                    {{ archive.original_created_at.strftime('%Y-%m-%d %H:%M') }}
+                  {% else %}
+                    Not captured
+                  {% endif %}
+                </div>
+              </div>
+              <div class="meta-card">
+                <div class="meta-label">Original Submitted At</div>
+                <div class="meta-value">
+                  {% if archive.original_submitted_at %}
+                    {{ archive.original_submitted_at.strftime('%Y-%m-%d %H:%M') }}
+                  {% else %}
+                    Draft / Not submitted
+                  {% endif %}
+                </div>
+              </div>
+              <div class="meta-card">
+                <div class="meta-label">Archived At</div>
+                <div class="meta-value">
+                  {% if archive.archived_at %}
+                    {{ archive.archived_at.strftime('%Y-%m-%d %H:%M') }}
+                  {% else %}
+                    Not captured
+                  {% endif %}
+                </div>
+              </div>
+              <div class="meta-card">
+                <div class="meta-label">Archived By User ID</div>
+                <div class="meta-value">{{ archive.archived_by_user_id }}</div>
+              </div>
+              <div class="meta-card">
+                <div class="meta-label">Archive Reason</div>
+                <div class="meta-value">{{ archive.archive_reason or 'Not captured' }}</div>
+              </div>
+              <div class="meta-card">
+                <div class="meta-label">Saved Fields</div>
+                <div class="meta-value">{{ form_fields|length }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card border-0 shadow-sm">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h5 class="mb-0">Submitted Answers</h5>
+              <span class="text-muted small">Every archived field saved in the snapshot is shown below.</span>
+            </div>
+
+            {% if form_fields %}
+              <div class="table-responsive">
+                <table class="table table-bordered table-striped align-middle answer-table mb-0">
+                  <thead class="table-dark">
+                    <tr>
+                      <th>Field</th>
+                      <th>Stored Value</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for field in form_fields %}
+                    <tr>
+                      <th>{{ field.label }}</th>
+                      <td>
+                        {% if field.display_value %}
+                          <pre class="answer-value">{{ field.display_value }}</pre>
+                        {% else %}
+                          <span class="text-muted">No value saved</span>
+                        {% endif %}
+                      </td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            {% else %}
+              <div class="alert alert-info mb-0">No archived field data was found for this record.</div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://kit.fontawesome.com/a2d9d6c6b2.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

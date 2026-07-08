@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Form B – Researcher's Details | JBS Ethics</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/form_a.css" />
+  <!-- <link rel="stylesheet" href="{{ url_for('static', filename='css/form_a.css') }}"> -->
+
+  <style>
+        .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.6);
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    .modal-content {
+      background: #fff;
+      padding: 2rem;
+      border-radius: 8px;
+      text-align: center;
+      width: 400px;
+      max-width: 90%;
+      box-shadow: 0 0 10px rgba(0,0,0,0.25);
+    }
+
+    .modal-content h3 {
+      margin-bottom: 1rem;
+      color: #2E1A46;
+    }
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #print-section, #print-section * {
+    visibility: visible;
+  }
+  #print-section {
+    position: absolute;
+    left: 0;
+    top: 0;
+  }
+}
+    .modal-content button {
+      margin-top: 1rem;
+      background-color: #2E1A46;
+      color: #fff;
+      padding: 0.6rem 1.2rem;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    span{
+        font-weight: normal;
+        font-size:14px;
+    }
+</style>
+</head>
+
+<body>
+
+  <!-- Navbar -->
+  <header class="navbar">
+    <div class="nav-content">
+      <img src="{{ url_for('static',filename='img/image.png')}}" alt="UJ JBS Logo" class="logo uj">
+      <span class="nav-title">Form B – Researcher's Details</span>
+
+      <!-- Logout -->
+      <div style="text-align: right;">
+        <a href="{{url_for('logout')}}" class="btn-logout">Logout</a>
+      </div>
+    </div>
+  </header>
+<div  id="print-section">
+    <!-- Main Content -->
+    <main class="main-content">
+      <h2>Section 1: Researcher's Details</h2>
+      <label>Applicant Name <br>
+        <span class="form-answer">{{formB.applicant_name}}</span>
+    </label>
+      <label>Student/Staff Number <br>
+        <span class="form-answer">{{formB.student_number}}</span></label>
+      <label>Institution <br>
+        <span class="form-answer">{{formB.institution}}</span></label>
+      <label>UJ Department and School <br>
+        <span class="form-answer">{{formB.department}}</span></label>
+      <label>Degree Registered For <br>
+        <span class="form-answer">{{formB.degree}}</span></label>
+      <label>Title/Working Title of Project or Study <br>
+        <span class="form-answer">{{formB.study_title}}</span></label>
+      <label>Mobile Number <br>
+        <span class="form-answer">{{formB.mobile}}</span></label>
+      <label>Email Address <br>
+        <span class="form-answer">{{formB.email}}</span></label>
+      <label>Supervisor(s) <br>
+        <span class="form-answer">{{formB.supervisor}}</span></label>
+      <label>Supervisor Email Address <br>
+        <span class="form-answer">{{formB.supervisor_email}}</span></label>
+   
+
+    </form>
+  </main>
+
+  <!-- Section 2 -->
+
+  
+    <!-- Main Content -->
+    <main class="main-content">
+
+    <form action="b-section3-supervisor.html" method="GET">
+      <h2>Section 2: Research Project and Data Information</h2>
+
+      <label>2.1 Provide short description of the research project (±200 words)
+        <br>
+        <span class="form-answer">{{formB.project_description}}</span>
+      </label>
+  
+      <label>2.2 What is the nature of the data? <span class="info-icon" title="Archival sources, statistical, reports, etc">ℹ️</span></label>
+    <span class="form-answer">{{formB.data_nature}}</span>
+
+      <label>2.3 What is the origin/source of the research data?
+        <br><span class="form-answer">{{formB.data_origin}}</span>
+      </label>
+ 
+
+      <div class="question-block">
+        <label>2.4 Are the sources of the research data in the public domain?
+            <br><span class="form-answer">{{'Yes' if formB.data_public else 'No'}}</span>
+        </label>
+        
+      </div>
+
+      <label>2.4.1 Provide explanation:
+        <br><span class="form-answer">Comment: {{formB.public_evidence or 'Not Applicable'}}</span>
+      </label>
+   
+
+      <label>2.4.2 If the data is in the public domain, what are the access conditions?
+        <br><span class="form-answer">Comment: {{formB.access_conditions or 'Not Applicable'}}</span>
+      </label>
+    
+
+      <div class="question-block">
+        <label>2.5 Does the database contain personal information/identifiers?</label>
+            <p>This information relates to the anonymity of data/confidentiality of the data</p>
+            <span class="form-answer">{{'Yes' if formB.personal_info else 'No'}}</span>
+            <br><span class="form-answer">Comment: {{formB.personal_info_comment}}</span>
+      
+      </div>
+
+      <div class="question-block">
+        <label>2.6 If the database does contain personal information, do you have evidence that the data to be provided to you have been anonymized?
+            <br><span class="form-answer">{{formB.data_anonymized}}</span>
+        </label>
+       
+      </div>
+
+      <label>2.6.1 Comment / Justification:<br>
+    <span class="form-answer">Comment: {{formB.anonymization_comment}}</span></label>
+
+     
+      <div class="question-block">
+        <label>2.7 In the case of a private database, does it contain information on private firms/organisations for which permission is required? 
+            <br><span class="form-answer">{{'Yes' if formB.private_permission else 'No'}}</span>
+        </label>
+      </div>
+
+      <label>2.7.1 Provide permission details:
+        <br><span class="form-answer">Comment: {{formB.permission_details or 'Not Applicable'}}</span>
+      </label>
+     
+
+      <div class="question-block">
+        <label>2.8 Will data shortcomings/incompleteness be reported?
+            <br><span class="form-answer">{{'Yes' if formB.shortcomings_reported else 'No'}}</span>
+        </label>       
+      </div>
+
+      <label>2.9 Explain how data limitations will be reported OR Why they will not be reported?
+        <br><span class="form-answer">{{formB.limitations_reporting}}</span>
+      </label>
+    
+
+      <div class="question-block">
+        <label>2.10 Are the research methodology and research design in line with the answers of the preceding questions?
+            <br><span class="form-answer">{{'Yes' if formB.methodology_alignment else 'No'}}</span>
+        </label>
+       
+      </div>
+
+      <label>2.11 How will original owners of the data be acknowledged?
+        <br><span class="form-answer">{{formB.data_acknowledgment}}</span>
+      </label>
+    
+    </form>
+  </main>
+
+  <!-- Section 3 -->
+
+   <!-- Main Content -->
+  <main class="main-content">
+    <form id="formBFinal">
+      <h2>Section 3: Ethical Considerations</h2>
+
+      <div class="question-block">
+        <label>3.1 Was ethical clearance granted for the original data gathering phase?
+            <br><span class="form-answer">{{formB.original_clearance}}</span>
+        </label>
+        
+      </div>
+
+      <div class="question-block">
+        <label>3.2 Did participants in the original study grant permission for future use of the data?
+            <br><span class="form-answer">{{formB.participant_permission}}</span>
+        </label>
+       
+      </div>
+
+      <label>3.3 If the data is not in the public domain, explain how it will be safely stored and destroyed:
+        <br><span class="form-answer">{{formB.data_safekeeping}}</span>
+      </label>
+    </main>
+
+    <main class="main-content">
+ 
+      <h2>Section 4: Risk Assessment</h2>
+
+      <div class="question-block">
+        <label>4.1 The study presents:
+            <br><span class="form-answer">{{formB.risk_level}}</span>
+        </label>
+        
+      </div>
+
+      <label>4.2 Comments/Justification:
+        <br><span class="form-answer">{{formB.risk_comments}}</span>
+      </label>
+      </main>
+
+      <main class="main-content">
+      <h2>Section 5: Declaration</h2>
+
+
+      <p class="form-note" style="text-align: justify;">
+        I, <strong>{{formB.declaration_name}}</strong>
+        (full name of main researcher), declare that I have read the Policy on Research Ethics of UJ and the contents of this document are a true and accurate reflection of the methodological and ethical implications of my proposed study. I shall carry out the study in strict accordance with the approved proposal and the Policy on Research Ethics of UJ. I further undertake to inform the relevant research ethics review committee of JBS in writing of any adverse events that occur arising from the research project. I shall also notify the relevant JBS research ethics review committee if any changes to the study are proposed. I shall deal with the data used in an ethical manner. I shall assimilate all data used for this research project in accordance with ethical guidelines outlined in my proposal. Paragraph 5 of the Policy on Research Ethics places huge emphasis on the integrity of the research and I shall ensure that I conduct the research with the highest integrity taking into account UJ’s Policy for Copyright Infringement and Plagiarism. Data that was gathered retrospectively will not be used. I acknowledge that as main researcher it is my responsibility to ensure that the co-researchers to this research project adhere to the ethics principles set out in the UJ Policy on Research Ethics. 
+      </p>
+
+      <label>Full Name
+        <br><strong>{{formB.full_name}}</strong>
+      </label>
+
+      <label>Date
+        <br><span class="form-answer">{{formB.declaration_date}}</span>
+      </label>
+
+      <hr>
+
+      <div id="supervisorDeclaration" style="display: none;">
+    
+      <h3>SUPERVISOR'S SECTION</h3>
+      <p><strong>Supervisor's Review and Declaration</strong></p>
+    
+      <div class="form-group">
+        <label for="supervisor_comments">Supervisor Comments:</label>
+        <textarea id="supervisor_comments" name="supervisor_comments" rows="4"
+          placeholder="Provide feedback or concerns regarding the student's submission..."></textarea>
+      </div>
+    
+      <p><strong>Declaration by Supervisor (where applicable):</strong></p>
+      <p>
+        To the best of my knowledge, the student has addressed all the aspects that relate to ethical clearance for the
+        study and is complying with the requirements as set forth in the Policy on Research Ethics of UJ and the Charter and
+        standard operating procedure of the Johannesburg Business Schools’ Research Ethics Committee.
+      </p>
+    
+      <div class="form-group">
+        <label for="supervisor_signature">Signature of Supervisor</label>
+        <input type="text" name="supervisor_signature" id="supervisor_signature"
+          placeholder="Type your full name as signature" required>
+      </div>
+    
+      <div class="form-group">
+        <label for="supervisor_date">Date</label>
+        <input type="date" name="supervisor_date" id="supervisor_date" required>
+      </div>
+    
+    </div>
+
+      </form>
+  </main>
+
+
+</div>
+<!-- Confirmation Modal -->
+<div id="confirmationModal" class="modal-overlay">
+  <div class="modal-content">
+    <h3>Form B Submitted Successfully!</h3>
+    <p>Your application has been received and forwarded to your supervisor.</p>
+    <button onclick="window.location.href='dashboard.html'">Go to Dashboard</button>
+  </div>
+</div>
+
+
+<footer class="footer">
+   
+</footer>
+
+  
+<!-- Script -->
+<script>
+    window.addEventListener('load', () => {
+  setTimeout(() => {
+    window.print();
+  }, 500);
+});
+  document.getElementById('formBFinal').addEventListener('submit', function (e) {
+    e.preventDefault();
+    document.getElementById('confirmationModal').style.display = 'flex';
+  });
+
+    const supervisorDeclaration = document.getElementById("supervisorDeclaration");
+  
+  
+  // Simulate submission
+  form.addEventListener("submit", function (e) {
+    e.preventDefault();
+    modal.style.display = "flex";
+  });
+
+  closeModalBtn.addEventListener("click", () => {
+    window.location.href = "supervisor-dashboard.html";
+  });
+  window.onload = function() {
+    window.print();
+  };
+</script>
+
+</body>
+</html>

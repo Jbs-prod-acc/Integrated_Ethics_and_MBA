@@ -1,5 +1,5 @@
 import json
-from models import db_session, UserActivityLog
+from app.models import db_session, UserActivityLog
 from flask import request, session
 from datetime import datetime
 

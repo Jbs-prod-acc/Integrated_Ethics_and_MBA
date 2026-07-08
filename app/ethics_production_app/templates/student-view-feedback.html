@@ -65,7 +65,7 @@
 
           <div class="form-group">
             <label for="supervisor_name">Supervisor Name:</label>
-            <strong id="supervisor_name">{{view_form.supervisor}}</strong>
+            <strong id="supervisor_name">{% if view_form.supervisor_name %}{{view_form.supervisor_name}}{% else %}{{view_form.supervisor}}{% endif %}</strong>
           </div>
 
           <div class="form-group">

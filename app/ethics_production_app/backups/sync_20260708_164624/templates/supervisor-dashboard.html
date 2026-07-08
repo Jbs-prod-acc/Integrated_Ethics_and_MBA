@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Supervisor Dashboard | JBS Ethics</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/supervisor.css') }}">
+</head>
+<body>
+
+<div class="admin-wrapper">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <img src="{{ url_for('static',filename='img/image.png')}}" alt="UJ JBS Logo" class="logo uj">
+    </div>
+    <nav class="sidebar-nav">
+      <a href="{{url_for('supervisor_dashboard')}}" class="sidebar-link active">
+        <i class="fas fa-home"></i> Dashboard
+      </a>
+      <a href="{{url_for('supervisor_student')}}" class="sidebar-link">
+        <i class="fas fa-users"></i> My Students
+      </a>
+      {% if supervisor_role=='REVIEWER'%}
+      <a href="{{url_for('review_dashboard')}}" class="sidebar-link">
+        <i class="fas fa-users"></i> Reviewer Dashboard
+      </a>
+      {% endif %}
+      <a href="{{url_for('logout')}}" class="sidebar-link">
+        <i class="fas fa-sign-out-alt"></i> Logout
+      </a>
+    </nav>
+  </aside>
+
+  <!-- Main -->
+  <main class="admin-main">
+    <header class="topbar">
+      <h2>Supervisor</h2>
+      <p>
+        Please review the student submissions below. You can click on the form name to view the details and take necessary actions.
+      </p>
+    </header>
+    <br>
+<div class="mb-3">
+  <label for="formAStatusFilter" class="form-label">Filter Forms by Status:</label>
+  <select id="formAStatusFilter" class="form-select">
+    <option value="all">All</option>
+    <option value="awaiting-review">Awaiting Review</option>
+    <option value="submitted-admin">Submitted to Ethics Admin</option>
+    <option value="certificate-issued">Certificate issued</option>
+    
+  </select>
+</div>
+    <section class="admin-content">
+
+      {% if supervisor_formA or supervisor_formB or supervisor_formC%}
+      <table class="status-table" style="margin-top: 0rem;">
+        <thead>
+          <tr>
+            <th>Form Name</th>
+            <th>Name</th>
+            <th>Student</th>
+            <th>Status</th>
+            <th>Reason</th>
+            <th>Submitted On</th>
+            <th>Documents</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% if supervisor_formA %}
+          {% for forma,req,forma_count in supervisor_formA %}
+          
+          {% set row_status = get_supervisor_row_status(forma) %}
+          
+          <tr data-status="{{ row_status }}">
+            <td>Form A</td>
+            <td>{{forma.applicant_name if forma.applicant_name else (forma.declaration_name if forma.declaration_name else (forma.user.full_name if forma.user else 'Unknown'))}}</td>
+            <td>{{forma.student_number}}</td>
+            <td><span class="badge status-pending">
+           
+           {% if (forma.rec_status=='Approved' or forma.rec_status=='Approved with Minor Changes') and forma.certificate_issued %}
+                {% if forma.certificate_heading %}
+                <a href="{{ url_for('edited_certificate', id=forma.form_id) }}">View Certificate</a>
+                {% else %}
+                <a href="{{ url_for('view_certificate', id=forma.form_id) }}">View Certificate</a>
+                {% endif %}
+              <br>
+
+              {% elif forma.certificate_issued and forma.certificate_received%}
+              {% if forma.certificate_heading %}
+              <a href="{{ url_for('edited_certificate', id=forma.form_id) }}">View Certificate</a>
+              {% else %}
+              <a href="{{ url_for('view_certificate', id=forma.form_id) }}">View Certificate</a>
+              {% endif %}
+              {% else %}
+              {{ get_supervisor_dashboard_status(forma) }}
+              {% endif %}
+              {% set review_comment = '' %}
+              {% set review_comment1 = '' %}
+                {% if forma.form_review_comment in ['Approved','Approved with Minor Changes', 'Resubmission Required'] %}
+                  {% set review_comment = forma.form_review_comment %}
+                  {% endif %}
+                {% if forma.form_review_comment1 in ['Approved','Approved with Minor Changes', 'Resubmission Required'] %}
+                  {% set review_comment1 = forma.form_review_comment1 %}
+                  {% endif %}
+                {# 🖨️ Display the result if it was matched #}
+                  {% if review_comment %}
+                    <p>Review Status 1: {{ review_comment }}</p>
+                    {% endif %}
+                    {% if review_comment1%}
+                    <p>Review Status 2: {{ review_comment1 }}</p>
+                  {% endif %}
+            </span>
+            <br>
+            {% if forma_count > 1 %}
+            <br>
+              <a href="{{url_for('supervisor_dashboard_previous_forms',user_id=forma.user_id)}}" class="view-btn" >Review Previous Forms </a>
+            {% endif %}
+          </td>
+            <td>
+              {% if forma.supervisor_feedback and not forma.ethics_commettee_comments%}
+              <!-- <strong>Supervisors comments</strong> -->
+
+              <a href="{{url_for('supervisor_view_feedback',id=forma.form_id)}}" class="btn btn-success">View Feedback</a>
+              <br>
+              {% elif forma.form_supervisor_status %}
+              {{ forma.form_supervisor_status }}
+              {% elif forma.ethics_commettee_comments %}
+              <strong>Ethics Admin comments</strong>
+              <a href="{{url_for('supervisor_view_feedback',id=forma.form_id)}}" class="btn btn-success">View Feedback</a>
+              <br>
+              {% endif %}
+            </td>
+            <td>
+              {% if forma.submitted_at %}
+                {{forma.submitted_at.strftime('%d/%m/%Y %H:%M')}}
+              {% elif forma.declaration_date %}
+              {{forma.declaration_date.strftime('%d/%m/%Y %H:%M')}}
+              {% endif %}
+            </td>
+            <td>
+              {% if req %}
+              <ul class="doc-link">
+                  {% if req.proposal_path %}
+                      <li><a href="{{ url_for('view_requirement_file', req_id=req.id, field='proposal_path') }}" target="_blank">Research Proposal</a></li>
+                  {% endif %}
+
+                  {% if req.permission_letter %}
+                    <li><a href="{{ url_for('view_requirement_file', req_id=req.id, field='permission_letter') }}" target="_blank">Permission Letter(s)</a></li>
+                  {% endif %}
+                  {% if req.ethics_evidence_path %}
+                      <li><a href="{{ url_for('view_requirement_file', req_id=req.id, field='ethics_evidence_path') }}" target="_blank">Ethical Compliance</a></li>
+                  {% endif %}
+
+                  {% if req.prior_clearance_path %}
+                      <li><a href="{{ url_for('view_requirement_file', req_id=req.id, field='prior_clearance_path') }}" target="_blank">Ethics Clearance</a></li>
+                  {% endif %}
+                  {% if req.research_tools_path %}
+                      <li><a href="{{ url_for('view_requirement_file', req_id=req.id, field='research_tools_path') }}" target="_blank">Survey/Interview/Focus Group Questions</a></li>
+                  {% endif %}
+                  {% if req.impact_assessment_path %}
+                      <li><a href="{{ url_for('view_requirement_file', req_id=req.id, field='impact_assessment_path') }}" target="_blank">Personal Assessment Impact Form</a></li>
+                  {% endif %}
+                  {% if req.prior_clearance %}
+                  <li><a href="{{url_for('view_requirement_file', req_id=req.id, field='prior_clearance')}}">Prior Clearance</a></li>
+                  {% endif %}
+                  {% if req.prior_clearance1 %}
+                  <li><a href="{{url_for('view_requirement_file', req_id=req.id, field='prior_clearance1')}}">POPIA Letter</a></li>
+                  {% endif %}
+                  {% if req.participation_info_sheet%}
+                  <li><a href="{{url_for('view_requirement_file', req_id=req.id, field='participation_info_sheet')}}">Participation Info Sheet</a></li>
+                  {% endif %}
+                  {% if req.pending_note%}
+                  <li><a href="{{url_for('view_requirement_file', req_id=req.id, field='pending_note')}}">Pending Note</a></li>
+                  {% endif %}
+              </ul>
+              {% else %}
+              <p class="text-muted"><em>No documents uploaded</em></p>
+              {% endif %}
+            </td>
+            <td>
+              <a href="{{url_for('form_a_supervisor',form_id=forma.form_id)}}" class="view-btn">Review</a><br>            </td>
+          </tr>
+          {% endfor %}
+          {% endif%}
+          
+          {% if supervisor_formB %}
+          {% for formb,req,formb_count in supervisor_formB %}
+          <br>
+          
+          {% set row_status = get_supervisor_row_status(formb) %}
+          
+          <tr data-status="{{ row_status }}">
+            <td>Form B</td>
+            <td>{{formb.applicant_name if formb.applicant_name else (formb.declaration_name if formb.declaration_name else (formb.user.full_name if formb.user else 'Unknown'))}}</td>
+            
+            <td>{{formb.student_number}}</td>
+            <td><span class="badge status-pending">
+              {% if formb.rec_status=='Approved' or formb.rec_status=='Approved with Minor Changes' and formb.certificate_issued and formb.certificate_received%}
+                {% if formb.certificate_heading %}
+                <a href="{{ url_for('edited_certificate', id=formb.form_id) }}">View Certificate</a>
+                {% else %}
+                <a href="{{ url_for('view_certificate', id=formb.form_id) }}">View Certificate</a>
+                {% endif %}
+              <br>
+              {% elif formb.certificate_issued and formb.certificate_received%}
+              {% if formb.certificate_heading %}
+              <a href="{{ url_for('edited_certificate', id=formb.form_id) }}">View Certificate</a>
+              {% else %}
+              <a href="{{ url_for('view_certificate', id=formb.form_id) }}">View Certificate</a>
+              {% endif %}
+              {% else %}
+              {{ get_supervisor_dashboard_status(formb) }}
+              {% endif %}
+              {% set review_comment = '' %}
+              {% set review_comment1 = '' %}
+                {% if formb.form_review_comment in ['Approved','Approved with Minor Changes', 'Resubmission Required'] %}
+                  {% set review_comment = formb.form_review_comment %}
+                  {% endif %}
+                {% if formb.form_review_comment1 in ['Approved','Approved with Minor Changes', 'Resubmission Required'] %}
+                  {% set review_comment1 = formb.form_review_comment1 %}
+                  {% endif %}
+                {# 🖨️ Display the result if it was matched #}
+                  {% if review_comment %}
+                    <p>Review Status 1: {{ review_comment }}</p>
+                    {% endif %}
+                    {% if review_comment1%}
+                    <p>Review Status 2: {{ review_comment1 }}</p>
+                  {% endif %}
+            </span>
+          <br>
+            {% if formb_count > 1 %}
+            <br>
+              <a href="{{url_for('supervisor_dashboard_previous_forms',user_id=formb.user_id)}}" class="view-btn" >Review Previous Forms </a>
+            {% endif %}
+          </td>
+            <td>
+              {% if formb.supervisor_feedback and not formb.ethics_commettee_comments%}
+              <!-- <strong>Supervisors comments</strong> -->
+              <a href="{{url_for('supervisor_view_feedback',id=formb.form_id)}}" class="btn btn-success">View Feedback</a>
+              <br>
+              {% elif formb.form_supervisor_status %}
+              {{ formb.form_supervisor_status }}
+              {% elif formb.ethics_commettee_comments %}
+              <strong>Ethics Admin comments</strong>
+              <a href="{{url_for('supervisor_view_feedback',id=formb.form_id)}}" class="btn btn-success">View Feedback</a>
+              <br>
+              
+              {% endif %}
+            </td>
+            <td>
+              {% if formb.submitted_at %}
+                {{formb.submitted_at.strftime('%d/%m/%Y %H:%M')}}
+              {% elif formb.declaration_date %}
+              {{formb.declaration_date.strftime('%d/%m/%Y %H:%M')}}
+              {% endif %}
+            </td>
+            <td>
+              {% if req %}
+              <ul class="doc-link">
+                  {% if req.proposal_path %}
+                      <li><a href="{{ url_for('view_requirement_file', req_id=req.id, field='proposal_path') }}" target="_blank">Proposal</a></li>
+                  {% endif %}
+
+                  {% if req.permission_letter %}
+                    <li><a href="{{ url_for('view_requirement_file', req_id=req.id, field='permission_letter') }}" target="_blank">Permission Letter(s)</a></li>
+                  {% endif %}
+                  
+                  {% if req.ethics_evidence_path %}
+                      <li><a href="{{ url_for('view_requirement_file', req_id=req.id, field='ethics_evidence_path') }}" target="_blank">Ethical Compliance</a></li>
+                  {% endif %}
+                  {% if req.prior_clearance_path %}
+                      <li><a href="{{ url_for('view_requirement_file', req_id=req.id, field='prior_clearance_path') }}" target="_blank">Ethical Clearance</a></li>
+                  {% endif %}
+                  {% if req.prior_clearance1 %}
+                  <li><a href="{{url_for('view_requirement_file', req_id=req.id, field='prior_clearance1')}}">POPIA Letter</a></li>
+                  {% endif %}
+                  {% if req.pending_note%}
+                  <li><a href="{{url_for('view_requirement_file', req_id=req.id, field='pending_note')}}">Pending Note</a></li>
+                  {% endif %}
+              </ul>
+              {% else %}
+              <p class="text-muted"><em>No documents uploaded</em></p>
+              {% endif %}
+            </td>
+            <td>
+              <a href="{{url_for('form_b_supervisor',form_id=formb.form_id)}}" class="view-btn">Review</a><br>            </td>
+          </tr>
+          {% endfor %}
+          {% endif %}
+          <br>
+          {% if supervisor_formC%}
+          {% for formc,req,formc_count in supervisor_formC %}
+          <br>
+          
+          {% set row_status = get_supervisor_row_status(formc) %}
+         
+          <tr data-status="{{ row_status }}">
+            <td>Form C</td>
+            <td>{{formc.applicant_name if formc.applicant_name else (formc.declaration_name if formc.declaration_name else (formc.user.full_name if formc.user else 'Unknown'))}}</td>
+            <td>{{formc.student_number}}</td>
+            <td><span class="badge status-pending">
+                {% if formc.rec_status=='Approved' or formc.rec_status=='Approved with Minor Changes' and formc.certificate_issued and formc.certificate_received%}
+                {% if formc.certificate_heading %}
+                <a href="{{ url_for('edited_certificate', id=formc.form_id) }}">View Certificate</a>
+                {% else %}
+                <a href="{{ url_for('view_certificate', id=formc.form_id) }}">View Certificate</a>
+                {% endif %}
+              <br>
+              {% elif formc.certificate_issued and formc.certificate_received %}
+              {% if formc.certificate_heading %}
+              <a href="{{ url_for('edited_certificate', id=formc.form_id) }}">View Certificate</a>
+              {% else %}
+              <a href="{{ url_for('view_certificate', id=formc.form_id) }}">View Certificate</a>
+              {% endif %}
+              {% else %}
+              {{ get_supervisor_dashboard_status(formc) }}
+              {% endif %}
+              {% set review_comment = '' %}
+              {% set review_comment1 = '' %}
+                {% if formc.form_review_comment in ['Approved','Approved with Minor Changes', 'Resubmission Required'] %}
+                  {% set review_comment = formc.form_review_comment %}
+                  {% endif %}
+                {% if formc.form_review_comment1 in ['Approved','Approved with Minor Changes', 'Resubmission Required'] %}
+                  {% set review_comment1 = formc.form_review_comment1 %}
+                  {% endif %}
+                {# 🖨️ Display the result if it was matched #}
+                  {% if review_comment %}
+                    <p>Review Status 1: {{ review_comment }}</p>
+                    {% endif %}
+                    {% if review_comment1%}
+                    <p>Review Status 2: {{ review_comment1 }}</p>
+                  {% endif %}
+              </span>
+              <br>
+              {% if formc_count > 1 %}
+              <br>
+                <a href="{{url_for('supervisor_dashboard_previous_forms',user_id=formc.user_id)}}" class="view-btn" >Review Previous Forms </a>
+              {% endif %}
+              </td>
+              <td>
+              {% if formc.supervisor_feedback and not formc.ethics_commettee_comments%}
+            
+              <!-- <strong>Supervisors comments</strong> -->
+              <a href="{{url_for('supervisor_view_feedback',id=formc.form_id)}}" class="btn btn-success">View Feedback</a>
+              <br>
+              {% elif formc.form_supervisor_status %}
+              {{ formc.form_supervisor_status }}
+              {% elif formc.ethics_commettee_comments %}
+              <strong>Ethics Admin comments</strong>
+              <a href="{{url_for('supervisor_view_feedback',id=formc.form_id)}}" class="btn btn-success">View Feedback</a>
+              <br>
+              {% endif %}
+            </td>
+            <td>
+              {% if formc.submission_date %}
+                {{formc.submission_date.strftime('%d/%m/%Y %H:%M')}}
+              {% endif %}
+            </td>
+            <td>
+              {% if req and req.files %}
+              <ul class="doc-link">
+                  <li><a href="{{ url_for('view_requirement_file', req_id=req.id, field='files') }}" target="_blank">Proposal</a></li>
+              </ul>
+              {% else %}
+              <p class="text-muted"><em>No documents uploaded</em></p>
+              {% endif %}
+            </td>            <td>
+              <a href="{{url_for('form_c_supervisor',form_id=formc.form_id)}}" class="view-btn">Review</a>
+             
+            </td>
+          </tr>
+          {% endfor %}
+         
+          {% endif %}
+        </tbody>
+      </table>
+      {% else %}
+      No submissions 
+      {% endif %}
+
+    </section>
+
+  </main>
+
+</div>
+
+    <!-- <footer class="footer">
+      <p>&copy; 2025 Johannesburg Business School | University of Johannesburg</p>
+    </footer> -->
+<script>
+  document.getElementById("formAStatusFilter").addEventListener("change", function () {
+  let selected = this.value;
+  let rows = document.querySelectorAll("table.status-table tbody tr");
+
+  rows.forEach(row => {
+    let status = row.getAttribute("data-status");
+    if (selected === "all" || status === selected) {
+      row.style.display = "";
+    } else {
+      row.style.display = "none";
+    }
+  });
+});
+</script>
+</body>
+</html>

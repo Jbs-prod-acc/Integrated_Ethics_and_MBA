@@ -42,12 +42,11 @@
   <input id="specialisation" type="text" name="specialisation" placeholder="Specialisation" required>
   <select name="role" required>
   <option value="" disabled selected hidden>Choose Role</option>
-  <option value="ADMIN" >ADMIN</option>
-  <option value="DEAN" >DEAN</option>
-  <option value="REVIEWER" >REVIEWER</option>
-  <option value="REC" >REC</option>
-  <option value="SUPERVISOR" >SUPERVISOR</option>
-  
+  {% if 'SUPER_ADMIN' in assignable_roles %}<option value="SUPER_ADMIN">SUPER ADMIN</option>{% endif %}
+  {% if 'ADMIN' in assignable_roles %}<option value="ADMIN">ADMIN</option>{% endif %}
+  {% if 'REC' in assignable_roles %}<option value="REC">REC</option>{% endif %}
+  {% if 'REVIEWER' in assignable_roles %}<option value="REVIEWER">REVIEWER</option>{% endif %}
+  {% if 'SUPERVISOR' in assignable_roles %}<option value="SUPERVISOR">SUPERVISOR</option>{% endif %}
 </select>
 
   <button type="submit">Register</button>

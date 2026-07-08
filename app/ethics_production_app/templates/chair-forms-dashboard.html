@@ -205,8 +205,8 @@
                 form.submitted_at%}{{form.submitted_at.strftime('%d/%m/%Y')}}{% elif form.created_at
                 %}{{form.created_at.strftime('%d/%m/%Y')}}{% endif%}</td>
               <td>{% if form.supervisor_date %}{{form.supervisor_date.strftime('%d/%m/%Y')}}{% endif %}</td>
-              <td>{% if not awaiting_admin_review and form.ethics_supervisor_signature_date
-                %}{{form.ethics_supervisor_signature_date.strftime('%d/%m/%Y')}}{% elif not awaiting_admin_review and
+              <td>{% if not awaiting_admin_review and form.ethics_signature_date
+                %}{{form.ethics_signature_date.strftime('%d/%m/%Y')}}{% elif not awaiting_admin_review and
                 form.review_signature_date %}{{form.review_signature_date.strftime('%d/%m/%Y')}}{% endif %}</td>
               <td>
                 {% if form.review_date %}{{form.review_supervisor_signature}} : {{form.review_date}}{% endif %}
@@ -221,7 +221,7 @@
                 {% if form.form_review_comment1 in ['Approved with Minor Changes', 'Resubmission Required'] %}
                 {% set review_comment1 = form.form_review_comment1 %}
                 {% endif %}
-                {# ðŸ–¨ï¸ Display the result if it was matched #}
+                {# 🖨️ Display the result if it was matched #}
                 {% if review_comment %}
                 <p class="btn btn-secondary text-white">Review Status: {{ review_comment }}</p>
                 {% endif %}
@@ -286,7 +286,7 @@
                   {% set review_comment = form.form_review_comment %}
                   {% elif form.form_review_comment1 in ['Approved with Minor Changes', 'Resubmission Required'] %}
                   {% set review_comment = form.form_review_comment1 %}
-                  {# ðŸ–¨ï¸ Display the result if it was matched #}
+                  {# 🖨️ Display the result if it was matched #}
                   {% if review_comment %}
                   <p>Review Status: {{ review_comment }}</p>
                   {% endif %}
@@ -330,7 +330,7 @@
                 </button>
 
                 {% elif form.certificate_received %}
-                ðŸŽ“ Certificate was issued
+                🎓 Certificate was issued
                 <br>
                 <a href="{{url_for('ethics_form_pdf',form_id=form.form_id,form_type=form_name)}}"
                   class="btn btn-sm btn-success text-white">View Form</a>

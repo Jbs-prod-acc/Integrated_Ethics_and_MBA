@@ -181,7 +181,7 @@ def resubmit_formb(id):
             flash("You cannot resubmit Form B until at least one reviewer is assigned.", "danger")
             return redirect(url_for("student_dashboard"))
         # Mark as resubmitted, update timestamp, status, etc.
-        form.ethics_supervisor_form_status = "Resubmitted"
+        form.ethics_form_status = "Resubmitted"
         form.form_supervisor_status = "Resubmitted"
         form.submitted_at = get_local_time()
         form.status = "Resubmitted"
@@ -281,7 +281,7 @@ def send_back_for_corrections_c(id):
         flash('Form C sent back for corrections.', 'warning')
     except SQLAlchemyError as e:
         db_session.rollback()
-        print(f"âŒ Database error in send_back_for_corrections_c: {str(e)}")
+        print(f"❌ Database error in send_back_for_corrections_c: {str(e)}")
         flash('Database error: {}'.format(str(e)), 'danger')
     return redirect(url_for('ethics_reviewer_committee_form_c'))
 
@@ -305,7 +305,7 @@ def resubmit_formc(id):
             return redirect(url_for("student_dashboard"))
         # Update form fields from student input as needed
         form.submission_date = get_local_time()
-        form.ethics_supervisor_form_status = "Resubmitted"
+        form.ethics_form_status = "Resubmitted"
         form.form_supervisor_status = "Resubmitted"
         form.status = 'Resubmitted'
         form.visible_to_student = False
@@ -315,7 +315,7 @@ def resubmit_formc(id):
         flash('Form C resubmitted to admin and supervisor.', 'success')
     except SQLAlchemyError as e:
         db_session.rollback()
-        print(f"âŒ Database error in resubmit_formc: {str(e)}")
+        print(f"❌ Database error in resubmit_formc: {str(e)}")
         flash('Database error: {}'.format(str(e)), 'danger')
     return redirect(url_for('student_dashboard'))  
 
@@ -423,7 +423,7 @@ def student_autosave_formb():
         import traceback
         db_session.rollback()
         print('\n' + '='*60)
-        print('âŒ Exception in student_autosave_formb:', str(e))
+        print('❌ Exception in student_autosave_formb:', str(e))
         print('--- TRACEBACK BELOW ---')
         traceback.print_exc()
         print('='*60 + '\n')
@@ -808,7 +808,7 @@ def form_a_sec1_autosave():
         return jsonify({'success': True})
     except Exception as e:
         db_session.rollback()
-        print(f"âŒ Error in form_a_sec1_autosave: {str(e)}")
+        print(f"❌ Error in form_a_sec1_autosave: {str(e)}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
@@ -831,7 +831,7 @@ def form_a_sec2_autosave():
         return jsonify({'success': True})
     except Exception as e:
         db_session.rollback()
-        print(f"âŒ Error in form_a_sec2_autosave: {str(e)}")
+        print(f"❌ Error in form_a_sec2_autosave: {str(e)}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
@@ -854,7 +854,7 @@ def form_a_sec3_autosave():
         return jsonify({'success': True})
     except Exception as e:
         db_session.rollback()
-        print(f"âŒ Error in form_a_sec3_autosave: {str(e)}")
+        print(f"❌ Error in form_a_sec3_autosave: {str(e)}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
@@ -877,7 +877,7 @@ def form_a_sec4_autosave():
         return jsonify({'success': True})
     except Exception as e:
         db_session.rollback()
-        print(f"âŒ Error in form_a_sec4_autosave: {str(e)}")
+        print(f"❌ Error in form_a_sec4_autosave: {str(e)}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
@@ -900,7 +900,7 @@ def form_a_sec5_autosave():
         return jsonify({'success': True})
     except Exception as e:
         db_session.rollback()
-        print(f"âŒ Error in form_a_sec5_autosave: {str(e)}")
+        print(f"❌ Error in form_a_sec5_autosave: {str(e)}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
@@ -924,7 +924,7 @@ def form_a_sec6_autosave():
         return jsonify({'success': True})
     except Exception as e:
         db_session.rollback()
-        print(f"âŒ Error in form_a_sec6_autosave: {str(e)}")
+        print(f"❌ Error in form_a_sec6_autosave: {str(e)}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
     
@@ -1135,7 +1135,7 @@ def resubmit_forma(id):
             flash('You cannot resubmit Form A until at least one reviewer is assigned.', 'danger')
             return redirect(url_for('student_dashboard'))
         form.status = 'Resubmitted'
-        form.ethics_supervisor_form_status = 'Resubmitted'
+        form.ethics_form_status = 'Resubmitted'
         form.form_supervisor_status = 'Resubmitted'
         form.submitted_at = get_local_time()
         form.visible_to_student = False
