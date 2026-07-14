@@ -742,16 +742,21 @@ def log_ethics_auth_activity(user, action, details=None):
         db.session.add(EthicsActivityLog(user_id=user.id, action=action, details=details))
 
 
-def build_ethics_sso_token(user):
-    return build_ethics_sso_token_for_email(user.email, source_system=getattr(user, "system_name", ""))
+def build_ethics_sso_token(user, destination=""):
+    return build_ethics_sso_token_for_email(
+        user.email,
+        source_system=getattr(user, "system_name", ""),
+        destination=destination,
+    )
 
 
-def build_ethics_sso_token_for_email(email, source_system=""):
+def build_ethics_sso_token_for_email(email, source_system="", destination=""):
     serializer = URLSafeTimedSerializer(current_app.config["SECRET_KEY"])
     return serializer.dumps(
         {
             "email": normalize_email(email),
             "source_system": source_system,
+            "destination": destination if destination == "admin_upload_docs" else "",
             "issued_at": datetime.utcnow().isoformat(),
         },
         salt=ETHICS_SSO_SALT,
@@ -1074,7 +1079,8 @@ def switch_to_ethics():
     if current_user.system_name == "mba" and not EthicsUser.find_by_email(current_user.email):
         flash("This account does not have Ethics access.", "error")
         return redirect(url_for("mba.dashboard"))
-    token = build_ethics_sso_token(current_user)
+    destination = (request.args.get("destination") or "").strip()
+    token = build_ethics_sso_token(current_user, destination=destination)
     return redirect(url_for("ethics_sso_bridge", token=token))
 
 

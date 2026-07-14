@@ -276,7 +276,7 @@ def redirect_to_shared_login(message=None):
     return redirect('/login?system=ethics')
 
 
-def _complete_ethics_login(user, *, audit_action='login', audit_page='login'):
+def _complete_ethics_login(user, *, audit_action='login', audit_page='login', destination=''):
     clear_auth_session()
     session['loggedin'] = True
     session['id'] = user.user_id
@@ -294,6 +294,13 @@ def _complete_ethics_login(user, *, audit_action='login', audit_page='login'):
     db_session.commit()
 
     role = user.role.value or 'student'
+
+    if destination == 'admin_upload_docs' and role in {'ADMIN', 'SUPER_ADMIN'}:
+        if role == 'ADMIN':
+            session['admin_role'] = 'ADMIN'
+        else:
+            session['super_role'] = 'SUPER_ADMIN'
+        return redirect(url_for('admin_upload_student_docs'))
 
     if role == 'STUDENT':
         user_id = session.get('id')
@@ -748,7 +755,7 @@ def _has_received_certificate(form_or_record):
 
 
 def has_dual_reviewer_approval(form_or_record):
-    approved_statuses = {'Approved', 'Approved with Minor Changes'}
+    approved_statuses = {'Approved'}
     reviewer_recommendations = [
         _status_text(_status_value(form_or_record, 'review_recommendation', '') or ''),
         _status_text(_status_value(form_or_record, 'review_recommendation1', '') or ''),
@@ -2916,15 +2923,24 @@ def sso_login():
         clear_auth_session()
         return redirect_to_shared_login("Access denied.")
 
-    if not user.authenticate_student or str(user.authenticate_student).lower() in ['false', '0', 'none']:
-        clear_auth_session()
-        return redirect_to_shared_login("Access denied.")
-
     if getattr(user, 'role', None) is None:
         clear_auth_session()
         return redirect_to_shared_login("Access denied.")
 
-    return _complete_ethics_login(user, audit_action='sso_login', audit_page='sso-login')
+    user_role = str(getattr(user.role, 'value', user.role) or '').upper()
+    if user_role == 'STUDENT' and (
+        not user.authenticate_student
+        or str(user.authenticate_student).lower() in ['false', '0', 'none']
+    ):
+        clear_auth_session()
+        return redirect_to_shared_login("Access denied.")
+
+    return _complete_ethics_login(
+        user,
+        audit_action='sso_login',
+        audit_page='sso-login',
+        destination=(payload.get('destination') or '').strip(),
+    )
 
 
 
@@ -5703,6 +5719,7 @@ def submit_form_b_requirements():
             # Basic status flags
             needs_permission_val = request.form.get('need_permission')
             has_clearance = request.form.get('has_clearance') == 'Yes'
+            has_personal_information = request.form.get('company_requires_jbs') == 'Yes'
             # Note: has_ethics_evidence might not be in Form B template, but let's be safe
             has_ethics_evidence = request.form.get('has_ethics_evidence') == 'Yes'
             
@@ -5755,6 +5772,11 @@ def submit_form_b_requirements():
             ethics_evidence_data, ethics_evidence_fname = read_file_blob('ethics_evidence') if has_ethics_evidence else (None, None)
             proposal_data, proposal_fname = read_file_blob('proposal_path')
             pending_note_data, pending_note_filename = read_file_blob('pending_note_path')
+            popia_data, popia_filename = read_file_blob('prior_clearance1') if has_personal_information else (None, None)
+
+            if has_personal_information and not popia_data and not (form and form.prior_clearance1):
+                flash("POPIA Information Letter and Consent Form is required", "error")
+                return redirect(url_for('submit_form_b_requirements'))
             
             if not form and not proposal_data:
                 flash("Proposal is required", "error")
@@ -5768,6 +5790,7 @@ def submit_form_b_requirements():
             form.form_type = "FORM B"
             form.needs_permission = needs_permission_bool
             form.has_clearance = has_clearance
+            form.company_requires_jbs = has_personal_information
             form.has_ethics_evidence = has_ethics_evidence
             form.updated_at = datetime.utcnow()
             
@@ -5790,6 +5813,10 @@ def submit_form_b_requirements():
             if pending_note_data:
                 form.pending_note = pending_note_data
                 form.pending_note_filename = pending_note_filename
+
+            if popia_data:
+                form.prior_clearance1 = popia_data
+                form.prior_clearance1_filename = popia_filename
 
             db_session.commit()
             
@@ -12638,12 +12665,12 @@ def view_certificate(id):
         certificate_details=certificate_details
     )
 
-@app.route('/update_certificate_status/<string:id>', methods=['GET', 'POST'])
+@app.route('/update_certificate_status/<string:id>', methods=['POST'])
+@role_required('ADMIN', 'SUPER_ADMIN', 'REC')
 def update_certificate_status(id):
-    if 'id' not in session:
-        flash("Unauthorized access", "error")
-        return redirect(url_for('login_page'))
-    
+    current_role = str(session.get('role') or '').upper()
+    redirect_endpoint = 'ethics_reviewer_committee_form' if current_role == 'REC' else 'chair_landing'
+
     certificate_details = None
     for model in [FormA, FormB, FormC]:
         certificate_details = db_session.query(model).filter_by(form_id=id).first()
@@ -12652,9 +12679,9 @@ def update_certificate_status(id):
 
     if not certificate_details:
         flash("Certificate record not found.", "error")
-        return redirect(url_for('chair_landing'))
+        return redirect(url_for(redirect_endpoint))
 
-    if request.method == 'POST':
+    try:
         if not getattr(certificate_details, 'certificate_issued', None):
             certificate_details.certificate_issued = datetime.now()
         certificate_details.certificate_received = True
@@ -12662,10 +12689,12 @@ def update_certificate_status(id):
         db_session.add(certificate_details)
         db_session.commit()
         flash("Certificate status updated successfully.", "success")
-        return redirect(url_for('chair_landing'))
+    except Exception as error:
+        db_session.rollback()
+        app.logger.exception("Certificate status update failed for form_id=%s: %s", id, error)
+        flash("Certificate status could not be updated. Please try again.", "error")
 
-    flash("Use the update button to submit the certificate status change.", "info")
-    return redirect(url_for('chair_landing'))
+    return redirect(url_for(redirect_endpoint))
 
 
 

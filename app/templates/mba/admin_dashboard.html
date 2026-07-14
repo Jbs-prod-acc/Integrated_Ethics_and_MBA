@@ -32,6 +32,10 @@
       <i class="nav-icon fas fa-users-cog" aria-hidden="true"></i>
       <strong>Users</strong>
     </a>
+    <a href="{{ url_for('auth.switch_to_ethics', destination='admin_upload_docs') }}" class="portal-tab">
+      <i class="nav-icon fas fa-file-arrow-up" aria-hidden="true"></i>
+      <strong>Ethics Documents</strong>
+    </a>
     <a href="{{ url_for('mba.admin_dashboard', panel='supervisors', view='all') }}"
       class="portal-tab {% if active_panel == 'supervisors' %}is-active{% endif %}">
       <i class="nav-icon fas fa-user-gear" aria-hidden="true"></i>
@@ -1743,7 +1747,6 @@
                 <input type="hidden" name="user_id" value="{{ user.id }}">
                 <input type="hidden" name="user_q" value="{{ user_search or '' }}">
                 <input type="hidden" name="user_access" value="{{ user_access_filter or 'all' }}">
-                <input type="hidden" name="current_access_mode" value="{{ access_key }}">
                 <div style="display:grid; grid-template-columns:repeat(2, minmax(180px, 1fr)); gap:0.5rem;">
                   <label class="admin-filter-field" style="margin:0;">
                     <span>MBA role</span>
@@ -1766,10 +1769,6 @@
                 </div>
                 <div style="display:flex; gap:0.4rem; flex-wrap:wrap;">
                   <button class="primary-button small-button" type="submit" name="access_mode" value="update">Update</button>
-                  <button class="secondary-button small-button" type="submit" name="access_mode" value="mba">MBA</button>
-                  <button class="secondary-button small-button" type="submit" name="access_mode" value="ethics">Ethics</button>
-                  <button class="primary-button small-button" type="submit" name="access_mode" value="both">Both</button>
-                  <button class="secondary-button small-button" type="submit" name="access_mode" value="none">Revoke</button>
                 </div>
               </form>
             </td>

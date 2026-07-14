@@ -1118,11 +1118,17 @@ def admin_user_access_action():
 
     user_id = parse_positive_int(request.form.get("user_id"), 0)
     access_mode = (request.form.get("access_mode") or "").strip().lower()
-    current_access_mode = (request.form.get("current_access_mode") or "").strip().lower()
     selected_mba_role = (request.form.get("mba_role") or "").strip().lower()
     selected_ethics_role = (request.form.get("ethics_role") or "").strip().lower()
     if access_mode == "update":
-        access_mode = current_access_mode
+        if selected_mba_role and selected_ethics_role:
+            access_mode = "both"
+        elif selected_mba_role:
+            access_mode = "mba"
+        elif selected_ethics_role:
+            access_mode = "ethics"
+        else:
+            access_mode = "none"
     if access_mode not in {"mba", "ethics", "both", "none"}:
         flash("Select a valid access mode.", "error")
         return redirect(url_for("mba.admin_dashboard", panel="users"))
