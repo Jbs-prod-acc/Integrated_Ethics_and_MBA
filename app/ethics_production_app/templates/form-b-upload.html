@@ -47,6 +47,7 @@
 
     <!-- Section Title -->
     <h2>Before You Start Form B</h2>
+    {% include '_uploaded_requirements.html' %}
     <form id="formBRequirements" action="{{url_for('submit_form_b_requirements')}}" method="post" enctype="multipart/form-data">
       <input type="hidden" name="from_dashboard" value="{{ from_dashboard if from_dashboard else '' }}">
       {% with messages = get_flashed_messages(with_categories=true) %}
@@ -126,7 +127,7 @@
     
       <div class="question-block">
         <label>3. Upload Approved Proposal</label>
-        <input type="file" name="proposal_path" required accept=".pdf,.docx">
+        <input type="file" name="proposal_path" {% if not from_dashboard or not from_dashboard.proposal_path %}required{% endif %} accept=".pdf,.docx">
       </div>
      
       <div class="question-block">

@@ -556,12 +556,16 @@
       {% set researcher_affiliation_value = formA.researcher_affiliation|string|lower|trim if formA and formA.researcher_affiliation is not none else '' %}
       {% set collective_involvement_value = formA.collective_involvement|string|lower|trim if formA and formA.collective_involvement is not none else '' %}
       {% set is_funded_value = formA.is_funded|string|lower|trim if formA and formA.is_funded is not none else '' %}
+      {% set grant_permission_value = formA.grant_permission|string|lower|trim if formA and formA.grant_permission is not none else '' %}
+      {% set grant_permission_yes = grant_permission_value in ['yes', 'true', '1', 'on'] or data.org_name or data.org_contact or data.org_role or data.org_permission %}
+      {% set researcher_affiliation_yes = researcher_affiliation_value in ['yes', 'true', '1', 'on'] or (formA.affiliation_details and formA.affiliation_details|string|lower != 'none') %}
+      {% set collective_involvement_yes = collective_involvement_value in ['yes', 'true', '1', 'on'] or (formA.collective_details and formA.collective_details|string|lower != 'none') %}
 
       <label>4.1 Does your project involve organisations or institutions that need to grant permission for research
         activities?</label>
       <br>
       
-      <span class="form-answer">{{formA.grant_permission}}</span>
+      <span class="form-answer">{{ 'Yes' if grant_permission_yes else 'No' }}</span>
         <br>
       <br>
 
@@ -611,7 +615,7 @@
       <label>4.2 Are any researchers affiliated with the organisations above?
         <br>
         <span class="form-answer">
-          {% if researcher_affiliation in ['yes', 'true', '1', 'on'] %}
+          {% if researcher_affiliation_yes %}
             Yes
           {% else %}
             No
@@ -630,7 +634,7 @@
       <label>4.3 Does your research involve collectives or communities?
         <br>
         <span class="form-answer">
-          {% if collective_involvement in ['yes', 'true', '1', 'on'] %}
+          {% if collective_involvement_yes %}
             Yes
           {% else %}
             No
@@ -649,7 +653,7 @@
       <label>4.4 Is your project funded or sponsored?
         <br>
         <span class="form-answer">
-          {% if is_funded in ['yes', 'true', '1', 'on'] %}
+          {% if is_funded_value in ['yes', 'true', '1', 'on'] %}
             Yes
           {% else %}
             No
@@ -997,7 +1001,7 @@
         <label>5.5 Secondary Data Usage</label>
 
         <label>5.5.1 Will secondary data be used?</label><br>
-        <span class="form-answer">{{formA.uses_secondary_data}}</span>
+        <span class="form-answer">{{ 'YES' if formA.uses_secondary_data else 'NO' }}</span>
 
         <label>5.5.2 Is the data public, private, or both?</label><br>
         <span class="form-answer">{{ formA.secondary_data_type }}</span>

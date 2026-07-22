@@ -530,15 +530,15 @@ input[type="checkbox"]:checked::after {
                   <label>4.2 Are any researchers affiliated with the organisations above?</label>
                   <div class="d-flex gap-4">
                     <label>
-                      <input type="radio" name="researcher_affiliation" value="No" {% if not formA.researcher_affiliation%}checked{% endif %} />
+                      <input type="radio" name="researcher_affiliation" value="No" {% if formA and (formA.researcher_affiliation|string|lower in ['no','false','0']) %}checked{% endif %} />
                       No
                     </label>
                     <label>
-                      <input type="radio" name="researcher_affiliation" value="Yes" {% if formA.researcher_affiliation%} checked{% endif %} />
+                      <input type="radio" name="researcher_affiliation" value="Yes" {% if formA and (formA.researcher_affiliation|string|lower in ['yes','true','1']) %}checked{% endif %} />
                       Yes
                     </label>
                   </div>
-              <div id="affiliation_comment" placeholder="Please provide details of the affiliation">
+              <div id="affiliation_comment" style="display: {% if formA and (formA.researcher_affiliation|string|lower in ['yes','true','1']) %}block{% else %}none{% endif %};" placeholder="Please provide details of the affiliation">
                   <textarea name="affiliation_details" rows="3" placeholder="Describe researcher’s affiliation to any listed organisation">{{formA.affiliation_details}}</textarea>
                 </div>
                       <label>4.3 Does your research involve collectives or communities?
@@ -554,7 +554,9 @@ input[type="checkbox"]:checked::after {
                           Yes
                         </label>
                       </div>
-                          <textarea name="collective_details" placeholder="Explain what measures you have taken to consult and engage with those communities and / or representative groups regarding your research project."  rows="3">{{formA.collective_details}}</textarea>
+                          <div id="collective_comment" style="display: {% if formA and (formA.collective_involvement|string|lower in ['yes','true','1']) %}block{% else %}none{% endif %};">
+                            <textarea name="collective_details" placeholder="Explain what measures you have taken to consult and engage with those communities and / or representative groups regarding your research project." rows="3">{{formA.collective_details}}</textarea>
+                          </div>
 
                       
                       <label>4.4 Is your project funded or sponsored?</label>
@@ -1310,6 +1312,12 @@ try {
     radio.addEventListener('change', function () {
       document.getElementById('permission_table_wrapper').style.display =
         this.value === 'Yes' ? 'block' : 'none';
+      if (this.value !== 'Yes') {
+        document.querySelectorAll('#permission_table_wrapper input, #permission_table_wrapper select').forEach(field => {
+          if (field.type === 'radio' || field.type === 'checkbox') field.checked = false;
+          else field.value = '';
+        });
+      }
     });
   });
   const selectedGrantPermission = document.querySelector('input[name="grant_permission"]:checked');
@@ -1322,6 +1330,7 @@ try {
   document.querySelectorAll('input[name="researcher_affiliation"]').forEach(radio => {
     radio.addEventListener('change', function () {
       document.getElementById('affiliation_comment').style.display = this.value === 'Yes' ? 'block' : 'none';
+      if (this.value !== 'Yes') document.querySelector('textarea[name="affiliation_details"]').value = '';
     });
   });
 
@@ -1329,6 +1338,7 @@ try {
   document.querySelectorAll('input[name="collective_involvement"]').forEach(radio => {
     radio.addEventListener('change', function () {
       document.getElementById('collective_comment').style.display = this.value === 'Yes' ? 'block' : 'none';
+      if (this.value !== 'Yes') document.querySelector('textarea[name="collective_details"]').value = '';
     });
   });
 
@@ -1449,7 +1459,17 @@ function removeRow(button) {
 
   function handleSecondaryData() {
     const val = document.getElementById("secondaryData").value;
+    if (val !== "Yes") clearSecondaryDataFields();
     document.getElementById("secondaryDetails").style.display = val === "Yes" ? "block" : "none";
+  }
+
+  function clearSecondaryDataFields() {
+    const details = document.getElementById('secondaryDetails');
+    if (!details) return;
+    details.querySelectorAll('input, textarea, select').forEach(field => {
+      if (field.type === 'radio' || field.type === 'checkbox') field.checked = false;
+      else field.value = '';
+    });
   }
 
   function handleDataType() {

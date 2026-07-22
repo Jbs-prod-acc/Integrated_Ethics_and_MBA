@@ -1845,7 +1845,15 @@
       }
 
       function updateVisibility() {
-        target.style.display = getToggleCheckboxGroupValue(groupName) === visibleValue ? 'block' : 'none';
+        const isVisible = getToggleCheckboxGroupValue(groupName) === visibleValue;
+        target.style.display = isVisible ? 'block' : 'none';
+        if (!isVisible) {
+          const fields = target.matches('input, textarea, select') ? [target] : target.querySelectorAll('input, textarea, select');
+          fields.forEach(function (field) {
+            if (field.type === 'radio' || field.type === 'checkbox') field.checked = false;
+            else field.value = '';
+          });
+        }
       }
 
       group.addEventListener('toggle-checkbox-group:change', updateVisibility);

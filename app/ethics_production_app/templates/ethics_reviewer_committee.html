@@ -213,6 +213,9 @@
               {% elif forma.status == 'Submitted to Student for Corrections' %}
               <span class="status-pill approved">Form was sent back to student</span>
               <br>
+              {% elif forma.supervisor_form_status in ['Revisions required'] %}
+              Form was sent back to student for revisions
+              <br>
               <br>
               {% elif forma.rejected_or_accepted and not forma.reviewer_name1 and not forma.review_date and not forma.status%}
               <p>Awaiting for review</p>
@@ -442,6 +445,9 @@
             <br>
             <span class="status-pill approved">🎓 Certificate was issued</span>
             <br>
+            {% elif formb.supervisor_form_status in ['Revisions required'] %}
+            Form was sent back to student for revisions
+            <br>
             <br>
               {% elif formb.rejected_or_accepted and not formb.reviewer_name1 and not formb.review_date%}
               <p>Awaiting for review</p>
@@ -654,6 +660,9 @@
               {% if formc.certificate_received %}
               <br>
             <span class="status-pill approved">🎓 Certificate was issued</span>
+            <br>
+            {% elif formc.supervisor_form_status in ['Revisions required'] %}
+            Form was sent back to student for revisions
             <br>
             <br>
               {% elif formc.rejected_or_accepted and not formc.reviewer_name1 and not formc.review_date%}

@@ -259,6 +259,7 @@
   document.querySelectorAll('input[name="researcher_affiliation"]').forEach(radio => {
     radio.addEventListener('change', function () {
       document.getElementById('affiliation_comment').style.display = this.value === 'Yes' ? 'block' : 'none';
+      if (this.value !== 'Yes') document.querySelector('textarea[name="affiliation_details"]').value = '';
     });
   });
 
@@ -266,6 +267,7 @@
   document.querySelectorAll('input[name="collective_involvement"]').forEach(radio => {
     radio.addEventListener('change', function () {
       document.getElementById('collective_comment').style.display = this.value === 'Yes' ? 'block' : 'none';
+      if (this.value !== 'Yes') document.querySelector('textarea[name="collective_details"]').value = '';
     });
   });
 
@@ -374,6 +376,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   });
   let autosaveTimeout = null;
+  let activeAutosaveController = null;
   const savingIndicator = document.getElementById('autosave-status');
   const AUTOSAVE_DEBUG_SEC3 = true;
   function debugLogSec3(...args) {
@@ -473,6 +476,8 @@ document.addEventListener('DOMContentLoaded', function() {
   
   function autosave() {
     showSaving();
+    if (activeAutosaveController) activeAutosaveController.abort();
+    activeAutosaveController = new AbortController();
     debugLogSec3('Autosave start');
     const formData = new FormData(form);
 
@@ -513,6 +518,7 @@ document.addEventListener('DOMContentLoaded', function() {
     fetch('{{ url_for("form_a_sec3_autosave") }}', {
       method: 'POST',
       body: formData,
+      signal: activeAutosaveController.signal,
       headers: { 'Accept': 'application/json' }
     })
     .then(r => {
@@ -535,6 +541,7 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     })
     .catch(err => {
+      if (err.name === 'AbortError') return;
       showError();
       console.error('[FORM-A-SEC3] Fetch error:', err);
     });

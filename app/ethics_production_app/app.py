@@ -2043,6 +2043,22 @@ def _build_autosave_data(form_payload):
     return data
 
 
+def _clear_forma_secondary_data_details(form):
+    """Remove every answer that is conditional on Form A question 5.5.1."""
+    for field in [
+        'secondary_data_type', 'data_nature', 'data_origin', 'access_conditions',
+        'personal_info', 'personal_info_comment', 'data_anonymized',
+        'anonymization_comment', 'permission_details', 'private_permission',
+        'public_data_description', 'shortcomings_reported',
+        'limitations_reporting', 'methodology_alignment', 'data_acknowledgment',
+    ]:
+        if hasattr(form, field):
+            setattr(form, field, '')
+    for field in ['private_permission_file', 'private_permission_filename']:
+        if hasattr(form, field):
+            setattr(form, field, None)
+
+
 def _apply_forma_autosave_payload(form, form_payload, section='all', include_declaration=False):
     data = _build_autosave_data(form_payload)
 
@@ -2110,6 +2126,14 @@ def _apply_forma_autosave_payload(form, form_payload, section='all', include_dec
             if key in data and hasattr(form, key):
                 setattr(form, key, data.get(key, ''))
 
+        for key in ['grant_permission', 'researcher_affiliation', 'collective_involvement', 'is_funded']:
+            if key in data and hasattr(form, key):
+                raw_value = data.get(key)
+                if raw_value in [None, '']:
+                    setattr(form, key, '')
+                else:
+                    setattr(form, key, 'Yes' if _autosave_str_to_bool(raw_value) is True else 'No')
+
         grant_permission_value = (getattr(form, 'grant_permission', None) or '').strip().lower()
         if grant_permission_value == 'yes':
             form.org_name = ','.join(form_payload.getlist('org_name[]'))
@@ -2121,6 +2145,11 @@ def _apply_forma_autosave_payload(form, form_payload, section='all', include_dec
             form.org_contact = ''
             form.org_role = ''
             form.org_permission = ''
+
+        if _autosave_str_to_bool(getattr(form, 'researcher_affiliation', None)) is not True:
+            form.affiliation_details = ''
+        if _autosave_str_to_bool(getattr(form, 'collective_involvement', None)) is not True:
+            form.collective_details = ''
         form.fund_org = ','.join(form_payload.getlist('fund_org[]'))
         form.fund_contact = ','.join(form_payload.getlist('fund_contact[]'))
         form.fund_role = ','.join(form_payload.getlist('fund_role[]'))
@@ -2161,8 +2190,7 @@ def _apply_forma_autosave_payload(form, form_payload, section='all', include_dec
                 form.private_permission = 'Yes' if _autosave_str_to_bool(private_permission_value) else 'No'
 
         if hasattr(form, 'uses_secondary_data') and not form.uses_secondary_data:
-            form.secondary_data_type = ''
-            form.private_permission = ''
+            _clear_forma_secondary_data_details(form)
 
     if section in ['all', 'sec5']:
         for key in ['informed_consent', 'study_benefits', 'participant_risks', 'adverse_steps', 'community_participation', 'community_effects', 'results_feedback', 'products_access', 'publication_plans', 'participant_comp', 'participant_costs', 'ethics_reporting']:
@@ -5435,6 +5463,90 @@ def dashboard ():
 
 # FORM A =====================================================================================================
 
+_REQUIREMENT_DOCUMENTS = {
+    "FORM A": [
+        ("permission_letter", "permission_letter_filename", "Company Permission Letter", "permission"),
+        ("pending_note", "pending_note_filename", "Pending Note", "pending"),
+        ("prior_clearance", "prior_clearance_filename", "Prior Ethical Clearance Document", "clearance"),
+        ("prior_clearance1", "prior_clearance1_filename", "POPIA Information Letter and Consent Form", "personal"),
+        ("research_tools_path", "research_tools_filename", "Survey / Questionnaire / Focus Group Questions", "always"),
+        ("proposal_path", "proposal_filename", "Research Proposal", "always"),
+        ("impact_assessment_path", "impact_assessment_filename", "Personal Impact Assessment Form", "always"),
+        ("participation_info_sheet", "participation_info_filename", "Participation Information Sheet & Consent Form", "always"),
+    ],
+    "FORM B": [
+        ("permission_letter", "permission_letter_filename", "Permission Letter", "permission"),
+        ("pending_note", "pending_note_filename", "Pending Note", "pending"),
+        ("prior_clearance_path", "prior_clearance_path_filename", "Prior Ethical Clearance Document", "clearance"),
+        ("proposal_path", "proposal_filename", "Approved Proposal", "always"),
+        ("prior_clearance1", "prior_clearance1_filename", "POPIA Information Letter and Consent Form", "personal"),
+    ],
+    "FORM C": [("files", "files_filename", "Research Proposal", "always")],
+}
+
+
+def _student_requirement_documents(form, form_type):
+    """Build the upload checklist without loading document bytes in the template."""
+    documents = []
+    for field, filename_field, label, condition in _REQUIREMENT_DOCUMENTS[form_type]:
+        required = condition == "always"
+        if form:
+            required = required or (condition == "permission" and form.needs_permission is True)
+            required = required or (condition == "pending" and form.needs_permission is None)
+            required = required or (condition == "clearance" and form.has_clearance is True)
+            required = required or (condition == "personal" and form.company_requires_jbs is True)
+        filename = getattr(form, filename_field, None) if form else None
+        has_file = bool(filename and getattr(form, field, None)) if form else False
+        documents.append({"field": field, "label": label, "filename": filename,
+                          "uploaded": has_file, "required": required})
+    return documents
+
+
+@app.route('/student/requirements/document/<string:field>', methods=['GET'])
+def download_student_requirement_document(field):
+    user_id = session.get('id')
+    form = db_session.query(FormARequirements).filter_by(user_id=user_id).first() if user_id else None
+    allowed = {item[0]: item[1] for items in _REQUIREMENT_DOCUMENTS.values() for item in items}
+    if not form or field not in allowed:
+        abort(404)
+    data = getattr(form, field, None)
+    filename = getattr(form, allowed[field], None)
+    if not data or not filename:
+        abort(404)
+    mimetype = mimetypes.guess_type(filename)[0] or 'application/octet-stream'
+    if isinstance(data, memoryview):
+        data = data.tobytes()
+    if isinstance(data, bytes):
+        return send_file(io.BytesIO(data), mimetype=mimetype, as_attachment=True,
+                         download_name=filename)
+    safe_name = os.path.basename(str(data).replace('\\', '/'))
+    path = os.path.join(get_upload_folder(), safe_name)
+    if not os.path.isfile(path):
+        abort(404)
+    return send_file(path, mimetype=mimetype, as_attachment=True, download_name=filename)
+
+
+@app.route('/student/requirements/document/<string:field>/delete', methods=['POST'])
+def delete_student_requirement_document(field):
+    user_id = session.get('id')
+    form = db_session.query(FormARequirements).filter_by(user_id=user_id).first() if user_id else None
+    allowed = {item[0]: item[1] for items in _REQUIREMENT_DOCUMENTS.values() for item in items}
+    if not form or field not in allowed or field not in {
+        item[0] for item in _REQUIREMENT_DOCUMENTS.get(form.form_type, [])
+    }:
+        abort(404)
+    setattr(form, field, None)
+    setattr(form, allowed[field], None)
+    form.updated_at = datetime.utcnow()
+    db_session.commit()
+    flash("Document deleted. It is now marked for re-upload.", "success")
+    endpoint = {
+        "FORM A": "submit_form_a_requirements",
+        "FORM B": "submit_form_b_requirements",
+        "FORM C": "submit_form_c_requirements",
+    }.get(form.form_type, "student_dashboard")
+    return redirect(url_for(endpoint))
+
 @app.route('/submit_form_a_requirements', methods=['GET', 'POST'])
 def submit_form_a_requirements():
 
@@ -5620,7 +5732,8 @@ def submit_form_a_requirements():
             db_session.rollback()
             return jsonify({'error': str(e)}), 500
 
-    return render_template('form-a-upload.html',from_dashboard=form)
+    return render_template('form-a-upload.html', from_dashboard=form,
+                           uploaded_documents=_student_requirement_documents(form, "FORM A"))
 
 @app.route('/submit_form_c_requirements', methods=['GET', 'POST'])
 def submit_form_c_requirements():
@@ -5660,7 +5773,7 @@ def submit_form_c_requirements():
             proposal_data, proposal_filename = read_file_blob('proposal')
           
             # Validate required files
-            if not proposal_data:
+            if not proposal_data and not (form and form.files):
                 return jsonify({'error': 'Missing required files'}), 400
                 
             
@@ -5701,7 +5814,8 @@ def submit_form_c_requirements():
             db_session.rollback()
             return jsonify({'error': str(e)}), 500
   
-    return render_template('form-c-upload.html',from_dashboard=form)
+    return render_template('form-c-upload.html', from_dashboard=form,
+                           uploaded_documents=_student_requirement_documents(form, "FORM C"))
 
 
 @app.route('/submit_form_b_requirements', methods=['GET', 'POST'])
@@ -5830,7 +5944,8 @@ def submit_form_b_requirements():
             flash(f"Error submitting requirements: {str(e)}", "danger")
             return redirect(url_for('submit_form_b_requirements'))
             
-    return render_template('form-b-upload.html', from_dashboard=form)
+    return render_template('form-b-upload.html', from_dashboard=form,
+                           uploaded_documents=_student_requirement_documents(form, "FORM B"))
 
             
 @app.route('/edit-form-a/<form_id>', methods=['GET'])
@@ -7796,10 +7911,10 @@ def student_edit_forma():
             target_form.org_permission = ''
 
         target_form.researcher_affiliation = request.form.get('researcher_affiliation')
-        target_form.affiliation_details = request.form.get('affiliation_details')
+        target_form.affiliation_details = request.form.get('affiliation_details') if (target_form.researcher_affiliation or '').lower() == 'yes' else ''
 
         target_form.collective_involvement = request.form.get('collective_involvement')
-        target_form.collective_details = request.form.get('collective_details')
+        target_form.collective_details = request.form.get('collective_details') if (target_form.collective_involvement or '').lower() == 'yes' else ''
 
         target_form.is_funded = request.form.get('is_funded')
         target_form.fund_org = join_list('fund_org[]')
@@ -7889,6 +8004,9 @@ def student_edit_forma():
         if file and file.filename:
             target_form.private_permission_file = file.read()
             target_form.private_permission_filename = file.filename
+
+        if not target_form.uses_secondary_data:
+            _clear_forma_secondary_data_details(target_form)
 
         # Section 6
         target_form.informed_consent = request.form.get('informed_consent')
@@ -8263,12 +8381,9 @@ def student_continue_forma():
             else:
                 collective_involvement=False
         
-            secondary_data = request.form.get('secondary_data')  # This should be added as a hidden input for access
-
-            if secondary_data=='No':
-                form.uses_secondary_data = False
-            else:
-                form.uses_secondary_data = True
+            secondary_data = request.form.get('uses_secondary_data', request.form.get('secondary_data'))
+            form.uses_secondary_data = _autosave_str_to_bool(secondary_data)
+            if form.uses_secondary_data:
                 form.secondary_data_type = request.form.get('data_type')
                 if form.secondary_data_type == 'private':
                     form.private_permission = request.form.get('privatePermission') == 'Yes'
@@ -8276,6 +8391,8 @@ def student_continue_forma():
                     # Add logic for saving file securely if uploaded
                 elif form.secondary_data_type == 'public':
                     form.public_data_description = request.form.get('public_data_description')
+            else:
+                _clear_forma_secondary_data_details(form)
                 
             
                 
@@ -8404,12 +8521,12 @@ def student_continue_forma():
                 form.org_permission = ''
                 
             form.researcher_affiliation = 'Yes' if researcher_affiliation else 'No'
-            form.affiliation_details = request.form.get('affiliation_details')
+            form.affiliation_details = request.form.get('affiliation_details') if researcher_affiliation else ''
 
             form.collective_involvement = 'Yes' if collective_involvement else 'No'
                 
 
-            form.collective_details = request.form.get('collective_details')
+            form.collective_details = request.form.get('collective_details') if collective_involvement else ''
                 # Funding Information
             form.is_funded = request.form.get('is_funded')
             form.fund_org = ','.join(request.form.getlist('fund_org[]'))
@@ -8542,6 +8659,9 @@ def student_continue_forma():
             if file and file.filename:
                 form.private_permission_file = file.read()
                 form.private_permission_filename = file.filename
+
+            if not form.uses_secondary_data:
+                _clear_forma_secondary_data_details(form)
     
             db_session.add(form)
             db_session.commit()
@@ -8674,11 +8794,9 @@ def submit_form_a(form_id):
             researcher_affiliation = to_bool(request.form.get('researcher_affiliation'))
             collective_involvement = to_bool(request.form.get('collective_involvement'))
             
-            secondary_data = request.form.get('secondary_data')
-            if secondary_data == 'No':
-                form.uses_secondary_data = False
-            else:
-                form.uses_secondary_data = True
+            secondary_data = request.form.get('uses_secondary_data', request.form.get('secondary_data'))
+            form.uses_secondary_data = _autosave_str_to_bool(secondary_data)
+            if form.uses_secondary_data:
                 form.secondary_data_type = request.form.get('data_type')
                 if form.secondary_data_type == 'private':
                     form.private_permission = to_bool(request.form.get('privatePermission'))
@@ -8686,6 +8804,8 @@ def submit_form_a(form_id):
                     if file and file.filename:
                         form.private_permission_file = file.read()
                         form.private_permission_filename = file.filename
+            else:
+                _clear_forma_secondary_data_details(form)
 
             # Assign all form fields
             form.user_id = user_id
@@ -8766,9 +8886,9 @@ def submit_form_a(form_id):
                 form.org_role = ''
                 form.org_permission = ''
             form.researcher_affiliation = 'Yes' if researcher_affiliation else 'No'
-            form.affiliation_details = request.form.get('affiliation_details')
+            form.affiliation_details = request.form.get('affiliation_details') if researcher_affiliation else ''
             form.collective_involvement = 'Yes' if collective_involvement else 'No'
-            form.collective_details = request.form.get('collective_details')
+            form.collective_details = request.form.get('collective_details') if collective_involvement else ''
             form.is_funded = request.form.get('is_funded')
             form.fund_org = ','.join(request.form.getlist('fund_org[]'))
             form.fund_contact = ','.join(request.form.getlist('fund_contact[]'))
@@ -8853,6 +8973,9 @@ def submit_form_a(form_id):
             form.ethics_form_status = None
             form.form_supervisor_status = 'Resubmitted' if was_in_corrections else 'Submitted'
             reset_form_review_feedback(form)
+
+            if not form.uses_secondary_data:
+                _clear_forma_secondary_data_details(form)
             
             print(f"DEBUG: About to commit form - declaration_name={form.declaration_name}, submitted={form.submitted}")
 

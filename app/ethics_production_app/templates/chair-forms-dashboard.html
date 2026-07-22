@@ -257,9 +257,6 @@
                   Approved by both Reviewers
                   {% elif is_waiting_for_additional_reviewer(form) %}
                   Awaiting for second reviewers feedback
-                  {% elif form.rejected_or_accepted and assigned_reviewers == 0 and not form.form_reviewed_by and not
-                  form.form_reviewed_by1 %}
-                  Awaiting review
                   {% elif form.rejected_or_accepted and assigned_reviewers == 1 and completed_reviews == 0 %}
                   Awaiting assigned reviewer feedback
                   {% elif form.rejected_or_accepted and assigned_reviewers >= 1 and not form.form_reviewed_by and not
@@ -300,6 +297,11 @@
                   All assigned reviewers approved the form
                   <br>
                   Awaiting Submission to REC
+                  {% elif form.supervisor_form_status in ['Revisions required'] %}
+                    Submitted to student for revisions
+                  {% elif form.rejected_or_accepted and assigned_reviewers == 0 and not form.form_reviewed_by and not
+                  form.form_reviewed_by1 %}
+                  Awaiting review
                   {% else %}
                   Awaiting review
                   {% endif %}

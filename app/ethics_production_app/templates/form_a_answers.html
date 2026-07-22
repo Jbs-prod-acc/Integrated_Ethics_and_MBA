@@ -440,15 +440,15 @@
       </table>
 
       <label>4.2 Are any researchers affiliated with the organisations above?
-        <br><span class="form-answer">{{'Yes' if formA.researcher_affiliation else 'No'}}
+        <br><span class="form-answer">{{ 'Yes' if formA.researcher_affiliation|string|lower|trim in ['yes', 'true', '1', 'on'] else 'No' }}
       </label>
       
       <label>4.3 Does your research involve collectives or communities?
-        <br><span class="form-answer">{{'Yes' if formA.collective_involvement else 'No'}}
+        <br><span class="form-answer">{{ 'Yes' if formA.collective_involvement|string|lower|trim in ['yes', 'true', '1', 'on'] else 'No' }}
       </label>
       
       <label>4.4 Is your project funded or sponsored?
-        <br><span class="form-answer">{{'Yes' if formA.is_funded else 'No'}}</span>
+        <br><span class="form-answer">{{ 'Yes' if formA.is_funded|string|lower|trim in ['yes', 'true', '1', 'on'] else 'No' }}</span>
       </label>
       
       <table>

@@ -70,6 +70,7 @@
         <main class="main-content">
             <!-- Section Title -->
             <h2>Upload Proposal for Ethics Exemption (Form C)</h2>
+            {% include '_uploaded_requirements.html' %}
 
             <form id="formCUpload" action="{{url_for('submit_form_c_requirements')}}" method="post"
                 enctype="multipart/form-data">
@@ -95,7 +96,7 @@
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <div class="question-block">
                     <label>Upload Your Research Proposal</label>
-                    <input type="file" name="proposal" required accept=".pdf,.docx">
+                    <input type="file" name="proposal" {% if not from_dashboard or not from_dashboard.files %}required{% endif %} accept=".pdf,.docx">
                 </div>
 
                 <!-- Navigation -->

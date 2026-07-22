@@ -57,6 +57,7 @@
   <main class="main-content">
 
     <h2>Before You Start Form A</h2>
+    {% include '_uploaded_requirements.html' %}
     <form id="formARequirements" action="{{url_for('submit_form_a_requirements')}}" method="post" enctype="multipart/form-data">
       <input type="hidden" name="from_dashboard" value="{{ from_dashboard if from_dashboard else '' }}">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -134,22 +135,22 @@
 
       <div class="question-block">
         <label>4. Upload Survey / Questionnaire / Focus Group Questions</label>
-        <input type="file" name="research_tools_path" accept=".pdf,.docx" required>
+        <input type="file" name="research_tools_path" accept=".pdf,.docx" {% if not from_dashboard or not from_dashboard.research_tools_path %}required{% endif %}>
       </div>
 
       <div class="question-block">
         <label>5. Upload Research Proposal</label>
-        <input type="file" name="proposal_path" accept=".pdf,.docx" required>
+        <input type="file" name="proposal_path" accept=".pdf,.docx" {% if not from_dashboard or not from_dashboard.proposal_path %}required{% endif %}>
       </div>
 
       <div class="question-block">
         <label>6. Upload Personal Impact Assessment Form</label>
-        <input type="file" name="impact_assessment_path" accept=".pdf,.docx" required>
+        <input type="file" name="impact_assessment_path" accept=".pdf,.docx" {% if not from_dashboard or not from_dashboard.impact_assessment_path %}required{% endif %}>
       </div>
 
       <div class="question-block">
         <label>7. Upload Participation Information Sheet & Consent Form</label>
-        <input type="file" name="participation_info_sheet" accept=".pdf,.docx" required>
+        <input type="file" name="participation_info_sheet" accept=".pdf,.docx" {% if not from_dashboard or not from_dashboard.participation_info_sheet %}required{% endif %}>
       </div>
 
       <div class="form-navigation">

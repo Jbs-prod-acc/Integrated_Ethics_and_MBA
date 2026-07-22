@@ -1,0 +1,48 @@
+{% if uploaded_documents %}
+<section class="card border-0 shadow-sm mb-4" aria-labelledby="uploadedDocumentsHeading">
+  <div class="card-body">
+    <h3 id="uploadedDocumentsHeading" class="h5 mb-2">Your uploaded documents</h3>
+    <p class="text-muted mb-3">Uploaded files are ready. Items marked <strong>Upload needed</strong> must be uploaded before you continue.</p>
+    <div class="list-group list-group-flush">
+      {% for document in uploaded_documents %}
+      <div class="list-group-item px-0 d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-2">
+        <div>
+          <div class="fw-semibold">{{ document.label }}</div>
+          {% if document.uploaded %}<small class="text-success">Uploaded: {{ document.filename }}</small>
+          {% elif document.required %}<small class="text-danger fw-semibold">Upload needed{% if from_dashboard %} / re-upload required{% endif %}</small>
+          {% else %}<small class="text-muted">Not currently required</small>{% endif %}
+        </div>
+        {% if document.uploaded %}
+        <div class="d-flex gap-2">
+          <a class="btn btn-sm btn-outline-primary" href="{{ url_for('download_student_requirement_document', field=document.field) }}">Download</a>
+          <button type="button" class="btn btn-sm btn-outline-danger delete-document-button" data-delete-url="{{ url_for('delete_student_requirement_document', field=document.field) }}" data-document-name="{{ document.label }}">Delete</button>
+        </div>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+<div class="modal fade" id="deleteDocumentModal" tabindex="-1" aria-labelledby="deleteDocumentModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered"><div class="modal-content">
+    <div class="modal-header"><h2 class="modal-title fs-5" id="deleteDocumentModalLabel">Delete uploaded document?</h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
+    <div class="modal-body"><p class="mb-1">Are you sure you want to delete <strong id="deleteDocumentName"></strong>?</p><p class="text-danger mb-0">You will need to upload it again if it is required.</p></div>
+    <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button><form id="deleteDocumentForm" method="post" class="no-loading-indicator"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button type="submit" class="btn btn-danger">Yes, delete document</button></form></div>
+  </div></div>
+</div>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const modalElement = document.getElementById('deleteDocumentModal');
+  if (!modalElement || typeof bootstrap === 'undefined') return;
+  document.body.appendChild(modalElement);
+  const modal = new bootstrap.Modal(modalElement);
+  document.querySelectorAll('.delete-document-button').forEach(function (button) {
+    button.addEventListener('click', function () {
+      document.getElementById('deleteDocumentName').textContent = button.dataset.documentName;
+      document.getElementById('deleteDocumentForm').action = button.dataset.deleteUrl;
+      modal.show();
+    });
+  });
+});
+</script>
+{% endif %}
