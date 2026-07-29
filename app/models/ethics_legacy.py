@@ -62,6 +62,9 @@ def normalize_database_url(db_url):
         db_url = db_url.replace("postgres://", "postgresql://", 1)
 
     parsed = urlparse(db_url)
+    if parsed.scheme not in {"postgresql", "postgresql+psycopg2"}:
+        return db_url
+
     query_params = dict(parse_qsl(parsed.query, keep_blank_values=True))
     hostname = parsed.hostname or ""
 

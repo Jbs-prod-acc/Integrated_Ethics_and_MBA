@@ -129,22 +129,22 @@
         
       </div>
 
-      <label>2.4.1 Provide explanation:
-        <br><span class="form-answer">Comment: {{formB.public_evidence or 'Not Applicable'}}</span>
-      </label>
-   
-
+      {% if formB.data_public %}
       <label>2.4.2 If the data is in the public domain, what are the access conditions?
-        <br><span class="form-answer">Comment: {{formB.access_conditions or 'Not Applicable'}}</span>
+        <br><span class="form-answer">{{ formB.access_conditions }}</span>
       </label>
+      {% else %}
+      <label>2.4.1 Provide explanation:
+        <br><span class="form-answer">{{ formB.public_evidence }}</span>
+      </label>
+      {% endif %}
     
 
       <div class="question-block">
         <label>2.5 Does the database contain personal information/identifiers?</label>
             <p>This information relates to the anonymity of data/confidentiality of the data</p>
             <span class="form-answer">{{'Yes' if formB.personal_info else 'No'}}</span>
-
-            <br><span class="form-answer">Comment: {{formB.personal_info_comment or 'Not Applicable'}}</span>
+            <br><span class="form-answer">Comment: {{ formB.personal_info_comment if formB.personal_info else 'Not Applicable' }}</span>
       </div>
 
       <div class="question-block">
@@ -164,13 +164,15 @@
         </label>
       </div>
 
+      {% if formB.private_permission %}
       <label>2.7.1 Provide permission details:
         <br><span class="form-answer">Comment: {{formB.permission_details or 'Not Applicable'}}</span>
-        {% if formB.private_permission_file %}
+        {% if formB.private_permission_filename or formB.private_permission_file %}
         <br>
-        <a href="{{ url_for('view_form_file', form_type='B', form_id=formB.form_id, field_name='private_permission_file') }}" target="_blank">View Document</a>
+        <a href="{{ url_for('view_form_file', form_type='B', form_id=formB.form_id, field_name='private_permission_file') }}" target="_blank">View {{ formB.private_permission_filename or 'uploaded permission document' }}</a>
         {% endif %}
       </label>
+      {% endif %}
      
 
       <div class="question-block">

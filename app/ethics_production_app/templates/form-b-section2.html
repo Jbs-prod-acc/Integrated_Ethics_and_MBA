@@ -76,11 +76,12 @@
         </div>
       </div>
 
-      <!-- Shown only if data_public = No -->
-        <div id="public_data_fields" style="display: none;">
+        <div id="public_evidence_fields" style="display: none;">
           <label>2.4.1 Provide explanation:</label>
           <textarea name="public_evidence" rows="3" placeholder="Explain why the data is not publicly accessible."></textarea>
+        </div>
 
+        <div id="access_conditions_fields" style="display: none;">
           <label>2.4.2 If the data is in the public domain, what are the access conditions?</label>
           <textarea name="access_conditions" rows="3" placeholder="Mention access terms, restrictions, or data agreements."></textarea>
         </div>
@@ -136,12 +137,14 @@
       </div>
 
       <div id="permission_details_box" style="display: none;">
+        <input type="hidden" name="clear_private_permission_file" value="No">
         <label>2.7.1 Provide permission details:</label>
         <textarea name="permission_details" rows="3"
           placeholder="Describe the permission granted."></textarea>
         <br>
         <label>Upload permission document (if applicable):</label>
         <input type="file" name="private_permission_file" class="form-control">
+        <div id="private_permission_upload_status" class="mt-2 text-success"></div>
       </div>
 
       <div class="question-block">
@@ -203,33 +206,14 @@
   //   const commentBox = document.getElementById("personalInfoComment");
   //   commentBox.style.display = yesSelected ? "block" : "none";
   // }
-    function togglePersonalInfo() {
-    const selected = document.querySelector('input[name="personal_info"]:checked');
-    const commentBox = document.getElementById("personalInfoComment");
-
-    if (selected && selected.value === "Yes") {
-      commentBox.style.display = "block";
-    } else {
-      commentBox.style.display = "none";
-    }
-  }
-
-function togglePublicData() {
-    const value = document.querySelector('input[name="data_public"]:checked').value;
-    document.getElementById('public_data_fields').style.display = value === "No" ? 'block' : 'none';
-  }
-
   function toggleAnonymization() {
     const value = document.querySelector('input[name="data_anonymized"]:checked').value;
     document.getElementById('anonymization_box').style.display = value === "No" ? 'block' : 'none';
   }
 
-  function togglePrivatePermission() {
-    const value = document.querySelector('input[name="private_permission"]:checked').value;
-    document.getElementById('permission_details_box').style.display = value === "Yes" ? 'block' : 'none';
-  }
 </script>
 
+<script src="{{ url_for('static', filename='js/formb-public-domain.js') }}"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="{{ url_for('static', filename='js/form-autosave.js') }}"></script>
 <script>

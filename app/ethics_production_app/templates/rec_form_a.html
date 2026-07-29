@@ -595,6 +595,9 @@
     <br><span class="form-answer">{{form.conflict_explanation}}</span>
     <br>
 
+    {% set display_form = form %}
+    {% include '_form_a_section_5_4_readonly.html' %}
+    {% if false %}
     <label>5.4 Research Instruments for Data Collection</label>
     <label for="data-collection-methods">5.4.1 Indicate which data collection methods will be used</label><br>
      <table id="data_methods" class="table table-bordered">
@@ -731,6 +734,7 @@
     <br>
     <br>
 
+{% endif %}
 <label>5.5 Secondary Data Usage</label>
 
 <label>5.5.1 Will secondary data be used?</label><br>
@@ -749,9 +753,9 @@
 <span class="form-answer">{{ form.access_conditions or 'Not Applicable' }}</span>
 
 <label>5.5.6 Does the database contain personal information/identifiers?</label><br>
-<span class="form-answer">{{ form.personal_info or 'Not Applicable' }}</span>
+<span class="form-answer">{{ form.personal_info|yes_no }}</span>
 
-{% if form.personal_info == 'Yes' %}
+{% if form.personal_info|yes_no == 'Yes' %}
   <label>5.5.6.1 Specify the personal info/identifiers:</label><br>
   <span class="form-answer">{{ form.personal_info_comment or 'Not Applicable' }}</span>
 {% endif %}
@@ -840,35 +844,35 @@
   
     <div class="question-block">
       <label for="study-benefits">6.3 What are the benefits of the study?
-        <br><span class="form-answer">{{form.study_benefits}}</span>
+        <br><span class="form-answer">{{ form.study_benefits if form.study_benefits and form.study_benefits|string|trim else 'Not applicable' }}</span>
       </label>
       <br>
     </div>
   
     <div class="question-block">
       <label for="participant-risks">6.4 Description of the risks participants may suffer and the level of risk:
-        <br><span class="form-answer">{{form.participant_risks}}</span>
+        <br><span class="form-answer">{{ form.participant_risks if form.participant_risks and form.participant_risks|string|trim else 'Not applicable' }}</span>
       </label>
       <br>
     </div>
   
     <div class="question-block">
       <label for="adverse-steps">6.5 Description of steps to be taken in case of adverse events:
-        <br><span class="form-answer">{{form.adverse_steps}}</span>
+        <br><span class="form-answer">{{ form.adverse_steps if form.adverse_steps and form.adverse_steps|string|trim else 'Not applicable' }}</span>
       </label>
       <br>
     </div>
   
     <div class="question-block">
       <label for="community-participation">6.6 Description of anticipated community participation in the study:
-        <span class="form-answer">{{form.community_participation}}</span>
+        <span class="form-answer">{{ form.community_participation if form.community_participation and form.community_participation|string|trim else 'Not applicable' }}</span>
       </label>
       <br>
     </div>
   
     <div class="question-block">
       <label for="community-effects">6.7 Description of possible adverse effects on the community:
-        <br><span class="form-answer">{{form.community_effects}}</span>
+        <br><span class="form-answer">{{ form.community_effects if form.community_effects and form.community_effects|string|trim else 'Not applicable' }}</span>
       </label>
       <br>
     </div>
@@ -942,42 +946,42 @@
   
     <div class="question-block">
       <label for="results-feedback">6.10 How will participants be informed of findings?
-        <br><span class="form-answer">{{form.results_feedback}}</span>
+        <br><span class="form-answer">{{ form.results_feedback if form.results_feedback and form.results_feedback|string|trim else 'Not applicable' }}</span>
       </label>
     
     </div>
   
     <div class="question-block">
       <label for="products-access">6.11 Description of participants’ access to products developed from the study:
-        <br><span class="form-answer">{{form.products_access}}</span>
+        <br><span class="form-answer">{{ form.products_access if form.products_access and form.products_access|string|trim else 'Not applicable' }}</span>
       </label>
 
     </div>
   
     <div class="question-block">
       <label for="publication-plans">6.12 Indicate how you envisage publishing this research:
-        <span class="form-answer">{{form.publication_plans}}</span>
+        <span class="form-answer">{{ form.publication_plans if form.publication_plans and form.publication_plans|string|trim else 'Not applicable' }}</span>
       </label>
 
     </div>
   
     <div class="question-block">
       <label for="participant-comp">6.13 Describe compensation to participants (if applicable):
-        <br><span class="form-answer">{{form.participant_comp}}</span>
+        <br><span class="form-answer">{{ form.participant_comp if form.participant_comp and form.participant_comp|string|trim else 'Not applicable' }}</span>
       </label>
 
     </div>
   
     <div class="question-block">
       <label for="participant-costs">6.14 Describe any financial costs to participants (if applicable):
-        <span class="form-answer">{{form.participant_costs}}</span>
+        <span class="form-answer">{{ form.participant_costs if form.participant_costs and form.participant_costs|string|trim else 'Not applicable' }}</span>
       </label>
 
     </div>
   
     <div class="question-block">
       <label for="ethics-reporting">6.15 Description of reporting to ethics research committee:
-        <br><span class="form-answer">{{form.ethics_reporting}}</span>
+        <br><span class="form-answer">{{ form.ethics_reporting if form.ethics_reporting and form.ethics_reporting|string|trim else 'Not applicable' }}</span>
       </label>
     
     </div>
@@ -1021,14 +1025,15 @@
     <label>Date of Submission:</label>
     <span class="form-answer">{% if form.submitted_at%}{{form.submitted_at.strftime('%d/%m/%Y')}}{% endif%}</span>
 
-    <label>Date of Re-submission:</label>
-    <span class="form-answer">{% if form.declaration_date%}{{form.declaration_date.strftime('%d/%m/%Y')}}{% endif %}</span>
-
     <label>Supervisor:</label>
     <span class="form-answer">{{form.supervisor}}</span>
 
     <label>Title of Research:</label>
     <span class="form-answer">{{form.study_title}}</span>
+    {% if not form.submitted_at and form.declaration_date %}
+    <label>Date of Re-submission:</label>
+    <span class="form-answer">{{form.declaration_date.strftime('%d/%m/%Y')}}</span>
+    {% endif %}
     <table>
         <thead class="thead-light">
           <tr>

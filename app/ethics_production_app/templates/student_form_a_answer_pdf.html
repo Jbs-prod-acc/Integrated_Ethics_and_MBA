@@ -760,38 +760,39 @@
       <section id="section-5">
         <h2>Section 5: Methodology</h2>
 
+        {% if formA.quantitative or formA.qualitative or formA.mixed_methods %}
         <label>5.1 Research Paradigm (Substantiate your choice of paradigm)</label><br>
-        <table id="methodTypeTable" class="table table-bordered">
-          <thead class="thead-light">
-            <tr>
-              <th>Quantitative Methods</th>
-              <th>Qualitative Methods</th>
-              <th>Mixed Methods</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td class="text-center">{{'Yes' if formA.quantitative else 'No'}}</td>
-              <td class="text-center">{{'Yes' if formA.qualitative else 'No'}}</td>
-              <td class="text-center">{{'Yes' if formA.mixed_methods else 'No'}}</td>
-            </tr>
-          </tbody>
-        </table>
+        <span class="form-answer">
+          {% if formA.quantitative %}Quantitative Methods<br>{% endif %}
+          {% if formA.qualitative %}Qualitative Methods<br>{% endif %}
+          {% if formA.mixed_methods %}Mixed Methods{% endif %}
+        </span><br>
+        {% endif %}
 
+        {% if formA.paradigm_explanation %}
+        <label>5.1.1 Explain your paradigm selection</label><br>
+        <span class="form-answer">{{ formA.paradigm_explanation }}</span><br>
+        {% endif %}
 
+        {% if formA.design %}
         <label>5.2 Research Design / Approach
           <br><span class="form-answer">{{formA.design}}</span>
         </label>
         <br>
+        {% endif %}
 
 
+        {% if formA.participants_description or data.population or data.sampling_method or data.sampling_size or data.inclusion_criteria or formA.duration_timing or formA.contact_details_method or formA.conflict_interest or formA.conflict_explanation %}
         <label>5.3 Details of the participants</label>
 
+        {% if formA.participants_description %}
         <label>5.3.1 Participant Group Description</label>
         <br><span class="form-answer">{{formA.participants_description}}</span>
         <br>
         <br>
+        {% endif %}
 
+        {% if data.population or data.sampling_method or data.sampling_size or data.inclusion_criteria %}
         <table id="participantsTable" class="table table-bordered">
           <thead class="thead-light">
             <tr>
@@ -812,52 +813,49 @@
             </tr>
           </tbody>
         </table>
+        {% endif %}
 
 
+        {% if formA.duration_timing %}
         <label>5.3.2 Describe how much time you require of participants in each group and when the data will be
           collected/
           when the interviews will take place.
           <br><span class="form-answer">{{formA.duration_timing}}</span>
         </label>
         <br>
+        {% endif %}
 
+        {% if formA.contact_details_method %}
         <label>5.3.3 Explain how you will obtain the contact details of participants</label>
         <br><span class="form-answer">{{formA.contact_details_method}}</span>
         </label>
         <br>
+        {% endif %}
+        {% if formA.conflict_interest or formA.conflict_explanation %}
         <label>5.3.4 Conflict of interest or unequal relationship between researcher and participants?<span
             class="info-icon"
             title="A conflict of interest may arise where financial, personal or other considerations could directly and significantly affect, or appear to affect, a researcher's research conduct and judgement.">ℹ️</span></label>
         <br><span class="form-answer">{{'Yes' if formA.conflict_interest else 'No'}}</span>
         <br><span class="form-answer">Comment: {{formA.conflict_explanation or 'Not Applicable'}}</span>
         <br>
+        {% endif %}
+        {% endif %}
 
 
+        {% set selected_methods = formA.data_methods or [] %}
+        {% if selected_methods or formA.data_collection_procedure or formA.data_collectors or formA.intervention or formA.sensitive_data or formA.translator or formA.translator_procedure %}
         <label>5.4 Research Instruments for Data Collection</label>
-        <label for="data-collection-methods">5.4.1 Indicate which data collection methods will be used</label><br>
-        <table id="data_methods" class="table table-bordered">
-          <thead class="thead-light">
-            <tr>
-              <th>Questionnaire</th>
-              <th>Interview</th>
-              <th>Focus Group</th>
-              <th>Observation</th>
-              <th>Documents</th>
-              <th>Other</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-            <tr>
-              <td>{{ 'Yes' if 'questionnaire' in (formA.data_methods or []) else 'No' }}</td>
-              <td>{{ 'Yes' if 'interview' in (formA.data_methods or []) else 'No' }}</td>
-              <td>{{ 'Yes' if 'focus' in (formA.data_methods or []) else 'No' }}</td>
-              <td>{{ 'Yes' if 'observation' in (formA.data_methods or []) else 'No' }}</td>
-              <td>{{ 'Yes' if 'documents' in (formA.data_methods or []) else 'No' }}</td>
-              <td>{{ 'Yes' if 'other' in (formA.data_methods or []) else 'No' }}</td>
-            </tr>
-          </tbody>
-        </table>
+        {% if selected_methods %}
+        <label for="data-collection-methods">5.4.1 Data collection methods used</label><br>
+        <span class="form-answer">
+          {% if 'questionnaire' in selected_methods %}Questionnaire<br>{% endif %}
+          {% if 'interview' in selected_methods %}Interview<br>{% endif %}
+          {% if 'focus' in selected_methods or 'focus_group' in selected_methods %}Focus Group<br>{% endif %}
+          {% if 'observation' in selected_methods %}Observation<br>{% endif %}
+          {% if 'documents' in selected_methods %}Documents<br>{% endif %}
+          {% if 'other' in selected_methods %}Other{% endif %}
+        </span><br>
+        {% endif %}
 
 
         <!-- Questionnaire -->
@@ -873,46 +871,29 @@
 
 
         <!-- 5.4.1.1 Questionnaire(s) -->
+        {% if 'questionnaire' in selected_methods and (formA.questionnaire_type or formA.permission_obtained or formA.open_source or formA.instrument_attachment_reason) %}
         <label>5.4.1.1 Questionnaire(s):</label><br>
-        {% if formA.questionnaire_type %}
-        <span class="form-answer">Questionnaire Type: {{ formA.questionnaire_type or 'Not Applicable' }}</span><br>
-        {% endif %}
+        {% if formA.questionnaire_type %}<span class="form-answer">Questionnaire Type: {{ formA.questionnaire_type }}</span><br>{% endif %}
 
         {% if (formA.questionnaire_type|string)|trim|lower == 'existing' %}
-        <label>If existing, permission obtained?</label><br>
-
-        <span class="form-answer">
-          {# normalize to string -> lower #}
-          {% set perm = (formA.permission_obtained|string)|trim|lower %}
-          {% if perm in ['yes','true','on','1'] %}
-          Yes
-          {% elif perm in ['no','false','off','0'] %}
-          No
-          {% else %}
-          Not Applicable
-          {% endif %}
-        </span><br>
-
-        <span class="form-answer">
-          {% set os = (formA.open_source|string)|trim|lower %}
-          {% if os in ['yes','true','on','1'] %}
-          Open Source
-          {% elif os in ['no','false','off','0'] %}
-          Not open source
-          {% else %}
-          Not Applicable
-          {% endif %}
-        </span><br>
+        {% if formA.permission_obtained %}
+        <span class="form-answer">Permission obtained: {{ formA.permission_obtained }}</span><br>
+        {% endif %}
+        {% if formA.open_source %}
+        <span class="form-answer">Open source: {{ formA.open_source }}</span><br>
+        {% endif %}
         {% endif %}
 
 
-        <!-- Justification (textarea) -->
+        {% if formA.instrument_attachment_reason %}
         <label class="d-block mb-1">Justification:</label>
-        <span class="form-answer">{{ formA.instrument_attachment_reason or 'Not Applicable' }}</span>
-        </div>
+        <span class="form-answer">{{ formA.instrument_attachment_reason }}</span>
+        {% endif %}
+        {% endif %}
 
 
         <!-- Interview -->
+        {% if 'interview' in selected_methods and (formA.interview_type or formA.interview_recording) %}
         <label>5.4.1.2 Interviews</label>
 
         {% if formA.interview_type %}
@@ -929,12 +910,12 @@
           Video
           {% elif irec == 'both' %}
           Audio & Video
-          {% else %}
-          Not Applicable
           {% endif %}
         </span><br>
+        {% endif %}
 
         <!-- Focus Group -->
+        {% if ('focus' in selected_methods or 'focus_group' in selected_methods) and formA.focus_recording %}
         <label>5.4.1.3 Focus Groups</label>
 
         <label>How will the focus groups be recorded?</label><br>
@@ -947,109 +928,152 @@
           Video
           {% elif frec == 'both' %}
           Audio & Video
-          {% else %}
-          Not Applicable
           {% endif %}
         </span><br>
+        {% endif %}
 
         <!-- Observation -->
+        {% if 'observation' in selected_methods and formA.observation_details %}
         <label>5.4.1.4 Please describe your observation protocol:</label>
-        <br><span class="form-answer">{{formA.observation_details or 'Not Applicable'}}</span>
+        <br><span class="form-answer">{{formA.observation_details}}</span>
         <br>
+        {% endif %}
         <!-- Documents -->
+        {% if 'documents' in selected_methods and formA.documents_details %}
         <label>5.4.1.5 What type of documents will be analyzed?</label><br>
-        <span class="form-answer">{{formA.documents_details or 'Not Applicable'}}</span>
+        <span class="form-answer">{{formA.documents_details}}</span>
         <br>
+        {% endif %}
         <!-- Other -->
+        {% if 'other' in selected_methods and formA.other_details %}
         <label>5.4.1.6 Please describe other data collection method(s):</label>
         <br>
-        <span class="form-answer">{{formA.other_details or 'Not Applicable'}}</span>
+        <span class="form-answer">{{formA.other_details}}</span>
+        {% endif %}
 
 
 
         <!-- General Data Collection Procedure -->
+        {% if formA.data_collection_procedure %}
         <label style="margin-top: 1.5rem;">5.4.2 Describe the data collection procedure</label>
         <br>
         <span class="form-answer">{{formA.data_collection_procedure}}</span>
+        {% endif %}
 
+        {% if formA.data_collectors %}
         <label>5.4.3 Who will collect the data (Researcher and/or field workers/external company)?
           <br><span class="form-answer">{{formA.data_collectors}}</span>
         </label>
         <br>
+        {% endif %}
 
+        {% if formA.intervention %}
         <label>5.4.4 Will participants be subjected to any form of intervention (manipulation of the participant or the
           participants' environment)?
           <br><span class="form-answer">{{'Yes' if formA.intervention else 'No'}}</span>
         </label><br>
+        {% endif %}
 
 
+        {% if formA.sensitive_data %}
         <label>5.4.5 Sensitive data or vulnerable populations?
           <br><span class="form-answer">{{formA.sensitive_data}}</span>
         </label>
         <br>
+        {% endif %}
 
+        {% if formA.translator or formA.translator_procedure %}
         <label>5.4.6 Will a translator be required?
           <br><span class="form-answer">{{ 'Yes' if formA.translator else 'No' }}</span>
           <br><span class="form-answer">Comment: {{formA.translator_procedure or 'Not Applicable'}}</span>
         </label>
-
-
-
-        <br>
-        <br>
-
-        <label>5.5 Secondary Data Usage</label>
-
-        <label>5.5.1 Will secondary data be used?</label><br>
-        <span class="form-answer">{{ 'YES' if formA.uses_secondary_data else 'NO' }}</span>
-
-        <label>5.5.2 Is the data public, private, or both?</label><br>
-        <span class="form-answer">{{ formA.secondary_data_type }}</span>
-
-        <label>5.5.3 Nature of the Data</label><br>
-        <span class="form-answer">{{ formA.data_nature or 'Not Applicable' }}</span>
-
-
-        <label>5.5.4 Origin/Source of Research Data</label><br>
-        <span class="form-answer">{{ formA.data_origin or 'Not Applicable' }}</span>
-
-
-        <label>5.5.5 What are the access conditions?</label><br>
-        <span class="form-answer">{{ formA.access_conditions or 'Not Applicable' }}</span>
-
-
-        <label>5.5.6 Does the database contain personal information/identifiers?</label><br>
-        <span class="form-answer">{{ formA.personal_info or 'No' }}</span>
-
-        {% if formA.personal_info == 'Yes' %}
-        <label>5.5.6.1 Specify the personal info/identifiers:</label><br>
-        <span class="form-answer">{{ formA.personal_info_comment or 'Not Applicable' }}</span>
+        {% endif %}
         {% endif %}
 
 
+
+        <br>
+        <br>
+
+        {% if formA.uses_secondary_data or formA.secondary_data_type or formA.data_nature or formA.data_origin or formA.access_conditions or formA.personal_info or formA.personal_info_comment or formA.data_anonymized or formA.anonymization_comment or formA.public_data_description or formA.shortcomings_reported or formA.limitations_reporting or formA.methodology_alignment or formA.data_acknowledgment %}
+        <label>5.5 Secondary Data Usage</label>
+        {% if formA.uses_secondary_data %}
+        <label>5.5.1 Will secondary data be used?</label><br>
+        <span class="form-answer">Yes</span>
+        {% endif %}
+
+        {% if formA.secondary_data_type %}
+        <label>5.5.2 Is the data public, private, or both?</label><br>
+        <span class="form-answer">{{ formA.secondary_data_type }}</span>
+        {% endif %}
+
+        {% if formA.data_nature %}
+        <label>5.5.3 Nature of the Data</label><br>
+        <span class="form-answer">{{ formA.data_nature }}</span>
+        {% endif %}
+
+
+        {% if formA.data_origin %}
+        <label>5.5.4 Origin/Source of Research Data</label><br>
+        <span class="form-answer">{{ formA.data_origin }}</span>
+        {% endif %}
+
+
+        {% if formA.access_conditions %}
+        <label>5.5.5 What are the access conditions?</label><br>
+        <span class="form-answer">{{ formA.access_conditions }}</span>
+        {% endif %}
+
+
+        {% if formA.personal_info is not none and formA.personal_info|string|trim %}
+        <label>5.5.6 Does the database contain personal information/identifiers?</label><br>
+        <span class="form-answer">{{ formA.personal_info|yes_no }}</span>
+        {% endif %}
+
+        {% if formA.personal_info_comment %}
+        <label>5.5.6.1 Specify the personal info/identifiers:</label><br>
+        <span class="form-answer">{{ formA.personal_info_comment }}</span>
+        {% endif %}
+
+
+        {% if formA.data_anonymized %}
         <label>5.5.7 Has the data been anonymized?</label><br>
-        <span class="form-answer">{{ formA.data_anonymized or 'Not Applicable' }}</span>
+        <span class="form-answer">{{ formA.data_anonymized }}</span>
+        {% endif %}
 
 
+        {% if formA.anonymization_comment %}
         <label>5.5.7.1 Comment / Justification:</label><br>
-        <span class="form-answer">{{ formA.anonymization_comment or 'Not Applicable' }}</span>
+        <span class="form-answer">{{ formA.anonymization_comment }}</span>
+        {% endif %}
 
 
+        {% if formA.public_data_description %}
         <label>5.5.8 What type of public data will be used?</label><br>
-        <span class="form-answer">{{ formA.public_data_description or 'Not Applicable' }}</span>
+        <span class="form-answer">{{ formA.public_data_description }}</span>
+        {% endif %}
 
 
+        {% if formA.shortcomings_reported %}
         <label>5.5.9 Will data shortcomings/incompleteness be reported?</label><br>
-        <span class="form-answer">{{ formA.shortcomings_reported or 'Not Applicable' }}</span>
+        <span class="form-answer">Yes</span>
+        {% endif %}
 
+        {% if formA.limitations_reporting %}
         <label>5.5.10 How will data limitations be reported?</label><br>
-        <span class="form-answer">{{ formA.limitations_reporting or 'Not Applicable' }}</span>
+        <span class="form-answer">{{ formA.limitations_reporting }}</span>
+        {% endif %}
 
+        {% if formA.methodology_alignment %}
         <label>5.5.11 Is the research methodology and design aligned with secondary data use?</label><br>
-        <span class="form-answer">{{ formA.methodology_alignment or 'Not Applicable' }}</span>
+        <span class="form-answer">Yes</span>
+        {% endif %}
 
+        {% if formA.data_acknowledgment %}
         <label>5.5.12 How will the original owners of the data be acknowledged?</label><br>
-        <span class="form-answer">{{ formA.data_acknowledgment or 'Not Applicable' }}</span>
+        <span class="form-answer">{{ formA.data_acknowledgment }}</span>
+        {% endif %}
+        {% endif %}
 
       </section>
 
@@ -1120,35 +1144,35 @@
 
         <div class="question-block">
           <label for="study-benefits">6.3 What are the benefits of the study?
-            <br><span class="form-answer">{{formA.study_benefits}}</span>
+            <br><span class="form-answer">{{ formA.study_benefits if formA.study_benefits and formA.study_benefits|string|trim else 'Not applicable' }}</span>
           </label>
           <br>
         </div>
 
         <div class="question-block">
           <label for="participant-risks">6.4 Description of the risks participants may suffer and the level of risk:
-            <br><span class="form-answer">{{formA.participant_risks}}</span>
+            <br><span class="form-answer">{{ formA.participant_risks if formA.participant_risks and formA.participant_risks|string|trim else 'Not applicable' }}</span>
           </label>
           <br>
         </div>
 
         <div class="question-block">
           <label for="adverse-steps">6.5 Description of steps to be taken in case of adverse events:
-            <br><span class="form-answer">{{formA.adverse_steps}}</span>
+            <br><span class="form-answer">{{ formA.adverse_steps if formA.adverse_steps and formA.adverse_steps|string|trim else 'Not applicable' }}</span>
           </label>
           <br>
         </div>
 
         <div class="question-block">
           <label for="community-participation">6.6 Description of anticipated community participation in the study:
-            <span class="form-answer">{{formA.community_participation}}</span>
+            <br><span class="form-answer">{{ formA.community_participation if formA.community_participation and formA.community_participation|string|trim else 'Not applicable' }}</span>
           </label>
           <br>
         </div>
 
         <div class="question-block">
           <label for="community-effects">6.7 Description of possible adverse effects on the community:
-            <br><span class="form-answer">{{formA.community_effects}}</span>
+            <br><span class="form-answer">{{ formA.community_effects if formA.community_effects and formA.community_effects|string|trim else 'Not applicable' }}</span>
           </label>
           <br>
         </div>
@@ -1278,42 +1302,42 @@
 
         <div class="question-block">
           <label for="results-feedback">6.10 How will participants be informed of findings?
-            <br><span class="form-answer">{{formA.results_feedback}}</span>
+            <br><span class="form-answer">{{ formA.results_feedback if formA.results_feedback and formA.results_feedback|string|trim else 'Not applicable' }}</span>
           </label>
 
         </div>
 
         <div class="question-block">
           <label for="products-access">6.11 Description of participants’ access to products developed from the study:
-            <br><span class="form-answer">{{formA.products_access}}</span>
+            <br><span class="form-answer">{{ formA.products_access if formA.products_access and formA.products_access|string|trim else 'Not applicable' }}</span>
           </label>
 
         </div>
 
         <div class="question-block">
           <label for="publication-plans">6.12 Indicate how you envisage publishing this research:
-            <span class="form-answer">{{formA.publication_plans}}</span>
+            <br><span class="form-answer">{{ formA.publication_plans if formA.publication_plans and formA.publication_plans|string|trim else 'Not applicable' }}</span>
           </label>
 
         </div>
 
         <div class="question-block">
           <label for="participant-comp">6.13 Describe compensation to participants (if applicable):
-            <br><span class="form-answer">{{formA.participant_comp}}</span>
+            <br><span class="form-answer">{{ formA.participant_comp if formA.participant_comp and formA.participant_comp|string|trim else 'Not applicable' }}</span>
           </label>
 
         </div>
 
         <div class="question-block">
           <label for="participant-costs">6.14 Describe any financial costs to participants (if applicable):
-            <span class="form-answer">{{formA.participant_costs}}</span>
+            <br><span class="form-answer">{{ formA.participant_costs if formA.participant_costs and formA.participant_costs|string|trim else 'Not applicable' }}</span>
           </label>
 
         </div>
 
         <div class="question-block">
           <label for="ethics-reporting">6.15 Description of reporting to ethics research committee:
-            <br><span class="form-answer">{{formA.ethics_reporting}}</span>
+            <br><span class="form-answer">{{ formA.ethics_reporting if formA.ethics_reporting and formA.ethics_reporting|string|trim else 'Not applicable' }}</span>
           </label>
 
         </div>

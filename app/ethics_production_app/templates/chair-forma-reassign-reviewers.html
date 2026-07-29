@@ -218,9 +218,9 @@
           <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
             <div>
               <h4 class="mb-1">{{ form.applicant_name }}</h4>
-              <p class="helper-text">Select one required reviewer and, if needed, an optional second reviewer for this reassignment.</p>
+              <p class="helper-text">Select exactly one reviewer for this form.</p>
             </div>
-            <span id="selectionCount" class="badge text-bg-primary selection-badge">0 / 2 selected</span>
+            <span id="selectionCount" class="badge text-bg-primary selection-badge">0 / 1 selected</span>
           </div>
         </div>
 
@@ -254,7 +254,7 @@
             <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
               <div>
                 <h5 class="mb-1">Available Reviewers</h5>
-                <p class="helper-text">Assign one reviewer at minimum. You can optionally assign a second reviewer.</p>
+                <p class="helper-text">Exactly one reviewer is required.</p>
               </div>
             </div>
 
@@ -265,7 +265,7 @@
                   <div class="d-flex align-items-start gap-3">
                     <input
                       class="form-check-input mt-1 reviewer-checkbox"
-                      type="checkbox"
+                      type="radio"
                       name="reviewer_names[]"
                       value="{{ reviewer.user_id }}"
                       {% if checked %}checked{% endif %}
@@ -302,12 +302,12 @@
 
     function syncState(changedBox) {
       const checked = checkboxes.filter((box) => box.checked);
-      if (checked.length > 2 && changedBox) {
+      if (checked.length > 1 && changedBox) {
         changedBox.checked = false;
       }
 
       const updatedChecked = checkboxes.filter((box) => box.checked);
-      countBadge.textContent = `${updatedChecked.length} / 2 selected`;
+      countBadge.textContent = `${updatedChecked.length} / 1 selected`;
 
       checkboxes.forEach((box) => {
         const wrapper = box.closest('.reviewer-item');

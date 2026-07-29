@@ -19,7 +19,7 @@
           {% if messages %}
             <div class="flash-stack">
               {% for category, message in messages %}
-                <div class="flash flash--{{ category }}">{{ message }}</div>
+                <div class="flash flash--{{ category }} js-timed-flash" role="alert">{{ message }}</div>
               {% endfor %}
             </div>
           {% endif %}
@@ -81,6 +81,17 @@
 
     <script>
       (function () {
+        const flashDuration = 4000;
+        document.querySelectorAll(".js-timed-flash").forEach(function (flashMessage) {
+          window.setTimeout(function () {
+            flashMessage.style.transition = "opacity 200ms ease";
+            flashMessage.style.opacity = "0";
+            window.setTimeout(function () {
+              flashMessage.remove();
+            }, 200);
+          }, flashDuration);
+        });
+
         const dialog = document.getElementById("forgot-password-dialog");
         const openButton = document.getElementById("forgot-password-open");
         const cancelButton = document.getElementById("forgot-password-cancel");

@@ -1220,10 +1220,10 @@
             <label>5.5.6 Does the database contain personal information/identifiers?</label><br>
             <div class="d-flex gap-4 toggle-checkbox-group" data-group-name="personal_info">
               <input type="hidden" name="personal_info"
-                value="{{ formA.personal_info if formA.personal_info is not none else '' }}">
-              <label><input type="checkbox" data-toggle-option value="Yes" {% if formA.personal_info=='Yes' %}checked{% endif %}>
+                value="{{ formA.personal_info|yes_no if formA.personal_info is not none else '' }}">
+              <label><input type="checkbox" data-toggle-option value="Yes" {% if formA.personal_info|yes_no == 'Yes' %}checked{% endif %}>
                 Yes</label>
-              <label><input type="checkbox" data-toggle-option value="No" {% if formA.personal_info=='No' %}checked{% endif %}>
+              <label><input type="checkbox" data-toggle-option value="No" {% if formA.personal_info|yes_no == 'No' %}checked{% endif %}>
                 No</label>
             </div>
 
@@ -2110,6 +2110,8 @@
     }
 
   </script>
+<script src="{{ url_for('static', filename='js/form-autosave.js') }}"></script>
+<script>window.initAutosaveRefreshGuard({ endpoint: '{{ url_for("student_autosave_forma") }}' });</script>
 </body>
 <noscript>
   <div style="background: #ffdddd; color: #a00; padding: 1em; text-align: center; font-weight: bold;">

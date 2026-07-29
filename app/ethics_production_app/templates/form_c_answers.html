@@ -120,28 +120,28 @@
         </thead>
         <tbody>
           <tr><td>Communities that may be considered as vulnerable</td>
-            <td>{{formc.vulnerable}}</td></tr>
+            <td>{{'Yes' if formc.vulnerable else 'No'}}</td></tr>
           <tr><td>People under the age of 18 or over 65</td>
-            <td>{{formc.age_under_18_or_over_65}}</td></tr>
+            <td>{{'Yes' if formc.age_under_18_or_over_65 else 'No'}}</td></tr>
           <tr><td>UJ employees or students</td>
-            <td>{{formc.uj_employee}}</td></tr>
+            <td>{{'Yes' if formc.uj_employee else 'No'}}</td></tr>
           <tr><td>Persons not usually considered vulnerable but would be in this context</td>
-            <td>{{formc.non_vulnerable_context}}</td></tr>
+            <td>{{'Yes' if formc.non_vulnerable_context else 'No'}}</td></tr>
           <tr><td>Non-English-speaking participants</td>
-            <td>{{formc.non_english}}</td></tr>
+            <td>{{'Yes' if formc.non_english else 'No'}}</td></tr>
           <tr><td>A researcher’s own students</td>
-            <td>{{formc.own_student}}</td></tr>
+            <td>{{'Yes' if formc.own_student else 'No'}}</td></tr>
           <tr><td>People living in poverty</td>
-            <td>{{formc.poverty}}</td></tr>
+            <td>{{'Yes' if formc.poverty else 'No'}}</td></tr>
           <tr><td>People with little or no education</td>
-            <td>{{formc.non_education}}</td></tr>
+            <td>{{'Yes' if formc.non_education else 'No'}}</td></tr>
           <tr><td>Other: Please describe.</td>
-            <td>{{formc.vulnerable_other_description}}</td></tr>
+            <td>{{'Not applicable' if not formc.vulnerable_other_description or formc.vulnerable_other_description|string|trim|lower in ['false', 'none'] else formc.vulnerable_other_description}}</td></tr>
         </tbody>
       </table>
       
       <label><strong>Comments (e.g. “No participants”):</strong></label>
-     
+      <br><span class="form-answer">{{formc.vulnerable_comments or 'Not applicable'}}</span>
       
       <hr>
 
@@ -155,34 +155,34 @@
   </thead>
   <tbody>
   <tr><td>Collection/use/disclosure of info WITHOUT individual’s consent (excluding StatsSA, etc.)</td>
-    <td>{{formc.consent_violation}}</td></tr>
+    <td>{{'Yes' if formc.consent_violation else 'No'}}</td></tr>
 <tr><td>Causing discomfiture beyond normal inconvenience</td>
-  <td>{{formc.discomfiture}}</td></tr>
+  <td>{{'Yes' if formc.discomfiture else 'No'}}</td></tr>
 <tr><td>Deception of participants or covert observation</td>
-  <td>{{formc.deception}}</td></tr>
+  <td>{{'Yes' if formc.deception else 'No'}}</td></tr>
 <tr><td>Examining sensitive or contentious issues</td>
-  <td>{{formc.sensitive_issues}}</td></tr>
+  <td>{{'Yes' if formc.sensitive_issues else 'No'}}</td></tr>
 <tr><td>Seeking prejudicial information about participants</td>
-  <td>{{formc.prejuditial_info}}</td></tr>
+  <td>{{'Yes' if formc.prejuditial_info else 'No'}}</td></tr>
 <tr><td>Using intrusive techniques</td>
-  <td>{{formc.intrusive}}</td></tr>
+  <td>{{'Yes' if formc.intrusive else 'No'}}</td></tr>
 <tr><td>Study/participation in illegal activities</td>
-  <td>{{formc.illegal}}</td></tr>
+  <td>{{'Yes' if formc.illegal else 'No'}}</td></tr>
 <tr><td>Collecting personal/social info directly from participants</td>
-  <td>{{formc.direct_social_info}}</td></tr>
+  <td>{{'Yes' if formc.direct_social_info else 'No'}}</td></tr>
 <tr><td>Identifiable info collected from available records (staff/student records)</td>
-  <td>{{formc.identifiable_records}}</td></tr>
+  <td>{{'Yes' if formc.identifiable_records else 'No'}}</td></tr>
 <tr><td>Psychology inventories / scales / tests</td>
-  <td>{{formc.psychology_tests}}</td></tr>
+  <td>{{'Yes' if formc.psychology_tests else 'No'}}</td></tr>
 <tr><td>Activities putting researcher/data collector at risk</td>
-  <td>{{formc.reseacher_risk}}</td></tr>
+  <td>{{'Yes' if formc.reseacher_risk else 'No'}}</td></tr>
     <tr><td>Other:  Please describe.</td>
-      <td>{{formc.activity_other_description}}</td></tr>
+      <td>{{'Not applicable' if not formc.activity_other_description or formc.activity_other_description|string|trim|lower in ['false', 'none'] else formc.activity_other_description}}</td></tr>
   </tbody>
 </table>
 
 <label><strong>Comments:</strong></label>
-
+<br><span class="form-answer">{{formc.activity_comments or 'Not applicable'}}</span>
       <hr>
 
       <h4>2.3 Additional Research Considerations</h4>
@@ -195,24 +195,24 @@
         </thead>
         <tbody>
        <tr><td>a) Reimbursement or incentives to any participants.</td>
-        <td>{{formc.incentives}}</td></tr>
+        <td>{{'Yes' if formc.incentives else 'No'}}</td></tr>
         <tr><td>b) Participants will incur financial costs by participating.</td>
-          <td>{{formc.participant_costs}}</td></tr>
+          <td>{{'Yes' if formc.participant_costs else 'No'}}</td></tr>
         <tr><td>c) Researcher has financial or other involvement in the research.</td>
-          <td>{{formc.researcher_interest}}</td></tr>
+          <td>{{'Yes' if formc.researcher_interest else 'No'}}</td></tr>
         <tr><td>d) Any potential conflict of interest (e.g., researching peers/students).</td>
-          <td>{{formc.conflict_of_interest}}</td></tr>
+          <td>{{'Yes' if formc.conflict_of_interest else 'No'}}</td></tr>
         <tr><td>e) Research is conducted on UJ premises.</td>
-          <td>{{formc.uj_premises}}</td></tr>
+          <td>{{'Yes' if formc.uj_premises else 'No'}}</td></tr>
         <tr><td>f) Research uses UJ facilities (venues, software, hardware, etc.)</td>
-          <td>{{formc.uj_facilities}}</td></tr>
+          <td>{{'Yes' if formc.uj_facilities else 'No'}}</td></tr>
         <tr><td>g) Research is funded by UJ or through UJ-acquired funding.</td>
-          <td>{{formc.uj_funding}}</td></tr>
+          <td>{{'Yes' if formc.uj_funding else 'No'}}</td></tr>
         </tbody>
       </table>
       
       <label><strong>Comments:</strong></label>
-     
+      <br><span class="form-answer">{{formc.consideration_comments or 'Not applicable'}}</span>
       
       <hr>
       
@@ -278,7 +278,7 @@
         </label>
       </div>
 
-      {% if formc.form_a_requirements and formc.form_a_requirements.files %}
+      {% if requirement_file_available(formc.form_a_requirements, 'files') %}
       <div class="form-group mt-3">
           <label><strong>Uploaded Proposal Document:</strong></label>
           <div class="mt-2">

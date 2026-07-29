@@ -170,6 +170,12 @@
     function handleFormSubmit(event) {
         const form = event.target;
 
+        // Another form-specific validator may have cancelled submission.
+        // Do not lock the page or show the overlay when no request will be sent.
+        if (event.defaultPrevented) {
+            return true;
+        }
+
         // Check if form is already being submitted
         if (submittedForms.has(form)) {
             event.preventDefault();

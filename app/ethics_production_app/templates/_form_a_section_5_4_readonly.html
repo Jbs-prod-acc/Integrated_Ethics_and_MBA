@@ -1,0 +1,94 @@
+{% set selected_methods = display_form.data_methods or [] %}
+{% if selected_methods or display_form.data_collection_procedure or display_form.data_collectors or display_form.intervention or display_form.sensitive_data or display_form.translator or display_form.translator_procedure %}
+<div class="question-block">
+  <label>5.4 Research Instruments for Data Collection</label><br>
+
+  {% if selected_methods %}
+  <label>5.4.1 Indicate which data collection methods will be used</label><br>
+  <span class="form-answer">
+    {% if 'questionnaire' in selected_methods %}Questionnaire<br>{% endif %}
+    {% if 'interview' in selected_methods %}Interview<br>{% endif %}
+    {% if 'focus' in selected_methods or 'focus_group' in selected_methods %}Focus Group<br>{% endif %}
+    {% if 'observation' in selected_methods %}Observation<br>{% endif %}
+    {% if 'documents' in selected_methods %}Documents<br>{% endif %}
+    {% if 'other' in selected_methods %}Other{% endif %}
+  </span><br>
+  {% endif %}
+
+  {% if 'questionnaire' in selected_methods %}
+    {% if display_form.questionnaire_type %}
+    <label>5.4.1.1 Questionnaire(s)</label><br>
+    <span class="form-answer">Questionnaire Type: {{ display_form.questionnaire_type }}</span><br>
+    {% endif %}
+    {% if display_form.permission_obtained %}
+    <span class="form-answer">Permission obtained: {{ display_form.permission_obtained }}</span><br>
+    {% endif %}
+    {% if display_form.open_source %}
+    <span class="form-answer">Open source: {{ display_form.open_source }}</span><br>
+    {% endif %}
+    {% if display_form.instrument_attachment_reason %}
+    <span class="form-answer">Justification: {{ display_form.instrument_attachment_reason }}</span><br>
+    {% endif %}
+  {% endif %}
+
+  {% if 'interview' in selected_methods %}
+    {% if display_form.interview_type or display_form.interview_recording %}
+    <label>5.4.1.2 Interviews</label><br>
+    {% endif %}
+    {% if display_form.interview_type %}
+    <span class="form-answer">Interview Type: {{ display_form.interview_type }}</span><br>
+    {% endif %}
+    {% if display_form.interview_recording %}
+    <span class="form-answer">Recording: {{ display_form.interview_recording }}</span><br>
+    {% endif %}
+  {% endif %}
+
+  {% if 'focus' in selected_methods or 'focus_group' in selected_methods %}
+    {% if display_form.focus_recording %}
+    <label>5.4.1.3 Focus Groups</label><br>
+    <span class="form-answer">Recording: {{ display_form.focus_recording }}</span><br>
+    {% endif %}
+  {% endif %}
+
+  {% if 'observation' in selected_methods and display_form.observation_details %}
+  <label>5.4.1.4 Observation protocol</label><br>
+  <span class="form-answer">{{ display_form.observation_details }}</span><br>
+  {% endif %}
+
+  {% if 'documents' in selected_methods and display_form.documents_details %}
+  <label>5.4.1.5 Documents to be analysed</label><br>
+  <span class="form-answer">{{ display_form.documents_details }}</span><br>
+  {% endif %}
+
+  {% if 'other' in selected_methods and display_form.other_details %}
+  <label>5.4.1.6 Other data collection method(s)</label><br>
+  <span class="form-answer">{{ display_form.other_details }}</span><br>
+  {% endif %}
+
+  {% if display_form.data_collection_procedure %}
+  <label>5.4.2 Describe the data collection procedure</label><br>
+  <span class="form-answer">{{ display_form.data_collection_procedure }}</span><br>
+  {% endif %}
+
+  {% if display_form.data_collectors %}
+  <label>5.4.3 Who will collect the data?</label><br>
+  <span class="form-answer">{{ display_form.data_collectors }}</span><br>
+  {% endif %}
+
+  {% if display_form.intervention %}
+  <label>5.4.4 Will participants be subjected to any form of intervention?</label><br>
+  <span class="form-answer">Yes</span><br>
+  {% endif %}
+
+  {% if display_form.sensitive_data %}
+  <label>5.4.5 Sensitive data or vulnerable populations?</label><br>
+  <span class="form-answer">{{ display_form.sensitive_data }}</span><br>
+  {% endif %}
+
+  {% if display_form.translator or display_form.translator_procedure %}
+  <label>5.4.6 Will a translator be required?</label><br>
+  {% if display_form.translator %}<span class="form-answer">Yes</span><br>{% endif %}
+  {% if display_form.translator_procedure %}<span class="form-answer">{{ display_form.translator_procedure }}</span><br>{% endif %}
+  {% endif %}
+</div>
+{% endif %}

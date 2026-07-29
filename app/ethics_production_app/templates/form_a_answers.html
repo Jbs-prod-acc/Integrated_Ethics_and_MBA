@@ -566,6 +566,9 @@
     <br><span class="form-answer">{{formA.conflict_explanation}}</span>
     <br>
 
+    {% set display_form = formA %}
+    {% include '_form_a_section_5_4_readonly.html' %}
+    {% if false %}
     <h3>5.4 Research Instruments for Data Collection</h3>
     <label>5.4.1 Indicate which data collection methods will be used</label><br>
     <table id="data_methods" class="table table-bordered">
@@ -639,6 +642,7 @@
     <br>
     <br><span class="form-answer">{{formA.translator_procedure}}</span>
 
+{% endif %}
 <h3>5.5 Secondary Data Usage</h3>
 
 <label>5.5.1 Will secondary data be used?</label><br>
@@ -667,9 +671,9 @@
 <br><br>
 
 <label>5.5.3.4 Does the database contain personal information/identifiers?</label><br>
-<span class="form-answer">{{ formA.personal_info or 'Not specified' }}</span>
+<span class="form-answer">{{ formA.personal_info|yes_no }}</span>
 
-{% if formA.personal_info == 'Yes' %}
+{% if formA.personal_info|yes_no == 'Yes' %}
   <label>5.5.3.5 Specify the personal info/identifiers:</label><br>
   <span class="form-answer">{{ formA.personal_info_comment or 'None provided' }}</span>
 {% endif %}
@@ -757,35 +761,35 @@
   
     <div class="question-block">
       <label for="study-benefits">6.3 What are the benefits of the study?
-        <br><span class="form-answer">{{formA.study_benefits}}</span>
+        <br><span class="form-answer">{{ formA.study_benefits if formA.study_benefits and formA.study_benefits|string|trim else 'Not applicable' }}</span>
       </label>
       <br>
     </div>
   
     <div class="question-block">
       <label for="participant-risks">6.4 Description of the risks participants may suffer and the level of risk:
-        <br><span class="form-answer">{{formA.participant_risks}}</span>
+        <br><span class="form-answer">{{ formA.participant_risks if formA.participant_risks and formA.participant_risks|string|trim else 'Not applicable' }}</span>
       </label>
       <br>
     </div>
   
     <div class="question-block">
       <label for="adverse-steps">6.5 Description of steps to be taken in case of adverse events:
-        <br><span class="form-answer">{{formA.adverse_steps}}</span>
+        <br><span class="form-answer">{{ formA.adverse_steps if formA.adverse_steps and formA.adverse_steps|string|trim else 'Not applicable' }}</span>
       </label>
       <br>
     </div>
   
     <div class="question-block">
       <label for="community-participation">6.6 Description of anticipated community participation in the study:
-        <span class="form-answer">{{formA.community_participation}}</span>
+        <span class="form-answer">{{ formA.community_participation if formA.community_participation and formA.community_participation|string|trim else 'Not applicable' }}</span>
       </label>
       <br>
     </div>
   
     <div class="question-block">
       <label for="community-effects">6.7 Description of possible adverse effects on the community:
-        <br><span class="form-answer">{{formA.community_effects}}</span>
+        <br><span class="form-answer">{{ formA.community_effects if formA.community_effects and formA.community_effects|string|trim else 'Not applicable' }}</span>
       </label>
       <br>
     </div>
@@ -834,42 +838,42 @@
   
     <div class="question-block">
       <label for="results-feedback">6.10 How will participants be informed of findings?
-        <br><span class="form-answer">{{formA.results_feedback}}</span>
+        <br><span class="form-answer">{{ formA.results_feedback if formA.results_feedback and formA.results_feedback|string|trim else 'Not applicable' }}</span>
       </label>
     
     </div>
   
     <div class="question-block">
       <label for="products-access">6.11 Description of participants’ access to products developed from the study:
-        <br><span class="form-answer">{{formA.products_access}}</span>
+        <br><span class="form-answer">{{ formA.products_access if formA.products_access and formA.products_access|string|trim else 'Not applicable' }}</span>
       </label>
 
     </div>
   
     <div class="question-block">
       <label for="publication-plans">6.12 Indicate how you envisage publishing this research:
-        <span class="form-answer">{{formA.publication_plans}}</span>
+        <span class="form-answer">{{ formA.publication_plans if formA.publication_plans and formA.publication_plans|string|trim else 'Not applicable' }}</span>
       </label>
 
     </div>
   
     <div class="question-block">
       <label for="participant-comp">6.13 Describe compensation to participants (if applicable):
-        <br><span class="form-answer">{{formA.participants_comp}}</span>
+        <br><span class="form-answer">{{ formA.participants_comp if formA.participants_comp and formA.participants_comp|string|trim else 'Not applicable' }}</span>
       </label>
 
     </div>
   
     <div class="question-block">
       <label for="participant-costs">6.14 Describe any financial costs to participants (if applicable):
-        <span class="form-answer">{{formA.participants_costs}}</span>
+        <span class="form-answer">{{ formA.participants_costs if formA.participants_costs and formA.participants_costs|string|trim else 'Not applicable' }}</span>
       </label>
 
     </div>
   
     <div class="question-block">
       <label for="ethics-reporting">6.15 Description of reporting to ethics research committee:
-        <br><span class="form-answer">{{formA.ethics_reporting}}</span>
+        <br><span class="form-answer">{{ formA.ethics_reporting if formA.ethics_reporting and formA.ethics_reporting|string|trim else 'Not applicable' }}</span>
       </label>
     
     </div>

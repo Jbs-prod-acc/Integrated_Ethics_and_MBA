@@ -191,12 +191,6 @@
                 view_form.submission_date%}{{view_form.submission_date.strftime('%d/%m/%Y')}}{% endif%}</strong>
             </div>
             <br>
-            <div class="form-group">
-              <label>Date of Re-submission:</label>
-              <strong>{% if view_form.declaration_date%}{{view_form.declaration_date}}
-                {% elif view_form.signature_date %}{{view_form.signature_date.strftime('%d/%m/%Y')}}
-                {% endif%}</strong>
-            </div>
             <br>
             <div class="form-group">
               <label>Supervisor:</label>

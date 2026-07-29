@@ -238,7 +238,7 @@
               <ul class="doc-link">
                 {% if supervisor_formA_req %}
                 {% for formR in supervisor_formA_req %}
-                  {% if formR.user_id == formc.user_id and formR.files %}
+                  {% if formR.user_id == formc.user_id and requirement_file_available(formR, 'files') %}
                     <li><a href="{{ url_for('view_requirement_file', req_id=formR.id, field='files') }}" target="_blank">Research Proposal</a></li>
                   {% endif %}
                 {% endfor %}

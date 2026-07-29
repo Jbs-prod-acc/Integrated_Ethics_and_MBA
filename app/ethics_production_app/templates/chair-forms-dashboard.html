@@ -200,14 +200,15 @@
               <td>{% if form.supervisor%}{{form.supervisor}}{% elif form.supervisor_name%}{{form.supervisor_name}}{%
                 endif%}</td>
               <td>{{form_name}}</td>
-              <td>{% if form.declaration_date%}{{form.declaration_date.strftime('%d/%m/%Y')}}{% elif
-                form.submission_date%}{{form.submission_date.strftime('%d/%m/%Y')}}{% elif
-                form.submitted_at%}{{form.submitted_at.strftime('%d/%m/%Y')}}{% elif form.created_at
-                %}{{form.created_at.strftime('%d/%m/%Y')}}{% endif%}</td>
-              <td>{% if form.supervisor_date %}{{form.supervisor_date.strftime('%d/%m/%Y')}}{% endif %}</td>
+              <td>{% if form_name == 'FORM C' and form.submission_date
+                %}{{form.submission_date.strftime('%d/%m/%Y %H:%M')}}{% elif form.submitted_at
+                %}{{form.submitted_at.strftime('%d/%m/%Y %H:%M')}}{% elif form.declaration_date
+                %}{{form.declaration_date.strftime('%d/%m/%Y %H:%M')}}{% elif form.created_at
+                %}{{form.created_at.strftime('%d/%m/%Y %H:%M')}}{% endif%}</td>
+              <td>{% if form.supervisor_date %}{{form.supervisor_date.strftime('%d/%m/%Y %H:%M')}}{% endif %}</td>
               <td>{% if not awaiting_admin_review and form.ethics_signature_date
-                %}{{form.ethics_signature_date.strftime('%d/%m/%Y')}}{% elif not awaiting_admin_review and
-                form.review_signature_date %}{{form.review_signature_date.strftime('%d/%m/%Y')}}{% endif %}</td>
+                %}{{form.ethics_signature_date.strftime('%d/%m/%Y %H:%M')}}{% elif not awaiting_admin_review and
+                form.review_signature_date %}{{form.review_signature_date.strftime('%d/%m/%Y %H:%M')}}{% endif %}</td>
               <td>
                 {% if form.review_date %}{{form.review_supervisor_signature}} : {{form.review_date}}{% endif %}
                 <br>
@@ -234,36 +235,40 @@
                     class="btn btn-sm btn-success text-white mt-2">View Feedback</a>
                 </span>
                 <br>
+                {% set risk_level = (form.risk_level or form.risk_rating or '')|lower %}
+                {% set assigned_reviewers = assigned_reviewer_count(form) %}
+                {% set completed_reviews = completed_reviewer_count(form) %}
+                {% set suppress_empty_status_pill =
+                  is_current_row and
+                  has_reviewer_approval(form) and
+                  not form.submitted_to_rec and
+                  'low' in risk_level and
+                  not form.certificate_issued
+                %}
+                {% if not suppress_empty_status_pill %}
                 <span class="status-pill approved">
-                  {% set risk_level = (form.risk_level or form.risk_rating or '')|lower %}
-                  {% set assigned_reviewers = assigned_reviewer_count(form) %}
-                  {% set completed_reviews = completed_reviewer_count(form) %}
                   {% if not is_current_row %}
                   Previous version
-                  {% elif form.status == 'Submitted to Student for Corrections' %}
+                  {% elif is_student_correction_state(form) %}
                   Form was sent back to student
                   {% elif form.submitted_to_rec and 'low' not in risk_level and not form.certificate_issued %}
                   Form submitted to Rec
 
-                  {% elif (form.review_recommendation in ['Approved','Approved with Minor Changes']) and
-                  (form.review_recommendation1 in [ 'Approved','Approved with Minor Changes']) and not
-                  form.submitted_to_rec and 'low' not in risk_level %}
-                  Approved by both Reviewers
+                  {% elif has_reviewer_approval(form) and not form.submitted_to_rec and 'low' not in risk_level %}
+
                   <br>
                   Awaiting Submission to REC
-                  {% elif (form.review_recommendation in ['Approved','Approved with Minor Changes']) and
-                  (form.review_recommendation1 in [ 'Approved','Approved with Minor Changes']) and not
-                  form.submitted_to_rec %}
-                  Approved by both Reviewers
+                  {% elif has_reviewer_approval(form) and not form.submitted_to_rec %}
+
                   {% elif is_waiting_for_additional_reviewer(form) %}
-                  Awaiting for second reviewers feedback
+                  Awaiting assigned reviewer feedback
                   {% elif form.rejected_or_accepted and assigned_reviewers == 1 and completed_reviews == 0 %}
                   Awaiting assigned reviewer feedback
                   {% elif form.rejected_or_accepted and assigned_reviewers >= 1 and not form.form_reviewed_by and not
                   form.form_reviewed_by1 %}
-                  Submitted to Reviewers
+                  Submitted to Reviewer
                   {% elif assigned_reviewers >= 1 and not form.form_reviewed_by and not form.form_reviewed_by1 %}
-                  Submitted to Reviewers
+                  Submitted to Reviewer
                   {% elif not form.supervisor_signature and form.review_date %}
                   Rejected by Ethics Committee
                   {% elif form.certificate_issued and form.certificate_received %}
@@ -306,6 +311,7 @@
                   Awaiting review
                   {% endif %}
                 </span>
+                {% endif %}
                 <br>
                 {% if form.review_supervisor_signature%}
                 {{form.review_supervisor_signature}}: {{form.form_review_comment}}
@@ -323,7 +329,7 @@
                 {% if not is_current_row %}
                 <a href="{{url_for('ethics_form_pdf',form_id=form.form_id,form_type=form_name)}}"
                   class="btn btn-sm btn-success text-white">View Form</a>
-                {% elif has_dual_reviewer_approval(form) and not form.certificate_issued %}
+                {% elif has_reviewer_approval(form) and not form.certificate_issued %}
                 <a href="{{url_for('ethics_form_pdf',form_id=form.form_id,form_type=form_name)}}"
                   class="btn btn-sm btn-success text-white">View Form</a>
                 <br>
@@ -400,6 +406,14 @@
 
       certificateStatusModalForm.setAttribute('action', action);
       certificateStatusModalText.textContent = `You are about to submit the final ethics status for ${formLabel}. This confirms that the student has completed the ethics process and updates the certificate status.`;
+    });
+
+    document.querySelectorAll('span.status-pill').forEach(function (statusPill) {
+      const hasVisibleStatus = statusPill.textContent.trim().length > 0;
+      const hasInteractiveContent = statusPill.querySelector('a, button, form');
+      if (!hasVisibleStatus && !hasInteractiveContent) {
+        statusPill.remove();
+      }
     });
   </script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>

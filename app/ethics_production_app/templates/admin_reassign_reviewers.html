@@ -71,7 +71,7 @@
   <main class="admin-main">
     <header class="topbar">
       <h2>Reassign Form Reviewers</h2>
-      <p class="mb-0 text-muted">Update reviewer assignments for the latest submitted Form A, Form B, and Form C records at any stage of reviewer workflow. One reviewer is required, and a second reviewer is optional.</p>
+      <p class="mb-0 text-muted">Update reviewer assignments for the latest submitted Form A, Form B, and Form C records. Exactly one reviewer is required per form.</p>
     </header>
 
     <section class="admin-content">
@@ -93,9 +93,9 @@
               <th>Student</th>
               <th>Form</th>
               <th>Submitted</th>
-              <th>Current Reviewers</th>
+              <th>Current Reviewer</th>
               <th>Status</th>
-              <th>Assign New Reviewers</th>
+              <th>Assign New Reviewer</th>
             </tr>
           </thead>
           <tbody>
@@ -142,17 +142,9 @@
                     <input type="hidden" name="form_type" value="{{ row.form_type }}">
                     <input type="hidden" name="page" value="{{ page }}">
                     <select name="reviewer_1_id" class="form-select" required>
-                      <option value="">Select first reviewer</option>
+                      <option value="">Select reviewer</option>
                       {% for reviewer in reviewers %}
                         <option value="{{ reviewer.user_id }}" {% if row.selected_reviewer_ids|length > 0 and row.selected_reviewer_ids[0] == reviewer.user_id %}selected{% endif %}>
-                          {{ reviewer.full_name }} - {{ reviewer.email }}
-                        </option>
-                      {% endfor %}
-                    </select>
-                    <select name="reviewer_2_id" class="form-select">
-                      <option value="">Optional second reviewer</option>
-                      {% for reviewer in reviewers %}
-                        <option value="{{ reviewer.user_id }}" {% if row.selected_reviewer_ids|length > 1 and row.selected_reviewer_ids[1] == reviewer.user_id %}selected{% endif %}>
                           {{ reviewer.full_name }} - {{ reviewer.email }}
                         </option>
                       {% endfor %}

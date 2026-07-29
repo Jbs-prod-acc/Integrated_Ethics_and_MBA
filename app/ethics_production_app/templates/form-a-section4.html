@@ -905,5 +905,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="{{ url_for('static', filename='js/form-submission-handler.js') }}"></script>
+<script src="{{ url_for('static', filename='js/form-autosave.js') }}"></script>
+<script>window.initAutosaveRefreshGuard({ endpoint: '{{ url_for("form_a_sec4_autosave") }}' });</script>
 </body>
 </html>

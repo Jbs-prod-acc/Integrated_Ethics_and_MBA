@@ -142,7 +142,7 @@
   <select id="formAStatusFilter" class="form-select">
     <option value="all">All</option>
     <option value="awaiting-review">Awaiting Review</option>
-    <option value="submitted-reviewers">Submitted to Reviewers</option>
+    <option value="submitted-reviewers">Submitted to Reviewer</option>
     <option value="approved-both">Approved by both Reviewers</option>
     <option value="certificate-issued">Certificate issued</option>
     <option value="rejected">Rejected</option>
@@ -220,7 +220,7 @@
               {% elif forma.reviewer_name1 and forma.reviewer_name2 and forma.supervisor_date%}
               <br>
       
-              <span class="status-pill approved">Submitted to Reviewers</span>
+              <span class="status-pill approved">Submitted to Reviewer</span>
               
                {% elif not forma.rejected_or_accepted and forma.reviewer_name2 and forma.reviewer_name1 and 'Resubmission Required' in [forma.recommendation1, forma.recommendation]%}
                <span class="status-paill approved">Awaiting Student Update</span>
@@ -237,7 +237,7 @@
 
               {% elif forma.rejected_or_accepted and forma.reviewer_name1 and forma.reviewer_name2 and not forma.certificate_issued  and not forma.review_recommendation %}
 
-              <p>Submitted to Reviewers</p>
+              <p>Submitted to Reviewer</p>
               {% elif not forma.recommendation%}
               <span class="status-pill approved">Awaiting for Review</span>
               {% elif forma.certificate_issued and not forma.certificate_received%}
@@ -324,7 +324,7 @@
               <a href="{{url_for('chair_forma_view',id=forma.user_id)}}" class="btn btn-sm btn-success text-white" >Review</a>
               <br>
               <br>
-              {% if has_dual_reviewer_approval(forma) and not forma.certificate_issued %}
+              {% if has_reviewer_approval(forma) and not forma.certificate_issued %}
                   <button type="button" class="btn btn-sm btn-success text-white open-certificate-status-modal" data-bs-toggle="modal" data-bs-target="#certificateStatusModal" data-action="{{ url_for('update_certificate_status', id=forma.form_id) }}" data-form-label="Form A for {{ forma.applicant_name }}">
                     🎓 Update Certificate Status
                   </button>
@@ -445,7 +445,7 @@
               {% elif formb.rec_status and 'low' not in formb.risk_level|lower %}
               <span class="status-pill approved">{{formb.rec_status}}</span>
               {% elif  formb.reviewer_name and formb.reviewer_name2 and not formb.certificate_issued %}
-              <span class="status-pill approved">Submitted to Reviewers</span>
+              <span class="status-pill approved">Submitted to Reviewer</span>
               {% elif not formb.rejected_or_accepted and formb.reviewer_name2 and formb.reviewer_name1 and 'Resubmission Required' in [formb.recommendation1, formb.recommendation]%}
                <span class="status-paill approved">Awaiting Student Update</span>
               
@@ -468,7 +468,7 @@
               <br>
               <p>Approved by both Reviewers</p>
               {% elif formb.rejected_or_accepted and formb.reviewer_name1 and formb.reviewer_name2 and not formb.certificate_issued and not formb.review_recommendation%}
-              <p>Submitted to Reviewers</p>
+              <p>Submitted to Reviewer</p>
               {% elif not formb.recommendation%}
               
               <span class="status-pill approved">Awaiting for review</span>
@@ -532,7 +532,7 @@
               <a href="{{url_for('chair_formb_view',id=formb.user_id)}}" class="btn btn-sm btn-success text-white" >Review</a>
             <br>
               <br>
-              {% if has_dual_reviewer_approval(formb) and not formb.certificate_issued %}
+              {% if has_reviewer_approval(formb) and not formb.certificate_issued %}
               <button type="button" class="btn btn-sm btn-success text-white open-certificate-status-modal" data-bs-toggle="modal" data-bs-target="#certificateStatusModal" data-action="{{ url_for('update_certificate_status', id=formb.form_id) }}" data-form-label="Form B for {{ formb.applicant_name }}">
                 Update Certificate Status
               </button>
@@ -656,7 +656,7 @@
               {% elif formc.rec_status and 'low' in formc.risk_level|lower %}
               <p>{{formc.rec_status}}</p>
               {% elif formc.reviewer_name1 and formc.reviewer_name2 and formc.supervisor_date%}
-              <span class="status-pill approved">Submitted to Reviewers</span>
+              <span class="status-pill approved">Submitted to Reviewer</span>
               
               {% elif not formc.rejected_or_accepted and formc.reviewer_name2 and formc.reviewer_name1 and 'Resubmission Required' in [formc.recommendation1, formc.recommendation]%}
                <span class="status-paill approved">Awaiting Student Update</span>
@@ -674,7 +674,7 @@
               <p>Approved by both Reviewers</p>
 
               {% elif formc.reviewer_name1 and formc.reviewer_name2 and formc.rejected_or_accepted and not formc.certificate_issued and not formc.review_recommendation %}
-              <p>Submitted to Reviewers</p>
+              <p>Submitted to Reviewer</p>
 
               {% elif not formc.recommendation%}
               <span class="status-pill approved">Awaiting for reviews</span>
@@ -731,7 +731,7 @@
               <a href="{{url_for('chair_formc_view',id=formc.user_id)}}" class="btn btn-sm btn-success text-white">Review</a>
              <br>
               <br>
-              {% if has_dual_reviewer_approval(formc) and not formc.certificate_issued %}
+              {% if has_reviewer_approval(formc) and not formc.certificate_issued %}
               <button type="button" class="btn btn-sm btn-success text-white open-certificate-status-modal" data-bs-toggle="modal" data-bs-target="#certificateStatusModal" data-action="{{ url_for('update_certificate_status', id=formc.form_id) }}" data-form-label="Form C for {{ formc.applicant_name }}">
                 Update Certificate Status
               </button>

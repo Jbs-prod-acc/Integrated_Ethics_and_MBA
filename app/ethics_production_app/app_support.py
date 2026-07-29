@@ -409,8 +409,13 @@ def is_student_correction_state(form):
     normalized_review_comments = {
         (getattr(form, 'form_review_comment', None) or '').strip().lower(),
         (getattr(form, 'form_review_comment1', None) or '').strip().lower(),
+        (getattr(form, 'review_recommendation', None) or '').strip().lower(),
+        (getattr(form, 'review_recommendation1', None) or '').strip().lower(),
     }
-    if 'resubmission required' in normalized_review_comments:
+    if any(
+        status == 'resubmission required' or 'approved with minor changes' in status
+        for status in normalized_review_comments
+    ):
         return True
 
     normalized_return_statuses = {
@@ -461,7 +466,7 @@ def get_student_dashboard_status(form):
         return 'Form Submitted To REC'
 
     if getattr(form, 'reviewer_name1', None) or getattr(form, 'reviewer_name2', None):
-        return 'Form Submitted To Reviewers'
+        return 'Form Submitted To Ethics Admin'
 
     if getattr(form, 'rejected_or_accepted', False) and getattr(form, 'supervisor_date', None):
         return 'Form Submitted To Ethics Admin'

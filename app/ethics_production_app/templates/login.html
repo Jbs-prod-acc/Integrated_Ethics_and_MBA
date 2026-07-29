@@ -74,10 +74,12 @@ body {
            <h2 class="centered-text mb-3">Login</h2>
 
         {% if messages %}
-          <div id="alertMessage" class="alert alert-secondary alert-dismissible fade show">
-            {% for message in messages %} {{ message }} {% endfor %}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-          </div>
+          {% for message in messages %}
+            <div class="alert alert-secondary alert-dismissible fade show js-timed-flash" role="alert">
+              {{ message }}
+              <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+          {% endfor %}
         {% endif %}
 
         <form action="{{ url_for('login_page') }}" method="post" id="loginForm">
@@ -113,15 +115,18 @@ body {
 </footer> -->
 
 <script>
-    // Hide alert after 3 seconds
-    setTimeout(function() {
-      const alert = document.getElementById('alertMessage');
-      if (alert) {
-        alert.classList.remove('show'); // Bootstrap fade out
-        alert.classList.add('fade'); // add fade class
-        alert.style.display = 'none'; // or use .remove() if you prefer
-      }
-    }, 3000); // 3000ms = 3 seconds
+    document.querySelectorAll('.js-timed-flash').forEach(function(alertMessage) {
+      window.setTimeout(function() {
+        if (window.bootstrap && window.bootstrap.Alert) {
+          window.bootstrap.Alert.getOrCreateInstance(alertMessage).close();
+        } else {
+          alertMessage.classList.remove('show');
+          window.setTimeout(function() {
+            alertMessage.remove();
+          }, 200);
+        }
+      }, 4000);
+    });
   </script>
 <script>
   window.addEventListener('pageshow', function (event) {

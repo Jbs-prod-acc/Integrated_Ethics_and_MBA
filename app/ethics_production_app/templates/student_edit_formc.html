@@ -108,7 +108,7 @@ input[type="checkbox"]:checked::after {
           <tr><td>A researcher’s own students</td><td><input type="checkbox" {% if formc.own_students %}checked{% endif %} name="own_students"></td></tr>
           <tr><td>People living in poverty</td><td><input type="checkbox" {% if formc.poverty%}checked{% endif %} name="poverty"></td></tr>
           <tr><td>People with little or no education</td><td><input type="checkbox" {% if formc.no_education %}checked{% endif %} name="no_education"></td></tr>
-          <tr><td>Other: Please describe.</td><td><textarea name="vulnerable_other_description" class="form-control" rows="2">{{formc.vulnerable_other_description}}</textarea></td></tr>
+          <tr><td>Other: Please describe.</td><td><textarea name="vulnerable_other_description" class="form-control" rows="2">{{'' if not formc.vulnerable_other_description or formc.vulnerable_other_description|string|trim|lower in ['false', 'none'] else formc.vulnerable_other_description}}</textarea></td></tr>
         </tbody>
       </table>
       
@@ -137,7 +137,7 @@ input[type="checkbox"]:checked::after {
     <tr><td>Identifiable info collected from available records (staff/student records)</td><td><input type="checkbox" {% if formc.identifiable_records%}checked{% endif %} name="identifiable_records"></td></tr>
     <tr><td>Psychology inventories / scales / tests</td><td><input type="checkbox" {% if formc.psychology_tests%}checked{% endif %} name="psychology_tests"></td></tr>
     <tr><td>Activities putting researcher/data collector at risk</td><td><input type="checkbox" {% if formc.researcher_risk%}checked{% endif %} name="researcher_risk"></td></tr>
-    <tr><td>Other:  Please describe.</td><td><textarea name="activity_other_description" value="{{formc.activity_other_description}}" class="form-control" rows="2"></textarea></td></tr>
+    <tr><td>Other:  Please describe.</td><td><textarea name="activity_other_description" class="form-control" rows="2">{{'' if not formc.activity_other_description or formc.activity_other_description|string|trim|lower in ['false', 'none'] else formc.activity_other_description}}</textarea></td></tr>
   </tbody>
 </table>
 
@@ -319,6 +319,8 @@ input[type="checkbox"]:checked::after {
 
 </div>
 
+<script src="{{ url_for('static', filename='js/form-autosave.js') }}"></script>
+<script>window.initAutosaveRefreshGuard({ endpoint: '{{ url_for("student_autosave_formc") }}' });</script>
 </body>
 <noscript>
   <div style="background: #ffdddd; color: #a00; padding: 1em; text-align: center; font-weight: bold;">

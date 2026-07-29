@@ -131,21 +131,22 @@
         
       </div>
 
-      <label>2.4.1 Provide explanation:
-        <br><span class="form-answer">Comment: {{form.public_evidence or 'Not Applicable'}}</span>
-      </label>
-   
-
+      {% if form.data_public %}
       <label>2.4.2 If the data is in the public domain, what are the access conditions?
-        <br><span class="form-answer">Comment: {{form.access_conditions or 'Not Applicable'}}</span>
+        <br><span class="form-answer">{{ form.access_conditions }}</span>
       </label>
+      {% else %}
+      <label>2.4.1 Provide explanation:
+        <br><span class="form-answer">{{ form.public_evidence }}</span>
+      </label>
+      {% endif %}
     
 
       <div class="question-block">
         <label>2.5 Does the database contain personal information/identifiers?</label>
             <p>This information relates to the anonymity of data/confidentiality of the data</p>
-            <span class="form-answer">{{'Yes' if form.data_public else 'No'}}</span>
-            <br><span class="form-answer">Comment: {{form.personal_info_comment or 'Not Applicable'}}</span>
+            <span class="form-answer">{{'Yes' if form.personal_info else 'No'}}</span>
+            <br><span class="form-answer">Comment: {{ form.personal_info_comment if form.personal_info else 'Not Applicable' }}</span>
       </div>
 
       <div class="question-block">
@@ -165,9 +166,14 @@
         </label>
       </div>
 
+      {% if form.private_permission %}
       <label>2.7.1 Provide permission details:
         <br><span class="form-answer">Comment: {{form.permission_details or 'Not Applicable'}}</span>
+        {% if form.private_permission_filename or form.private_permission_file %}
+        <br><a href="{{ url_for('view_form_file', form_type='B', form_id=form.form_id, field_name='private_permission_file') }}" target="_blank">View {{ form.private_permission_filename or 'uploaded permission document' }}</a>
+        {% endif %}
       </label>
+      {% endif %}
      
 
       <div class="question-block">
@@ -268,14 +274,16 @@
     <label>Date of Submission:</label>
     <span class="form-answer">{% if form.submitted_at%}{{form.submitted_at.strftime('%d/%m/%Y')}}{% endif%}</span>
 
-    <label>Date of Re-submission:</label>
-    <span class="form-answer">{% if form.declaration_date%}{{form.declaration_date.strftime('%d/%m/%Y')}}{% endif%}</span>
-
     <label>Supervisor:</label>
     <span class="form-answer">{{form.supervisor}}</span>
 
     <label>Title of Research:</label>
     <span class="form-answer">{{form.study_title}}</span>
+
+    {% if not form.submitted_at and form.declaration_date %}
+    <label>Date of Re-submission:</label>
+    <span class="form-answer">{{form.declaration_date.strftime('%d/%m/%Y')}}</span>
+    {% endif %}
 
     <label>Date of Review:</label>
     <input type="date" name="review_date" required placeholder="dd/mm/yyyy">

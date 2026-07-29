@@ -142,8 +142,8 @@
   <select id="formAStatusFilter" class="form-select">
     <option value="all">All</option>
     <option value="awaiting-review">Awaiting Review</option>
-    <option value="submitted-reviewers">Submitted to Reviewers</option>
-    <option value="approved-both">Approved by both Reviewers</option>
+    <option value="submitted-reviewers">Submitted to Reviewer</option>
+    <option value="approved-both"></option>
     <option value="certificate-issued">Certificate issued</option>
     <option value="rejected">Rejected</option>
   </select>
@@ -171,16 +171,15 @@
           {% set row_status = "" %}
           {% set rec1 = (forma.review_recommendation or "") %}
           {% set rec2 = (forma.review_recommendation1 or "") %}
-          
+
           {# FIXED: Properly set the approved-both status #}
           {% if forma.certificate_issued %}
             {% set row_status = "certificate-issued" %}
-          {% elif (rec1 in ['Approved','Approved with Minor Changes']) and
-            (rec2 in ['Approved','Approved with Minor Changes']) and not forma.certificate_received%}
+          {% elif has_reviewer_approval(forma) and not forma.certificate_received%}
             {% set row_status = "approved-both" %}
           {% elif forma.status == 'Submitted to Student for Corrections' %}
             {% set row_status = "awaiting-review" %}
-          {% elif forma.reviewer_name1 and forma.reviewer_name2 and forma.supervisor_date %}
+          {% elif (forma.reviewer_name1 or forma.reviewer_name2) and forma.supervisor_date %}
             {% set row_status = "submitted-reviewers" %}
           {% elif forma.rejected_or_accepted and not forma.reviewer_name1 %}
             {% set row_status = "awaiting-review" %}
@@ -196,6 +195,8 @@
             <td>FORM A</td>
             <td>{{forma.declaration_date}}</td>
             <td>
+              <span class="status-pill approved">{{ get_ethics_dashboard_status(forma) }}</span>
+              <div hidden aria-hidden="true">
               {% if forma.review_supervisor_signature%}
              {{forma.review_supervisor_signature}}: {{forma.form_review_comment}}
              {% endif %}
@@ -221,28 +222,27 @@
               <p>Awaiting for review</p>
               {% elif forma.rec_status and 'low' not in forma.risk_rating|lower %}
               {{forma.rec_status}}
-              {% elif forma.reviewer_name1 and forma.reviewer_name2 and forma.supervisor_date%}
+              {% elif (forma.reviewer_name1 or forma.reviewer_name2) and forma.supervisor_date%}
               <br>
       
-              <span class="status-pill approved">Submitted to Reviewers</span>
-              
-               {% elif not forma.rejected_or_accepted and forma.reviewer_name2 and forma.reviewer_name1 and 'Resubmission Required' in [forma.recommendation1, forma.recommendation]%}
+              <span class="status-pill approved">Submitted to Reviewer</span>
+
+               {% elif not forma.rejected_or_accepted and (forma.reviewer_name1 or forma.reviewer_name2) and 'Resubmission Required' in [forma.recommendation1, forma.recommendation]%}
                <span class="status-paill approved">Awaiting Student Update</span>
               
               <p>Certificate issued but not sent</p>
-              {% elif forma.review_recommendation and not forma.review_recommendation1 %}
-              <p>Awaiting second reviewer</p>
+              {% elif is_waiting_for_additional_reviewer(forma) %}
+              <p>Awaiting assigned reviewer feedback</p>
               {% elif forma.submitted_to_rec and 'low' not in forma.risk_rating|lower and not forma.certificate_issued%}
               <br>
               <p>Form submitted to Rec</p>
-              {% elif (forma.review_recommendation in ['Approved','Approved with Minor Changes']) and
-              (forma.review_recommendation1 in ['Approved','Approved with Minor Changes']) and not forma.certificate_received %}
+              {% elif has_reviewer_approval(forma) and not forma.certificate_received %}
               <br>
-              <p>Approved by both Reviewers</p>
+              <p></p>
 
-              {% elif forma.rejected_or_accepted and forma.reviewer_name1 and forma.reviewer_name2 and not forma.certificate_issued  and not forma.review_recommendation %}
+              {% elif forma.rejected_or_accepted and (forma.reviewer_name1 or forma.reviewer_name2) and not forma.certificate_issued  and not forma.review_recommendation %}
 
-              <p>Submitted to Reviewers</p>
+              <p>Submitted to Reviewer</p>
               {% elif not forma.recommendation%}
               <span class="status-pill approved">Awaiting for Review</span>
               {% elif forma.certificate_issued and not forma.certificate_received%}
@@ -283,6 +283,7 @@
           
             {% endif %}
             </span>
+            </div>
             <br>
           
             <a href="{{url_for('ethics_view_feedback',id=forma.form_id)}}" class="btn btn-sm btn-success text-white mt-2">View Feedback</a>
@@ -329,7 +330,7 @@
               <a href="{{url_for('chair_forma_view',id=forma.user_id)}}" class="btn btn-sm btn-success text-white" >Review</a>
               <br>
               <br>
-              {% if has_dual_reviewer_approval(forma) and not forma.certificate_issued %}
+              {% if has_reviewer_approval(forma) and not forma.certificate_issued %}
                   <button type="button" class="btn btn-sm btn-success text-white open-certificate-status-modal" data-bs-toggle="modal" data-bs-target="#certificateStatusModal" data-action="{{ url_for('update_certificate_status', id=forma.form_id) }}" data-form-label="Form A for {{ forma.applicant_name }}">
                     🎓 Update Certificate Status
                   </button>
@@ -416,10 +417,9 @@
           {# FIXED: Properly set the approved-both status #}
           {% if formb.certificate_issued %}
             {% set row_status = "certificate-issued" %}
-          {% elif (rec1 in ['Approved','Approved with Minor Changes']) and
-                  (rec2 in ['Approved','Approved with Minor Changes']) and not formb.certificate_received %}
+          {% elif has_reviewer_approval(formb) and not formb.certificate_received %}
             {% set row_status = "approved-both" %}
-          {% elif formb.reviewer_name1 and formb.reviewer_name2 and formb.supervisor_date %}
+          {% elif (formb.reviewer_name1 or formb.reviewer_name2) and formb.supervisor_date %}
             {% set row_status = "submitted-reviewers" %}
           {% elif formb.rejected_or_accepted and not formb.reviewer_name1 %}
             {% set row_status = "awaiting-review" %}
@@ -434,7 +434,10 @@
             <td>{{formb.supervisor}}</td>
             <td>FORM B</td>
             <td>{{formb.declaration_date}}</td>
-            <td>{% if formb.review_supervisor_signature%}
+            <td>
+              <span class="status-pill approved">{{ get_ethics_dashboard_status(formb) }}</span>
+              <div hidden aria-hidden="true">
+              {% if formb.review_supervisor_signature%}
              {{formb.review_supervisor_signature}}: {{formb.form_review_comment}}
              {% endif %}
              <br>
@@ -454,8 +457,8 @@
               {% elif formb.rec_status and 'low' not in formb.risk_level|lower %}
               <span class="status-pill approved">{{formb.rec_status}}</span>
               {% elif  formb.reviewer_name and formb.reviewer_name2 and not formb.certificate_issued %}
-              <span class="status-pill approved">Submitted to Reviewers</span>
-              {% elif not formb.rejected_or_accepted and formb.reviewer_name2 and formb.reviewer_name1 and 'Resubmission Required' in [formb.recommendation1, formb.recommendation]%}
+              <span class="status-pill approved">Submitted to Reviewer</span>
+              {% elif not formb.rejected_or_accepted and (formb.reviewer_name1 or formb.reviewer_name2) and 'Resubmission Required' in [formb.recommendation1, formb.recommendation]%}
                <span class="status-paill approved">Awaiting Student Update</span>
               
               
@@ -468,17 +471,16 @@
               <a href="{{ url_for('view_certificate', id=formb.form_id) }}" class="btn btn-sm btn-success text-white">View Certificate</a>
               <a href="{{ url_for('modify_certificate', id=formb.form_id) }}" class="btn btn-sm btn-warning mt-2">Edit Certificate</a>
               {% endif %}
-              {% elif formb.review_recommendation and not formb.review_recommendation1 %}
-              <p>Awaiting second reviewer</p>
+              {% elif is_waiting_for_additional_reviewer(formb) %}
+              <p>Awaiting assigned reviewer feedback</p>
               {% elif formb.submitted_to_rec and 'low' not in formb.risk_level|lower and not formb.certificate_issued%}
               <br>
               <p>Form submitted to Rec</p>
-              {% elif (formb.review_recommendation in ['Approved','Approved with Minor Changes']) and
-              (formb.review_recommendation1 in ['Approved','Approved with Minor Changes']) and not formb.certificate_received%}
+              {% elif has_reviewer_approval(formb) and not formb.certificate_received%}
               <br>
-              <p>Approved by both Reviewers</p>
-              {% elif formb.rejected_or_accepted and formb.reviewer_name1 and formb.reviewer_name2 and not formb.certificate_issued and not formb.review_recommendation%}
-              <p>Submitted to Reviewers</p>
+              <p></p>
+              {% elif formb.rejected_or_accepted and (formb.reviewer_name1 or formb.reviewer_name2) and not formb.certificate_issued and not formb.review_recommendation%}
+              <p>Submitted to Reviewer</p>
               {% elif not formb.recommendation%}
               
               <span class="status-pill approved">Awaiting for review</span>
@@ -505,6 +507,7 @@
           
             {% endif %}
             </span>
+            </div>
         
             <br>
             <a href="{{url_for('ethics_view_feedback',id=formb.form_id)}}" class="btn btn-sm btn-success text-white mt-2">View Feedback</a>
@@ -542,7 +545,7 @@
               <a href="{{url_for('chair_formb_view',id=formb.user_id)}}" class="btn btn-sm btn-success text-white" >Review</a>
             <br>
               <br>
-              {% if has_dual_reviewer_approval(formb) and not formb.certificate_issued %}
+              {% if has_reviewer_approval(formb) and not formb.certificate_issued %}
               <button type="button" class="btn btn-sm btn-success text-white open-certificate-status-modal" data-bs-toggle="modal" data-bs-target="#certificateStatusModal" data-action="{{ url_for('update_certificate_status', id=formb.form_id) }}" data-form-label="Form B for {{ formb.applicant_name }}">
                 Update Certificate Status
               </button>
@@ -631,10 +634,8 @@
           {# FIXED: Properly set the approved-both status #}
           {% if formc.certificate_issued %}
             {% set row_status = "certificate-issued" %}
-          {% elif (rec1 in ['Approved','Approved with Minor Changes']) and
-            (rec2 in ['Approved','Approved with Minor Changes']) and not formc.certificate_received %}
-            {% set row_status = "approved-both" %}
-          {% elif formc.reviewer_name1 and formc.reviewer_name2 and formc.supervisor_date %}
+
+          {% elif (formc.reviewer_name1 or formc.reviewer_name2) and formc.supervisor_date %}
             {% set row_status = "submitted-reviewers" %}
           {% elif formc.rejected_or_accepted and not formc.reviewer_name1 %}
             {% set row_status = "awaiting-review" %}
@@ -650,6 +651,8 @@
             <td>FORM C</td>
             <td>{% if formc.declaration_date%}{{formc.declaration_date.strftime('%d/%m/%Y')}}{% elif formc.submission_date%}{{formc.submission_date.strftime('%d/%m/%Y')}}{% endif%}</td>
             <td>
+              <span class="status-pill approved">{{ get_ethics_dashboard_status(formc) }}</span>
+              <div hidden aria-hidden="true">
               {% if formc.review_supervisor_signature%}
              {{formc.review_supervisor_signature}}: {{formc.form_review_comment}}
              {% endif %}
@@ -669,27 +672,24 @@
               <p>Awaiting for review</p>
               {% elif formc.rec_status and 'low' in formc.risk_level|lower %}
               <p>{{formc.rec_status}}</p>
-              {% elif formc.reviewer_name1 and formc.reviewer_name2 and formc.supervisor_date%}
-              <span class="status-pill approved">Submitted to Reviewers</span>
+              {% elif (formc.reviewer_name1 or formc.reviewer_name2) and formc.supervisor_date%}
+              <span class="status-pill approved">Submitted to Reviewer</span>
               
-              {% elif not formc.rejected_or_accepted and formc.reviewer_name2 and formc.reviewer_name1 and 'Resubmission Required' in [formc.recommendation1, formc.recommendation]%}
+              {% elif not formc.rejected_or_accepted and (formc.reviewer_name1 or formc.reviewer_name2) and 'Resubmission Required' in [formc.recommendation1, formc.recommendation]%}
                <span class="status-paill approved">Awaiting Student Update</span>
               
               
-              {% elif formc.review_recommendation and not formc.review_recommendation1 %}
-              <p>Awaiting second reviewer</p>
+              {% elif is_waiting_for_additional_reviewer(formc) %}
+              <p>Awaiting assigned reviewer feedback</p>
 
               {% elif formc.submitted_to_rec and 'low' not in formc.risk_level|lower and not formc.certificate_issued%}
               <br>
               <p>Form submitted to Rec</p>
 
-              {% elif (formc.review_recommendation in ['Approved','Approved with Minor Changes']) and
-              (formc.review_recommendation1 in ['Approved','Approved with Minor Changes']) and not formc.certificate_received %}
-              <br>
-              <p>Approved by both Reviewers</p>
 
-              {% elif formc.reviewer_name1 and formc.reviewer_name2 and formc.rejected_or_accepted and not formc.certificate_issued and not formc.review_recommendation %}
-              <p>Submitted to Reviewers</p>
+
+              {% elif (formc.reviewer_name1 or formc.reviewer_name2) and formc.rejected_or_accepted and not formc.certificate_issued and not formc.review_recommendation %}
+              <p>Submitted to Reviewer</p>
 
               {% elif not formc.recommendation%}
               <span class="status-pill approved">Awaiting for reviews</span>
@@ -726,6 +726,7 @@
           
             {% endif %}
             </span>
+            </div>
             <br>
         
         
@@ -733,7 +734,7 @@
             </td>
             <td>{{formc.risk_level}}</td>
             <td>
-              {% if req and req.files %}
+              {% if requirement_file_available(req, 'files') %}
                <ul class="doc-link">
                 <li><a href="{{ url_for('view_requirement_file', req_id=req.id, field='files') }}" target="_blank">Proposal</a></li>
                </ul>
@@ -746,7 +747,7 @@
               <a href="{{url_for('chair_formc_view',id=formc.user_id)}}" class="btn btn-sm btn-success text-white">Review</a>
              <br>
               <br>
-              {% if has_dual_reviewer_approval(formc) and not formc.certificate_issued %}
+              {% if has_reviewer_approval(formc) and not formc.certificate_issued %}
               <button type="button" class="btn btn-sm btn-success text-white open-certificate-status-modal" data-bs-toggle="modal" data-bs-target="#certificateStatusModal" data-action="{{ url_for('update_certificate_status', id=formc.form_id) }}" data-form-label="Form C for {{ formc.applicant_name }}">
                 Update Certificate Status
               </button>

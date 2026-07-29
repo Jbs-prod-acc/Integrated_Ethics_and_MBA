@@ -133,7 +133,14 @@ def parse_admin_log_date(date_text):
 
 
 def parse_html_date(date_text):
-    date_text = (date_text or '').strip()
+    if isinstance(date_text, datetime):
+        return date_text
+    if isinstance(date_text, date):
+        return datetime.combine(date_text, dt_time.min)
+    if date_text is None:
+        return None
+
+    date_text = str(date_text).strip()
     if not date_text:
         return None
     for fmt in ('%d/%m/%Y', '%m/%d/%Y', '%Y-%m-%d'):
@@ -222,10 +229,12 @@ AUTH_SESSION_KEYS = (
 ETHICS_SSO_SALT = 'mba-to-ethics-sso'
 
 
-def clear_auth_session():
-    """Remove authentication-related session state without wiping flash messages."""
+def clear_auth_session(*, clear_flashes=False):
+    """Remove authentication state and optionally discard queued flash messages."""
     for key in AUTH_SESSION_KEYS:
         session.pop(key, None)
+    if clear_flashes:
+        session.pop('_flashes', None)
 
 
 def get_current_user():
@@ -385,9 +394,17 @@ def _find_all_forms_for_user(model, user_id, *, options=None):
         query = query.options(*options)
     query = query.filter_by(user_id=user_id)
     if hasattr(model, 'submitted_at'):
-        query = query.order_by(model.submitted_at.desc().nullslast(), model.created_at.desc().nullslast())
+        query = query.order_by(
+            model.submitted_at.is_(None).desc(),
+            model.submitted_at.desc().nullslast(),
+            model.created_at.desc().nullslast(),
+        )
     elif hasattr(model, 'submission_date'):
-        query = query.order_by(model.submission_date.desc().nullslast(), model.created_at.desc().nullslast())
+        query = query.order_by(
+            model.submission_date.is_(None).desc(),
+            model.submission_date.desc().nullslast(),
+            model.created_at.desc().nullslast(),
+        )
     else:
         query = query.order_by(model.created_at.desc().nullslast())
     return query.all()
@@ -635,6 +652,8 @@ def get_student_supervisor_or_flash(user, *, redirect_endpoint='student_dashboar
 
 STUDENT_CORRECTION_STATUSES = {
     'Corrections Required',
+    'Revisions required',
+    'Resubmission Required',
     'Submitted to Student for Corrections',
 }
 
@@ -652,8 +671,13 @@ def is_student_correction_state(form):
     normalized_review_comments = {
         (getattr(form, 'form_review_comment', None) or '').strip().lower(),
         (getattr(form, 'form_review_comment1', None) or '').strip().lower(),
+        (getattr(form, 'review_recommendation', None) or '').strip().lower(),
+        (getattr(form, 'review_recommendation1', None) or '').strip().lower(),
     }
-    if 'resubmission required' in normalized_review_comments:
+    if any(
+        status == 'resubmission required' or 'approved with minor changes' in status
+        for status in normalized_review_comments
+    ):
         return True
 
     normalized_return_statuses = {
@@ -719,7 +743,7 @@ def get_student_dashboard_status(form):
         return 'Form Submitted To REC'
 
     if getattr(form, 'reviewer_name1', None) or getattr(form, 'reviewer_name2', None):
-        return 'Form Submitted To Reviewers'
+        return 'Form Submitted To Ethics Admin'
 
     if getattr(form, 'rejected_or_accepted', False) and getattr(form, 'supervisor_date', None):
         return 'Form Submitted To Ethics Admin'
@@ -743,6 +767,22 @@ def _status_text(value):
     return value.strip() if isinstance(value, str) else value
 
 
+def format_yes_no(value, empty='Not Applicable'):
+    """Render legacy boolean/string answers consistently as Yes or No."""
+    if value is None:
+        return empty
+    if isinstance(value, bool):
+        return 'Yes' if value else 'No'
+    normalized = str(value).strip().lower()
+    if normalized in {'yes', 'true', '1', 'on', 'checked'}:
+        return 'Yes'
+    if normalized in {'no', 'false', '0', 'off'}:
+        return 'No'
+    if not normalized:
+        return empty
+    return str(value)
+
+
 def _has_issued_certificate(form_or_record):
     certificate_issued = _status_value(form_or_record, 'certificate_issued')
     if isinstance(certificate_issued, str):
@@ -754,21 +794,39 @@ def _has_received_certificate(form_or_record):
     return bool(_status_value(form_or_record, 'certificate_received'))
 
 
-def has_dual_reviewer_approval(form_or_record):
-    approved_statuses = {'Approved'}
-    reviewer_recommendations = [
-        _status_text(_status_value(form_or_record, 'review_recommendation', '') or ''),
-        _status_text(_status_value(form_or_record, 'review_recommendation1', '') or ''),
-    ]
-    reviewer_ids = [
-        _status_value(form_or_record, 'form_reviewed_by'),
-        _status_value(form_or_record, 'form_reviewed_by1'),
-    ]
+def has_reviewer_approval(form_or_record):
+    """Return whether the single assigned reviewer has approved the form."""
+    approved_statuses = {'Approved', 'Approved with Minor Changes'}
+    assigned_reviewer = (
+        _status_value(form_or_record, 'reviewer_name1')
+        or _status_value(form_or_record, 'first_reviewer')
+        or _status_value(form_or_record, 'reviewer_name2')
+        or _status_value(form_or_record, 'second_reviewer')
+    )
+    if not assigned_reviewer:
+        return False
 
-    return (
-        all(reviewer_ids)
-        and all(reviewer_recommendations)
-        and all(recommendation in approved_statuses for recommendation in reviewer_recommendations)
+    completed_reviews = [
+        (
+            _status_value(form_or_record, 'form_reviewed_by'),
+            _status_text(
+                _status_value(form_or_record, 'review_recommendation', '')
+                or _status_value(form_or_record, 'first_reviewer_recommendation', '')
+                or ''
+            ),
+        ),
+        (
+            _status_value(form_or_record, 'form_reviewed_by1'),
+            _status_text(
+                _status_value(form_or_record, 'review_recommendation1', '')
+                or _status_value(form_or_record, 'second_reviewer_recommendation', '')
+                or ''
+            ),
+        ),
+    ]
+    return any(
+        reviewed_by == assigned_reviewer and recommendation in approved_statuses
+        for reviewed_by, recommendation in completed_reviews
     )
 
 
@@ -894,7 +952,7 @@ def get_workflow_location(form_or_record):
         'with-student-revisions': 'With Student (Revisions)',
         'with-supervisor': 'With Supervisor',
         'pending-reviewers': 'Pending Reviewers',
-        'with-reviewers': 'With Reviewers',
+        'with-reviewers': 'With Reviewer',
         'pending-revisions': 'Pending Revisions',
         'with-ethics-admin': 'With Ethics Admin',
         'draft': 'Draft saved - not yet submitted',
@@ -906,23 +964,24 @@ def get_supervisor_dashboard_status(form):
     if not form:
         return ''
 
-    stage = get_workflow_stage(form)
-    if stage == 'process-complete':
-        return 'Certificate Issued'
-    if stage == 'with-student-revisions':
-        return 'Revisions required, Form was returned to student'
-    if stage == 'with-rec':
-        return 'With REC Chair'
-    if stage == 'with-ethics-admin':
-        return 'With Ethics Admin'
-    if stage == 'with-reviewers':
-        return 'With Reviewers'
-    if stage == 'pending-reviewers':
-        return 'Pending Reviewers'
-    if stage == 'pending-revisions':
-        return 'Pending Revisions'
-    if stage == 'with-supervisor':
-        return 'Awaiting for review'
+    reviewer_recommendations = {
+        (_status_text(_status_value(form, 'review_recommendation', '') or '') or '').lower(),
+        (_status_text(_status_value(form, 'review_recommendation1', '') or '') or '').lower(),
+    }
+    if is_student_correction_state(form):
+        if any('approved with minor changes' in item for item in reviewer_recommendations):
+            return 'Approved with minor changes'
+        return 'Resubmission required'
+
+    supervisor_date = (
+        _status_value(form, 'supervisor_date')
+        or _status_value(form, 'signature_date')
+    )
+    if supervisor_date:
+        return 'With Ethics'
+
+    if get_student_submission_timestamp(form):
+        return 'Awaiting review'
     return 'Draft saved - not yet submitted'
 
 
@@ -938,6 +997,12 @@ def get_supervisor_row_status(form):
 
 
 def get_reviewer_dashboard_status(form, reviewer_id=None):
+    if reviewer_id and reviewer_id in {
+        _status_value(form, 'form_reviewed_by'),
+        _status_value(form, 'form_reviewed_by1'),
+    }:
+        return 'Reviewed'
+
     stage = get_workflow_stage(form)
     if stage == 'process-complete':
         return 'Certificate Issued'
@@ -952,10 +1017,41 @@ def get_reviewer_dashboard_status(form, reviewer_id=None):
     if stage == 'pending-reviewers':
         return 'Pending Reviewers'
     if stage == 'with-reviewers':
-        return 'With Reviewers'
+        return 'Awaiting review'
     if stage == 'with-supervisor':
         return 'With Supervisor'
     return 'Awaiting for review'
+
+
+def get_ethics_dashboard_status(form):
+    """Return the Ethics Admin queue status for a submitted form."""
+    if not form:
+        return ''
+
+    if is_student_correction_state(form):
+        return 'Form was sent back to student'
+
+    assigned_count = _assigned_reviewer_count_any(form)
+    completed_count = _completed_reviewer_count_any(form)
+    if assigned_count == 0:
+        return 'Awaiting review'
+    if completed_count < assigned_count:
+        return 'With reviewer'
+
+    recommendations = [
+        _status_text(_status_value(form, 'review_recommendation', '') or ''),
+        _status_text(_status_value(form, 'review_recommendation1', '') or ''),
+        _status_text(_status_value(form, 'first_reviewer_recommendation', '') or ''),
+        _status_text(_status_value(form, 'second_reviewer_recommendation', '') or ''),
+    ]
+    normalized = {(item or '').lower() for item in recommendations if item}
+    if any(item in {'resubmission required', 'reject'} for item in normalized):
+        return 'Resubmission required'
+    if any('approved with minor changes' in item for item in normalized):
+        return 'Approved with minor changes'
+    if 'approved' in normalized:
+        return 'Approved'
+    return 'Reviewed'
 
 
 def get_reviewer_row_status(form, reviewer_id=None):
@@ -1102,6 +1198,51 @@ def has_all_required_reviews(form):
     return completed_reviewer_count(form) >= assigned_count
 
 
+def apply_reviewer_recommendation_routing(form, recommendation):
+    """Route a form immediately after its assigned reviewer completes a review."""
+    if not has_all_required_reviews(form):
+        return
+
+    normalized_recommendation = (recommendation or '').strip().lower()
+    if normalized_recommendation == 'approved':
+        form.status = 'Approved'
+        form.submitted_to_admin = True
+        form.submitted_to_reviewers = False
+        form.visible_to_student = False
+        form.rejected_or_accepted = True
+    elif normalized_recommendation in {
+        'approved with minor changes',
+        'approved with minor changes, resubmission required',
+        'resubmission required',
+    }:
+        form.status = 'Submitted to Student for Corrections'
+        form.submitted_to_admin = False
+        form.submitted_to_reviewers = False
+        form.visible_to_student = True
+        form.rejected_or_accepted = False
+
+
+def apply_admin_correction_routing(form, recommendation, user_role):
+    """Return an admin-reviewed form to the student without reviewer gating."""
+    normalized_role = (user_role or '').strip().upper()
+    normalized_recommendation = (recommendation or '').strip().lower()
+    if normalized_role not in {'ADMIN', 'SUPER_ADMIN'}:
+        return
+    if normalized_recommendation not in {
+        'approved with minor changes',
+        'approved with minor changes, resubmission required',
+        'resubmission required',
+        'revisions required',
+    }:
+        return
+
+    form.status = 'Submitted to Student for Corrections'
+    form.submitted_to_admin = False
+    form.submitted_to_reviewers = False
+    form.visible_to_student = True
+    form.rejected_or_accepted = False
+
+
 def is_waiting_for_additional_reviewer(form):
     return assigned_reviewer_count(form) > 1 and completed_reviewer_count(form) < assigned_reviewer_count(form)
 
@@ -1120,8 +1261,10 @@ app.jinja_env.globals['get_supervisor_dashboard_status'] = get_supervisor_dashbo
 app.jinja_env.globals['get_supervisor_row_status'] = get_supervisor_row_status
 app.jinja_env.globals['get_reviewer_dashboard_status'] = get_reviewer_dashboard_status
 app.jinja_env.globals['get_reviewer_row_status'] = get_reviewer_row_status
+app.jinja_env.globals['get_ethics_dashboard_status'] = get_ethics_dashboard_status
 app.jinja_env.globals['has_reviewer_feedback'] = has_reviewer_feedback
-app.jinja_env.globals['has_dual_reviewer_approval'] = has_dual_reviewer_approval
+app.jinja_env.globals['has_reviewer_approval'] = has_reviewer_approval
+app.jinja_env.filters['yes_no'] = format_yes_no
 
 
 def can_access_form(user, form):
@@ -1209,6 +1352,33 @@ REQUIREMENT_FILE_FIELDS = {
     'research_tools_path', 'impact_assessment_path', 'participation_info_sheet',
     'pending_note', 'needs_permission_pending', 'files'
 }
+
+
+def _resolve_requirement_file_field(requirements, requested_field):
+    """Return the stored field that contains an uploaded requirement document.
+
+    Form C historically stored its proposal in ``files`` while the other upload
+    screens stored the same document in ``proposal_path``.  Existing students
+    can therefore have a valid proposal in either field.
+    """
+    if not requirements:
+        return None
+
+    candidates = (requested_field,)
+    if requested_field == 'files':
+        candidates = ('files', 'proposal_path')
+
+    for candidate in candidates:
+        filename = getattr(requirements, f"{candidate}_filename", None)
+        data = getattr(requirements, candidate, None)
+        if filename or data:
+            return candidate
+    return None
+
+
+@app.template_global()
+def requirement_file_available(requirements, requested_field):
+    return _resolve_requirement_file_field(requirements, requested_field) is not None
 
 
 @app.after_request
@@ -1353,7 +1523,7 @@ def view_requirement_file():
         abort(403)
     
     # Use f_name from now on
-    actual_field = f_name
+    actual_field = _resolve_requirement_file_field(req, f_name) or f_name
     data = getattr(req, actual_field, None)
     
     # If data is a boolean (like ethics_evidence), it's not the file data. Try _path.
@@ -1512,6 +1682,30 @@ def resubmit_formb(id):
         return redirect(url_for("student_dashboard"))
 
 
+def preserve_single_reviewer_assignment(new_form, previous_form):
+    """Keep the new version's assignment or inherit it from the previous version."""
+    if not new_form:
+        return False
+
+    assigned_reviewer = (
+        getattr(new_form, 'reviewer_name1', None)
+        or getattr(new_form, 'reviewer_name2', None)
+    )
+    if not assigned_reviewer and previous_form:
+        assigned_reviewer = (
+            getattr(previous_form, 'reviewer_name1', None)
+            or getattr(previous_form, 'reviewer_name2', None)
+        )
+
+    changed = (
+        getattr(new_form, 'reviewer_name1', None) != assigned_reviewer
+        or getattr(new_form, 'reviewer_name2', None) is not None
+    )
+    new_form.reviewer_name1 = assigned_reviewer
+    new_form.reviewer_name2 = None
+    return changed
+
+
 def inherit_previous_reviewers(new_form, model, user_id, order_column):
     """
     When a new version of a form is created, carry forward the latest assigned
@@ -1529,9 +1723,34 @@ def inherit_previous_reviewers(new_form, model, user_id, order_column):
         reviewer_name1 = getattr(previous_form, 'reviewer_name1', None)
         reviewer_name2 = getattr(previous_form, 'reviewer_name2', None)
         if reviewer_name1 or reviewer_name2:
-            new_form.reviewer_name1 = reviewer_name1
-            new_form.reviewer_name2 = reviewer_name2
+            preserve_single_reviewer_assignment(new_form, previous_form)
             break
+
+
+def backfill_reviewer_from_previous_version(current_form, model, order_column):
+    """Persist the newest prior reviewer assignment on an existing current version."""
+    if not current_form:
+        return False
+    if getattr(current_form, 'reviewer_name1', None) or getattr(current_form, 'reviewer_name2', None):
+        return False
+
+    previous_form = (
+        db_session.query(model)
+        .filter(
+            model.user_id == current_form.user_id,
+            model.form_id != current_form.form_id,
+            or_(
+                model.reviewer_name1.isnot(None),
+                model.reviewer_name2.isnot(None),
+            ),
+        )
+        .order_by(
+            order_column.desc().nullslast(),
+            model.created_at.desc().nullslast(),
+        )
+        .first()
+    )
+    return preserve_single_reviewer_assignment(current_form, previous_form)
 
 
 def get_reviewers_for_ethics_assignment(current_form, model, order_column):
@@ -1550,7 +1769,7 @@ def get_reviewers_for_ethics_assignment(current_form, model, order_column):
         if reviewer_id
     ]
     if current_ids:
-        return current_ids
+        return current_ids[:1]
 
     previous_forms = (
         db_session.query(model)
@@ -1570,7 +1789,7 @@ def get_reviewers_for_ethics_assignment(current_form, model, order_column):
             if reviewer_id
         ]
         if previous_ids:
-            return previous_ids
+            return previous_ids[:1]
 
     return []
 
@@ -1666,6 +1885,42 @@ def student_autosave_forma():
 
 # --- AUTOSAVE ENDPOINT FOR FORM B ---
 def _get_or_create_formb_draft(user_id, form_data):
+    explicit_form_id = form_data.get('formb_id') or form_data.get('form_id') or ''
+    requested_form_id = (
+        explicit_form_id
+        or session.get('active_formb_id')
+        or ''
+    )
+    requested_form_id = str(requested_form_id).strip()
+    if requested_form_id:
+        requested_form = (
+            db_session.query(FormB)
+            .options(
+                defer(FormB.permission_letter),
+                defer(FormB.prior_clearance),
+                defer(FormB.ethics_evidence),
+                defer(FormB.proposal_path),
+                defer(FormB.pending_note),
+                defer(FormB.private_permission_file),
+            )
+            .filter(FormB.form_id == requested_form_id, FormB.user_id == user_id)
+            .first()
+        )
+        if requested_form:
+            if requested_form.submitted_at is None:
+                session['active_formb_id'] = requested_form.form_id
+                return requested_form, None
+            if is_student_correction_state(requested_form):
+                return _get_or_create_formb_resubmission_draft(user_id, requested_form)
+            if explicit_form_id:
+                return None, (
+                    jsonify({
+                        'success': False,
+                        'error': 'Autosave ignored because this Form B has already been submitted.',
+                    }),
+                    409,
+                )
+
     form = (
         db_session.query(FormB)
         .filter(FormB.user_id == user_id, FormB.submitted_at.is_(None))
@@ -1673,7 +1928,18 @@ def _get_or_create_formb_draft(user_id, form_data):
         .first()
     )
     if form:
+        session['active_formb_id'] = form.form_id
         return form, None
+
+    latest_submission = (
+        db_session.query(FormB)
+        .options(*FORMB_DEFERRED_UPLOADS)
+        .filter(FormB.user_id == user_id, FormB.submitted_at.isnot(None))
+        .order_by(FormB.submitted_at.desc(), FormB.created_at.desc().nullslast())
+        .first()
+    )
+    if latest_submission and is_student_correction_state(latest_submission):
+        return _get_or_create_formb_resubmission_draft(user_id, latest_submission)
 
     user = db_session.query(User).filter(User.user_id == user_id).first()
     if not user:
@@ -1696,7 +1962,53 @@ def _get_or_create_formb_draft(user_id, form_data):
         submitted=False,
     )
     db_session.add(form)
+    db_session.flush()
+    session['active_formb_id'] = form.form_id
     return form, None
+
+def _apply_formb_public_domain_answers(form, form_data):
+    """Save only the Form B conditional answers that match their Yes/No choices."""
+    answer = form_data.get('data_public')
+    if answer is not None:
+        is_public = str(answer).strip().lower() in ('yes', 'true', '1', 'on')
+        form.data_public = is_public
+        if is_public:
+            form.public_evidence = None
+            form.access_conditions = (form_data.get('access_conditions') or '').strip() or None
+        else:
+            form.public_evidence = (form_data.get('public_evidence') or '').strip() or None
+            form.access_conditions = None
+
+    personal_info_answer = form_data.get('personal_info')
+    if personal_info_answer is not None:
+        contains_personal_info = str(personal_info_answer).strip().lower() in (
+            'yes', 'true', '1', 'on'
+        )
+        form.personal_info = contains_personal_info
+        form.personal_info_comment = (
+            (form_data.get('personal_info_comment') or '').strip() or None
+            if contains_personal_info
+            else 'Not Applicable'
+        )
+
+    permission_answer = form_data.get('private_permission')
+    if permission_answer is not None:
+        permission_required = str(permission_answer).strip().lower() in ('yes', 'true', '1', 'on')
+        form.private_permission = permission_required
+        if permission_required:
+            form.permission_details = (form_data.get('permission_details') or '').strip() or None
+        else:
+            form.permission_details = None
+            form.private_permission_file = None
+            form.private_permission_filename = None
+
+    clear_permission_file = str(
+        form_data.get('clear_private_permission_file') or ''
+    ).strip().lower() in ('yes', 'true', '1', 'on')
+    if clear_permission_file:
+        form.private_permission_file = None
+        form.private_permission_filename = None
+
 
 # Autosaves a logged-in student's Form B draft without submitting the form.
 @app.route('/student_autosave_formb', methods=['POST'])
@@ -1729,7 +2041,13 @@ def student_autosave_formb():
         'shortcomings_reported',
         'methodology_alignment'
     ]
-    declaration_fields = {'declaration_name', 'full_name', 'declaration_date'}
+    declaration_fields = {
+        'declaration_name',
+        'applicant_signature',
+        'full_name',
+        'declaration_date',
+        'submission_date',
+    }
 
     data = request.form.to_dict()
     for key, value in data.items():
@@ -1741,6 +2059,11 @@ def student_autosave_formb():
                 setattr(form, key, value if value else None)
             else:
                 setattr(form, key, value)
+    _apply_formb_public_domain_answers(form, request.form)
+    permission_file = request.files.get('private_permission_file')
+    if form.private_permission and permission_file and permission_file.filename:
+        form.private_permission_file = permission_file.read()
+        form.private_permission_filename = permission_file.filename
     try:
         db_session.commit()
         return jsonify({'success': True})
@@ -1756,6 +2079,34 @@ def student_autosave_formb():
 
 # --- AUTOSAVE ENDPOINT FOR FORM C ---
 def _get_or_create_formc_draft(user_id, form_data):
+    explicit_form_id = form_data.get('formc_id') or form_data.get('form_id') or ''
+    requested_form_id = (
+        explicit_form_id
+        or session.get('active_formc_id')
+        or ''
+    )
+    requested_form_id = str(requested_form_id).strip()
+    if requested_form_id:
+        requested_form = (
+            db_session.query(FormC)
+            .filter(FormC.form_id == requested_form_id, FormC.user_id == user_id)
+            .first()
+        )
+        if requested_form:
+            if requested_form.submission_date is None:
+                session['active_formc_id'] = requested_form.form_id
+                return requested_form, None
+            if is_student_correction_state(requested_form):
+                return _get_or_create_formc_resubmission_draft(user_id, requested_form)
+            if explicit_form_id:
+                return None, (
+                    jsonify({
+                        'success': False,
+                        'error': 'Autosave ignored because this Form C has already been submitted.',
+                    }),
+                    409,
+                )
+
     form = (
         db_session.query(FormC)
         .filter(FormC.user_id == user_id, FormC.submission_date.is_(None))
@@ -1763,7 +2114,17 @@ def _get_or_create_formc_draft(user_id, form_data):
         .first()
     )
     if form:
+        session['active_formc_id'] = form.form_id
         return form, None
+
+    latest_submission = (
+        db_session.query(FormC)
+        .filter(FormC.user_id == user_id, FormC.submission_date.isnot(None))
+        .order_by(FormC.submission_date.desc(), FormC.created_at.desc().nullslast())
+        .first()
+    )
+    if latest_submission and is_student_correction_state(latest_submission):
+        return _get_or_create_formc_resubmission_draft(user_id, latest_submission)
 
     user = db_session.query(User).filter(User.user_id == user_id).first()
     if not user:
@@ -1786,6 +2147,8 @@ def _get_or_create_formc_draft(user_id, form_data):
         submitted=False,
     )
     db_session.add(form)
+    db_session.flush()
+    session['active_formc_id'] = form.form_id
     return form, None
 
 
@@ -1841,7 +2204,13 @@ def student_autosave_formc():
         'uj_facilities',
         'uj_funding'
     ]
-    declaration_fields = {'declaration_name', 'full_name', 'submission_date'}
+    declaration_fields = {
+        'declaration_name',
+        'applicant_signature',
+        'full_name',
+        'declaration_date',
+        'submission_date',
+    }
 
     data = request.form.to_dict()
 
@@ -1907,6 +2276,7 @@ def _create_forma_resubmission_draft(source_form):
     draft.certificate_modified = False
     draft.certificate_condition_1 = None
     draft.visible_to_student = True
+    preserve_single_reviewer_assignment(draft, source_form)
 
     db_session.add(draft)
     db_session.flush()
@@ -1923,17 +2293,152 @@ def _get_or_create_forma_resubmission_draft(user_id, source_form):
     )
     for draft in existing_draft:
         if can_reuse_forma_draft(draft):
+            if preserve_single_reviewer_assignment(draft, source_form):
+                db_session.commit()
             session['active_forma_id'] = draft.form_id
             return draft, None
 
     if not source_form:
         return None, (jsonify({'success': False, 'error': 'No source form available for resubmission'}), 404)
 
-    return _create_forma_resubmission_draft(source_form), None
+    try:
+        draft = _create_forma_resubmission_draft(source_form)
+        db_session.commit()
+        return draft, None
+    except Exception as exc:
+        db_session.rollback()
+        app.logger.exception("Failed to create Form A resubmission draft")
+        return None, (jsonify({'success': False, 'error': str(exc)}), 500)
+
+
+def _create_resubmission_draft(source_form, model, submission_field_name, declaration_fields, session_key):
+    """Copy a returned submission into a new editable version."""
+    draft = model(user_id=source_form.user_id)
+    skip_fields = {'form_id', 'created_at', 'updated_at'}
+
+    for column in model.__table__.columns:
+        field_name = column.name
+        if field_name in skip_fields:
+            continue
+        setattr(draft, field_name, getattr(source_form, field_name, None))
+
+    setattr(draft, submission_field_name, None)
+    for field_name in declaration_fields:
+        if hasattr(draft, field_name):
+            setattr(draft, field_name, None)
+
+    if hasattr(draft, 'submitted'):
+        draft.submitted = False
+    draft.submitted_to_admin = False
+    draft.submitted_to_reviewers = False
+    draft.submitted_to_rec = False
+    draft.visible_to_student = True
+    preserve_single_reviewer_assignment(draft, source_form)
+
+    for field_name, empty_value in {
+        'rec_comments': None,
+        'rec_status': None,
+        'rec_date': None,
+        'certificate_code': None,
+        'certificate_issued': None,
+        'certificate_end_date': None,
+        'certificate_issuer': None,
+        'certificate_email': None,
+        'certificate_received': False,
+        'certificate_heading': None,
+        'certificate_modified': False,
+        'certificate_condition_1': None,
+    }.items():
+        if hasattr(draft, field_name):
+            setattr(draft, field_name, empty_value)
+
+    db_session.add(draft)
+    db_session.flush()
+    session[session_key] = draft.form_id
+    return draft
+
+
+def _get_or_create_resubmission_draft(
+    user_id,
+    source_form,
+    model,
+    submission_field_name,
+    declaration_fields,
+    session_key,
+    *,
+    options=None,
+):
+    query = db_session.query(model)
+    if options:
+        query = query.options(*options)
+    submission_field = getattr(model, submission_field_name)
+    existing_draft = (
+        query
+        .filter(model.user_id == user_id, submission_field.is_(None))
+        .order_by(model.created_at.desc().nullslast())
+        .first()
+    )
+    if existing_draft:
+        if preserve_single_reviewer_assignment(existing_draft, source_form):
+            db_session.commit()
+        session[session_key] = existing_draft.form_id
+        return existing_draft, None
+
+    if not source_form:
+        return None, (jsonify({'success': False, 'error': 'No source form available for resubmission'}), 404)
+
+    try:
+        draft = _create_resubmission_draft(
+            source_form,
+            model,
+            submission_field_name,
+            declaration_fields,
+            session_key,
+        )
+        db_session.commit()
+        return draft, None
+    except Exception as exc:
+        db_session.rollback()
+        app.logger.exception("Failed to create %s resubmission draft", model.__name__)
+        return None, (jsonify({'success': False, 'error': str(exc)}), 500)
+
+
+FORMB_DEFERRED_UPLOADS = (
+    defer(FormB.permission_letter),
+    defer(FormB.prior_clearance),
+    defer(FormB.ethics_evidence),
+    defer(FormB.proposal_path),
+    defer(FormB.pending_note),
+    defer(FormB.private_permission_file),
+)
+
+
+def _get_or_create_formb_resubmission_draft(user_id, source_form):
+    return _get_or_create_resubmission_draft(
+        user_id,
+        source_form,
+        FormB,
+        'submitted_at',
+        {'declaration_name', 'full_name', 'declaration_date'},
+        'active_formb_id',
+        options=FORMB_DEFERRED_UPLOADS,
+    )
+
+
+def _get_or_create_formc_resubmission_draft(user_id, source_form):
+    return _get_or_create_resubmission_draft(
+        user_id,
+        source_form,
+        FormC,
+        'submission_date',
+        {'declaration_name', 'full_name'},
+        'active_formc_id',
+    )
 
 def _get_or_create_forma_draft(user_id, form_data):
     form_data = form_data or {}
-    form_id = form_data.get('forma_id') or session.get('active_forma_id')
+    explicit_form_id = form_data.get('forma_id') or form_data.get('form_id') or ''
+    form_id = explicit_form_id or session.get('active_forma_id')
 
     # Prefer explicit draft id from the client when available.
     if form_id:
@@ -1944,6 +2449,14 @@ def _get_or_create_forma_draft(user_id, form_data):
             if can_reuse_forma_draft(form):
                 session['active_forma_id'] = form.form_id
                 return form, None
+            if explicit_form_id and getattr(form, 'submitted_at', None) is not None:
+                return None, (
+                    jsonify({
+                        'success': False,
+                        'error': 'Autosave ignored because this Form A has already been submitted.',
+                    }),
+                    409,
+                )
 
     # Otherwise, reuse the latest unsubmitted draft for this user.
     unsubmitted_drafts = (
@@ -2347,7 +2860,8 @@ def form_a_sec6_autosave():
     if error_response:
         return error_response
 
-    _apply_forma_autosave_payload(form, request.form, section='sec6', include_declaration=True)
+    # Declaration details are submission-only and must never be autosaved.
+    _apply_forma_autosave_payload(form, request.form, section='sec6', include_declaration=False)
     
     try:
         db_session.commit()
@@ -2785,7 +3299,8 @@ def quiz():
 
 @app.route('/logout', methods=['GET'])
 def logout():
-    clear_auth_session()
+    # Do not carry alerts from the authenticated area back to the login page.
+    clear_auth_session(clear_flashes=True)
     return redirect('/login?system=ethics')
 
 # Auto-logout after 45 minutes of inactivity
@@ -2809,7 +3324,7 @@ def auto_logout():
                     last_active_dt = now
                 # If inactive for more than 45 minutes
                 if now - last_active_dt > timedelta(minutes=60):
-                    clear_auth_session()
+                    clear_auth_session(clear_flashes=True)
                     return redirect('/login?system=ethics')
             # Always update last_active if not logging out
             session['last_active'] = now.isoformat()
@@ -3586,8 +4101,8 @@ def admin_reassign_reviewers():
             if reviewer_id and reviewer_id not in selected_ids:
                 selected_ids.append(reviewer_id)
 
-        if len(selected_ids) < 1 or len(selected_ids) > 2:
-            flash("Please choose one or two different reviewers before saving.", "danger")
+        if len(selected_ids) != 1:
+            flash("Please choose exactly one reviewer before saving.", "danger")
             return redirect(url_for('admin_reassign_reviewers', page=page))
 
         selected_reviewers = (
@@ -3604,7 +4119,7 @@ def admin_reassign_reviewers():
             return redirect(url_for('admin_reassign_reviewers', page=page))
 
         form.reviewer_name1 = selected_ids[0]
-        form.reviewer_name2 = selected_ids[1] if len(selected_ids) > 1 else None
+        form.reviewer_name2 = None
         form.submitted_to_reviewers = True
 
         db_session.add(UserActivityLog(
@@ -6293,6 +6808,7 @@ def form_a_upload ():
 ### this is the function to focus on when intergrating MBA and Ethics
 ###
 @app.route('/back_end/monitor', methods=['GET'])
+@role_required('ADMIN', 'SUPER_ADMIN')
 def monitor():
     user_id = session.get('id')
 
@@ -6392,6 +6908,7 @@ def monitor():
 
 
 @app.route('/back_end/monitor_forms/view_forms/<string:user_id>', methods=['GET','POST'])
+@role_required('ADMIN', 'SUPER_ADMIN')
 def monitor_forms (user_id):
     id=session.get('id')
     user_profile=db_session.query(User).filter_by(user_id=id).first()
@@ -6765,8 +7282,8 @@ def api_reassign_form_b_reviewers(form_id):
         if reviewer_id and reviewer_id not in selected_ids:
             selected_ids.append(reviewer_id)
 
-    if len(selected_ids) < 1 or len(selected_ids) > 2:
-        return jsonify({'success': False, 'error': 'Please provide one or two reviewers'}), 400
+    if len(selected_ids) != 1:
+        return jsonify({'success': False, 'error': 'Please provide exactly one reviewer'}), 400
 
     selected_reviewers = (
         db_session.query(User)
@@ -6781,7 +7298,7 @@ def api_reassign_form_b_reviewers(form_id):
         return jsonify({'success': False, 'error': 'One or more selected reviewers are invalid'}), 400
 
     form.reviewer_name1 = selected_ids[0]
-    form.reviewer_name2 = selected_ids[1] if len(selected_ids) > 1 else None
+    form.reviewer_name2 = None
     form.submitted_to_reviewers = True
 
     db_session.add(UserActivityLog(
@@ -6991,9 +7508,7 @@ def form_b_sec2():
             form.project_description = form_data.get('project_description')
             form.data_nature = form_data.get('data_nature')
             form.data_origin = form_data.get('data_origin')
-            form.data_public = form_data.get('data_public') == 'Yes'
-            form.public_evidence = form_data.get('public_evidence')
-            form.access_conditions = form_data.get('access_conditions')
+            _apply_formb_public_domain_answers(form, form_data)
             form.personal_info = form_data.get('personal_info') == 'Yes'
             form.data_anonymized = form_data.get('data_anonymized')
             form.anonymization_comment = form_data.get('anonymization_comment')
@@ -8809,7 +9324,10 @@ def submit_form_a(form_id):
 
             # Assign all form fields
             form.user_id = user_id
-            form.attachment_id = form_requirements.id if form_requirements else None
+            if form_requirements:
+                form.attachment_id = form_requirements.id
+            elif not form.attachment_id:
+                form.attachment_id = 'AUTOSAVE_PENDING'
             form.applicant_name = request.form.get('applicant_name')
             form.student_number = request.form.get('student_number')
             form.institution = request.form.get('institution')
@@ -9049,6 +9567,10 @@ def student_edit_formb():
             defer(FormB.private_permission_file),
         ],
     )
+    if form is not None and form.submitted_at is not None and is_student_correction_state(form):
+        form, error_response = _get_or_create_formb_resubmission_draft(user_id, form)
+        if error_response:
+            return error_response
 
     locked_response = redirect_if_student_form_locked(form, 'Form B')
     if locked_response:
@@ -9088,8 +9610,7 @@ def student_edit_formb():
         form.data_origin = request.form.get('data_origin')
         form.data_public=data_public
         form.personal_info=personal_info
-        form.public_evidence = request.form.get('public_evidence')
-        form.access_conditions = request.form.get('access_conditions')
+        _apply_formb_public_domain_answers(form, request.form)
         form.private_permission=private_permission
         form.data_anonymized = request.form.get('data_anonymized')
         form.anonymization_comment = request.form.get('anonymization_comment')
@@ -9178,6 +9699,11 @@ def student_continue_formb():
             defer(FormB.private_permission_file)
         ).filter_by(user_id=user_id).order_by(FormB.submitted_at.desc().nullslast(), FormB.created_at.desc().nullslast()).first()
 
+    if form is not None and form.submitted_at is not None and is_student_correction_state(form):
+        form, error_response = _get_or_create_formb_resubmission_draft(user_id, form)
+        if error_response:
+            return error_response
+
     # Ensure there is a draft instance before processing POST payload.
     if form is None:
         form = FormB(user_id=user_id)
@@ -9213,9 +9739,7 @@ def student_continue_formb():
             form.data_origin = request.form.get('data_origin')
             form.data_public=data_public
             form.personal_info=personal_info
-
-            form.public_evidence = request.form.get('public_evidence')
-            form.access_conditions = request.form.get('access_conditions')
+            _apply_formb_public_domain_answers(form, request.form)
             form.data_acknowledgment = request.form.get('data_acknowledgment')
             form.private_permission=private_permission
 
@@ -9283,6 +9807,11 @@ def submit_form_b(form_id):
     
     # Check if form exists in database - if yes UPDATE (add declaration), if no CREATE with declaration
     form = db_session.query(FormB).filter(FormB.user_id==user_id, FormB.form_id==form_id).first()
+    if form is not None and form.submitted_at is not None and is_student_correction_state(form):
+        form, error_response = _get_or_create_formb_resubmission_draft(user_id, form)
+        if error_response:
+            return error_response
+        form_id = form.form_id
     if not form:
         form = (
             db_session.query(FormB)
@@ -9349,8 +9878,7 @@ def submit_form_b(form_id):
             form.data_origin = request.form.get('data_origin')
             form.data_public = data_public
             form.personal_info = personal_info
-            form.public_evidence = request.form.get('public_evidence')
-            form.access_conditions = request.form.get('access_conditions')
+            _apply_formb_public_domain_answers(form, request.form)
             form.data_acknowledgment = request.form.get('data_acknowledgment')
             form.private_permission = private_permission
             form.data_anonymized = request.form.get('data_anonymized')
@@ -9429,6 +9957,10 @@ def student_edit_formc():
     user = db_session.query(User).filter(User.user_id == user_id).first()
     supervisor=db_session.query(User).filter(User.user_id == user.supervisor_id).first()
     form = _find_latest_editable_form_for_user(FormC, user_id, 'submission_date')
+    if form is not None and form.submission_date is not None and is_student_correction_state(form):
+        form, error_response = _get_or_create_formc_resubmission_draft(user_id, form)
+        if error_response:
+            return error_response
 
     locked_response = redirect_if_student_form_locked(form, 'Form C')
     if locked_response:
@@ -9563,6 +10095,11 @@ def student_continue_formc():
     if form is None:
         form = db_session.query(FormC).filter_by(user_id=user_id).order_by(FormC.submission_date.desc().nullslast(), FormC.created_at.desc().nullslast()).first()
 
+    if form is not None and form.submission_date is not None and is_student_correction_state(form):
+        form, error_response = _get_or_create_formc_resubmission_draft(user_id, form)
+        if error_response:
+            return error_response
+
     if form is None:
         form = FormC(user_id=user_id)
         inherit_previous_reviewers(form, FormC, user_id, FormC.submission_date)
@@ -9683,6 +10220,11 @@ def submit_form_c(form_id):
     # Resolve the draft to submit. Never create a new row at submit time,
     # otherwise a stale/missing form_id can produce duplicate records.
     form = db_session.query(FormC).filter(FormC.user_id==user_id, FormC.form_id==form_id).first()
+    if form is not None and form.submission_date is not None and is_student_correction_state(form):
+        form, error_response = _get_or_create_formc_resubmission_draft(user_id, form)
+        if error_response:
+            return error_response
+        form_id = form.form_id
     form_exists = form is not None
     
     if not form_exists:
@@ -9865,8 +10407,8 @@ def api_reassign_form_c_reviewers(form_id):
         if reviewer_id and reviewer_id not in selected_ids:
             selected_ids.append(reviewer_id)
 
-    if len(selected_ids) < 1 or len(selected_ids) > 2:
-        return jsonify({'success': False, 'error': 'Please provide one or two reviewers'}), 400
+    if len(selected_ids) != 1:
+        return jsonify({'success': False, 'error': 'Please provide exactly one reviewer'}), 400
 
     selected_reviewers = (
         db_session.query(User)
@@ -9881,7 +10423,7 @@ def api_reassign_form_c_reviewers(form_id):
         return jsonify({'success': False, 'error': 'One or more selected reviewers are invalid'}), 400
 
     form.reviewer_name1 = selected_ids[0]
-    form.reviewer_name2 = selected_ids[1] if len(selected_ids) > 1 else None
+    form.reviewer_name2 = None
     form.submitted_to_reviewers = True
 
     db_session.add(UserActivityLog(
@@ -9933,38 +10475,28 @@ def parse_field(field):
 
 
 @app.route('/chair_forma_view/<string:id>', methods=['GET'])
+@role_required('ADMIN', 'SUPER_ADMIN', 'REC')
 def chair_forma_view(id):
-    current_form = (
-        db_session.query(FormA)
-        .filter(
-            FormA.user_id == id,
-            FormA.submitted_at.isnot(None),
-            or_(
-                and_(FormA.submitted_to_admin == True, FormA.rejected_or_accepted == True),
-                FormA.submitted_to_reviewers == True,
-                FormA.form_reviewed_by.isnot(None),
-                FormA.form_reviewed_by1.isnot(None),
-            )
-        )
-        .order_by(desc(FormA.submitted_at), desc(FormA.created_at))
-        .first()
-    )
-
     form = (
         db_session.query(FormA)
         .filter(
             FormA.user_id == id,
             or_(
+                FormA.submitted_at.isnot(None),
                 FormA.created_at.isnot(None),
-                FormA.submitted_at.isnot(None)
             )
         )
-        .order_by(desc(FormA.submitted_at), desc(FormA.created_at))
+        .order_by(
+            FormA.submitted_at.is_(None).asc(),
+            FormA.submitted_at.desc().nullslast(),
+            FormA.created_at.desc().nullslast(),
+            FormA.form_id.desc(),
+        )
         .all()
     )
 
-    if not current_form and form:
-        current_form = form[0]
+    # The first row is always the latest submitted version.
+    current_form = form[0] if form else None
 
     form_name="FORM A"
     data={}
@@ -10029,8 +10561,8 @@ def chair_forma_reassign_reviewers(form_id):
             if reviewer_id and reviewer_id not in selected_ids:
                 selected_ids.append(reviewer_id)
 
-        if len(selected_ids) < 1 or len(selected_ids) > 2:
-            flash("Please select one or two reviewers.", "danger")
+        if len(selected_ids) != 1:
+            flash("Please select exactly one reviewer.", "danger")
             return render_template(
                 'chair-forma-reassign-reviewers.html',
                 form=form,
@@ -10059,7 +10591,7 @@ def chair_forma_reassign_reviewers(form_id):
             )
 
         form.reviewer_name1 = selected_ids[0]
-        form.reviewer_name2 = selected_ids[1] if len(selected_ids) > 1 else None
+        form.reviewer_name2 = None
         form.submitted_to_reviewers = True
 
         db_session.add(UserActivityLog(
@@ -10114,8 +10646,8 @@ def chair_formb_reassign_reviewers(form_id):
             if reviewer_id and reviewer_id not in selected_ids:
                 selected_ids.append(reviewer_id)
 
-        if len(selected_ids) < 1 or len(selected_ids) > 2:
-            flash("Please select one or two reviewers.", "danger")
+        if len(selected_ids) != 1:
+            flash("Please select exactly one reviewer.", "danger")
             return render_template(
                 'chair-forma-reassign-reviewers.html',
                 form=form,
@@ -10146,7 +10678,7 @@ def chair_formb_reassign_reviewers(form_id):
             )
 
         form.reviewer_name1 = selected_ids[0]
-        form.reviewer_name2 = selected_ids[1] if len(selected_ids) > 1 else None
+        form.reviewer_name2 = None
         form.submitted_to_reviewers = True
 
         db_session.add(UserActivityLog(
@@ -10201,8 +10733,8 @@ def chair_formc_reassign_reviewers(form_id):
             if reviewer_id and reviewer_id not in selected_ids:
                 selected_ids.append(reviewer_id)
 
-        if len(selected_ids) < 1 or len(selected_ids) > 2:
-            flash("Please select one or two reviewers.", "danger")
+        if len(selected_ids) != 1:
+            flash("Please select exactly one reviewer.", "danger")
             return render_template(
                 'chair-forma-reassign-reviewers.html',
                 form=form,
@@ -10233,7 +10765,7 @@ def chair_formc_reassign_reviewers(form_id):
             )
 
         form.reviewer_name1 = selected_ids[0]
-        form.reviewer_name2 = selected_ids[1] if len(selected_ids) > 1 else None
+        form.reviewer_name2 = None
         form.submitted_to_reviewers = True
 
         db_session.add(UserActivityLog(
@@ -10259,30 +10791,8 @@ def chair_formc_reassign_reviewers(form_id):
 
 
 @app.route('/chair_formb_view/<string:id>', methods=['GET'])
+@role_required('ADMIN', 'SUPER_ADMIN', 'REC')
 def chair_formb_view(id):
-    current_form = (
-        db_session.query(FormB)
-        .options(
-            defer(FormB.permission_letter),
-            defer(FormB.prior_clearance),
-            defer(FormB.ethics_evidence),
-            defer(FormB.proposal_path),
-            defer(FormB.pending_note),
-            defer(FormB.private_permission_file)
-        )
-        .filter(
-            FormB.user_id == id,
-            FormB.submitted_at.isnot(None),
-            or_(
-                and_(FormB.submitted_to_admin == True, FormB.rejected_or_accepted == True),
-                FormB.submitted_to_reviewers == True,
-                FormB.form_reviewed_by.isnot(None),
-                FormB.form_reviewed_by1.isnot(None),
-            )
-        )
-        .order_by(desc(FormB.submitted_at), desc(FormB.created_at))
-        .first()
-    )
     form = (
         db_session.query(FormB)
         .options(
@@ -10296,16 +10806,21 @@ def chair_formb_view(id):
         .filter(
             FormB.user_id == id,
             or_(
+                FormB.submitted_at.isnot(None),
                 FormB.created_at.isnot(None),
-                FormB.submitted_at.isnot(None)
             )
         )
-        .order_by(desc(FormB.submitted_at), desc(FormB.created_at))
+        .order_by(
+            FormB.submitted_at.is_(None).asc(),
+            FormB.submitted_at.desc().nullslast(),
+            FormB.created_at.desc().nullslast(),
+            FormB.form_id.desc(),
+        )
         .all()
     )
 
-    if not current_form and form:
-        current_form = form[0]
+    # The first row is always the latest submitted version.
+    current_form = form[0] if form else None
 
     form_name="FORM B"
     today = date.today()
@@ -10320,37 +10835,28 @@ def chair_formb_view(id):
     )
 
 @app.route('/chair_formc_view/<string:id>', methods=['GET'])
+@role_required('ADMIN', 'SUPER_ADMIN', 'REC')
 def chair_formc_view(id):
-    current_form = (
-        db_session.query(FormC)
-        .filter(
-            FormC.user_id == id,
-            FormC.submission_date.isnot(None),
-            or_(
-                and_(FormC.submitted_to_admin == True, FormC.rejected_or_accepted == True),
-                FormC.submitted_to_reviewers == True,
-                FormC.form_reviewed_by.isnot(None),
-                FormC.form_reviewed_by1.isnot(None),
-            )
-        )
-        .order_by(desc(FormC.submission_date), desc(FormC.created_at))
-        .first()
-    )
     form = (
         db_session.query(FormC)
         .filter(
             FormC.user_id == id,
             or_(
+                FormC.submission_date.isnot(None),
                 FormC.created_at.isnot(None),
-                FormC.submission_date.isnot(None)
             )
         )
-        .order_by(desc(FormC.submission_date), desc(FormC.created_at))
+        .order_by(
+            FormC.submission_date.is_(None).asc(),
+            FormC.submission_date.desc().nullslast(),
+            FormC.created_at.desc().nullslast(),
+            FormC.form_id.desc(),
+        )
         .all()
     )
 
-    if not current_form and form:
-        current_form = form[0]
+    # The first row is always the latest submitted version.
+    current_form = form[0] if form else None
 
     form_name="FORM C"
     
@@ -10453,6 +10959,7 @@ def student_view_feedback(id):
 
 
 @app.route('/supervisor_view_feedback/<string:id>', methods=['GET'])
+@role_required('SUPERVISOR', 'REVIEWER', 'ADMIN', 'SUPER_ADMIN')
 def supervisor_view_feedback(id):
     form = None
     for model in [FormA, FormB, FormC]:
@@ -10468,6 +10975,20 @@ def supervisor_view_feedback(id):
         if form:
             break
 
+    if form:
+        current_user = get_current_user()
+        current_role = str(role_value(current_user) or '').upper()
+        form_owner = db_session.query(User).filter_by(
+            user_id=getattr(form, 'user_id', None)
+        ).first()
+        if (
+            current_role not in {'ADMIN', 'SUPER_ADMIN'}
+            and (
+                not form_owner
+                or getattr(form_owner, 'supervisor_id', None) != current_user.user_id
+            )
+        ):
+            abort(403)
 
     if form:
         form = merge_reviewer_feedback_from_related_draft(form)
@@ -10478,6 +10999,7 @@ def supervisor_view_feedback(id):
 
 
 @app.route('/ethics_view_feedback/<string:id>', methods=['GET'])
+@role_required('REVIEWER', 'ADMIN', 'SUPER_ADMIN', 'REC')
 def ethics_view_feedback(id):
     form = None
     for model in [FormA, FormB, FormC]:
@@ -10494,7 +11016,9 @@ def ethics_view_feedback(id):
         )
         if form:
             break
-  
+
+    if form and not can_access_form(get_current_user(), form):
+        abort(403)
 
     if form:
         form = merge_reviewer_feedback_from_related_draft(form)
@@ -10570,6 +11094,7 @@ def reviewer_list():
 
 
 @app.route('/review_feedback/<string:form_id>', methods=['GET','POST'])
+@role_required('REVIEWER', 'ADMIN', 'SUPER_ADMIN', 'REC')
 def review_feedback(form_id):
     user_id=session.get('id')
     
@@ -10581,7 +11106,9 @@ def review_feedback(form_id):
         form = db_session.query(model).filter_by(form_id=form_id).first()
         if form:
             break  # Stop once the form is found
-    
+    if form and not can_access_form(get_current_user(), form):
+        abort(403)
+
     if form and is_submitted_form_record(form):
         form = merge_reviewer_feedback_from_related_draft(form)
         first_reviewer=''
@@ -10598,6 +11125,7 @@ def review_feedback(form_id):
 
 
 @app.route('/chair_form_view/<string:id>/<string:form_name>', methods=['GET','POST'])
+@role_required('REVIEWER', 'ADMIN', 'SUPER_ADMIN', 'REC')
 def chair_form_view(id,form_name):
     user_id=session.get('id')
     if not user_id:
@@ -10619,6 +11147,19 @@ def chair_form_view(id,form_name):
         defer(FormB.private_permission_file)
     ).filter_by(form_id=id).first()
     formc = db_session.query(FormC).filter_by(form_id=id).first()
+
+    requested_form = {
+        'FORM A': forma,
+        'A': forma,
+        'FORM B': formb,
+        'B': formb,
+        'FORM C': formc,
+        'C': formc,
+    }.get((form_name or '').strip().upper())
+    if not requested_form:
+        abort(404)
+    if not can_access_form(user_name, requested_form):
+        abort(403)
 
     if forma:
         formReviewers = db_session.query(User).filter(
@@ -10668,10 +11209,9 @@ def chair_form_view(id,form_name):
 
         
        
-        latest_forma = db_session.query(FormA) \
-        .filter(FormA.user_id == forma.user_id) \
-        .order_by(FormA.submitted_at.asc()) \
-        .first()
+        latest_forma = forma
+        if backfill_reviewer_from_previous_version(latest_forma, FormA, FormA.submitted_at):
+            db_session.commit()
         Assigned_reviewer=db_session.query(User).filter(User.user_id.in_([latest_forma.reviewer_name1, latest_forma.reviewer_name2])).all()
         if Assigned_reviewer:
             for item in Assigned_reviewer:
@@ -10879,6 +11419,8 @@ def chair_form_view(id,form_name):
                         rec_date=datetime.now()
                         )
                         db_session.add(form)
+            apply_reviewer_recommendation_routing(forma, review_recommendation)
+            apply_admin_correction_routing(forma, review_recommendation, user_role)
             db_session.add(forma)
             db_session.commit()
 
@@ -10890,10 +11432,9 @@ def chair_form_view(id,form_name):
     elif form_name=="FORM B":
         
         if formb:
-            latest_formb = db_session.query(FormB) \
-            .filter(FormB.user_id == formb.user_id) \
-            .order_by(FormB.submitted_at.asc()) \
-            .first()
+            latest_formb = formb
+            if backfill_reviewer_from_previous_version(latest_formb, FormB, FormB.submitted_at):
+                db_session.commit()
             Assigned_reviewer=db_session.query(User).filter(User.user_id.in_([latest_formb.reviewer_name1, latest_formb.reviewer_name2])).all()
             if Assigned_reviewer:
                 for item in Assigned_reviewer:
@@ -11085,6 +11626,8 @@ def chair_form_view(id,form_name):
                         rec_date=datetime.now()
                         )
                         db_session.add(form)
+            apply_reviewer_recommendation_routing(formb, review_recommendation)
+            apply_admin_correction_routing(formb, review_recommendation, user_role)
             db_session.add(formb)
             db_session.commit()
             return redirect(url_for('review_dashboard'))
@@ -11094,10 +11637,9 @@ def chair_form_view(id,form_name):
         list_of_revewers=[]
         id_of_reviewers=[]
         if formc:
-            latest_formc = db_session.query(FormC) \
-            .filter(FormC.user_id == formc.user_id) \
-            .order_by(FormC.submission_date.asc()) \
-            .first()
+            latest_formc = formc
+            if backfill_reviewer_from_previous_version(latest_formc, FormC, FormC.submission_date):
+                db_session.commit()
             Assigned_reviewer=db_session.query(User).filter(User.user_id.in_([latest_formc.reviewer_name1, latest_formc.reviewer_name2])).all()
             
             if Assigned_reviewer:
@@ -11294,6 +11836,8 @@ def chair_form_view(id,form_name):
                             )
                
                         db_session.add(form)
+            apply_reviewer_recommendation_routing(formc, review_recommendation)
+            apply_admin_correction_routing(formc, review_recommendation, user_role)
             db_session.add(formc)
             db_session.commit()
             return redirect(url_for('review_dashboard'))
@@ -11308,6 +11852,7 @@ def ethics_reviewer_committee_form():
 
 
 @app.route('/ethics_reviewer_committee_form_a', methods=['GET','POST'])
+@role_required('ADMIN', 'SUPER_ADMIN', 'REC')
 def ethics_reviewer_committee_form_a():
     user_id = session.get('id')
     user_profile = db_session.query(User).filter_by(user_id=user_id).first() if user_id else None
@@ -11343,6 +11888,8 @@ def ethics_reviewer_committee_form_a():
             FormA.submitted_at == latest_forma_subq.c.latest_submitted_at
         )
     )
+    if role == 'REC':
+        query = query.filter(FormA.submitted_to_rec == True)
 
     if year_param and month_param:
         query = query.filter(
@@ -11412,6 +11959,7 @@ def ethics_reviewer_committee_form_a():
 
 
 @app.route('/ethics_reviewer_committee_form_b', methods=['GET','POST'])
+@role_required('ADMIN', 'SUPER_ADMIN', 'REC')
 def ethics_reviewer_committee_form_b():
     user_id = session.get('id')
     user_profile = db_session.query(User).filter_by(user_id=user_id).first() if user_id else None
@@ -11456,6 +12004,8 @@ def ethics_reviewer_committee_form_b():
         latest_formB_subq,
         (FormB.user_id == latest_formB_subq.c.user_id) & (FormB.submitted_at == latest_formB_subq.c.latest_submitted_at)
     )
+    if role == 'REC':
+        query = query.filter(FormB.submitted_to_rec == True)
     if year_param and month_param:
         query = query.filter(
             extract('year', FormB.submitted_at) == int(year_param),
@@ -11484,6 +12034,7 @@ def ethics_reviewer_committee_form_b():
 
 
 @app.route('/ethics_reviewer_committee_form_c', methods=['GET','POST'])
+@role_required('ADMIN', 'SUPER_ADMIN', 'REC')
 def ethics_reviewer_committee_form_c():
     user_id = session.get('id')
     user_profile = db_session.query(User).filter_by(user_id=user_id).first() if user_id else None
@@ -11521,6 +12072,8 @@ def ethics_reviewer_committee_form_c():
         latest_formC_subq,
         (FormC.user_id == latest_formC_subq.c.user_id) & (FormC.submission_date == latest_formC_subq.c.latest_submission_date)
     )
+    if role == 'REC':
+        query = query.filter(FormC.submitted_to_rec == True)
     if year_param and month_param:
         query = query.filter(
             extract('year', FormC.submission_date) == int(year_param),
@@ -11549,12 +12102,17 @@ def ethics_reviewer_committee_form_c():
 
 
 @app.route('/student_form_pdf/<string:form_id>/<string:form_type>', methods=['GET','POST'])
+@login_required
 def student_form_pdf(form_id,form_type):
     form = None
     for model in [FormA, FormB, FormC]:
         form = db_session.query(model).filter_by(form_id=form_id).first()
         if form:
             break  # Stop once the form is found
+    if not form:
+        abort(404)
+    if not can_access_form(get_current_user(), form):
+        abort(403)
     data={}
     if form_type=='A':
         data={
@@ -11583,6 +12141,7 @@ def student_form_pdf(form_id,form_type):
 
 
 @app.route('/ethics_form_pdf/<string:form_id>/<string:form_type>', methods=['GET','POST'])
+@login_required
 def ethics_form_pdf(form_id,form_type):
     form_type = (form_type or '').strip().upper()
 
@@ -11590,6 +12149,8 @@ def ethics_form_pdf(form_id,form_type):
         form = db_session.query(FormA).filter_by(form_id=form_id).first()
         if not form:
             return "Form A not found.", 404
+        if not can_access_form(get_current_user(), form):
+            abort(403)
 
         data = {
             "org_name": parse_field(form.org_name),
@@ -11612,12 +12173,16 @@ def ethics_form_pdf(form_id,form_type):
         form = db_session.query(FormB).filter_by(form_id=form_id).first()
         if not form:
             return "Form B not found.", 404
+        if not can_access_form(get_current_user(), form):
+            abort(403)
         return render_template('student_form_b_answer_pdf.html',formB=form)
 
     if form_type == "FORM C":
         form = db_session.query(FormC).filter_by(form_id=form_id).first()
         if not form:
             return "Form C not found.", 404
+        if not can_access_form(get_current_user(), form):
+            abort(403)
         return render_template('student_form_c_answer_pdf.html',formc=form)
 
     return "Invalid form type.", 400
@@ -12089,6 +12654,7 @@ def api_admin_login_logs():
 
 
 @app.route('/review_version/<string:user_id>/<string:form_name>', methods=['GET','POST'])
+@role_required('REVIEWER', 'ADMIN', 'SUPER_ADMIN', 'REC')
 def review_version(user_id,form_name):
     normalized_form_name = (form_name or '').strip().upper()
     model_map = {
@@ -12108,6 +12674,20 @@ def review_version(user_id,form_name):
         .outerjoin(FormARequirements, FormARequirements.user_id == model.user_id)
         .filter(model.user_id == user_id)
     )
+    current_user = get_current_user()
+    current_role = str(role_value(current_user) or '').upper()
+    if current_role == 'REVIEWER':
+        query = query.filter(or_(
+            model.reviewer_name1 == current_user.user_id,
+            model.reviewer_name2 == current_user.user_id,
+            model.user_id.in_(
+                db_session.query(User.user_id).filter(
+                    User.supervisor_id == current_user.user_id
+                )
+            ),
+        ))
+    elif current_role == 'REC':
+        query = query.filter(model.submitted_to_rec == True)
 
     if model == FormB:
         query = query.options(
@@ -12127,6 +12707,8 @@ def review_version(user_id,form_name):
         )
 
     form = query.all()
+    if current_role == 'REVIEWER' and not form:
+        abort(403)
 
    
     user_id=session.get('id')
@@ -12134,6 +12716,7 @@ def review_version(user_id,form_name):
 
 
 @app.route('/review_dashboard', methods=['GET','POST'])
+@role_required('REVIEWER', 'ADMIN', 'SUPER_ADMIN')
 def review_dashboard():
     user_id=session.get('id')
 
@@ -12298,8 +12881,11 @@ def submit_to_rec(id):
 
 
 @app.route('/reviewer_form_a/<string:id>', methods=['GET'])
+@role_required('REVIEWER', 'ADMIN', 'SUPER_ADMIN', 'REC')
 def reviewer_form_a(id):
     form = db_session.query(FormA).filter_by(form_id=id).first()
+    if form and not can_access_form(get_current_user(), form):
+        abort(403)
     data={}
     if form and is_submitted_form_record(form):
         data={
@@ -12327,6 +12913,7 @@ def reviewer_form_a(id):
 
 
 @app.route('/reviewer_form_b/<string:id>', methods=['GET'])
+@role_required('REVIEWER', 'ADMIN', 'SUPER_ADMIN', 'REC')
 def reviewer_form_b(id):
    
     form = db_session.query(FormB).options(
@@ -12337,6 +12924,8 @@ def reviewer_form_b(id):
         defer(FormB.pending_note),
         defer(FormB.private_permission_file)
     ).filter_by(form_id=id).first()
+    if form and not can_access_form(get_current_user(), form):
+        abort(403)
 
     if form and is_submitted_form_record(form):
         return render_template("review_form_b.html",form=form)
@@ -12347,8 +12936,11 @@ def reviewer_form_b(id):
 
 
 @app.route('/reviewer_form_c/<string:id>', methods=['GET'])
+@role_required('REVIEWER', 'ADMIN', 'SUPER_ADMIN', 'REC')
 def reviewer_form_c(id):
     form = db_session.query(FormC).filter_by(form_id=id).first()
+    if form and not can_access_form(get_current_user(), form):
+        abort(403)
    
     if form and is_submitted_form_record(form):
         return render_template("review_form_c.html", form=form)
@@ -12359,6 +12951,7 @@ def reviewer_form_c(id):
 
 
 @app.route('/rec_dashboard', methods=['GET', 'POST'])
+@role_required('REC')
 def rec_dashboard():
     user_id = session.get('id')
     if not user_id:
@@ -12718,6 +13311,7 @@ def certificate(id):
 
 
 @app.route('/modify_certificate/<string:id>', methods=['GET', 'POST'])
+@role_required('ADMIN', 'SUPER_ADMIN', 'REC')
 def modify_certificate(id):
 
     if 'id' not in session:
@@ -12772,6 +13366,7 @@ def modify_certificate(id):
 
 
 @app.route('/view_certificate/<string:id>',methods=['GET','POST'])
+@login_required
 def view_certificate(id):
     
     if 'id' not in session:
@@ -12783,6 +13378,8 @@ def view_certificate(id):
         certificate_details = db_session.query(model).filter_by(form_id=id).first()
         if certificate_details:
             break
+    if certificate_details and not can_access_form(get_current_user(), certificate_details):
+        abort(403)
     return render_template(
         'view_certificate.html',
         certificate_details=certificate_details
@@ -12822,6 +13419,7 @@ def update_certificate_status(id):
 
 
 @app.route('/edited_certificate/<string:id>', methods=['GET'])
+@login_required
 def edited_certificate(id):
     certificate_details = None
     for model in [FormA, FormB, FormC]:
@@ -12830,6 +13428,8 @@ def edited_certificate(id):
             break
     if not certificate_details:
         return "No certificate data found.", 404
+    if not can_access_form(get_current_user(), certificate_details):
+        abort(403)
     return render_template('edited_certificate.html', certificate_details=certificate_details)
 
 
@@ -12838,6 +13438,7 @@ def edited_certificate(id):
 ### Admin Review Submision
 ###
 @app.route('/ethics_reviewer_committee_forms/<string:id>/<string:form_name>', methods=['GET','POST'])
+@role_required('ADMIN', 'SUPER_ADMIN')
 def ethics_reviewer_committee_forms(id,form_name):
     def resolve_reviewer_ids(selected_reviewers, existing_reviewer_ids):
         unique_selected = []
@@ -12846,14 +13447,14 @@ def ethics_reviewer_committee_forms(id,form_name):
             if reviewer_id and reviewer_id not in unique_selected:
                 unique_selected.append(reviewer_id)
         if unique_selected:
-            return unique_selected[:2]
-        return (existing_reviewer_ids or [])[:2]
+            return unique_selected[:1]
+        return (existing_reviewer_ids or [])[:1]
 
     forma = db_session.query(FormA).filter_by(form_id=id).first()
     
     Assigned_reviewer=''
     if forma:
-        id_of_reviewers = get_reviewers_for_ethics_assignment(forma, FormA, FormA.submitted_at)
+        id_of_reviewers = get_reviewers_for_ethics_assignment(forma, FormA, FormA.submitted_at)[:1]
         if id_of_reviewers:
             Assigned_reviewer = db_session.query(User).filter(User.user_id.in_(id_of_reviewers)).all()
  
@@ -12866,21 +13467,21 @@ def ethics_reviewer_committee_forms(id,form_name):
     else:
         reviewers=request.form.getlist('reviewer_names[]')
 
-        if len(reviewers) >= 2:
-            Assigned_reviewer=db_session.query(User).filter(User.user_id.in_([reviewers[0], reviewers[1]])).all()
+        if len(reviewers) >= 1:
+            Assigned_reviewer=db_session.query(User).filter(User.user_id == reviewers[0]).all()
             
 
     if form_name=="FORM A":
         
         if request.method=="POST":
             reviewers=request.form.getlist('reviewer_names[]')
-            if request.form.get('accept') in ['Accept','Approved with Minor Changes'] and len(reviewers) > 2:
-                flash('Please select no more than two reviewers before submitting.', 'danger')
+            if len({reviewer_id for reviewer_id in reviewers if reviewer_id}) > 1:
+                flash('Please select exactly one reviewer before submitting.', 'danger')
                 return redirect(url_for('ethics_reviewer_committee_forms', id=id, form_name=form_name))
 
             effective_reviewer_ids = resolve_reviewer_ids(reviewers, id_of_reviewers)
             if request.form.get('accept') in ['Accept','Approved with Minor Changes'] and len(effective_reviewer_ids) < 1:
-                flash('Please assign at least one reviewer before submitting.', 'danger')
+                flash('Please assign exactly one reviewer before submitting.', 'danger')
                 return redirect(url_for('ethics_reviewer_committee_forms', id=id, form_name=form_name))
 
             _reviewers_emails=[]
@@ -12888,7 +13489,7 @@ def ethics_reviewer_committee_forms(id,form_name):
                 _reviewers_emails=db_session.query(User).filter(User.user_id.in_(effective_reviewer_ids)).all()
 
             forma.reviewer_name1 = effective_reviewer_ids[0] if len(effective_reviewer_ids) >= 1 else None
-            forma.reviewer_name2 = effective_reviewer_ids[1] if len(effective_reviewer_ids) >= 2 else None
+            forma.reviewer_name2 = None
             forma.ethics_signature_date=datetime.now()
             forma.review_form_comments=request.form.get('additional_comments')
             forma.ethics_form_status=request.form.get('recommendation')
@@ -12964,7 +13565,7 @@ def ethics_reviewer_committee_forms(id,form_name):
         formb = db_session.query(FormB).filter_by(form_id=id).first()
         Assigned_reviewer=''
         if formb:
-            id_of_reviewers = get_reviewers_for_ethics_assignment(formb, FormB, FormB.submitted_at)
+            id_of_reviewers = get_reviewers_for_ethics_assignment(formb, FormB, FormB.submitted_at)[:1]
             if id_of_reviewers:
                 Assigned_reviewer = db_session.query(User).filter(User.user_id.in_(id_of_reviewers)).all()
  
@@ -12977,22 +13578,22 @@ def ethics_reviewer_committee_forms(id,form_name):
         else:
             reviewers=request.form.getlist('reviewer_names[]')
             
-            if len(reviewers) >= 2:
-                Assigned_reviewer=db_session.query(User).filter(User.user_id.in_([reviewers[0], reviewers[1]])).all()
+            if len(reviewers) >= 1:
+                Assigned_reviewer=db_session.query(User).filter(User.user_id == reviewers[0]).all()
   
         if request.method=="POST":
             reviewers=request.form.getlist('reviewer_names[]')
-            if request.form.get('accept') in ['Accept','Approved with Minor Changes'] and len(reviewers) > 2:
-                flash('Please select no more than two reviewers before submitting.', 'danger')
+            if len({reviewer_id for reviewer_id in reviewers if reviewer_id}) > 1:
+                flash('Please select exactly one reviewer before submitting.', 'danger')
                 return redirect(url_for('ethics_reviewer_committee_forms', id=id, form_name=form_name))
 
             effective_reviewer_ids = resolve_reviewer_ids(reviewers, id_of_reviewers)
             if request.form.get('accept') in ['Accept','Approved with Minor Changes'] and len(effective_reviewer_ids) < 1:
-                flash('Please assign at least one reviewer before submitting.', 'danger')
+                flash('Please assign exactly one reviewer before submitting.', 'danger')
                 return redirect(url_for('ethics_reviewer_committee_forms', id=id, form_name=form_name))
 
             formb.reviewer_name1 = effective_reviewer_ids[0] if len(effective_reviewer_ids) >= 1 else None
-            formb.reviewer_name2 = effective_reviewer_ids[1] if len(effective_reviewer_ids) >= 2 else None
+            formb.reviewer_name2 = None
             formb.ethics_signature_date=datetime.now()
             formb.review_form_comments=request.form.get('additional_comments')
             formb.ethics_form_status=request.form.get('recommendation')
@@ -13076,7 +13677,7 @@ def ethics_reviewer_committee_forms(id,form_name):
         
         Assigned_reviewer=''
         if formc:
-            id_of_reviewers = get_reviewers_for_ethics_assignment(formc, FormC, FormC.submission_date)
+            id_of_reviewers = get_reviewers_for_ethics_assignment(formc, FormC, FormC.submission_date)[:1]
             if id_of_reviewers:
                 Assigned_reviewer = db_session.query(User).filter(User.user_id.in_(id_of_reviewers)).all()
  
@@ -13089,18 +13690,18 @@ def ethics_reviewer_committee_forms(id,form_name):
             
         else:
             reviewers=request.form.getlist('reviewer_names[]')
-            if len(reviewers) >= 2:
-                Assigned_reviewer=db_session.query(User).filter(User.user_id.in_([reviewers[0], reviewers[1]])).all()
+            if len(reviewers) >= 1:
+                Assigned_reviewer=db_session.query(User).filter(User.user_id == reviewers[0]).all()
             
         if request.method=="POST":
             reviewers=request.form.getlist('reviewer_names[]')
-            if request.form.get('accept') in ['Accept','Approved with Minor Changes'] and len(reviewers) > 2:
-                flash('Please select no more than two reviewers before submitting.', 'danger')
+            if len({reviewer_id for reviewer_id in reviewers if reviewer_id}) > 1:
+                flash('Please select exactly one reviewer before submitting.', 'danger')
                 return redirect(url_for('ethics_reviewer_committee_forms', id=id, form_name=form_name))
 
             effective_reviewer_ids = resolve_reviewer_ids(reviewers, id_of_reviewers)
             if request.form.get('accept') in ['Accept','Approved with Minor Changes'] and len(effective_reviewer_ids) < 1:
-                flash('Please assign at least one reviewer before submitting.', 'danger')
+                flash('Please assign exactly one reviewer before submitting.', 'danger')
                 return redirect(url_for('ethics_reviewer_committee_forms', id=id, form_name=form_name))
 
             _reviewers_emails=[]
@@ -13108,7 +13709,7 @@ def ethics_reviewer_committee_forms(id,form_name):
                 _reviewers_emails=db_session.query(User).filter(User.user_id.in_(effective_reviewer_ids)).all()
 
             formc.reviewer_name1 = effective_reviewer_ids[0] if len(effective_reviewer_ids) >= 1 else None
-            formc.reviewer_name2 = effective_reviewer_ids[1] if len(effective_reviewer_ids) >= 2 else None
+            formc.reviewer_name2 = None
             formc.ethics_signature_date=datetime.now()
             formc.review_form_comments=request.form.get('additional_comments')
             formc.ethics_form_status=request.form.get('recommendation')
@@ -13334,13 +13935,33 @@ def supervisor_dashboard():
 
 
 @app.route('/supervisor_dashboard_previous_forms/<string:user_id>', methods=['GET','POST'])
+@role_required('SUPERVISOR', 'REVIEWER', 'ADMIN', 'SUPER_ADMIN')
 def supervisor_dashboard_previous_forms(user_id):
     supervisor_id=session.get('id')
     supervisor_role=session.get('supervisor_role')
     if not supervisor_id:
         return jsonify({'error': 'Unauthorized'}), 401
+
+    current_user = get_current_user()
+    current_role = str(role_value(current_user) or '').upper()
+    student = db_session.query(User).filter_by(user_id=user_id).first()
+    if not student:
+        abort(404)
+    if (
+        current_role not in {'ADMIN', 'SUPER_ADMIN'}
+        and getattr(student, 'supervisor_id', None) != current_user.user_id
+    ):
+        abort(403)
     
-    formA = db_session.query(FormA).filter(FormA.user_id==user_id).all()
+    formA = (
+        db_session.query(FormA)
+        .filter(FormA.user_id == user_id)
+        .order_by(
+            FormA.submitted_at.desc().nullslast(),
+            FormA.created_at.desc().nullslast(),
+        )
+        .all()
+    )
     
     # Safe FormB query - only load needed columns to avoid binary column issues
     formB_results = db_session.query(
@@ -13350,7 +13971,10 @@ def supervisor_dashboard_previous_forms(user_id):
         FormB.signature_date, FormB.review_supervisor_signature, FormB.review_date,
         FormB.review_supervisor_signature1, FormB.review_date1, FormB.created_at, FormB.declaration_date,
         FormB.status, FormB.review_form_status, FormB.rejected_or_accepted
-    ).filter(FormB.user_id==user_id).all()
+    ).filter(FormB.user_id == user_id).order_by(
+        FormB.submitted_at.desc().nullslast(),
+        FormB.created_at.desc().nullslast(),
+    ).all()
     
     # Convert tuples to proxy objects
     formB = []
@@ -13381,13 +14005,25 @@ def supervisor_dashboard_previous_forms(user_id):
         proxy.rejected_or_accepted = result.rejected_or_accepted
         formB.append(proxy)
     
-    formC = db_session.query(FormC).filter(FormC.user_id==user_id).all()
+    formC = (
+        db_session.query(FormC)
+        .filter(FormC.user_id == user_id)
+        .order_by(
+            FormC.submission_date.desc().nullslast(),
+            FormC.created_at.desc().nullslast(),
+        )
+        .all()
+    )
 
     supervisor_formA = db_session.query(FormA, FormARequirements) \
         .join(User, FormA.user_id == User.user_id) \
         .outerjoin(FormARequirements, FormARequirements.user_id == FormA.user_id) \
         .filter(FormA.user_id==user_id) \
-        .order_by(FormA.submitted_at.desc() ,FormA.declaration_date.desc()) \
+        .order_by(
+            FormA.submitted_at.desc().nullslast(),
+            FormA.created_at.desc().nullslast(),
+            FormA.declaration_date.desc().nullslast(),
+        ) \
         .all()
     
     # Safe FormB query with joins - only load needed columns to avoid binary column issues
@@ -13402,7 +14038,11 @@ def supervisor_dashboard_previous_forms(user_id):
     ).join(User, FormB.user_id == User.user_id) \
     .outerjoin(FormARequirements, FormARequirements.user_id == FormB.user_id) \
     .filter(FormB.user_id==user_id) \
-    .order_by(FormB.submitted_at.desc(), FormB.declaration_date.desc()) \
+    .order_by(
+        FormB.submitted_at.desc().nullslast(),
+        FormB.created_at.desc().nullslast(),
+        FormB.declaration_date.desc().nullslast(),
+    ) \
     .all()
     
     # Convert to simplified format: (FormB-like proxy, FormARequirements)
@@ -13438,7 +14078,10 @@ def supervisor_dashboard_previous_forms(user_id):
         .join(User, FormC.user_id == User.user_id) \
         .outerjoin(FormARequirements, FormARequirements.user_id == FormC.user_id) \
         .filter(FormC.user_id==user_id) \
-        .order_by(FormC.submission_date.desc()) \
+        .order_by(
+            FormC.submission_date.desc().nullslast(),
+            FormC.created_at.desc().nullslast(),
+        ) \
         .all()
     
     return render_template("supervisor_form_version_control.html",supervisor_role=supervisor_role,formA=formA,formB=formB,formC=formC,supervisor_formA=supervisor_formA,supervisor_formB=supervisor_formB,supervisor_formC=supervisor_formC)

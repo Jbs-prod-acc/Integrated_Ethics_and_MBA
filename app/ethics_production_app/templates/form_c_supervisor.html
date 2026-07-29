@@ -144,13 +144,13 @@
           <tr><td>People with little or no education</td>
             <td><span class="form-answer">{{'Yes' if formc.no_education else 'No'}}</span></td></tr>
           <tr><td>Other: Please describe.</td>
-            <td><span class="form-answer">{{formc.vulnerable_other_description}}</span></td></tr>
+            <td><span class="form-answer">{{'Not applicable' if not formc.vulnerable_other_description or formc.vulnerable_other_description|string|trim|lower in ['false', 'none'] else formc.vulnerable_other_description}}</span></td></tr>
         </tbody>
       </table>
 
       <label><strong>Comments (e.g. “No participants”):</strong></label>
       <br>
-      <span class="form-answer">{{formc.vulnerable_comments}}</span>
+      <span class="form-answer">{{formc.vulnerable_comments or 'Not applicable'}}</span>
 
       <hr>
       <br>
@@ -187,13 +187,13 @@
 <tr><td>Activities putting researcher/data collector at risk</td>
   <td><span class="form-answer">{{'Yes' if formc.researcher_risk else 'No'}}</span></td></tr>
     <tr><td>Other:  Please describe.</td>
-      <td><span class="form-answer">{{formc.activity_other_description}}</span></td></tr>
+      <td><span class="form-answer">{{'Not applicable' if not formc.activity_other_description or formc.activity_other_description|string|trim|lower in ['false', 'none'] else formc.activity_other_description}}</span></td></tr>
   </tbody>
 </table>
 
 <label><strong>Comments:</strong></label>
 <br>
-<span class="form-answer">{{formc.activity_comments}}</span>
+<span class="form-answer">{{formc.activity_comments or 'Not applicable'}}</span>
 
       <hr>
       <br>
@@ -227,7 +227,7 @@
 
       <label><strong>Comments:</strong></label>
       <br>
-      <span class="form-answer">{{formc.consideration_comments}}</span>
+      <span class="form-answer">{{formc.consideration_comments or 'Not applicable'}}</span>
 
       <hr>
       <br>
@@ -369,7 +369,7 @@
      
           <tr>
             <td><strong>Refined Concept Proposal</strong><br><small>This should match the approved version with the literature review.</small>
-              {% if formc.form_a_requirements and formc.form_a_requirements.files %}
+              {% if requirement_file_available(formc.form_a_requirements, 'files') %}
                   <div class="mt-2">
                     <a href="{{ url_for('view_requirement_file', req_id=formc.form_a_requirements.id, field_name='files') }}" target="_blank" class="btn btn-sm btn-primary">View Proposal Document</a>
                   </div>

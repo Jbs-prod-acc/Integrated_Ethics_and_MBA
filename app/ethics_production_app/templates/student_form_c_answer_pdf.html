@@ -129,29 +129,29 @@
         </thead>
         <tbody>
           <tr><td>Communities that may be considered as vulnerable</td>
-            <td><span class="form-answer">{{formc.vulnerable}}</span></td></tr>
+            <td><span class="form-answer">{{'Yes' if formc.vulnerable else 'No'}}</span></td></tr>
           <tr><td>People under the age of 18 or over 65</td>
-            <td><span class="form-answer">{{formc.age_under_18_or_over_65}}</span></td></tr>
+            <td><span class="form-answer">{{'Yes' if formc.age_under_18_or_over_65 else 'No'}}</span></td></tr>
           <tr><td>UJ employees or students</td>
-            <td><span class="form-answer">{{formc.uj_employees}}</span></td></tr>
+            <td><span class="form-answer">{{'Yes' if formc.uj_employees else 'No'}}</span></td></tr>
           <tr><td>Persons not usually considered vulnerable but would be in this context</td>
-            <td><span class="form-answer">{{formc.non_vulnerable_context}}</span></td></tr>
+            <td><span class="form-answer">{{'Yes' if formc.non_vulnerable_context else 'No'}}</span></td></tr>
           <tr><td>Non-English-speaking participants</td>
-            <td><span class="form-answer">{{formc.non_english}}</span></td></tr>
+            <td><span class="form-answer">{{'Yes' if formc.non_english else 'No'}}</span></td></tr>
           <tr><td>A researcher’s own students</td>
-            <td><span class="form-answer">{{formc.own_students}}</span></td></tr>
+            <td><span class="form-answer">{{'Yes' if formc.own_students else 'No'}}</span></td></tr>
           <tr><td>People living in poverty</td>
-            <td><span class="form-answer">{{formc.poverty}}</span></td></tr>
+            <td><span class="form-answer">{{'Yes' if formc.poverty else 'No'}}</span></td></tr>
           <tr><td>People with little or no education</td>
-            <td><span class="form-answer">{{formc.no_education}}</span></td></tr>
+            <td><span class="form-answer">{{'Yes' if formc.no_education else 'No'}}</span></td></tr>
           <tr><td>Other: Please describe.</td>
-            <td><span class="form-answer">{{formc.vulnerable_other_description}}</span></td></tr>
+            <td><span class="form-answer">{{'Not applicable' if not formc.vulnerable_other_description or formc.vulnerable_other_description|string|trim|lower in ['false', 'none'] else formc.vulnerable_other_description}}</span></td></tr>
         </tbody>
       </table>
 
       <label><strong>Comments (e.g. “No participants”):</strong></label>
       <br>
-      <span class="form-answer">{{formc.vulnerable_comments}}</span>
+      <span class="form-answer">{{formc.vulnerable_comments or 'Not applicable'}}</span>
 
       <hr>
 
@@ -165,35 +165,35 @@
   </thead>
   <tbody>
   <tr><td>Collection/use/disclosure of info without individual’s consent (excluding StatsSA, etc.)</td>
-    <td><span class="form-answer">{{formc.consent_violation}}</span></td></tr>
+    <td><span class="form-answer">{{'Yes' if formc.consent_violation else 'No'}}</span></td></tr>
 <tr><td>Causing discomfiture beyond normal inconvenience</td>
-  <td><span class="form-answer">{{formc.discomfiture}}</span></td></tr>
+  <td><span class="form-answer">{{'Yes' if formc.discomfiture else 'No'}}</span></td></tr>
 <tr><td>Deception of participants or covert observation</td>
-  <td><span class="form-answer">{{formc.deception}}</span></td></tr>
+  <td><span class="form-answer">{{'Yes' if formc.deception else 'No'}}</span></td></tr>
 <tr><td>Examining sensitive or contentious issues</td>
-  <td><span class="form-answer">{{formc.sensitive_issues}}</span></td></tr>
+  <td><span class="form-answer">{{'Yes' if formc.sensitive_issues else 'No'}}</span></td></tr>
 <tr><td>Seeking prejudicial information about participants</td>
-  <td><span class="form-answer">{{formc.prejudicial_info}}</span></td></tr>
+  <td><span class="form-answer">{{'Yes' if formc.prejudicial_info else 'No'}}</span></td></tr>
 <tr><td>Using intrusive techniques</td>
-  <td><span class="form-answer">{{formc.intrusive}}</span></td></tr>
+  <td><span class="form-answer">{{'Yes' if formc.intrusive else 'No'}}</span></td></tr>
 <tr><td>Study/participation in illegal activities</td>
-  <td><span class="form-answer">{{formc.illegal}}</span></td></tr>
+  <td><span class="form-answer">{{'Yes' if formc.illegal else 'No'}}</span></td></tr>
 <tr><td>Collecting personal/social info directly from participants</td>
-  <td><span class="form-answer">{{formc.direct_social_info}}</span></td></tr>
+  <td><span class="form-answer">{{'Yes' if formc.direct_social_info else 'No'}}</span></td></tr>
 <tr><td>Identifiable info collected from available records (staff/student records)</td>
-  <td><span class="form-answer">{{formc.identifiable_records}}</span></td></tr>
+  <td><span class="form-answer">{{'Yes' if formc.identifiable_records else 'No'}}</span></td></tr>
 <tr><td>Psychology inventories / scales / tests</td>
-  <td><span class="form-answer">{{formc.psychology_tests}}</span></td></tr>
+  <td><span class="form-answer">{{'Yes' if formc.psychology_tests else 'No'}}</span></td></tr>
 <tr><td>Activities putting researcher/data collector at risk</td>
-  <td><span class="form-answer">{{formc.researcher_risk}}</span></td></tr>
+  <td><span class="form-answer">{{'Yes' if formc.researcher_risk else 'No'}}</span></td></tr>
     <tr><td>Other:  Please describe.</td>
-      <td><span class="form-answer">{{formc.activity_other_description}}</span></td></tr>
+      <td><span class="form-answer">{{'Not applicable' if not formc.activity_other_description or formc.activity_other_description|string|trim|lower in ['false', 'none'] else formc.activity_other_description}}</span></td></tr>
   </tbody>
 </table>
 
 <label><strong>Comments:</strong></label>
 <br>
-<span class="form-answer">{{formc.activity_comments}}</span>
+<span class="form-answer">{{formc.activity_comments or 'Not applicable'}}</span>
 
       <hr>
 
@@ -207,25 +207,25 @@
         </thead>
         <tbody>
        <tr><td>a) Reimbursement or incentives to any participants.</td>
-        <td><span class="form-answer">{{formc.incentives}}</span></td></tr>
+        <td><span class="form-answer">{{'Yes' if formc.incentives else 'No'}}</span></td></tr>
         <tr><td>b) Participants will incur financial costs by participating.</td>
-          <td><span class="form-answer">{{formc.participant_costs}}</span></td></tr>
+          <td><span class="form-answer">{{'Yes' if formc.participant_costs else 'No'}}</span></td></tr>
         <tr><td>c) Researcher has financial or other involvement in the research.</td>
-          <td><span class="form-answer">{{formc.researcher_interest}}</span></td></tr>
+          <td><span class="form-answer">{{'Yes' if formc.researcher_interest else 'No'}}</span></td></tr>
         <tr><td>d) Any potential conflict of interest (e.g., researching peers/students).</td>
-          <td><span class="form-answer">{{formc.conflict_of_interest}}</span></td></tr>
+          <td><span class="form-answer">{{'Yes' if formc.conflict_of_interest else 'No'}}</span></td></tr>
         <tr><td>e) Research is conducted on UJ premises.</td>
-          <td><span class="form-answer">{{formc.uj_premises}}</span></td></tr>
+          <td><span class="form-answer">{{'Yes' if formc.uj_premises else 'No'}}</span></td></tr>
         <tr><td>f) Research uses UJ facilities (venues, software, hardware, etc.)</td>
-          <td><span class="form-answer">{{formc.uj_facilities}}</span></td></tr>
+          <td><span class="form-answer">{{'Yes' if formc.uj_facilities else 'No'}}</span></td></tr>
         <tr><td>g) Research is funded by UJ or through UJ-acquired funding.</td>
-          <td><span class="form-answer">{{formc.uj_funding}}</span></td></tr>
+          <td><span class="form-answer">{{'Yes' if formc.uj_funding else 'No'}}</span></td></tr>
         </tbody>
       </table>
       
       <label><strong>Comments:</strong></label>
       <br>
-      <span class="form-answer">{{formc.consideration_comments}}</span>
+      <span class="form-answer">{{formc.consideration_comments or 'Not applicable'}}</span>
      
       <hr>
       

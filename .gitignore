@@ -50,3 +50,6 @@ htmlcov/
 dist/
 build/
 *.egg-info/
+
+# Local database exports and backups
+*.dump

@@ -50,7 +50,7 @@
   <select id="formAStatusFilter" class="form-select">
     <option value="all">All</option>
     <option value="awaiting-review">Awaiting Review</option>
-    <option value="submitted-admin">Submitted to Ethics Admin</option>
+    <option value="submitted-admin">Reviewed</option>
     
     
   </select>
@@ -260,7 +260,7 @@
             <td>
               <ul class="doc-link">
                 
-                  {% if item.requirementsc.files %}
+                  {% if requirement_file_available(item.requirementsc, 'files') %}
                       
                       <li><a href="{{ url_for('view_requirement_file', req_id=item.requirementsc.id, field='files') }}" target="_blank">Proposal</a></li>
                   {% endif %}

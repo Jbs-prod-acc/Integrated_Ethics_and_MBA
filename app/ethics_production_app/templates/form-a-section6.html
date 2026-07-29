@@ -153,6 +153,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
   let autosaveTimeout = null;
   const savingIndicator = document.getElementById('autosave-status');
+  const declarationFields = new Set(['declaration_name', 'applicant_signature', 'full_name', 'declaration_date', 'submission_date']);
   const AUTOSAVE_DEBUG_SEC6 = true;
   function debugLogSec6(...args) {
     if (!AUTOSAVE_DEBUG_SEC6) return;
@@ -180,6 +181,7 @@ document.addEventListener('DOMContentLoaded', function() {
     showSaving();
     debugLogSec6('Autosave start');
     const formData = new FormData(form);
+    declarationFields.forEach(fieldName => formData.delete(fieldName));
 
     const checkboxes = form.querySelectorAll('input[type="checkbox"]');
     debugLogSec6('Checkbox count', checkboxes.length);
@@ -249,6 +251,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const allFields = Array.from(form.querySelectorAll('input:not([type="file"]), textarea, select'));
     allFields.forEach(field => {
       if (field.name === 'csrf_token') return;
+      if (declarationFields.has(field.name)) return;
       if (field.dataset.autosaveBound === '1') return;
       const eventType = (field.type === 'checkbox' || field.type === 'radio' || field.tagName === 'SELECT') ? 'change' : 'input';
       field.addEventListener(eventType, function() {
@@ -278,5 +281,7 @@ document.addEventListener('DOMContentLoaded', function() {
 <script src="{{ url_for('static', filename='js/datepicker-validation.js') }}"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="{{ url_for('static', filename='js/form-submission-handler.js') }}"></script>
+<script src="{{ url_for('static', filename='js/form-autosave.js') }}"></script>
+<script>window.initAutosaveRefreshGuard({ endpoint: '{{ url_for("form_a_sec6_autosave") }}' });</script>
 </body>
 </html>

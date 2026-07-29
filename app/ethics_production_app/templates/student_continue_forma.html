@@ -838,8 +838,8 @@ input[type="checkbox"]:checked::after {
   <!-- 5.5.6 -->
   <label>5.5.6 Does the database contain personal information/identifiers?</label><br>
    <div class="d-flex gap-4">
-     <input type="radio" value="Yes" name="personal_info"  {% if formA.personal_info %}checked{% endif %} onchange="togglePersonalInfo()"> Yes
-     <input type="radio" value="No" name="personal_info"  {% if not formA.personal_info %}checked{% endif %} onchange="togglePersonalInfo()"> No
+     <input type="radio" value="Yes" name="personal_info" {% if formA.personal_info|yes_no == 'Yes' %}checked{% endif %} onchange="togglePersonalInfo()"> Yes
+     <input type="radio" value="No" name="personal_info" {% if formA.personal_info|yes_no == 'No' %}checked{% endif %} onchange="togglePersonalInfo()"> No
    </div>
 
   <!-- 5.5.6.1 -->
@@ -1681,6 +1681,8 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script src="{{ url_for('static', filename='js/ddmmyyyy-datepicker.js') }}"></script>
+<script src="{{ url_for('static', filename='js/form-autosave.js') }}"></script>
+<script>window.initAutosaveRefreshGuard({ endpoint: '{{ url_for("student_autosave_forma") }}' });</script>
 </body>
 
 </html>

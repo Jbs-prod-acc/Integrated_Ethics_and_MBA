@@ -260,6 +260,8 @@ document.addEventListener('DOMContentLoaded', function() {
   attachAutosaveListeners();
 });
 </script>
+<script src="{{ url_for('static', filename='js/form-autosave.js') }}"></script>
+<script>window.initAutosaveRefreshGuard({ endpoint: '{{ url_for("form_a_sec1_autosave") }}' });</script>
 </body>
 
 </html>

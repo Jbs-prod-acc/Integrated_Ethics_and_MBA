@@ -91,14 +91,10 @@ def _ethics_role_for_mba_user(user):
 
 
 def _mba_access_descriptor_for_ethics_role(role):
+    # Ethics identities stay ethics-only unless they are registered students.
+    # Staff can still receive MBA access through explicit MBA administration.
     if role == EthicsRole.STUDENT.value:
         return {"role": MbaRole.STUDENT.value}
-    if role == EthicsRole.SUPERVISOR.value:
-        return {"role": MbaRole.SCHOLAR.value, "scholar_role": MbaScholarRole.SUPERVISOR.value}
-    if role == EthicsRole.ADMIN.value:
-        return {"role": MbaRole.ADMIN.value}
-    if role == EthicsRole.SUPER_ADMIN.value:
-        return {"role": MbaRole.MAIN_ADMIN.value}
     return None
 
 

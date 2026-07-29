@@ -219,18 +219,19 @@
         
       </div>
 
-      <label>2.4.1 Provide explanation:
-        <br>
-        <input type="text" name="public_evidence" placeholder="Explain why the data is not publicly accessible." value="{{formB.public_evidence}}">
-        
-      </label>
-   
+      <div id="public_evidence_fields" style="display: none;">
+        <label>2.4.1 Provide explanation:
+          <br>
+          <input type="text" name="public_evidence" placeholder="Explain why the data is not publicly accessible." value="{{ formB.public_evidence or '' }}">
+        </label>
+      </div>
 
-      <label>2.4.2 If the data is in the public domain, what are the access conditions?
-        <br>
-        <input type="text" name="access_conditions" placeholder="Mention access terms, restrictions, or data agreements." value="{{formB.access_conditions}}">
-    
-      </label>
+      <div id="access_conditions_fields" style="display: none;">
+        <label>2.4.2 If the data is in the public domain, what are the access conditions?
+          <br>
+          <input type="text" name="access_conditions" placeholder="Mention access terms, restrictions, or data agreements." value="{{ formB.access_conditions or '' }}">
+        </label>
+      </div>
     
 
       <div class="question-block">
@@ -244,8 +245,9 @@
             <input type="radio" name="personal_info" value="No"{% if not formB.personal_info %}checked{% endif%}  onchange="togglePersonalInfo()"> No
           </label>
         </div>
-        <br>
+        <div id="personalInfoComment" style="display: none; margin-top: 1rem;">
         <input type="text" name="personal_info_comment" placeholder="If yes, please specify what kind of personal information/identifiers to be collected" value="{{formB.personal_info_comment}}">
+        </div>
       </div>
 
       <div class="question-block">
@@ -287,6 +289,8 @@
         </label>
       </div>
 
+      <div id="permission_details_box" style="display: none;">
+      <input type="hidden" name="clear_private_permission_file" value="No">
       <label>2.7.1 Provide permission details:
         <br>
         <input type="text" name="permission_details" placeholder="Describe the permission granted." value="{{formB.permission_details}}">
@@ -295,12 +299,15 @@
       <div class="mb-3 mt-2">
         <label for="private_permission_file" class="form-label">Upload proof of permission for private data access:</label>
         <input class="form-control" type="file" id="private_permission_file" name="private_permission_file">
-        {% if formB.private_permission_file %}
-            <div class="mt-2">
-                <small class="text-success">Current file: {{ formB.private_permission_filename }}</small>
+        <div id="private_permission_upload_status" class="mt-2 text-success"></div>
+        {% if formB.private_permission_filename or formB.private_permission_file %}
+            <div class="mt-2" id="current_private_permission_file">
+                <small class="text-success">Current file: {{ formB.private_permission_filename or 'Uploaded permission document' }}</small>
                 <a href="{{ url_for('view_form_file', form_type='B', form_id=formB.form_id, field_name='private_permission_file') }}" target="_blank" class="btn btn-sm btn-outline-primary ms-2">View</a>
+                <button type="button" class="btn btn-sm btn-outline-danger ms-2" onclick="deletePrivatePermissionUpload()">Delete upload</button>
             </div>
         {% endif %}
+      </div>
       </div>
      
 
@@ -635,5 +642,8 @@
    
 </footer>
 
+<script src="{{ url_for('static', filename='js/form-autosave.js') }}"></script>
+<script>window.initAutosaveRefreshGuard({ endpoint: '{{ url_for("student_autosave_formb") }}' });</script>
 </body>
+<script src="{{ url_for('static', filename='js/formb-public-domain.js') }}"></script>
 </html>

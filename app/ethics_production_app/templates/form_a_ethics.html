@@ -823,6 +823,9 @@
 
 
 
+{% set display_form = formA %}
+{% include '_form_a_section_5_4_readonly.html' %}
+{% if false %}
 <label>5.4 Research Instruments for Data Collection</label>
 <label for="data-collection-methods">5.4.1 Indicate which data collection methods will be used</label><br>
 
@@ -1011,6 +1014,7 @@
           </label>
 
 
+          {% endif %}
           <label>5.5 Secondary Data Usage</label>
 
           <label>5.5.1 Will secondary data be used?</label><br>
@@ -1032,9 +1036,9 @@
 
 
           <label>5.5.6 Does the database contain personal information/identifiers?</label><br>
-          <span class="form-answer">{{ formA.personal_info or 'Not Applicable' }}</span>
+          <span class="form-answer">{{ formA.personal_info|yes_no }}</span>
 
-          {% if formA.personal_info == 'Yes' %}
+          {% if formA.personal_info|yes_no == 'Yes' %}
           <label>5.5.6.1 Specify the personal info/identifiers:</label><br>
           <span class="form-answer">{{ formA.personal_info_comment or 'Not Applicable' }}</span>
           {% endif %}
@@ -1149,35 +1153,35 @@
 
           <div class="question-block">
             <label for="study-benefits">6.3 What are the benefits of the study?
-              <br><span class="form-answer">{{formA.study_benefits}}</span>
+              <br><span class="form-answer">{{ formA.study_benefits if formA.study_benefits and formA.study_benefits|string|trim else 'Not applicable' }}</span>
             </label>
             <br>
           </div>
 
           <div class="question-block">
             <label for="participant-risks">6.4 Description of the risks participants may suffer and the level of risk:
-              <br><span class="form-answer">{{formA.participant_risks}}</span>
+              <br><span class="form-answer">{{ formA.participant_risks if formA.participant_risks and formA.participant_risks|string|trim else 'Not applicable' }}</span>
             </label>
             <br>
           </div>
 
           <div class="question-block">
             <label for="adverse-steps">6.5 Description of steps to be taken in case of adverse events:
-              <br><span class="form-answer">{{formA.adverse_steps}}</span>
+              <br><span class="form-answer">{{ formA.adverse_steps if formA.adverse_steps and formA.adverse_steps|string|trim else 'Not applicable' }}</span>
             </label>
             <br>
           </div>
 
           <div class="question-block">
             <label for="community-participation">6.6 Description of anticipated community participation in the study:
-              <span class="form-answer">{{formA.community_participation}}</span>
+              <span class="form-answer">{{ formA.community_participation if formA.community_participation and formA.community_participation|string|trim else 'Not applicable' }}</span>
             </label>
             <br>
           </div>
 
           <div class="question-block">
             <label for="community-effects">6.7 Description of possible adverse effects on the community:
-              <br><span class="form-answer">{{formA.community_effects}}</span>
+              <br><span class="form-answer">{{ formA.community_effects if formA.community_effects and formA.community_effects|string|trim else 'Not applicable' }}</span>
             </label>
             <br>
           </div>
@@ -1309,42 +1313,42 @@
 
           <div class="question-block">
             <label for="results-feedback">6.10 How will participants be informed of findings?
-              <br><span class="form-answer">{{formA.results_feedback}}</span>
+              <br><span class="form-answer">{{ formA.results_feedback if formA.results_feedback and formA.results_feedback|string|trim else 'Not applicable' }}</span>
             </label>
 
           </div>
 
           <div class="question-block">
             <label for="products-access">6.11 Description of participants’ access to products developed from the study:
-              <br><span class="form-answer">{{formA.products_access}}</span>
+              <br><span class="form-answer">{{ formA.products_access if formA.products_access and formA.products_access|string|trim else 'Not applicable' }}</span>
             </label>
 
           </div>
 
           <div class="question-block">
             <label for="publication-plans">6.12 Indicate how you envisage publishing this research:
-              <span class="form-answer">{{formA.publication_plans}}</span>
+              <span class="form-answer">{{ formA.publication_plans if formA.publication_plans and formA.publication_plans|string|trim else 'Not applicable' }}</span>
             </label>
 
           </div>
 
           <div class="question-block">
             <label for="participant-comp">6.13 Describe compensation to participants (if applicable):
-              <br><span class="form-answer">{{formA.participant_comp}}</span>
+              <br><span class="form-answer">{{ formA.participant_comp if formA.participant_comp and formA.participant_comp|string|trim else 'Not applicable' }}</span>
             </label>
 
           </div>
 
           <div class="question-block">
             <label for="participant-costs">6.14 Describe any financial costs to participants (if applicable):
-              <span class="form-answer">{{formA.participant_costs}}</span>
+              <span class="form-answer">{{ formA.participant_costs if formA.participant_costs and formA.participant_costs|string|trim else 'Not applicable' }}</span>
             </label>
 
           </div>
 
           <div class="question-block">
             <label for="ethics-reporting">6.15 Description of reporting to ethics research committee:
-              <br><span class="form-answer">{{formA.ethics_reporting}}</span>
+              <br><span class="form-answer">{{ formA.ethics_reporting if formA.ethics_reporting and formA.ethics_reporting|string|trim else 'Not applicable' }}</span>
             </label>
 
           </div>
@@ -1423,15 +1427,16 @@
             <span class="form-answer">{% if formA.submitted_at%}{{formA.submitted_at.strftime('%d/%m/%Y')}}{%
               endif%}</span>
 
-            <label>Date of Re-submission:</label>
-            <span class="form-answer">{% if formA.declaration_date%}{{formA.declaration_date}}{% endif %}</span>
-
             <label>Supervisor:</label>
             <span class="form-answer">{{formA.supervisor}}</span>
 
             <label>Title of Research:</label>
             <span class="form-answer">{{formA.study_title}}</span>
 
+            {% if not formA.submitted_at and formA.declaration_date %}
+            <label>Date of Re-submission:</label>
+            <span class="form-answer">{{formA.declaration_date}}</span>
+            {% endif %}
 
             <label>Date of Review:</label>
 
@@ -1488,21 +1493,24 @@
 
             <!-- Accept Fields (initially hidden) -->
             <div id="acceptFields" style="display: none;">
-              <label>Reviewer(s):</label>
-              <p class="text-muted small mb-2">Assign at least one reviewer. A second reviewer is optional.</p>
+              {% if not (latest_forma.reviewer_name1 or latest_forma.reviewer_name2) %}
+              <label>Reviewer:</label>
+              <p class="text-muted small mb-2">Assign exactly one reviewer.</p>
               <div class="dropdown">
                 <button class="btn btn-outline-primary dropdown-toggle" type="button" id="dropdownMenuButton"
                   data-bs-toggle="dropdown" aria-expanded="false">
-                  Select Reviewers
+                  Select Reviewer
                 </button>
                 <ul class="dropdown-menu dropdown-checkboxes p-2" aria-labelledby="dropdownMenuButton">
                   {% for item in formReviewers %}
-                  <li><label class="form-check"><input class="form-check-input" type="checkbox" name="reviewer_names[]"
-                        value="{{item.user_id}}" {% if item.user_id in [latest_forma.reviewer_name1,
-                        latest_forma.reviewer_name2] %}checked{% endif %}> {{item.full_name}}</label></li>
+                  <li><label class="form-check"><input class="form-check-input" type="radio" name="reviewer_names[]"
+                        value="{{item.user_id}}" {% if item.user_id == (latest_forma.reviewer_name1 or latest_forma.reviewer_name2) %}checked{% endif %}> {{item.full_name}}</label></li>
                   {% endfor %}
                 </ul>
               </div>
+              {% else %}
+              <input type="hidden" name="reviewer_names[]" value="{{ latest_forma.reviewer_name1 or latest_forma.reviewer_name2 }}">
+              {% endif %}
 
               <div class="form-group">
                 <label for="supervisor_signature">Ethics Admin Signature:</label>

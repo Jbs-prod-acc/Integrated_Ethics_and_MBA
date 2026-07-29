@@ -140,21 +140,22 @@
         
       </div>
 
-      <label>2.4.1 Provide explanation:
-        <br><span class="form-answer">Comment: {{formB.public_evidence or 'Not Applicable'}}</span>
-      </label>
-   
-
+      {% if formB.data_public %}
       <label>2.4.2 If the data is in the public domain, what are the access conditions?
-        <br><span class="form-answer">Comment: {{formB.access_conditions or 'Not Applicable'}}</span>
+        <br><span class="form-answer">{{ formB.access_conditions }}</span>
       </label>
+      {% else %}
+      <label>2.4.1 Provide explanation:
+        <br><span class="form-answer">{{ formB.public_evidence }}</span>
+      </label>
+      {% endif %}
     
 
       <div class="question-block">
         <label>2.5 Does the database contain personal information/identifiers?</label>
             <p>This information relates to the anonymity of data/confidentiality of the data</p>
-            <span class="form-answer">{{'Yes' if formB.data_public else 'No'}}</span>
-            <br><span class="form-answer">Comment: {{formB.personal_info_comment or 'Not Applicable'}}</span>
+            <span class="form-answer">{{'Yes' if formB.personal_info else 'No'}}</span>
+            <br><span class="form-answer">Comment: {{ formB.personal_info_comment if formB.personal_info else 'Not Applicable' }}</span>
       </div>
 
       <div class="question-block">
@@ -173,9 +174,14 @@
         </label>
       </div>
 
+      {% if formB.private_permission %}
       <label>2.7.1 Provide permission details:
         <br><span class="form-answer">Comment: {{formB.permission_details or 'Not Applicable'}}</span>
+        {% if formB.private_permission_filename or formB.private_permission_file %}
+        <br><a href="{{ url_for('view_form_file', form_type='B', form_id=formB.form_id, field_name='private_permission_file') }}" target="_blank">View {{ formB.private_permission_filename or 'uploaded permission document' }}</a>
+        {% endif %}
       </label>
+      {% endif %}
 
 
       <div class="question-block">
@@ -276,14 +282,16 @@
     <label>Date of Submission:</label>
     <span class="form-answer">{% if formB.submitted_at%}{{formB.submitted_at.strftime('%d/%m/%Y')}}{% endif%}</span>
 
-    <label>Date of Re-submission:</label>
-    <span class="form-answer">{% if formB.declaration_date%}{{formB.declaration_date.strftime('%d/%m/%Y')}}{% endif%}</span>
-
     <label>Supervisor:</label>
     <span class="form-answer">{{formB.supervisor}}</span>
 
     <label>Title of Research:</label>
     <span class="form-answer">{{formB.study_title}}</span>
+
+    {% if not formB.submitted_at and formB.declaration_date %}
+    <label>Date of Re-submission:</label>
+    <span class="form-answer">{{formB.declaration_date.strftime('%d/%m/%Y')}}</span>
+    {% endif %}
 
     <label>Date of Review:</label>
     <input type="date" name="review_date" required class="form-control" placeholder="dd/mm/yyyy">
@@ -328,18 +336,22 @@
 
   <!-- Accept Fields (initially hidden) -->
   <div id="acceptFields" style="display: none;">
-    <label>Reviewer(s):</label>
-    <p class="text-muted small mb-2">Assign at least one reviewer. A second reviewer is optional.</p>
+    {% if not (latest_formb.reviewer_name1 or latest_formb.reviewer_name2) %}
+    <label>Reviewer:</label>
+    <p class="text-muted small mb-2">Assign exactly one reviewer.</p>
   <div class="dropdown">
     <button class="btn btn-outline-primary dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
-      Select Reviewers
+      Select Reviewer
     </button>
     <ul class="dropdown-menu dropdown-checkboxes p-2" aria-labelledby="dropdownMenuButton">
       {% for item in formReviewers %}
-      <li><label class="form-check"><input class="form-check-input" type="checkbox" name="reviewer_names[]" value="{{item.user_id}}" {% if item.user_id in [latest_formb.reviewer_name1, latest_formb.reviewer_name2] %}checked{% endif %}> {{item.full_name}}</label></li>
+      <li><label class="form-check"><input class="form-check-input" type="radio" name="reviewer_names[]" value="{{item.user_id}}" {% if item.user_id == (latest_formb.reviewer_name1 or latest_formb.reviewer_name2) %}checked{% endif %}> {{item.full_name}}</label></li>
       {% endfor %}
     </ul>
   </div>
+    {% else %}
+    <input type="hidden" name="reviewer_names[]" value="{{ latest_formb.reviewer_name1 or latest_formb.reviewer_name2 }}">
+    {% endif %}
 
     <div class="form-group">
       <label for="supervisor_signature">Ethics Admin Signature:</label>

@@ -237,7 +237,7 @@ def inject_current_ethics_user():
         "full_name": display_name,
         "name": display_name,
         "current_role": role,
-        "has_dual_reviewer_approval": has_dual_reviewer_approval,
+        "has_reviewer_approval": has_reviewer_approval,
     }
 
 
@@ -515,23 +515,22 @@ def get_student_dashboard_status(form):
     return 'Draft saved - not yet submitted'
 
 
-def has_dual_reviewer_approval(form):
+def has_reviewer_approval(form):
     if not form:
         return False
-    recommendation_1 = getattr(form, 'review_recommendation', '') or ''
-    recommendation_2 = getattr(form, 'review_recommendation1', '') or ''
-    approved_values = {'Approved'}
-    reviewer_1 = getattr(form, 'reviewer_name1', None) or getattr(form, 'reviewer_name', None)
-    reviewer_2 = getattr(form, 'reviewer_name2', None)
-    reviewed_by_1 = getattr(form, 'form_reviewed_by', None) or getattr(form, 'review_supervisor_signature', None)
-    reviewed_by_2 = getattr(form, 'form_reviewed_by1', None) or getattr(form, 'review_supervisor_signature1', None)
-    return (
-        recommendation_1 in approved_values and
-        recommendation_2 in approved_values and
-        bool(reviewer_1) and
-        bool(reviewer_2) and
-        bool(reviewed_by_1) and
-        bool(reviewed_by_2)
+    approved_values = {'Approved', 'Approved with Minor Changes'}
+    assigned_reviewer = (
+        getattr(form, 'reviewer_name1', None)
+        or getattr(form, 'reviewer_name', None)
+        or getattr(form, 'reviewer_name2', None)
+    )
+    completed_reviews = (
+        (getattr(form, 'form_reviewed_by', None), getattr(form, 'review_recommendation', '') or ''),
+        (getattr(form, 'form_reviewed_by1', None), getattr(form, 'review_recommendation1', '') or ''),
+    )
+    return bool(assigned_reviewer) and any(
+        reviewed_by == assigned_reviewer and recommendation in approved_values
+        for reviewed_by, recommendation in completed_reviews
     )
 
 

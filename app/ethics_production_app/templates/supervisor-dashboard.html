@@ -49,7 +49,8 @@
   <select id="formAStatusFilter" class="form-select">
     <option value="all">All</option>
     <option value="awaiting-review">Awaiting Review</option>
-    <option value="submitted-admin">Submitted to Ethics Admin</option>
+    <option value="submitted-admin">With Ethics</option>
+    <option value="rejected">Returned to Student</option>
     <option value="certificate-issued">Certificate issued</option>
     
   </select>
@@ -331,7 +332,7 @@
               {% endif %}
             </td>
             <td>
-              {% if req and req.files %}
+              {% if requirement_file_available(req, 'files') %}
               <ul class="doc-link">
                   <li><a href="{{ url_for('view_requirement_file', req_id=req.id, field='files') }}" target="_blank">Proposal</a></li>
               </ul>

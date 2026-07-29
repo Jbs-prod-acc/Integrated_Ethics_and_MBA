@@ -149,7 +149,7 @@
               {% endif %}
             </span>
             <br>
-            {% if has_dual_reviewer_approval(form) and not form.certificate_issued %}
+            {% if has_reviewer_approval(form) and not form.certificate_issued %}
             <button type="button" class="btn btn-sm btn-success text-white open-certificate-status-modal" data-bs-toggle="modal" data-bs-target="#certificateStatusModal" data-action="{{ url_for('update_certificate_status', id=form.form_id) }}" data-form-label="{{ form_name }} for {{ form.full_name or form.applicant_name }}">
               Update Certificate Status
             </button>

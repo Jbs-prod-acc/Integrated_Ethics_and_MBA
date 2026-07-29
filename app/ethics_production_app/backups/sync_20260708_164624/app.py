@@ -352,7 +352,7 @@ def inject_current_ethics_user():
         "full_name": display_name,
         "name": display_name,
         "current_role": role,
-        "has_dual_reviewer_approval": has_dual_reviewer_approval,
+        "has_reviewer_approval": has_reviewer_approval,
     }
 
 
@@ -711,7 +711,7 @@ def get_student_dashboard_status(form):
         return 'Form Submitted To REC'
 
     if getattr(form, 'reviewer_name1', None) or getattr(form, 'reviewer_name2', None):
-        return 'Form Submitted To Reviewers'
+        return 'Form Submitted To Reviewer'
 
     if getattr(form, 'rejected_or_accepted', False) and getattr(form, 'supervisor_date', None):
         return 'Form Submitted To Ethics Admin'
@@ -746,23 +746,28 @@ def _has_received_certificate(form_or_record):
     return bool(_status_value(form_or_record, 'certificate_received'))
 
 
-def has_dual_reviewer_approval(form):
+def has_reviewer_approval(form):
     if not form:
         return False
-    recommendation_1 = _status_text(_status_value(form, 'review_recommendation', '')) or ''
-    recommendation_2 = _status_text(_status_value(form, 'review_recommendation1', '')) or ''
-    approved_values = {'Approved'}
-    reviewer_1 = _status_value(form, 'reviewer_name1') or _status_value(form, 'reviewer_name')
-    reviewer_2 = _status_value(form, 'reviewer_name2')
-    reviewed_by_1 = _status_value(form, 'form_reviewed_by') or _status_value(form, 'review_supervisor_signature')
-    reviewed_by_2 = _status_value(form, 'form_reviewed_by1') or _status_value(form, 'review_supervisor_signature1')
-    return (
-        recommendation_1 in approved_values and
-        recommendation_2 in approved_values and
-        bool(reviewer_1) and
-        bool(reviewer_2) and
-        bool(reviewed_by_1) and
-        bool(reviewed_by_2)
+    approved_values = {'Approved', 'Approved with Minor Changes'}
+    assigned_reviewer = (
+        _status_value(form, 'reviewer_name1')
+        or _status_value(form, 'reviewer_name')
+        or _status_value(form, 'reviewer_name2')
+    )
+    completed_reviews = (
+        (
+            _status_value(form, 'form_reviewed_by'),
+            _status_text(_status_value(form, 'review_recommendation', '')) or '',
+        ),
+        (
+            _status_value(form, 'form_reviewed_by1'),
+            _status_text(_status_value(form, 'review_recommendation1', '')) or '',
+        ),
+    )
+    return bool(assigned_reviewer) and any(
+        reviewed_by == assigned_reviewer and recommendation in approved_values
+        for reviewed_by, recommendation in completed_reviews
     )
 
 
@@ -1027,7 +1032,7 @@ def get_workflow_location(form_or_record):
         'with-student-revisions': 'With Student (Revisions)',
         'with-supervisor': 'With Supervisor',
         'pending-reviewers': 'Pending Reviewers',
-        'with-reviewers': 'With Reviewers',
+        'with-reviewers': 'With Reviewer',
         'pending-revisions': 'Pending Revisions',
         'with-ethics-admin': 'With Ethics Admin',
         'draft': 'Draft saved - not yet submitted',
@@ -1049,7 +1054,7 @@ def get_supervisor_dashboard_status(form):
     if stage == 'with-ethics-admin':
         return 'With Ethics Admin'
     if stage == 'with-reviewers':
-        return 'With Reviewers'
+        return 'With Reviewer'
     if stage == 'pending-reviewers':
         return 'Pending Reviewers'
     if stage == 'pending-revisions':
@@ -1085,7 +1090,7 @@ def get_reviewer_dashboard_status(form, reviewer_id=None):
     if stage == 'pending-reviewers':
         return 'Pending Reviewers'
     if stage == 'with-reviewers':
-        return 'With Reviewers'
+        return 'With Reviewer'
     if stage == 'with-supervisor':
         return 'With Supervisor'
     return 'Awaiting for review'

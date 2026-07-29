@@ -264,9 +264,9 @@
                   Awaiting assigned reviewer feedback
                   {% elif form.rejected_or_accepted and assigned_reviewers >= 1 and not form.form_reviewed_by and not
                   form.form_reviewed_by1 %}
-                  Submitted to Reviewers
+                  Submitted to Reviewer
                   {% elif assigned_reviewers >= 1 and not form.form_reviewed_by and not form.form_reviewed_by1 %}
-                  Submitted to Reviewers
+                  Submitted to Reviewer
                   {% elif not form.supervisor_signature and form.review_date %}
                   Rejected by Ethics Committee
                   {% elif form.certificate_issued and form.certificate_received %}
@@ -321,7 +321,7 @@
                 {% if not is_current_row %}
                 <a href="{{url_for('ethics_form_pdf',form_id=form.form_id,form_type=form_name)}}"
                   class="btn btn-sm btn-success text-white">View Form</a>
-                {% elif has_dual_reviewer_approval(form) and not form.certificate_issued %}
+                {% elif has_reviewer_approval(form) and not form.certificate_issued %}
                 <a href="{{url_for('ethics_form_pdf',form_id=form.form_id,form_type=form_name)}}"
                   class="btn btn-sm btn-success text-white">View Form</a>
                 <br>

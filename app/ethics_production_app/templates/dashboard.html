@@ -268,24 +268,9 @@
 
         {% if is_student_correction_state(formA) %}
         <div class="d-flex flex-row flex-nowrap gap-2 align-items-center">
-          {% if has_form_a_documents %}
-          <small class="text-danger d-block mt-2">
-          Please update your documents first, especially if revisions were requested in your feedback, before submitting the form.
-        </small>
-        <br>
           <a href="{{ url_for('student_edit_forma') }}" class="btn btn-warning btn-sm text-nowrap">
             Resubmit Corrected Form
           </a>
-          {% else %}
-          <small class="text-danger d-block mt-2">
-          Please update your documents first, especially if revisions were requested in your feedback, before submitting the form.
-        </small>
-        <br>
-          <button type="button" class="btn btn-warning btn-sm text-nowrap" disabled
-            title="Please update your documents first before continuing.">
-            Resubmit Corrected Form
-          </button>
-          {% endif %}
 
           <a href="{{ url_for('submit_form_a_requirements') }}"
             class="btn btn-success btn-sm text-white text-nowrap">
@@ -499,24 +484,9 @@
 
         {% if is_student_correction_state(formB) %}
         <div class="d-flex flex-row flex-nowrap gap-2 align-items-center">
-          {% if has_form_b_documents %}
-          <small class="text-danger d-block mt-2">
-          Please update your documents first, especially if revisions were requested in your feedback, before submitting the form.
-        </small>
-        <br>
           <a href="{{ url_for('student_edit_formb') }}" class="btn btn-warning btn-sm text-nowrap">
             Resubmit Corrected Form
           </a>
-          {% else %}
-          <small class="text-danger d-block mt-2">
-          Please update your documents first, especially if revisions were requested in your feedback, before submitting the form.
-        </small>
-        <br>
-          <button type="button" class="btn btn-warning btn-sm text-nowrap" disabled
-            title="Please update your documents first before continuing.">
-            Resubmit Corrected Form
-          </button>
-          {% endif %}
 
           <a href="{{ url_for('submit_form_b_requirements') }}"
             class="btn btn-success btn-sm text-white text-nowrap">
@@ -608,7 +578,7 @@
     <td>Form C</td>
 
     <td>
-      {% if form_requirements and form_requirements.files %}
+      {% if requirement_file_available(form_requirements, 'files') %}
       <ul class="doc-link">
         <li>
           <a href="{{ url_for('view_requirement_file', req_id=form_requirements.id, field='files') }}"
@@ -678,31 +648,16 @@
 
     <td style="min-width: 420px;">
       {% set has_form_c_documents =
-        form_requirements and form_requirements.files
+        requirement_file_available(form_requirements, 'files')
       %}
 
       {% if formC.form_id == current_form_c_id %}
 
         {% if is_student_correction_state(formC) %}
-        <small class="text-danger d-block mt-2">
-          Please update your documents first, especially if revisions were requested in your feedback, before submitting the form.
-        </small>
-        <br>
         <div class="d-flex flex-row flex-nowrap gap-2 align-items-center">
-          {% if has_form_c_documents %}
           <a href="{{ url_for('student_edit_formc') }}" class="btn btn-warning btn-sm text-nowrap">
             Resubmit Corrected Form
           </a>
-          {% else %}
-          <small class="text-danger d-block mt-2">
-          Please update your documents first, especially if revisions were requested in your feedback, before submitting the form.
-        </small>
-        <br>
-          <button type="button" class="btn btn-warning btn-sm text-nowrap" disabled
-            title="Please update your documents first before continuing.">
-            Resubmit Corrected Form
-          </button>
-          {% endif %}
 
           <a href="{{ url_for('submit_form_c_requirements') }}"
             class="btn btn-success btn-sm text-white text-nowrap">

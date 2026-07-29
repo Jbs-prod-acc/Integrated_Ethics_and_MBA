@@ -143,7 +143,8 @@
 
       <div class="question-block">
         <label>2.5 Does the database contain personal information/identifiers?
-            <br><span class="form-answer">{{'Yes' if formB.data_public else 'No'}}</span>
+            <br><span class="form-answer">{{ 'Yes' if formB.personal_info else 'No' }}</span>
+            <br><span class="form-answer">Comment: {{ formB.personal_info_comment if formB.personal_info else 'Not Applicable' }}</span>
         </label>
         
       

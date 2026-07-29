@@ -238,7 +238,7 @@
             <td>
               <ul class="doc-link">
                 
-                  {% if requirementsc.files %}
+                  {% if requirement_file_available(requirementsc, 'files') %}
                       
                       <li><a href="{{ url_for('view_requirement_file', req_id=requirementsc.id, field='files') }}" target="_blank">Proposal</a></li>
                   {% endif %}
