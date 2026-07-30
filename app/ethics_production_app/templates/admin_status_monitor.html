@@ -183,7 +183,7 @@ document.addEventListener('DOMContentLoaded', function () {
             <td>{{item.certificate_received}}</td>
             <td>
                 {% if item.form_type == 'FORM A' or item.form_type == 'FORM B' or item.form_type == 'FORM C' %}
-                    <a href="/chair_form_view_fixed/{{item.user_id}}" class="btn btn-sm btn-primary">View</a>
+                    <a href="{{ url_for('chair_form_view_fixed', user_id=item.user_id) }}" class="btn btn-sm btn-primary">View</a>
                 {% endif %}
             </td>
         </tr>
