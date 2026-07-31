@@ -2702,7 +2702,7 @@ def ethics_reviewer_committee_forms(id,form_name):
             forma.reviewer_name2 = effective_reviewer_ids[1] if len(effective_reviewer_ids) >= 2 else None
             forma.ethics_signature_date=datetime.now()
             forma.review_form_comments=request.form.get('additional_comments')
-            forma.ethics_form_status=request.form.get('recommendation')
+            forma.ethics_status=request.form.get('recommendation')
             if request.form.get('accept') in ['Accept','Approved with Minor Changes']:
                 if Assigned_reviewer:
                     #Uncomment the code bellow for testing
@@ -2797,7 +2797,7 @@ def ethics_reviewer_committee_forms(id,form_name):
             formb.reviewer_name2 = effective_reviewer_ids[1] if len(effective_reviewer_ids) >= 2 else None
             formb.ethics_signature_date=datetime.now()
             formb.review_form_comments=request.form.get('additional_comments')
-            formb.ethics_form_status=request.form.get('recommendation')
+            formb.ethics_status=request.form.get('recommendation')
             
             if request.form.get('accept') in ['Accept','Approved with Minor Changes']:
                 if Assigned_reviewer:
@@ -2904,7 +2904,7 @@ def ethics_reviewer_committee_forms(id,form_name):
             formc.reviewer_name2 = effective_reviewer_ids[1] if len(effective_reviewer_ids) >= 2 else None
             formc.ethics_signature_date=datetime.now()
             formc.review_form_comments=request.form.get('additional_comments')
-            formc.ethics_form_status=request.form.get('recommendation')
+            formc.ethics_status=request.form.get('recommendation')
             
             if request.form.get('accept') in ['Accept','Approved with Minor Changes']:
                 if Assigned_reviewer:
@@ -2993,7 +2993,7 @@ def supervisor_dashboard():
     formB_results = db_session.query(
         FormB.form_id, FormB.user_id, FormB.applicant_name, FormB.student_number,
         FormB.email, FormB.supervisor, FormB.supervisor_email, FormB.submitted_at,
-        FormB.recommendation, FormB.supervisor_date, FormB.ethics_form_status,
+        FormB.recommendation, FormB.supervisor_date, FormB.ethics_status,
         FormB.signature_date, FormB.review_supervisor_signature, FormB.review_date,
         FormB.review_supervisor_signature1, FormB.review_date1, FormB.created_at, FormB.declaration_date
     ).filter(FormB.submitted_at != None).order_by(FormB.submitted_at.desc()).limit(5).all()
@@ -3014,7 +3014,7 @@ def supervisor_dashboard():
         proxy.submitted_at = result.submitted_at
         proxy.recommendation = result.recommendation
         proxy.supervisor_date = result.supervisor_date
-        proxy.ethics_form_status = result.ethics_form_status
+        proxy.ethics_status = result.ethics_status
         proxy.signature_date = result.signature_date
         proxy.review_supervisor_signature = result.review_supervisor_signature
         proxy.review_date = result.review_date
@@ -3130,7 +3130,7 @@ def supervisor_dashboard_previous_forms(user_id):
     formB_results = db_session.query(
         FormB.form_id, FormB.user_id, FormB.applicant_name, FormB.student_number,
         FormB.email, FormB.supervisor, FormB.supervisor_email, FormB.submitted_at,
-        FormB.recommendation, FormB.supervisor_date, FormB.ethics_form_status,
+        FormB.recommendation, FormB.supervisor_date, FormB.ethics_status,
         FormB.signature_date, FormB.review_supervisor_signature, FormB.review_date,
         FormB.review_supervisor_signature1, FormB.review_date1, FormB.created_at, FormB.declaration_date,
         FormB.status, FormB.review_form_status, FormB.rejected_or_accepted
@@ -3152,7 +3152,7 @@ def supervisor_dashboard_previous_forms(user_id):
         proxy.submitted_at = result.submitted_at
         proxy.recommendation = result.recommendation
         proxy.supervisor_date = result.supervisor_date
-        proxy.ethics_form_status = result.ethics_form_status
+        proxy.ethics_status = result.ethics_status
         proxy.signature_date = result.signature_date
         proxy.review_supervisor_signature = result.review_supervisor_signature
         proxy.review_date = result.review_date
@@ -3178,7 +3178,7 @@ def supervisor_dashboard_previous_forms(user_id):
     supervisor_formB_results = db_session.query(
         FormB.form_id, FormB.user_id, FormB.applicant_name, FormB.student_number,
         FormB.email, FormB.supervisor, FormB.supervisor_email, FormB.submitted_at,
-        FormB.recommendation, FormB.supervisor_date, FormB.ethics_form_status,
+        FormB.recommendation, FormB.supervisor_date, FormB.ethics_status,
         FormB.signature_date, FormB.review_supervisor_signature, FormB.review_date,
         FormB.review_supervisor_signature1, FormB.review_date1, FormB.created_at, FormB.declaration_date,
         FormB.status, FormB.review_form_status, FormB.rejected_or_accepted,
@@ -3205,7 +3205,7 @@ def supervisor_dashboard_previous_forms(user_id):
         proxy.submitted_at = result.submitted_at
         proxy.recommendation = result.recommendation
         proxy.supervisor_date = result.supervisor_date
-        proxy.ethics_form_status = result.ethics_form_status
+        proxy.ethics_status = result.ethics_status
         proxy.signature_date = result.signature_date
         proxy.review_supervisor_signature = result.review_supervisor_signature
         proxy.review_date = result.review_date
@@ -3238,7 +3238,7 @@ def dean_dashboard():
     supervisor_formB_results = db_session.query(
         FormB.form_id, FormB.user_id, FormB.applicant_name, FormB.student_number,
         FormB.email, FormB.supervisor, FormB.supervisor_email, FormB.submitted_at,
-        FormB.recommendation, FormB.supervisor_date, FormB.ethics_form_status,
+        FormB.recommendation, FormB.supervisor_date, FormB.ethics_status,
         FormB.signature_date, FormB.review_supervisor_signature, FormB.review_date,
         FormB.review_supervisor_signature1, FormB.review_date1, FormB.created_at, FormB.declaration_date
     ).join(User, FormB.user_id == User.user_id).all()
@@ -3259,7 +3259,7 @@ def dean_dashboard():
         proxy.submitted_at = result.submitted_at
         proxy.recommendation = result.recommendation
         proxy.supervisor_date = result.supervisor_date
-        proxy.ethics_form_status = result.ethics_form_status
+        proxy.ethics_status = result.ethics_status
         proxy.signature_date = result.signature_date
         proxy.review_supervisor_signature = result.review_supervisor_signature
         proxy.review_date = result.review_date

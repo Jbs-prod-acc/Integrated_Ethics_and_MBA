@@ -682,7 +682,7 @@ def is_student_correction_state(form):
 
     normalized_return_statuses = {
         (getattr(form, 'recommendation', None) or '').strip().lower(),
-        (getattr(form, 'ethics_form_status', None) or '').strip().lower(),
+        (getattr(form, 'ethics_status', None) or '').strip().lower(),
         (getattr(form, 'form_supervisor_status', None) or '').strip().lower(),
     }
     return any(status in {'revisions required', 'revision required'} for status in normalized_return_statuses)
@@ -872,8 +872,8 @@ def get_workflow_stage(form_or_record):
         or _status_value(form_or_record, 'signature_date')
     )
 
-    ethics_form_status = (
-       _status_value(form_or_record, 'ethics_form_status')
+    ethics_status = (
+       _status_value(form_or_record, 'ethics_status')
     )
 
     normalized_review_comments = {
@@ -903,7 +903,7 @@ def get_workflow_stage(form_or_record):
         or supervisor_status == 'Revisions required'
         or recommendation == 'Revisions required'
         or status == 'Revisions required'
-        or ethics_form_status == 'Revisions required'
+        or ethics_status == 'Revisions required'
     ):
         return 'with-student-revisions'
 
@@ -1434,7 +1434,7 @@ def safe_query_formb(query_builder):
         FormB.submitted_at,
         FormB.recommendation,
         FormB.supervisor_date,
-        FormB.ethics_form_status,
+        FormB.ethics_status,
         FormB.signature_date,
         FormB.review_supervisor_signature,
         FormB.review_date,
@@ -1478,7 +1478,7 @@ def safe_query_formb(query_builder):
         proxy.submitted_at = result.submitted_at
         proxy.recommendation = result.recommendation
         proxy.supervisor_date = result.supervisor_date
-        proxy.ethics_form_status = result.ethics_form_status
+        proxy.ethics_status = result.ethics_status
         proxy.signature_date = result.signature_date
         proxy.review_supervisor_signature = result.review_supervisor_signature
         proxy.review_date = result.review_date
@@ -1671,7 +1671,7 @@ def resubmit_formb(id):
             flash("You cannot resubmit Form B until at least one reviewer is assigned.", "danger")
             return redirect(url_for("student_dashboard"))
         # Mark as resubmitted, update timestamp, status, etc.
-        form.ethics_form_status = None
+        form.ethics_status = None
         form.form_supervisor_status = "Resubmitted"
         form.submitted_at = get_local_time()
         form.status = "Resubmitted"
@@ -1844,7 +1844,7 @@ def resubmit_formc(id):
             return redirect(url_for("student_dashboard"))
         # Update form fields from student input as needed
         form.submission_date = get_local_time()
-        form.ethics_form_status = None
+        form.ethics_status = None
         form.form_supervisor_status = "Resubmitted"
         form.status = 'Resubmitted'
         form.visible_to_student = False
@@ -3079,7 +3079,7 @@ def resubmit_forma(id):
             flash('You cannot resubmit Form A until at least one reviewer is assigned.', 'danger')
             return redirect(url_for('student_dashboard'))
         form.status = 'Resubmitted'
-        form.ethics_form_status = None
+        form.ethics_status = None
         form.form_supervisor_status = 'Resubmitted'
         form.submitted_at = get_local_time()
         form.visible_to_student = False
@@ -4717,12 +4717,16 @@ def admin_upload_student_docs(id=None):
     current_user = db_session.query(User).filter_by(user_id=current_uid).first() if current_uid else None
 
     if request.method == 'POST':
-        # Get the ID of the FormARequirements record (not User ID)
-        record_id = request.form.get('id') or id
-        form_type = request.form.get('form_type')
+        record_id = (request.form.get('id') or id or '').strip()
+        form_type = (request.form.get('form_type') or '').strip()
+        allowed_form_types = {'FormA', 'FormB', 'FormC'}
         
         if not record_id:
             flash("No Requirement ID provided. Please select one from the dropdown.", "warning")
+            return redirect(url_for('admin_upload_student_docs'))
+
+        if form_type not in allowed_form_types:
+            flash("Please select a valid form type.", "warning")
             return redirect(url_for('admin_upload_student_docs'))
 
         # Locate the record by its Primary Key
@@ -4731,14 +4735,20 @@ def admin_upload_student_docs(id=None):
             flash(f"Requirement record with ID '{record_id}' does not exist.", "danger")
             return redirect(url_for('admin_upload_student_docs'))
         
-        req.form_type = form_type
-
-        # Handle Booleans
-        bool_fields = ['needs_permission', 'has_clearance', 'company_requires_jbs', 'has_ethics_evidence', 'ethics_evidence']
-        for b_field in bool_fields:
-            setattr(req, b_field, b_field in request.form)
-
-        # Mapping for inconsistent filename columns in models.py
+        # Accept only the fields displayed for the selected form so hidden
+        # sections cannot overwrite unrelated documents.
+        form_file_fields = {
+            'FormA': [
+                'pending_note', 'permission_letter', 'prior_clearance',
+                'prior_clearance1', 'research_tools_path', 'proposal_path',
+                'impact_assessment_path', 'participation_info_sheet',
+            ],
+            'FormB': [
+                'pending_note', 'permission_letter', 'prior_clearance_path',
+                'proposal_path', 'prior_clearance1',
+            ],
+            'FormC': ['files'],
+        }
         filename_mapping = {
             'research_tools_path': 'research_tools_filename',
             'proposal_path': 'proposal_filename',
@@ -4748,38 +4758,48 @@ def admin_upload_student_docs(id=None):
             'ethics_evidence_path': 'ethics_evidence_path_filename'
         }
 
-        # List of binary fields
-        file_fields = [
-            'needs_permission_pending', 'pending_note', 'permission_letter',
-            'prior_clearance_path', 'prior_clearance', 'prior_clearance1',
-            'need_jbs_clearance', 'need_jbs_clearance1', 'research_tools_path',
-            'proposal_path', 'impact_assessment_path', 'participation_info_sheet',
-            'ethics_evidence_path', 'files'
-        ]
-
+        allowed_extensions = {'pdf', 'docx'}
         uploaded_any = False
-        for field in file_fields:
-            file_obj = request.files.get(field)
-            if file_obj and file_obj.filename:
-                file_data = file_obj.read()
-                setattr(req, field, file_data)
-                
-                # Determine filename column
-                fname_col = filename_mapping.get(field, f"{field}_filename")
-                setattr(req, fname_col, file_obj.filename)
-                uploaded_any = True
-        
-        if uploaded_any:
-            req.updated_at = datetime.now()
-        
         try:
+            req.form_type = form_type
+
+            bool_fields = ['needs_permission', 'has_clearance', 'company_requires_jbs']
+            for bool_field in bool_fields:
+                setattr(req, bool_field, form_type != 'FormC' and bool_field in request.form)
+
+            for field in form_file_fields[form_type]:
+                file_obj = request.files.get(field)
+                if not file_obj or not file_obj.filename:
+                    continue
+
+                safe_filename = secure_filename(file_obj.filename)
+                extension = safe_filename.rsplit('.', 1)[-1].lower() if '.' in safe_filename else ''
+                if not safe_filename or extension not in allowed_extensions:
+                    raise ValueError(
+                        f"'{file_obj.filename}' is not supported. Upload PDF or DOCX files only."
+                    )
+
+                file_data = file_obj.read()
+                if not file_data:
+                    raise ValueError(f"'{safe_filename}' is empty and could not be uploaded.")
+
+                setattr(req, field, file_data)
+                filename_column = filename_mapping.get(field, f"{field}_filename")
+                setattr(req, filename_column, safe_filename)
+                uploaded_any = True
+
+            req.updated_at = datetime.now()
             db_session.commit()
             if uploaded_any:
                 flash(f"Successfully uploaded documents and updated flags for ID: {record_id}", "success")
             else:
                 flash(f"Updated status flags for ID: {record_id}", "success")
+        except ValueError as e:
+            db_session.rollback()
+            flash(str(e), "warning")
         except Exception as e:
             db_session.rollback()
+            app.logger.exception("Admin document upload failed for requirement %s", record_id)
             flash(f"Error saving database changes: {str(e)}", "danger")
 
         return redirect(url_for('admin_upload_student_docs'))
@@ -5329,7 +5349,7 @@ def admin_status_monitor():
                 "rec_status": getattr(form, 'rec_status', None),
                 "rejected_or_accepted": getattr(form, 'rejected_or_accepted', None),
                 "form_supervisor_status": getattr(form, 'form_supervisor_status', None),
-                "ethics_form_status": getattr(form, 'ethics_form_status', None),
+                "ethics_status": getattr(form, 'ethics_status', None),
                 "form_review_comment": getattr(form, 'form_review_comment', None),
                 "form_review_comment1": getattr(form, 'form_review_comment1', None),
             }
@@ -5459,7 +5479,7 @@ def super_admin_monitoring_page_a():
                 "rec_status": form.rec_status,
                 "rejected_or_accepted": form.rejected_or_accepted,
                 "form_supervisor_status": form.form_supervisor_status,
-                "ethics_form_status": form.ethics_form_status,
+                "ethics_status": form.ethics_status,
                 "form_review_comment": form.form_review_comment,
                 "form_review_comment1": form.form_review_comment1,
                 "rec_full_names": []  # Store list of REC full names
@@ -5572,7 +5592,7 @@ def super_admin_monitoring_page_b():
                 "rec_status": form.rec_status,
                 "rejected_or_accepted": form.rejected_or_accepted,
                 "form_supervisor_status": form.form_supervisor_status,
-                "ethics_form_status": form.ethics_form_status,
+                "ethics_status": form.ethics_status,
                 "form_review_comment": form.form_review_comment,
                 "form_review_comment1": form.form_review_comment1,
                 "rec_full_names": []  # Store list of REC full names
@@ -5675,7 +5695,7 @@ def super_admin_monitoring_page_c():
                 "rec_status": form.rec_status,
                 "rejected_or_accepted": form.rejected_or_accepted,
                 "form_supervisor_status": form.form_supervisor_status,
-                "ethics_form_status": form.ethics_form_status,
+                "ethics_status": form.ethics_status,
                 "form_review_comment": form.form_review_comment,
                 "form_review_comment1": form.form_review_comment1,
                 "rec_full_names": []  # Store list of REC full names
@@ -7812,7 +7832,7 @@ def reject_or_Accept_form_a(id):
             forma.supervisor_feedback=supervisor_feedback
             forma.recommendation=recommendation
             forma.status='Submitted to Ethics'
-            forma.ethics_form_status=None
+            forma.ethics_status=None
             forma.form_supervisor_status='Ready for submission'
             forma.supervisor_signature=supervisor_signature
             forma.signature_date=signature_date
@@ -7837,7 +7857,7 @@ def reject_or_Accept_form_a(id):
             forma.supervisor_feedback=supervisor_feedback
             forma.recommendation=recommendation
             forma.status='Revisions required'
-            forma.ethics_form_status=None
+            forma.ethics_status=None
             forma.form_supervisor_status='Revisions required'
             forma.submitted_to_admin=False
             forma.supervisor_signature=None
@@ -7928,7 +7948,7 @@ def reject_or_Accept_form_b(id):
             formb.supervisor_feedback=supervisor_feedback
             formb.recommendation=recommendation
             formb.status='Submitted to Ethics'
-            formb.ethics_form_status=None
+            formb.ethics_status=None
             formb.form_supervisor_status='Ready for submission'
             formb.supervisor_signature=supervisor_signature
             formb.signature_date=signature_date
@@ -7954,7 +7974,7 @@ def reject_or_Accept_form_b(id):
             formb.supervisor_feedback=supervisor_feedback
             formb.recommendation=recommendation
             formb.status='Revisions required'
-            formb.ethics_form_status=None
+            formb.ethics_status=None
             formb.form_supervisor_status='Revisions required'
             formb.submitted_to_admin=False
             formb.supervisor_signature=None
@@ -8027,7 +8047,7 @@ def reject_or_Accept_form_c(id):
             formc.supervisor_feedback=supervisor_feedback
             formc.recommendation=recommendation
             formc.status='Submitted to Ethics'
-            formc.ethics_form_status=None
+            formc.ethics_status=None
             formc.form_supervisor_status='Ready for submission'
             formc.supervisor_signature=supervisor_signature
             formc.signature_date=signature_date
@@ -8053,7 +8073,7 @@ def reject_or_Accept_form_c(id):
             formc.supervisor_feedback=supervisor_feedback
             formc.recommendation=recommendation
             formc.status='Revisions required'
-            formc.ethics_form_status=None
+            formc.ethics_status=None
             formc.form_supervisor_status='Revisions required'
             formc.submitted_to_admin=False
             formc.supervisor_signature=None
@@ -8594,7 +8614,7 @@ def student_edit_forma():
             form.rejected_or_accepted = False
             form.status = 'Resubmitted' if was_in_corrections else 'Submitted'
             form.visible_to_student = False
-            form.ethics_form_status = None
+            form.ethics_status = None
             form.form_supervisor_status = 'Resubmitted' if was_in_corrections else 'Submitted'
             reset_form_review_feedback(form)
         else:
@@ -9488,7 +9508,7 @@ def submit_form_a(form_id):
             form.rejected_or_accepted = False
             form.status = 'Resubmitted' if was_in_corrections else 'Submitted'
             form.visible_to_student = False
-            form.ethics_form_status = None
+            form.ethics_status = None
             form.form_supervisor_status = 'Resubmitted' if was_in_corrections else 'Submitted'
             reset_form_review_feedback(form)
 
@@ -9633,7 +9653,7 @@ def student_edit_formb():
         was_in_corrections = is_student_correction_state(form)
         form.status = 'Resubmitted' if was_in_corrections else (form.status or 'Submitted')
         form.visible_to_student = False
-        form.ethics_form_status = None
+        form.ethics_status = None
         form.form_supervisor_status = 'Resubmitted' if was_in_corrections else (form.form_supervisor_status or 'Submitted')
         reset_form_review_feedback(form)
         # Handle file upload
@@ -9909,7 +9929,7 @@ def submit_form_b(form_id):
             form.rejected_or_accepted = False
             was_in_corrections = is_student_correction_state(form)
             form.status = 'Resubmitted' if was_in_corrections else 'Submitted'
-            form.ethics_form_status = None
+            form.ethics_status = None
             form.form_supervisor_status = 'Resubmitted' if was_in_corrections else 'Submitted'
             reset_form_review_feedback(form)
             print(f"[DEBUG] FormB updated: declaration_name={form.declaration_name}, full_name={form.full_name}, declaration_date={form.declaration_date}, submitted_at={form.submitted_at}")
@@ -10041,7 +10061,7 @@ def student_edit_formc():
             was_in_corrections = is_student_correction_state(form)
             form.status = 'Resubmitted' if was_in_corrections else (form.status or 'Submitted')
             form.visible_to_student = False
-            form.ethics_form_status = None
+            form.ethics_status = None
             form.form_supervisor_status = 'Resubmitted' if was_in_corrections else (form.form_supervisor_status or 'Submitted')
             reset_form_review_feedback(form)
             db_session.commit()
@@ -10327,7 +10347,7 @@ def submit_form_c(form_id):
             was_in_corrections = is_student_correction_state(form)
             form.status = 'Resubmitted' if was_in_corrections else 'Submitted'
             form.visible_to_student = False
-            form.ethics_form_status = None
+            form.ethics_status = None
             form.form_supervisor_status = 'Resubmitted' if was_in_corrections else 'Submitted'
             reset_form_review_feedback(form)
             
@@ -13492,7 +13512,7 @@ def ethics_reviewer_committee_forms(id,form_name):
             forma.reviewer_name2 = None
             forma.ethics_signature_date=datetime.now()
             forma.review_form_comments=request.form.get('additional_comments')
-            forma.ethics_form_status=request.form.get('recommendation')
+            forma.ethics_status=request.form.get('recommendation')
             if request.form.get('accept') in ['Accept','Approved with Minor Changes']:
                 missing_submission_redirect = redirect_if_missing_student_submission(
                     forma,
@@ -13596,7 +13616,7 @@ def ethics_reviewer_committee_forms(id,form_name):
             formb.reviewer_name2 = None
             formb.ethics_signature_date=datetime.now()
             formb.review_form_comments=request.form.get('additional_comments')
-            formb.ethics_form_status=request.form.get('recommendation')
+            formb.ethics_status=request.form.get('recommendation')
             
             if request.form.get('accept') in ['Accept','Approved with Minor Changes']:
                 missing_submission_redirect = redirect_if_missing_student_submission(
@@ -13712,7 +13732,7 @@ def ethics_reviewer_committee_forms(id,form_name):
             formc.reviewer_name2 = None
             formc.ethics_signature_date=datetime.now()
             formc.review_form_comments=request.form.get('additional_comments')
-            formc.ethics_form_status=request.form.get('recommendation')
+            formc.ethics_status=request.form.get('recommendation')
             
             if request.form.get('accept') in ['Accept','Approved with Minor Changes']:
                 missing_submission_redirect = redirect_if_missing_student_submission(
@@ -13810,7 +13830,7 @@ def supervisor_dashboard():
     formB_results = db_session.query(
         FormB.form_id, FormB.user_id, FormB.applicant_name, FormB.student_number,
         FormB.email, FormB.supervisor, FormB.supervisor_email, FormB.submitted_at,
-        FormB.recommendation, FormB.supervisor_date, FormB.ethics_form_status,
+        FormB.recommendation, FormB.supervisor_date, FormB.ethics_status,
         FormB.signature_date, FormB.review_supervisor_signature, FormB.review_date,
         FormB.review_supervisor_signature1, FormB.review_date1, FormB.created_at, FormB.declaration_date
     ).filter(FormB.submitted_at != None).order_by(FormB.submitted_at.desc()).limit(5).all()
@@ -13831,7 +13851,7 @@ def supervisor_dashboard():
         proxy.submitted_at = result.submitted_at
         proxy.recommendation = result.recommendation
         proxy.supervisor_date = result.supervisor_date
-        proxy.ethics_form_status = result.ethics_form_status
+        proxy.ethics_status = result.ethics_status
         proxy.signature_date = result.signature_date
         proxy.review_supervisor_signature = result.review_supervisor_signature
         proxy.review_date = result.review_date
@@ -13967,7 +13987,7 @@ def supervisor_dashboard_previous_forms(user_id):
     formB_results = db_session.query(
         FormB.form_id, FormB.user_id, FormB.applicant_name, FormB.student_number,
         FormB.email, FormB.supervisor, FormB.supervisor_email, FormB.submitted_at,
-        FormB.recommendation, FormB.supervisor_date, FormB.ethics_form_status,
+        FormB.recommendation, FormB.supervisor_date, FormB.ethics_status,
         FormB.signature_date, FormB.review_supervisor_signature, FormB.review_date,
         FormB.review_supervisor_signature1, FormB.review_date1, FormB.created_at, FormB.declaration_date,
         FormB.status, FormB.review_form_status, FormB.rejected_or_accepted
@@ -13992,7 +14012,7 @@ def supervisor_dashboard_previous_forms(user_id):
         proxy.submitted_at = result.submitted_at
         proxy.recommendation = result.recommendation
         proxy.supervisor_date = result.supervisor_date
-        proxy.ethics_form_status = result.ethics_form_status
+        proxy.ethics_status = result.ethics_status
         proxy.signature_date = result.signature_date
         proxy.review_supervisor_signature = result.review_supervisor_signature
         proxy.review_date = result.review_date
@@ -14030,7 +14050,7 @@ def supervisor_dashboard_previous_forms(user_id):
     supervisor_formB_results = db_session.query(
         FormB.form_id, FormB.user_id, FormB.applicant_name, FormB.student_number,
         FormB.email, FormB.supervisor, FormB.supervisor_email, FormB.submitted_at,
-        FormB.recommendation, FormB.supervisor_date, FormB.ethics_form_status,
+        FormB.recommendation, FormB.supervisor_date, FormB.ethics_status,
         FormB.signature_date, FormB.review_supervisor_signature, FormB.review_date,
         FormB.review_supervisor_signature1, FormB.review_date1, FormB.created_at, FormB.declaration_date,
         FormB.status, FormB.review_form_status, FormB.rejected_or_accepted,
@@ -14061,7 +14081,7 @@ def supervisor_dashboard_previous_forms(user_id):
         proxy.submitted_at = result.submitted_at
         proxy.recommendation = result.recommendation
         proxy.supervisor_date = result.supervisor_date
-        proxy.ethics_form_status = result.ethics_form_status
+        proxy.ethics_status = result.ethics_status
         proxy.signature_date = result.signature_date
         proxy.review_supervisor_signature = result.review_supervisor_signature
         proxy.review_date = result.review_date
@@ -14097,7 +14117,7 @@ def dean_dashboard():
     supervisor_formB_results = db_session.query(
         FormB.form_id, FormB.user_id, FormB.applicant_name, FormB.student_number,
         FormB.email, FormB.supervisor, FormB.supervisor_email, FormB.submitted_at,
-        FormB.recommendation, FormB.supervisor_date, FormB.ethics_form_status,
+        FormB.recommendation, FormB.supervisor_date, FormB.ethics_status,
         FormB.signature_date, FormB.review_supervisor_signature, FormB.review_date,
         FormB.review_supervisor_signature1, FormB.review_date1, FormB.created_at, FormB.declaration_date
     ).join(User, FormB.user_id == User.user_id).all()
@@ -14118,7 +14138,7 @@ def dean_dashboard():
         proxy.submitted_at = result.submitted_at
         proxy.recommendation = result.recommendation
         proxy.supervisor_date = result.supervisor_date
-        proxy.ethics_form_status = result.ethics_form_status
+        proxy.ethics_status = result.ethics_status
         proxy.signature_date = result.signature_date
         proxy.review_supervisor_signature = result.review_supervisor_signature
         proxy.review_date = result.review_date
@@ -14457,7 +14477,7 @@ def export_forms_csv():
             'student_submission': 'Student Submission Date',
             'recommendation': 'Supervisors Recommendation',
             'supervisor_date': 'Supervisor Recommendation Date',
-            'ethics_form_status': 'Ethics Admin Decision',
+            'ethics_status': 'Ethics Admin Decision',
             'signature_date': 'Ethics Admin Decision Date',
             'review_supervisor_signature': 'First Reviewer Name',
             'review_recommendation': 'First Reviewer Recommendation',
@@ -14487,7 +14507,7 @@ def export_forms_csv():
             FormB.submitted_at,
             FormB.recommendation,
             FormB.supervisor_date,
-            FormB.ethics_form_status,
+            FormB.ethics_status,
             FormB.signature_date,
             FormB.review_supervisor_signature,
             FormB.review_recommendation,
@@ -14515,7 +14535,7 @@ def export_forms_csv():
             proxy.submitted_at = result.submitted_at
             proxy.recommendation = result.recommendation
             proxy.supervisor_date = result.supervisor_date
-            proxy.ethics_form_status = result.ethics_form_status
+            proxy.ethics_status = result.ethics_status
             proxy.signature_date = result.signature_date
             proxy.review_supervisor_signature = result.review_supervisor_signature
             proxy.review_recommendation = result.review_recommendation
@@ -14555,7 +14575,7 @@ def export_forms_csv():
                 'student_submission': remove_tz(record.submitted_at) if record.submitted_at else '',
                 'recommendation': record.recommendation or '',
                 'supervisor_date': remove_tz(record.supervisor_date) if record.supervisor_date else '',
-                'ethics_form_status': record.ethics_form_status or '',
+                'ethics_status': record.ethics_status or '',
                 'signature_date': remove_tz(record.signature_date) if record.signature_date else '',
                 'review_supervisor_signature': record.review_supervisor_signature or '',
                 'review_recommendation': record.review_recommendation or '',
@@ -14577,7 +14597,7 @@ def export_forms_csv():
                 'student_submission': remove_tz(record.submitted_at) if record.submitted_at else '',
                 'recommendation': record.recommendation or '',
                 'supervisor_date': remove_tz(record.supervisor_date) if record.supervisor_date else '',
-                'ethics_form_status': record.ethics_form_status or '',
+                'ethics_status': record.ethics_status or '',
                 'signature_date': remove_tz(record.signature_date) if record.signature_date else '',
                 'review_supervisor_signature': record.review_supervisor_signature or '',
                 'review_recommendation': record.review_recommendation or '',
@@ -14599,7 +14619,7 @@ def export_forms_csv():
                 'student_submission': remove_tz(record.submission_date) if record.submission_date else '',
                 'recommendation': record.recommendation or '',
                 'supervisor_date': remove_tz(record.supervisor_date) if record.supervisor_date else '',
-                'ethics_form_status': record.ethics_form_status or '',
+                'ethics_status': record.ethics_status or '',
                 'signature_date': remove_tz(record.signature_date) if record.signature_date else '',
                 'review_supervisor_signature': record.review_supervisor_signature or '',
                 'review_recommendation': record.review_recommendation or '',

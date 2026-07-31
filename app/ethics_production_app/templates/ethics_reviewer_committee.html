@@ -214,7 +214,7 @@
               {% elif forma.status == 'Submitted to Student for Corrections' %}
               <span class="status-pill approved">Form was sent back to student</span>
               <br>
-              {% elif forma.supervisor_form_status in ['Revisions required'] %}
+              {% elif forma.ethics_status in ['Revisions required'] %}
               Form was sent back to student for revisions
               <br>
               <br>
@@ -448,7 +448,7 @@
             <br>
             <span class="status-pill approved">🎓 Certificate was issued</span>
             <br>
-            {% elif formb.supervisor_form_status in ['Revisions required'] %}
+            {% elif formb.ethics_status in ['Revisions required'] %}
             Form was sent back to student for revisions
             <br>
             <br>
@@ -664,7 +664,7 @@
               <br>
             <span class="status-pill approved">🎓 Certificate was issued</span>
             <br>
-            {% elif formc.supervisor_form_status in ['Revisions required'] %}
+            {% elif formc.ethics_status in ['Revisions required'] %}
             Form was sent back to student for revisions
             <br>
             <br>

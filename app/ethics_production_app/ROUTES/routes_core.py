@@ -1521,12 +1521,16 @@ def admin_upload_student_docs(id=None):
     current_user = db_session.query(User).filter_by(user_id=current_uid).first() if current_uid else None
 
     if request.method == 'POST':
-        # Get the ID of the FormARequirements record (not User ID)
-        record_id = request.form.get('id') or id
-        form_type = request.form.get('form_type')
+        record_id = (request.form.get('id') or id or '').strip()
+        form_type = (request.form.get('form_type') or '').strip()
+        allowed_form_types = {'FormA', 'FormB', 'FormC'}
         
         if not record_id:
             flash("No Requirement ID provided. Please select one from the dropdown.", "warning")
+            return redirect(url_for('admin_upload_student_docs'))
+
+        if form_type not in allowed_form_types:
+            flash("Please select a valid form type.", "warning")
             return redirect(url_for('admin_upload_student_docs'))
 
         # Locate the record by its Primary Key
@@ -1535,14 +1539,11 @@ def admin_upload_student_docs(id=None):
             flash(f"Requirement record with ID '{record_id}' does not exist.", "danger")
             return redirect(url_for('admin_upload_student_docs'))
         
-        req.form_type = form_type
-
-        # Handle Booleans
-        bool_fields = ['needs_permission', 'has_clearance', 'company_requires_jbs', 'has_ethics_evidence', 'ethics_evidence']
-        for b_field in bool_fields:
-            setattr(req, b_field, b_field in request.form)
-
-        # Mapping for inconsistent filename columns in models.py
+        form_file_fields = {
+            'FormA': ['pending_note', 'permission_letter', 'prior_clearance', 'prior_clearance1', 'research_tools_path', 'proposal_path', 'impact_assessment_path', 'participation_info_sheet'],
+            'FormB': ['pending_note', 'permission_letter', 'prior_clearance_path', 'proposal_path', 'prior_clearance1'],
+            'FormC': ['files'],
+        }
         filename_mapping = {
             'research_tools_path': 'research_tools_filename',
             'proposal_path': 'proposal_filename',
@@ -1552,38 +1553,39 @@ def admin_upload_student_docs(id=None):
             'ethics_evidence_path': 'ethics_evidence_path_filename'
         }
 
-        # List of binary fields
-        file_fields = [
-            'needs_permission_pending', 'pending_note', 'permission_letter',
-            'prior_clearance_path', 'prior_clearance', 'prior_clearance1',
-            'need_jbs_clearance', 'need_jbs_clearance1', 'research_tools_path',
-            'proposal_path', 'impact_assessment_path', 'participation_info_sheet',
-            'ethics_evidence_path', 'files'
-        ]
-
+        allowed_extensions = {'pdf', 'docx'}
         uploaded_any = False
-        for field in file_fields:
-            file_obj = request.files.get(field)
-            if file_obj and file_obj.filename:
-                file_data = file_obj.read()
-                setattr(req, field, file_data)
-                
-                # Determine filename column
-                fname_col = filename_mapping.get(field, f"{field}_filename")
-                setattr(req, fname_col, file_obj.filename)
-                uploaded_any = True
-        
-        if uploaded_any:
-            req.updated_at = datetime.now()
-        
         try:
+            req.form_type = form_type
+            for bool_field in ['needs_permission', 'has_clearance', 'company_requires_jbs']:
+                setattr(req, bool_field, form_type != 'FormC' and bool_field in request.form)
+            for field in form_file_fields[form_type]:
+                file_obj = request.files.get(field)
+                if not file_obj or not file_obj.filename:
+                    continue
+                safe_filename = secure_filename(file_obj.filename)
+                extension = safe_filename.rsplit('.', 1)[-1].lower() if '.' in safe_filename else ''
+                if not safe_filename or extension not in allowed_extensions:
+                    raise ValueError(f"'{file_obj.filename}' is not supported. Upload PDF or DOCX files only.")
+                file_data = file_obj.read()
+                if not file_data:
+                    raise ValueError(f"'{safe_filename}' is empty and could not be uploaded.")
+                setattr(req, field, file_data)
+                filename_column = filename_mapping.get(field, f"{field}_filename")
+                setattr(req, filename_column, safe_filename)
+                uploaded_any = True
+            req.updated_at = datetime.now()
             db_session.commit()
             if uploaded_any:
                 flash(f"Successfully uploaded documents and updated flags for ID: {record_id}", "success")
             else:
                 flash(f"Updated status flags for ID: {record_id}", "success")
+        except ValueError as e:
+            db_session.rollback()
+            flash(str(e), "warning")
         except Exception as e:
             db_session.rollback()
+            app.logger.exception("Admin document upload failed for requirement %s", record_id)
             flash(f"Error saving database changes: {str(e)}", "danger")
 
         return redirect(url_for('admin_upload_student_docs'))
@@ -2087,7 +2089,7 @@ def admin_status_monitor():
                 "rec_status": getattr(form, 'rec_status', None),
                 "rejected_or_accepted": getattr(form, 'rejected_or_accepted', None),
                 "form_supervisor_status": getattr(form, 'form_supervisor_status', None),
-                "ethics_form_status": getattr(form, 'ethics_form_status', None),
+                "ethics_status": getattr(form, 'ethics_status', None),
                 "form_review_comment": getattr(form, 'form_review_comment', None),
                 "form_review_comment1": getattr(form, 'form_review_comment1', None),
             }
@@ -2217,7 +2219,7 @@ def super_admin_monitoring_page_a():
                 "rec_status": form.rec_status,
                 "rejected_or_accepted": form.rejected_or_accepted,
                 "form_supervisor_status": form.form_supervisor_status,
-                "ethics_form_status": form.ethics_form_status,
+                "ethics_status": form.ethics_status,
                 "form_review_comment": form.form_review_comment,
                 "form_review_comment1": form.form_review_comment1,
                 "rec_full_names": []  # Store list of REC full names
@@ -2330,7 +2332,7 @@ def super_admin_monitoring_page_b():
                 "rec_status": form.rec_status,
                 "rejected_or_accepted": form.rejected_or_accepted,
                 "form_supervisor_status": form.form_supervisor_status,
-                "ethics_form_status": form.ethics_form_status,
+                "ethics_status": form.ethics_status,
                 "form_review_comment": form.form_review_comment,
                 "form_review_comment1": form.form_review_comment1,
                 "rec_full_names": []  # Store list of REC full names
@@ -2433,7 +2435,7 @@ def super_admin_monitoring_page_c():
                 "rec_status": form.rec_status,
                 "rejected_or_accepted": form.rejected_or_accepted,
                 "form_supervisor_status": form.form_supervisor_status,
-                "ethics_form_status": form.ethics_form_status,
+                "ethics_status": form.ethics_status,
                 "form_review_comment": form.form_review_comment,
                 "form_review_comment1": form.form_review_comment1,
                 "rec_full_names": []  # Store list of REC full names

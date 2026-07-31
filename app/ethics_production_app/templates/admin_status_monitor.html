@@ -135,8 +135,8 @@ document.addEventListener('DOMContentLoaded', function () {
             </td>
             <td>{% if with_supervisor %}
                 <span class="text-muted">Pending supervisor handoff</span>
-                {% elif item.ethics_form_status %}
-                {{item.ethics_form_status}}<br>
+                {% elif item.ethics_status %}
+                {{item.ethics_status}}<br>
                 {% endif %}
                 {% if not with_supervisor and item.ethics_signature_date  %}
                 Decision Date: {{ item.ethics_signature_date.strftime('%Y-%m-%d')}}

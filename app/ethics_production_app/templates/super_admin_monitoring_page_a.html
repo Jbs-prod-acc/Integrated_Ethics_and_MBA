@@ -107,8 +107,8 @@
                             <small class="text-muted">Pending Review</small>
                         {% endif %}
                     </td>
-                    <td>{% if item.ethics_form_status %}
-                        {{item.ethics_form_status}}<br>
+                    <td>{% if item.ethics_status %}
+                        {{item.ethics_status}}<br>
                         {% elif item.status%}
                         {{item.status}}<br>
                         {% endif %}

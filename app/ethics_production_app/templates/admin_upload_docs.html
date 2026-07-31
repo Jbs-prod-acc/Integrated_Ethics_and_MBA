@@ -1,156 +1,167 @@
 {% extends "chair-base-layout.html" %}
 
-{% block title %}Admin - Upload student documents{% endblock %}
-{% block page_title %}Upload student documents{% endblock %}
+{% block title %}Admin - Upload Student Documents{% endblock %}
+{% block page_title %}Upload Student Documents{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <!-- Flashed Messages -->
+<div class="container py-4 admin-upload-page">
     {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
         {% for category, message in messages %}
-          <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-            {{ message }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-          </div>
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
         {% endfor %}
-      {% endif %}
     {% endwith %}
 
-    <div class="card shadow-sm">
-        <div class="card-body">
-            <h5 class="card-title mb-4 text-primary">Upload Documents by ID</h5>
-            
-            <form action="{{ url_for('admin_upload_student_docs') }}" method="POST" enctype="multipart/form-data">
-                <!-- CSRF token removed for unrestricted access -->
-                
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label for="id" class="form-label">Student Name</label>
+    <div class="card upload-card shadow-sm">
+        <div class="card-body p-4 p-lg-5">
+            <div class="mb-4">
+                <span class="section-kicker">Administrator upload</span>
+                <h2 class="mb-1" id="selectedFormHeading">Before You Start Form A</h2>
+                <p class="text-muted mb-0">Choose a student and form type, then upload the supporting documents.</p>
+            </div>
+
+            <form id="adminUploadForm" action="{{ url_for('admin_upload_student_docs') }}" method="post" enctype="multipart/form-data">
+                <div class="row g-3 selector-panel mb-4">
+                    <div class="col-lg-7">
+                        <label for="id" class="form-label">Student</label>
                         <select name="id" id="id" class="form-select" required>
                             <option value="">-- Choose Student --</option>
                             {% for req in requirements %}
-                                <option value="{{ req.id }}">{{ req.student_name }} ({{ req.form_type }})</option>
+                                <option value="{{ req.id }}" data-form-type="{{ req.form_type or '' }}">
+                                    {{ req.student_name }} ({{ req.form_type or 'Form not selected' }})
+                                </option>
                             {% endfor %}
                         </select>
                     </div>
-                    <div class="col-md-6 mb-3">
-                        <label for="form_type" class="form-label">form_type</label>
-                        <select name="form_type" id="form_type" class="form-select" onchange="toggleFormFields()">
-                            <option value="FormA">Form A</option>
-                            <option value="FormB">Form B</option>
-                            <option value="FormC">Form C</option>
+                    <div class="col-lg-5">
+                        <label for="form_type" class="form-label">Form type</label>
+                        <select name="form_type" id="form_type" class="form-select" required>
+                            <option value="FormA">Form A - Full ethics application</option>
+                            <option value="FormB">Form B - Secondary data</option>
+                            <option value="FormC">Form C - Ethics exemption</option>
                         </select>
                     </div>
                 </div>
 
-                <hr class="my-4">
-                
-                <div id="form-sections">
-                    <!-- SECTION: BOOLEANS -->
-                    <div class="row" id="section-booleans">
-                        <h6 class="text-secondary mb-3">Status Flags (Booleans)</h6>
-                        <div class="col-md-2 mb-3 flag-FormA flag-FormB">
-                            <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" id="needs_permission" name="needs_permission">
-                                <label class="form-check-label" for="needs_permission">needs_permission</label>
-                            </div>
-                        </div>
-                        <div class="col-md-2 mb-3 flag-FormA flag-FormB">
-                            <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" id="has_clearance" name="has_clearance">
-                                <label class="form-check-label" for="has_clearance">has_clearance</label>
-                            </div>
-                        </div>
-                        <div class="col-md-2 mb-3 flag-FormA flag-FormB">
-                            <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" id="company_requires_jbs" name="company_requires_jbs">
-                                <label class="form-check-label" for="company_requires_jbs">company_requires_jbs</label>
-                            </div>
-                        </div>
-                        <div class="col-md-2 mb-3 flag-FormA">
-                            <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" id="has_ethics_evidence" name="has_ethics_evidence">
-                                <label class="form-check-label" for="has_ethics_evidence">has_ethics_evidence</label>
-                            </div>
-                        </div>
-                        <div class="col-md-2 mb-3 flag-FormA">
-                            <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" id="ethics_evidence" name="ethics_evidence">
-                                <label class="form-check-label" for="ethics_evidence">ethics_evidence</label>
-                            </div>
-                        </div>
-                    </div>
-
-                    <hr class="my-4">
-                    <h6 class="text-secondary mb-3">Document Uploads (Binary Fields)</h6>
-
-                    <div class="row">
-                        <div class="col-md-4 mb-3 upload-FormA upload-FormB">
-                            <label class="form-labelSmall">needs_permission_pending (maps to needs_permission_pending_filename)</label>
-                            <input type="file" name="needs_permission_pending" class="form-control form-control-sm">
-                        </div>
-                        <div class="col-md-4 mb-3 upload-FormA upload-FormB">
-                            <label class="form-labelSmall">pending_note (maps to pending_note_filename)</label>
-                            <input type="file" name="pending_note" class="form-control form-control-sm">
-                        </div>
-                        <div class="col-md-4 mb-3 upload-FormA upload-FormB">
-                            <label class="form-labelSmall">permission_letter (maps to permission_letter_filename)</label>
-                            <input type="file" name="permission_letter" class="form-control form-control-sm">
-                        </div>
-
-                        <div class="col-md-4 mb-3 upload-FormA upload-FormB">
-                            <label class="form-labelSmall">prior_clearance_path (maps to prior_clearance_path_filename)</label>
-                            <input type="file" name="prior_clearance_path" class="form-control form-control-sm">
-                        </div>
-                        <div class="col-md-4 mb-3 upload-FormA">
-                            <label class="form-labelSmall">prior_clearance (maps to prior_clearance_filename)</label>
-                            <input type="file" name="prior_clearance" class="form-control form-control-sm">
-                        </div>
-                        <div class="col-md-4 mb-3 upload-FormA upload-FormB">
-                            <label class="form-labelSmall">POPIA Information Letter and Consent Form</label>
-                            <input type="file" name="prior_clearance1" class="form-control form-control-sm" accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
-                        </div>
-
-                        <div class="col-md-4 mb-3 upload-FormA">
-                            <label class="form-labelSmall">need_jbs_clearance (maps to need_jbs_clearance_filename)</label>
-                            <input type="file" name="need_jbs_clearance" class="form-control form-control-sm">
-                        </div>
-                        <div class="col-md-4 mb-3 upload-FormA">
-                            <label class="form-labelSmall">need_jbs_clearance1 (maps to need_jbs_clearance1_filename)</label>
-                            <input type="file" name="need_jbs_clearance1" class="form-control form-control-sm">
-                        </div>
-                        <div class="col-md-4 mb-3 upload-FormA">
-                            <label class="form-labelSmall">research_tools_path (maps to research_tools_filename)</label>
-                            <input type="file" name="research_tools_path" class="form-control form-control-sm">
-                        </div>
-
-                        <div class="col-md-4 mb-3 upload-FormA upload-FormB upload-FormC">
-                            <label class="form-labelSmall">proposal_path (maps to proposal_filename)</label>
-                            <input type="file" name="proposal_path" class="form-control form-control-sm">
-                        </div>
-                        <div class="col-md-4 mb-3 upload-FormA">
-                            <label class="form-labelSmall">impact_assessment_path (maps to impact_assessment_filename)</label>
-                            <input type="file" name="impact_assessment_path" class="form-control form-control-sm">
-                        </div>
-                        <div class="col-md-4 mb-3 upload-FormA">
-                            <label class="form-labelSmall">participation_info_sheet (maps to participation_info_filename)</label>
-                            <input type="file" name="participation_info_sheet" class="form-control form-control-sm">
-                        </div>
-
-                        <div class="col-md-4 mb-3 upload-FormA">
-                            <label class="form-labelSmall">ethics_evidence_path (maps to ethics_evidence_path_filename)</label>
-                            <input type="file" name="ethics_evidence_path" class="form-control form-control-sm">
-                        </div>
-                        <div class="col-md-4 mb-3 upload-FormA upload-FormC">
-                            <label class="form-labelSmall">files (maps to files_filename)</label>
-                            <input type="file" name="files" class="form-control form-control-sm">
-                        </div>
-                    </div>
+                <!-- These checkboxes preserve the boolean field names expected by the admin route. -->
+                <div class="visually-hidden" aria-hidden="true">
+                    <input type="checkbox" name="needs_permission" id="needs_permission">
+                    <input type="checkbox" name="has_clearance" id="has_clearance">
+                    <input type="checkbox" name="company_requires_jbs" id="company_requires_jbs">
                 </div>
 
-                <div class="mt-4 text-end">
-                    <button type="reset" class="btn btn-outline-secondary me-2">Reset Form</button>
+                <section class="form-type-section" data-form-section="FormA" aria-labelledby="formAHeading">
+                    <h3 id="formAHeading" class="form-section-title">Form A requirements</h3>
+
+                    <div class="question-block">
+                        <label class="question-label">1. Will the student require permission to access the company or organisation?</label>
+                        <div class="choice-row" data-sync-checkbox="needs_permission" data-upload-group="formAPermission">
+                            <label><input type="radio" name="form_a_permission_choice" value="Yes"> Yes</label>
+                            <label><input type="radio" name="form_a_permission_choice" value="No" checked> No</label>
+                            <label><input type="radio" name="form_a_permission_choice" value="Pending"> Pending</label>
+                        </div>
+                    </div>
+                    <div class="question-block conditional-upload" id="formAPermissionYes" hidden>
+                        <label for="formAPermissionLetter">Upload Company Permission Letter</label>
+                        <small>Company letterhead, signed and dated</small>
+                        <input id="formAPermissionLetter" type="file" name="permission_letter" class="form-control" accept=".pdf,.docx">
+                    </div>
+                    <div class="question-block conditional-upload" id="formAPermissionPending" hidden>
+                        <label for="formAPendingNote">Upload Pending Note</label>
+                        <small>Explain who was contacted and the expected timeline</small>
+                        <input id="formAPendingNote" type="file" name="pending_note" class="form-control" accept=".pdf,.docx">
+                    </div>
+
+                    <div class="question-block">
+                        <label class="question-label">2. Does the student have prior ethical clearance from the original study?</label>
+                        <div class="choice-row" data-sync-checkbox="has_clearance" data-upload-group="formAClearance">
+                            <label><input type="radio" name="form_a_clearance_choice" value="Yes"> Yes</label>
+                            <label><input type="radio" name="form_a_clearance_choice" value="No" checked> No</label>
+                        </div>
+                    </div>
+                    <div class="question-block conditional-upload" id="formAClearanceYes" hidden>
+                        <label for="formAPriorClearance">Upload Prior Ethical Clearance Document</label>
+                        <input id="formAPriorClearance" type="file" name="prior_clearance" class="form-control" accept=".pdf,.docx">
+                    </div>
+
+                    <div class="question-block">
+                        <label class="question-label">3. Will the student collect personal information?</label>
+                        <div class="choice-row" data-sync-checkbox="company_requires_jbs" data-upload-group="formAPopia">
+                            <label><input type="radio" name="form_a_popia_choice" value="Yes"> Yes</label>
+                            <label><input type="radio" name="form_a_popia_choice" value="No" checked> No</label>
+                        </div>
+                    </div>
+                    <div class="question-block conditional-upload" id="formAPopiaYes" hidden>
+                        <label for="formAPopiaLetter">Upload POPIA Information Letter and Consent Form</label>
+                        <input id="formAPopiaLetter" type="file" name="prior_clearance1" class="form-control" accept=".pdf,.docx">
+                    </div>
+
+                    <div class="question-block"><label for="researchTools">4. Upload Survey / Questionnaire / Focus Group Questions</label><input id="researchTools" type="file" name="research_tools_path" class="form-control" accept=".pdf,.docx"></div>
+                    <div class="question-block"><label for="formAProposal">5. Upload Research Proposal</label><input id="formAProposal" type="file" name="proposal_path" class="form-control" accept=".pdf,.docx"></div>
+                    <div class="question-block"><label for="impactAssessment">6. Upload Personal Impact Assessment Form</label><input id="impactAssessment" type="file" name="impact_assessment_path" class="form-control" accept=".pdf,.docx"></div>
+                    <div class="question-block"><label for="participationSheet">7. Upload Participation Information Sheet &amp; Consent Form</label><input id="participationSheet" type="file" name="participation_info_sheet" class="form-control" accept=".pdf,.docx"></div>
+                </section>
+
+                <section class="form-type-section" data-form-section="FormB" aria-labelledby="formBHeading" hidden>
+                    <h3 id="formBHeading" class="form-section-title">Form B requirements</h3>
+
+                    <div class="question-block">
+                        <label class="question-label">1. Does the student require permission to access the secondary data?</label>
+                        <div class="choice-row" data-sync-checkbox="needs_permission" data-upload-group="formBPermission">
+                            <label><input type="radio" name="form_b_permission_choice" value="Yes"> Yes</label>
+                            <label><input type="radio" name="form_b_permission_choice" value="No" checked> No</label>
+                            <label><input type="radio" name="form_b_permission_choice" value="Pending"> Pending</label>
+                        </div>
+                    </div>
+                    <div class="question-block conditional-upload" id="formBPermissionYes" hidden>
+                        <label for="formBPermissionLetter">Upload Permission Letter</label>
+                        <input id="formBPermissionLetter" type="file" name="permission_letter" class="form-control" accept=".pdf,.docx">
+                    </div>
+                    <div class="question-block conditional-upload" id="formBPermissionPending" hidden>
+                        <label for="formBPendingNote">Upload Pending Note</label>
+                        <small>Explain who was contacted and the expected timeline</small>
+                        <input id="formBPendingNote" type="file" name="pending_note" class="form-control" accept=".pdf,.docx">
+                    </div>
+
+                    <div class="question-block">
+                        <label class="question-label">2. Does the student have prior ethical clearance for the original study?</label>
+                        <div class="choice-row" data-sync-checkbox="has_clearance" data-upload-group="formBClearance">
+                            <label><input type="radio" name="form_b_clearance_choice" value="Yes"> Yes</label>
+                            <label><input type="radio" name="form_b_clearance_choice" value="No" checked> No</label>
+                        </div>
+                    </div>
+                    <div class="question-block conditional-upload" id="formBClearanceYes" hidden>
+                        <label for="formBPriorClearance">Upload Prior Ethical Clearance Document</label>
+                        <input id="formBPriorClearance" type="file" name="prior_clearance_path" class="form-control" accept=".pdf,.docx">
+                    </div>
+
+                    <div class="question-block"><label for="formBProposal">3. Upload Approved Proposal</label><input id="formBProposal" type="file" name="proposal_path" class="form-control" accept=".pdf,.docx"></div>
+
+                    <div class="question-block">
+                        <label class="question-label">4. Does the student have access to personal information?</label>
+                        <div class="choice-row" data-sync-checkbox="company_requires_jbs" data-upload-group="formBPopia">
+                            <label><input type="radio" name="form_b_popia_choice" value="Yes"> Yes</label>
+                            <label><input type="radio" name="form_b_popia_choice" value="No" checked> No</label>
+                        </div>
+                    </div>
+                    <div class="question-block conditional-upload" id="formBPopiaYes" hidden>
+                        <label for="formBPopiaLetter">Upload POPIA Information Letter and Consent Form</label>
+                        <input id="formBPopiaLetter" type="file" name="prior_clearance1" class="form-control" accept=".pdf,.docx">
+                    </div>
+                </section>
+
+                <section class="form-type-section" data-form-section="FormC" aria-labelledby="formCHeading" hidden>
+                    <h3 id="formCHeading" class="form-section-title">Upload Proposal for Ethics Exemption (Form C)</h3>
+                    <div class="question-block">
+                        <label for="formCProposal">Upload the student's Research Proposal</label>
+                        <input id="formCProposal" type="file" name="files" class="form-control" accept=".pdf,.docx">
+                    </div>
+                </section>
+
+                <div class="form-navigation mt-4 pt-2">
+                    <button type="reset" class="btn btn-outline-secondary">Reset Form</button>
                     <button type="submit" class="btn btn-primary px-4">Upload Documents</button>
                 </div>
             </form>
@@ -159,37 +170,84 @@
 </div>
 
 <style>
-    .form-labelSmall {
-        font-size: 0.85rem;
-        font-weight: 500;
-        color: #495057;
-    }
+    .admin-upload-page { max-width: 980px; }
+    .upload-card { border: 0; border-radius: 14px; }
+    .section-kicker { color: var(--jbs-orange, #ef820d); font-size: .78rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+    .selector-panel { background: #f7f9fc; border: 1px solid #e4e9f0; border-radius: 10px; padding: 1rem; }
+    .selector-panel .form-label, .question-block > label { font-weight: 600; }
+    .form-section-title { color: var(--jbs-blue, #022169); font-size: 1.25rem; margin: 1.75rem 0 1rem; }
+    .question-block { border-bottom: 1px solid #edf0f4; margin: 0; padding: 1.25rem 0; }
+    .question-block small { color: #6c757d; display: block; margin: .2rem 0 .65rem; }
+    .choice-row { display: flex; flex-wrap: wrap; gap: 1.5rem; margin-top: .75rem; }
+    .choice-row label { cursor: pointer; font-weight: 500; }
+    .choice-row input { accent-color: var(--jbs-orange, #ef820d); margin-right: .3rem; }
+    .conditional-upload { background: #f8fafc; border: 1px solid #e3e8ef; border-radius: 8px; margin: .65rem 0; padding: 1rem; }
+    .form-navigation { display: flex; justify-content: flex-end; gap: .75rem; }
+    [hidden] { display: none !important; }
+    @media (max-width: 576px) { .card-body { padding: 1.25rem !important; } .form-navigation { flex-direction: column-reverse; } .form-navigation .btn { width: 100%; } }
 </style>
 
 <script>
-    function toggleFormFields() {
-        const formType = document.getElementById('form_type').value;
-        
-        // Toggle flags (Booleans)
-        document.querySelectorAll('[class*="flag-"]').forEach(el => {
-            if (el.classList.contains('flag-' + formType)) {
-                el.style.display = 'block';
-            } else {
-                el.style.display = 'none';
-            }
-        });
+document.addEventListener('DOMContentLoaded', function () {
+    const formTypeSelect = document.getElementById('form_type');
+    const studentSelect = document.getElementById('id');
+    const heading = document.getElementById('selectedFormHeading');
+    const sections = Array.from(document.querySelectorAll('[data-form-section]'));
+    const booleanIds = ['needs_permission', 'has_clearance', 'company_requires_jbs'];
 
-        // Toggle Uploads
-        document.querySelectorAll('[class*="upload-"]').forEach(el => {
-            if (el.classList.contains('upload-' + formType)) {
-                el.style.display = 'block';
-            } else {
-                el.style.display = 'none';
-            }
+    function setConditionalUpload(group, value) {
+        document.querySelectorAll('.conditional-upload[id^="' + group + '"]').forEach(function (node) {
+            const isTarget = node.id === group + value;
+            node.hidden = !isTarget;
+            node.querySelectorAll('input').forEach(function (input) { input.disabled = !isTarget; });
         });
     }
 
-    // Initialize on load
-    document.addEventListener('DOMContentLoaded', toggleFormFields);
+    function syncVisibleChoices() {
+        booleanIds.forEach(function (id) { document.getElementById(id).checked = false; });
+        const activeSection = document.querySelector('[data-form-section]:not([hidden])');
+        if (!activeSection) return;
+
+        activeSection.querySelectorAll('[data-sync-checkbox]').forEach(function (choiceRow) {
+            const selected = choiceRow.querySelector('input[type="radio"]:checked');
+            const checkbox = document.getElementById(choiceRow.dataset.syncCheckbox);
+            if (checkbox) checkbox.checked = Boolean(selected && selected.value === 'Yes');
+            if (selected && choiceRow.dataset.uploadGroup) setConditionalUpload(choiceRow.dataset.uploadGroup, selected.value);
+        });
+    }
+
+    function showSelectedForm() {
+        const selectedType = formTypeSelect.value;
+        const labels = { FormA: 'Before You Start Form A', FormB: 'Before You Start Form B', FormC: 'Upload Proposal for Ethics Exemption (Form C)' };
+        heading.textContent = labels[selectedType];
+
+        sections.forEach(function (section) {
+            const active = section.dataset.formSection === selectedType;
+            section.hidden = !active;
+            section.querySelectorAll('input, select, textarea, button').forEach(function (control) {
+                control.disabled = !active;
+            });
+        });
+        syncVisibleChoices();
+    }
+
+    formTypeSelect.addEventListener('change', showSelectedForm);
+    studentSelect.addEventListener('change', function () {
+        const selectedOption = studentSelect.options[studentSelect.selectedIndex];
+        const studentFormType = selectedOption ? selectedOption.dataset.formType : '';
+        if (studentFormType && ['FormA', 'FormB', 'FormC'].includes(studentFormType)) {
+            formTypeSelect.value = studentFormType;
+            showSelectedForm();
+        }
+    });
+    document.querySelectorAll('[data-sync-checkbox] input[type="radio"]').forEach(function (radio) {
+        radio.addEventListener('change', syncVisibleChoices);
+    });
+    document.getElementById('adminUploadForm').addEventListener('reset', function () {
+        window.setTimeout(showSelectedForm, 0);
+    });
+
+    showSelectedForm();
+});
 </script>
 {% endblock %}

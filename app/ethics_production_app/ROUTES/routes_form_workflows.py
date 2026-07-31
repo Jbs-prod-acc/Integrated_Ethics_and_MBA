@@ -181,7 +181,7 @@ def resubmit_formb(id):
             flash("You cannot resubmit Form B until at least one reviewer is assigned.", "danger")
             return redirect(url_for("student_dashboard"))
         # Mark as resubmitted, update timestamp, status, etc.
-        form.ethics_form_status = "Resubmitted"
+        form.ethics_status = "Resubmitted"
         form.form_supervisor_status = "Resubmitted"
         form.submitted_at = get_local_time()
         form.status = "Resubmitted"
@@ -305,7 +305,7 @@ def resubmit_formc(id):
             return redirect(url_for("student_dashboard"))
         # Update form fields from student input as needed
         form.submission_date = get_local_time()
-        form.ethics_form_status = "Resubmitted"
+        form.ethics_status = "Resubmitted"
         form.form_supervisor_status = "Resubmitted"
         form.status = 'Resubmitted'
         form.visible_to_student = False
@@ -1135,7 +1135,7 @@ def resubmit_forma(id):
             flash('You cannot resubmit Form A until at least one reviewer is assigned.', 'danger')
             return redirect(url_for('student_dashboard'))
         form.status = 'Resubmitted'
-        form.ethics_form_status = 'Resubmitted'
+        form.ethics_status = 'Resubmitted'
         form.form_supervisor_status = 'Resubmitted'
         form.submitted_at = get_local_time()
         form.visible_to_student = False

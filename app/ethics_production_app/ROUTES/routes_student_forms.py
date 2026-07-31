@@ -2257,7 +2257,7 @@ def student_edit_forma():
             form.rejected_or_accepted = False
             form.status = 'Resubmitted' if was_in_corrections else 'Submitted'
             form.visible_to_student = False
-            form.ethics_form_status = 'Resubmitted' if was_in_corrections else 'Submitted'
+            form.ethics_status = 'Resubmitted' if was_in_corrections else 'Submitted'
             form.form_supervisor_status = 'Resubmitted' if was_in_corrections else 'Submitted'
             reset_form_review_feedback(form)
         else:
@@ -3083,7 +3083,7 @@ def submit_form_a(form_id):
             form.rejected_or_accepted = False
             form.status = 'Resubmitted' if was_in_corrections else 'Submitted'
             form.visible_to_student = False
-            form.ethics_form_status = 'Resubmitted' if was_in_corrections else 'Submitted'
+            form.ethics_status = 'Resubmitted' if was_in_corrections else 'Submitted'
             form.form_supervisor_status = 'Resubmitted' if was_in_corrections else 'Submitted'
             reset_form_review_feedback(form)
             
@@ -3217,7 +3217,7 @@ def student_edit_formb():
         was_in_corrections = is_student_correction_state(form)
         form.status = 'Resubmitted' if was_in_corrections else (form.status or 'Submitted')
         form.visible_to_student = False
-        form.ethics_form_status = 'Resubmitted' if was_in_corrections else (form.ethics_form_status or 'Submitted')
+        form.ethics_status = 'Resubmitted' if was_in_corrections else (form.ethics_status or 'Submitted')
         form.form_supervisor_status = 'Resubmitted' if was_in_corrections else (form.form_supervisor_status or 'Submitted')
         reset_form_review_feedback(form)
         # Handle file upload
@@ -3486,7 +3486,7 @@ def submit_form_b(form_id):
             form.rejected_or_accepted = False
             was_in_corrections = is_student_correction_state(form)
             form.status = 'Resubmitted' if was_in_corrections else 'Submitted'
-            form.ethics_form_status = 'Resubmitted' if was_in_corrections else 'Submitted'
+            form.ethics_status = 'Resubmitted' if was_in_corrections else 'Submitted'
             form.form_supervisor_status = 'Resubmitted' if was_in_corrections else 'Submitted'
             reset_form_review_feedback(form)
             print(f"[DEBUG] FormB updated: declaration_name={form.declaration_name}, full_name={form.full_name}, declaration_date={form.declaration_date}, submitted_at={form.submitted_at}")
@@ -3614,7 +3614,7 @@ def student_edit_formc():
             was_in_corrections = is_student_correction_state(form)
             form.status = 'Resubmitted' if was_in_corrections else (form.status or 'Submitted')
             form.visible_to_student = False
-            form.ethics_form_status = 'Resubmitted' if was_in_corrections else (form.ethics_form_status or 'Submitted')
+            form.ethics_status = 'Resubmitted' if was_in_corrections else (form.ethics_status or 'Submitted')
             form.form_supervisor_status = 'Resubmitted' if was_in_corrections else (form.form_supervisor_status or 'Submitted')
             reset_form_review_feedback(form)
             db_session.commit()
@@ -3874,7 +3874,7 @@ def submit_form_c(form_id):
             was_in_corrections = is_student_correction_state(form)
             form.status = 'Resubmitted' if was_in_corrections else 'Submitted'
             form.visible_to_student = False
-            form.ethics_form_status = 'Resubmitted' if was_in_corrections else 'Submitted'
+            form.ethics_status = 'Resubmitted' if was_in_corrections else 'Submitted'
             form.form_supervisor_status = 'Resubmitted' if was_in_corrections else 'Submitted'
             reset_form_review_feedback(form)
             

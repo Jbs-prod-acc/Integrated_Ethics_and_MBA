@@ -302,7 +302,7 @@
                   All assigned reviewers approved the form
                   <br>
                   Awaiting Submission to REC
-                  {% elif form.supervisor_form_status in ['Revisions required'] %}
+                  {% elif form.ethics_status in ['Revisions required'] %}
                     Submitted to student for revisions
                   {% elif form.rejected_or_accepted and assigned_reviewers == 0 and not form.form_reviewed_by and not
                   form.form_reviewed_by1 %}

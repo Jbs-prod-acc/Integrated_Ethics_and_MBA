@@ -420,7 +420,7 @@ def is_student_correction_state(form):
 
     normalized_return_statuses = {
         (getattr(form, 'recommendation', None) or '').strip().lower(),
-        (getattr(form, 'ethics_form_status', None) or '').strip().lower(),
+        (getattr(form, 'ethics_status', None) or '').strip().lower(),
         (getattr(form, 'form_supervisor_status', None) or '').strip().lower(),
     }
     return any(status in {'revisions required', 'revision required'} for status in normalized_return_statuses)
@@ -768,7 +768,7 @@ def safe_query_formb(query_builder):
         FormB.submitted_at,
         FormB.recommendation,
         FormB.supervisor_date,
-        FormB.ethics_form_status,
+        FormB.ethics_status,
         FormB.signature_date,
         FormB.review_supervisor_signature,
         FormB.review_date,
@@ -812,7 +812,7 @@ def safe_query_formb(query_builder):
         proxy.submitted_at = result.submitted_at
         proxy.recommendation = result.recommendation
         proxy.supervisor_date = result.supervisor_date
-        proxy.ethics_form_status = result.ethics_form_status
+        proxy.ethics_status = result.ethics_status
         proxy.signature_date = result.signature_date
         proxy.review_supervisor_signature = result.review_supervisor_signature
         proxy.review_date = result.review_date

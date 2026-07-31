@@ -53,3 +53,5 @@ build/
 
 # Local database exports and backups
 *.dump
+/*backups
+/app/ethics_production_app/backups/
