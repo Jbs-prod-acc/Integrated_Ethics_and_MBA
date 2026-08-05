@@ -4022,6 +4022,35 @@ def admin_reassign_supervisors():
         User.role == UserRole.STUDENT
     ).order_by(User.full_name.asc()).all()
 
+
+    # Passing the viewing rights
+    # ==========================================================
+    # CHECK WHETHER USER CAN ACCESS BI REPORTING
+    # ==========================================================
+
+    has_any_bi_view_rights = bool(
+        db_session.execute(
+            text(
+                """
+                SELECT EXISTS
+                (
+                    SELECT 1
+                    FROM public.users_bi_config_rights
+                    WHERE user_id = :user_id
+                    AND lower(
+                            trim(
+                                has_bi_view_rights
+                            )
+                        ) = 'yes'
+                )
+                """
+            ),
+            {
+                "user_id": admin_id,
+            },
+        ).scalar()
+    )
+
     return render_template(
         'admin_reassign_supervisors.html',
         role=role,
@@ -4032,7 +4061,9 @@ def admin_reassign_supervisors():
         page=page,
         total_pages=total_pages,
         total_students=total_students,
-        filter_students_list=filter_students_list
+        filter_students_list=filter_students_list,
+             # Passing the viewing rights
+         has_any_bi_view_rights=has_any_bi_view_rights,
     )
 
 
@@ -4166,6 +4197,35 @@ def admin_reassign_reviewers():
     start_index = (page - 1) * per_page
     paginated_rows = rows[start_index:start_index + per_page]
 
+
+    # Passing the viewing rights
+    # ==========================================================
+    # CHECK WHETHER USER CAN ACCESS BI REPORTING
+    # ==========================================================
+
+    has_any_bi_view_rights = bool(
+        db_session.execute(
+            text(
+                """
+                SELECT EXISTS
+                (
+                    SELECT 1
+                    FROM public.users_bi_config_rights
+                    WHERE user_id = :user_id
+                    AND lower(
+                            trim(
+                                has_bi_view_rights
+                            )
+                        ) = 'yes'
+                )
+                """
+            ),
+            {
+                "user_id": admin_id,
+            },
+        ).scalar()
+    )
+
     return render_template(
         'admin_reassign_reviewers.html',
         role=role,
@@ -4173,7 +4233,9 @@ def admin_reassign_reviewers():
         reviewer_rows=paginated_rows,
         reviewers=reviewers,
         page=page,
-        total_pages=total_pages
+        total_pages=total_pages,
+             # Passing the viewing rights
+         has_any_bi_view_rights=has_any_bi_view_rights,
     )
 
 
@@ -4257,6 +4319,35 @@ def admin_student_password_resets():
     students = students_query.offset((page - 1) * per_page).limit(per_page).all()
     total_pages = max(1, (total_students + per_page - 1) // per_page)
 
+    # Passing the viewing rights
+    # ==========================================================
+    # CHECK WHETHER USER CAN ACCESS BI REPORTING
+    # ==========================================================
+
+    has_any_bi_view_rights = bool(
+        db_session.execute(
+            text(
+                """
+                SELECT EXISTS
+                (
+                    SELECT 1
+                    FROM public.users_bi_config_rights
+                    WHERE user_id = :user_id
+                    AND lower(
+                            trim(
+                                has_bi_view_rights
+                            )
+                        ) = 'yes'
+                )
+                """
+            ),
+            {
+                "user_id": admin_id,
+            },
+        ).scalar()
+    )
+
+
     return render_template(
         'admin_student_password_resets.html',
         role=role,
@@ -4264,7 +4355,9 @@ def admin_student_password_resets():
         students=students,
         page=page,
         total_pages=total_pages,
-        search_query=search_query
+        search_query=search_query,
+             # Passing the viewing rights
+         has_any_bi_view_rights=has_any_bi_view_rights,
     )
 
 
@@ -5376,6 +5469,34 @@ def admin_status_monitor():
     end_idx = start_idx + per_page
     forms_list = filtered_records[start_idx:end_idx]
     current = datetime.utcnow()
+
+    # Passing the viewing rights
+    # ==========================================================
+    # CHECK WHETHER USER CAN ACCESS BI REPORTING
+    # ==========================================================
+
+    has_any_bi_view_rights = bool(
+        db_session.execute(
+            text(
+                """
+                SELECT EXISTS
+                (
+                    SELECT 1
+                    FROM public.users_bi_config_rights
+                    WHERE user_id = :user_id
+                    AND lower(
+                            trim(
+                                has_bi_view_rights
+                            )
+                        ) = 'yes'
+                )
+                """
+            ),
+            {
+                "user_id": user_id,
+            },
+        ).scalar()
+    )
     return render_template(
         'admin_status_monitor.html',
         role=role,
@@ -5385,7 +5506,9 @@ def admin_status_monitor():
         per_page=per_page,
         total=total,
         search_query=search_query,
-        name_suggestions=name_suggestions
+        name_suggestions=name_suggestions,
+             # Passing the viewing rights
+         has_any_bi_view_rights=has_any_bi_view_rights,
     )
 
 @app.route('/super_admin_monitoring_page_a',methods=['GET','POST'])
@@ -5491,7 +5614,42 @@ def super_admin_monitoring_page_a():
     # Step 4: Convert to list for output
     forms_list = list(forms_dict.values())
     current = datetime.now(timezone.utc)
-    return render_template('super_admin_monitoring_page_a.html',role=role,current_time=current, forms_list=forms_list, page=page, per_page=per_page, total=total)
+
+    # Passing the viewing rights
+    # ==========================================================
+    # CHECK WHETHER USER CAN ACCESS BI REPORTING
+    # ==========================================================
+
+    has_any_bi_view_rights = bool(
+        db_session.execute(
+            text(
+                """
+                SELECT EXISTS
+                (
+                    SELECT 1
+                    FROM public.users_bi_config_rights
+                    WHERE user_id = :user_id
+                    AND lower(
+                            trim(
+                                has_bi_view_rights
+                            )
+                        ) = 'yes'
+                )
+                """
+            ),
+            {
+                "user_id": user_id,
+            },
+        ).scalar()
+    )
+    return render_template('super_admin_monitoring_page_a.html',
+                           role=role,current_time=current, 
+                           forms_list=forms_list, page=page, 
+                           per_page=per_page, total=total,
+                                # Passing the viewing rights
+         has_any_bi_view_rights=has_any_bi_view_rights,
+
+                           )
 
 
 @app.route('/super_admin_monitoring_page_b',methods=['GET','POST'])
@@ -5604,7 +5762,36 @@ def super_admin_monitoring_page_b():
     # Step 4: Convert to list for output
     forms_list = list(forms_dict.values())
     current = datetime.now(timezone.utc)
-    return render_template('super_admin_monitoring_page_b.html',role=role,current_time=current, forms_list=forms_list, page=page, per_page=per_page, total=total)
+
+    # Passing the viewing rights
+    # ==========================================================
+    # CHECK WHETHER USER CAN ACCESS BI REPORTING
+    # ==========================================================
+
+    has_any_bi_view_rights = bool(
+        db_session.execute(
+            text(
+                """
+                SELECT EXISTS
+                (
+                    SELECT 1
+                    FROM public.users_bi_config_rights
+                    WHERE user_id = :user_id
+                    AND lower(
+                            trim(
+                                has_bi_view_rights
+                            )
+                        ) = 'yes'
+                )
+                """
+            ),
+            {
+                "user_id": user_id,
+            },
+        ).scalar()
+    )
+    return render_template('super_admin_monitoring_page_b.html',      # Passing the viewing rights
+         has_any_bi_view_rights=has_any_bi_view_rights, role=role,current_time=current, forms_list=forms_list, page=page, per_page=per_page, total=total)
 
 
 
@@ -5819,6 +6006,34 @@ def all_users():
     if query_msg:
         query_messages.append(query_msg)
 
+    # Passing the viewing rights
+    # ==========================================================
+    # CHECK WHETHER USER CAN ACCESS BI REPORTING
+    # ==========================================================
+
+    has_any_bi_view_rights = bool(
+        db_session.execute(
+            text(
+                """
+                SELECT EXISTS
+                (
+                    SELECT 1
+                    FROM public.users_bi_config_rights
+                    WHERE user_id = :user_id
+                    AND lower(
+                            trim(
+                                has_bi_view_rights
+                            )
+                        ) = 'yes'
+                )
+                """
+            ),
+            {
+                "user_id": user_id,
+            },
+        ).scalar()
+    )
+
     return render_template(
         "user-list.html",
         role=role,
@@ -5829,6 +6044,9 @@ def all_users():
         auth_status=auth_status,
         page=page,
         total_pages=total_pages,
+             # Passing the viewing rights
+         has_any_bi_view_rights=has_any_bi_view_rights,
+
     )
 @app.route('/api/forgot-password', methods=['POST'])
 def forgot_password():
@@ -6913,6 +7131,34 @@ def monitor():
             "email": user.email,
         })
 
+    # Passing the viewing rights
+    # ==========================================================
+    # CHECK WHETHER USER CAN ACCESS BI REPORTING
+    # ==========================================================
+
+    has_any_bi_view_rights = bool(
+        db_session.execute(
+            text(
+                """
+                SELECT EXISTS
+                (
+                    SELECT 1
+                    FROM public.users_bi_config_rights
+                    WHERE user_id = :user_id
+                    AND lower(
+                            trim(
+                                has_bi_view_rights
+                            )
+                        ) = 'yes'
+                )
+                """
+            ),
+            {
+                "user_id": user_id,
+            },
+        ).scalar()
+    )
+
     return render_template(
         'monitor.html',
         role=role,
@@ -6920,7 +7166,9 @@ def monitor():
         filter_users_list=filter_users_list,
         page=page,
         total_pages=total_pages,
-        total_users=total_users
+        total_users=total_users,
+             # Passing the viewing rights
+         has_any_bi_view_rights=has_any_bi_view_rights,
     )
 
 
@@ -11098,6 +11346,34 @@ def reviewer_list():
 
     role = user_profile.role.value
 
+    # Passing the viewing rights
+    # ==========================================================
+    # CHECK WHETHER USER CAN ACCESS BI REPORTING
+    # ==========================================================
+
+    has_any_bi_view_rights = bool(
+        db_session.execute(
+            text(
+                """
+                SELECT EXISTS
+                (
+                    SELECT 1
+                    FROM public.users_bi_config_rights
+                    WHERE user_id = :user_id
+                    AND lower(
+                            trim(
+                                has_bi_view_rights
+                            )
+                        ) = 'yes'
+                )
+                """
+            ),
+            {
+                "user_id": user_id,
+            },
+        ).scalar()
+    )
+
     return render_template(
         "reviewer-list.html",
         role=role,
@@ -11106,7 +11382,9 @@ def reviewer_list():
         filter_users_list=filter_users_list,
         page=page,
         total_pages=total_pages,
-        total_reviewers=total_reviewers
+        total_reviewers=total_reviewers,
+             # Passing the viewing rights
+         has_any_bi_view_rights=has_any_bi_view_rights,
     )
 
 
@@ -12368,6 +12646,34 @@ def chair_landing():
     paginated_rows_c, total_records_c, total_pages_c, page_c = paginate_folder_rows(forms_by_yearC, page_c)
 
     role = user.role.value if user and user.role else None
+
+    # Passing the viewing rights
+    # ==========================================================
+    # CHECK WHETHER USER CAN ACCESS BI REPORTING
+    # ==========================================================
+
+    has_any_bi_view_rights = bool(
+        db_session.execute(
+            text(
+                """
+                SELECT EXISTS
+                (
+                    SELECT 1
+                    FROM public.users_bi_config_rights
+                    WHERE user_id = :user_id
+                    AND lower(
+                            trim(
+                                has_bi_view_rights
+                            )
+                        ) = 'yes'
+                )
+                """
+            ),
+            {
+                "user_id": user_id,
+            },
+        ).scalar()
+    )
     return render_template(
         "chair-landing-dashboard.html",
         role=role,
@@ -12385,6 +12691,9 @@ def chair_landing():
         total_records_c=total_records_c,
         current_year=datetime.now().year,
         year_filter=year_filter,
+             # Passing the viewing rights
+         has_any_bi_view_rights=has_any_bi_view_rights,
+
     )
 
 
@@ -12576,6 +12885,35 @@ def admin_login_logs():
     )
 
     role = current_user.role.value if current_user and current_user.role else None
+
+
+    # Passing the viewing rights
+    # ==========================================================
+    # CHECK WHETHER USER CAN ACCESS BI REPORTING
+    # ==========================================================
+
+    has_any_bi_view_rights = bool(
+        db_session.execute(
+            text(
+                """
+                SELECT EXISTS
+                (
+                    SELECT 1
+                    FROM public.users_bi_config_rights
+                    WHERE user_id = :user_id
+                    AND lower(
+                            trim(
+                                has_bi_view_rights
+                            )
+                        ) = 'yes'
+                )
+                """
+            ),
+            {
+                "user_id": user_id,
+            },
+        ).scalar()
+    )
     return render_template(
         'admin_login_logs.html',
         role=role,
@@ -12597,6 +12935,9 @@ def admin_login_logs():
         activity_per_page=activity_per_page,
         activity_total=activity_total,
         user_name_suggestions=user_name_suggestions,
+             # Passing the viewing rights
+         has_any_bi_view_rights=has_any_bi_view_rights,
+
         filters={
             'search': user_search,
             'email': user_search,
@@ -12732,7 +13073,36 @@ def review_version(user_id,form_name):
 
    
     user_id=session.get('id')
-    return render_template('review_version.html',form=form,form_name=form_name,user_id=user_id)
+
+    # Passing the viewing rights
+    # ==========================================================
+    # CHECK WHETHER USER CAN ACCESS BI REPORTING
+    # ==========================================================
+
+    has_any_bi_view_rights = bool(
+        db_session.execute(
+            text(
+                """
+                SELECT EXISTS
+                (
+                    SELECT 1
+                    FROM public.users_bi_config_rights
+                    WHERE user_id = :user_id
+                    AND lower(
+                            trim(
+                                has_bi_view_rights
+                            )
+                        ) = 'yes'
+                )
+                """
+            ),
+            {
+                "user_id": user_id,
+            },
+        ).scalar()
+    )
+    return render_template('review_version.html',form=form,form_name=form_name,user_id=user_id,      # Passing the viewing rights
+         has_any_bi_view_rights=has_any_bi_view_rights,)
 
 
 @app.route('/review_dashboard', methods=['GET','POST'])
@@ -12868,12 +13238,42 @@ def review_dashboard():
         form_c, requirementsc = None, None
    
     today = date.today()
+
+    # Passing the viewing rights
+    # ==========================================================
+    # CHECK WHETHER USER CAN ACCESS BI REPORTING
+    # ==========================================================
+
+    has_any_bi_view_rights = bool(
+        db_session.execute(
+            text(
+                """
+                SELECT EXISTS
+                (
+                    SELECT 1
+                    FROM public.users_bi_config_rights
+                    WHERE user_id = :user_id
+                    AND lower(
+                            trim(
+                                has_bi_view_rights
+                            )
+                        ) = 'yes'
+                )
+                """
+            ),
+            {
+                "user_id": user_id,
+            },
+        ).scalar()
+    )
    
     return render_template('review-dashboard.html',
                 user_id=user_id,today=today,
                 submitted_form_a=form_aa,
                 submitted_form_b=form_bb,
-                submitted_form_c=form_cc)
+                submitted_form_c=form_cc,
+                     # Passing the viewing rights
+         has_any_bi_view_rights=has_any_bi_view_rights,)
 
 
 
@@ -12971,7 +13371,7 @@ def reviewer_form_c(id):
 
 
 @app.route('/rec_dashboard', methods=['GET', 'POST'])
-@role_required('REC')
+@role_required('REC', 'REVIEWER', 'ADMIN', 'SUPER_ADMIN')
 def rec_dashboard():
     user_id = session.get('id')
     if not user_id:
@@ -13079,6 +13479,34 @@ def rec_dashboard():
     # Supervisor-specific requirements
     supervisor_formA_req = db_session.query(FormARequirements).filter_by(user_id=user_id).all()
 
+    # Passing the viewing rights
+    # ==========================================================
+    # CHECK WHETHER USER CAN ACCESS BI REPORTING
+    # ==========================================================
+
+    has_any_bi_view_rights = bool(
+        db_session.execute(
+            text(
+                """
+                SELECT EXISTS
+                (
+                    SELECT 1
+                    FROM public.users_bi_config_rights
+                    WHERE user_id = :user_id
+                    AND lower(
+                            trim(
+                                has_bi_view_rights
+                            )
+                        ) = 'yes'
+                )
+                """
+            ),
+            {
+                "user_id": user_id,
+            },
+        ).scalar()
+    )
+
     return render_template(
         'rec-dashboard.html',
         today=today,
@@ -13097,6 +13525,8 @@ def rec_dashboard():
         total_records_a=total_records_a,
         total_records_b=total_records_b,
         total_records_c=total_records_c,
+             # Passing the viewing rights
+         has_any_bi_view_rights=has_any_bi_view_rights,
         
     )
 
@@ -13153,6 +13583,35 @@ def admin_rec_form(form_id):
 
     all_reviewers_counter = len(all_reviewers)
 
+    # Passing the viewing rights
+    # ==========================================================
+    # CHECK WHETHER USER CAN ACCESS BI REPORTING
+    # ==========================================================
+
+    has_any_bi_view_rights = bool(
+        db_session.execute(
+            text(
+                """
+                SELECT EXISTS
+                (
+                    SELECT 1
+                    FROM public.users_bi_config_rights
+                    WHERE user_id = :user_id
+                    AND lower(
+                            trim(
+                                has_bi_view_rights
+                            )
+                        ) = 'yes'
+                )
+                """
+            ),
+            {
+                "user_id": user_id,
+            },
+        ).scalar()
+    )
+
+
     return render_template(
         'chair_rec_form.html',
         Rec_team=Rec_team,
@@ -13167,6 +13626,9 @@ def admin_rec_form(form_id):
         per_page=per_page,
         total_pages=total_pages,
         total_records=total_records,
+             # Passing the viewing rights
+         has_any_bi_view_rights=has_any_bi_view_rights,
+
     )
 @app.route('/rec_form_a/<string:id>', methods=['GET'])
 def rec_form_a(id):
@@ -13378,9 +13840,40 @@ def modify_certificate(id):
     if not certificate_details:
         return "No certificate data found.", 404
     
+
+    # Passing the viewing rights
+    # ==========================================================
+    # CHECK WHETHER USER CAN ACCESS BI REPORTING
+    # ==========================================================
+
+    has_any_bi_view_rights = bool(
+        db_session.execute(
+            text(
+                """
+                SELECT EXISTS
+                (
+                    SELECT 1
+                    FROM public.users_bi_config_rights
+                    WHERE user_id = :user_id
+                    AND lower(
+                            trim(
+                                has_bi_view_rights
+                            )
+                        ) = 'yes'
+                )
+                """
+            ),
+            {
+                "user_id": id,
+            },
+        ).scalar()
+    )
+    
     return render_template(
         'edit_certificate.html',
-        certificate_details=certificate_details
+        certificate_details=certificate_details,
+             # Passing the viewing rights
+         has_any_bi_view_rights=has_any_bi_view_rights,
         
     )
 
@@ -13949,8 +14442,38 @@ def supervisor_dashboard():
             seen_users_c.add(formc.user_id)
     
     #supervisor_formA_req=db_session.query(model).filter(FormARequirements.user_id == FormA.user_id).all()
+
+    # Passing the viewing rights
+    # ==========================================================
+    # CHECK WHETHER USER CAN ACCESS BI REPORTING
+    # ==========================================================
+
+    has_any_bi_view_rights = bool(
+        db_session.execute(
+            text(
+                """
+                SELECT EXISTS
+                (
+                    SELECT 1
+                    FROM public.users_bi_config_rights
+                    WHERE user_id = :user_id
+                    AND lower(
+                            trim(
+                                has_bi_view_rights
+                            )
+                        ) = 'yes'
+                )
+                """
+            ),
+            {
+                "user_id": supervisor_id,
+            },
+        ).scalar()
+    )
+
     
-    return render_template("supervisor-dashboard.html",supervisor_role=role,formA=formA,formB=formB,formC=formC,supervisor_formA=supervisor_formA,supervisor_formB=supervisor_formB,supervisor_formC=supervisor_formC)
+    return render_template("supervisor-dashboard.html",     # Passing the viewing rights
+         has_any_bi_view_rights=has_any_bi_view_rights,supervisor_role=role,formA=formA,formB=formB,formC=formC,supervisor_formA=supervisor_formA,supervisor_formB=supervisor_formB,supervisor_formC=supervisor_formC)
 
 
 
@@ -15250,6 +15773,602 @@ def export_reviewer_assignments_csv():
         traceback.print_exc()
         flash(f'Error exporting reviewer assignments: {str(e)}', 'error')
         return redirect(url_for('chair_landing'))
+    
+
+
+
+
+
+
+
+
+
+
+
+# Automated Power Bi Configurations
+
+
+from ROUTES.bi_form_mapping import (
+    get_bi_landing_page_context,
+    get_bi_configuration_rights_context,
+    save_bi_configuration_and_view_rights,
+    attach_bi_access_rights_to_records,
+)
+
+
+@app.route(
+    '/power/bi/and/reporting',
+    methods=[
+        'GET',
+        'POST',
+    ],
+)
+@role_required(
+    'ADMIN',
+    'SUPER_ADMIN',
+    'REVIEWER',
+)
+def power_bi_and_reporting():
+    user_id = session.get('id')
+
+    user = (
+        db_session.query(User)
+        .filter(
+            User.user_id == user_id
+        )
+        .first()
+    )
+
+    if not user:
+        return redirect(
+            url_for('login_page')
+        )
+
+    role = (
+        user.role.value
+        if user.role
+        else None
+    )
+
+    # ==========================================================
+    # SAVE CONFIGURATION AND VIEWING RIGHTS
+    # ==========================================================
+
+    if request.method == 'POST':
+        payload = request.get_json(
+            silent=True,
+        ) or {}
+
+        users_payload = payload.get(
+            'users',
+            [],
+        )
+
+        updated_by = (
+            user.full_name
+            or user.email
+            or str(user.user_id)
+        )
+
+        save_result = (
+            save_bi_configuration_and_view_rights(
+                db_session=db_session,
+                users=users_payload,
+                updated_by=updated_by,
+            )
+        )
+
+        response_status = (
+            200
+            if save_result.get('success')
+            else 400
+        )
+
+        return jsonify(
+            save_result
+        ), response_status
+
+    # ==========================================================
+    # MAIN BI TABLE FILTER VALUES
+    # ==========================================================
+
+    search_text = (
+        request.args.get(
+            'search',
+            '',
+            type=str,
+        )
+        or ''
+    ).strip()
+
+    selected_view = (
+        request.args.get(
+            'bi_view_name',
+            '',
+            type=str,
+        )
+        or ''
+    ).strip()
+
+    selected_table = (
+        request.args.get(
+            'database_table',
+            '',
+            type=str,
+        )
+        or ''
+    ).strip()
+
+    selected_status = (
+        request.args.get(
+            'status',
+            '',
+            type=str,
+        )
+        or ''
+    ).strip()
+
+    # ==========================================================
+    # MAIN BI TABLE PAGINATION VALUES
+    # ==========================================================
+
+    page = request.args.get(
+        'page',
+        default=1,
+        type=int,
+    )
+
+    per_page = request.args.get(
+        'per_page',
+        default=10,
+        type=int,
+    )
+
+    if page is None or page < 1:
+        page = 1
+
+    if per_page not in {
+        10,
+        25,
+        50,
+        100,
+    }:
+        per_page = 10
+
+    # ==========================================================
+    # BUILD MAIN BI TABLE CONTEXT
+    # ==========================================================
+
+    bi_context = get_bi_landing_page_context(
+        page=page,
+        per_page=per_page,
+        search_text=search_text,
+        selected_view=selected_view,
+        selected_table=selected_table,
+        selected_status=selected_status,
+    )
+
+    bi_context['bi_records'] = (
+        attach_bi_access_rights_to_records(
+            db_session=db_session,
+            bi_records=bi_context.get(
+                'bi_records',
+                [],
+            ),
+            user_id=user_id,
+        )
+    )
+
+    # ==========================================================
+    # BI RIGHTS FILTER VALUES
+    # ==========================================================
+
+    bi_rights_search_text = (
+        request.args.get(
+            'bi_rights_search',
+            '',
+            type=str,
+        )
+        or ''
+    ).strip()
+
+    # ==========================================================
+    # BI RIGHTS PAGINATION VALUES
+    # ==========================================================
+
+    bi_rights_page = request.args.get(
+        'bi_rights_page',
+        default=1,
+        type=int,
+    )
+
+    bi_rights_per_page = request.args.get(
+        'bi_rights_per_page',
+        default=10,
+        type=int,
+    )
+
+    if (
+        bi_rights_page is None
+        or bi_rights_page < 1
+    ):
+        bi_rights_page = 1
+
+    if bi_rights_per_page not in {
+        10,
+        25,
+        50,
+        100,
+    }:
+        bi_rights_per_page = 10
+
+    # ==========================================================
+    # BUILD BI RIGHTS CONTEXT
+    # ==========================================================
+
+    bi_rights_context = (
+        get_bi_configuration_rights_context(
+            db_session=db_session,
+            page=bi_rights_page,
+            per_page=bi_rights_per_page,
+            search_text=bi_rights_search_text,
+        )
+    )
+
+    # ==========================================================
+    # RENDER TEMPLATE
+    # ==========================================================
+
+
+    # Passing the viewing rights
+    # ==========================================================
+    # CHECK WHETHER USER CAN ACCESS BI REPORTING
+    # ==========================================================
+
+    has_any_bi_view_rights = bool(
+        db_session.execute(
+            text(
+                """
+                SELECT EXISTS
+                (
+                    SELECT 1
+                    FROM public.users_bi_config_rights
+                    WHERE user_id = :user_id
+                    AND lower(
+                            trim(
+                                has_bi_view_rights
+                            )
+                        ) = 'yes'
+                )
+                """
+            ),
+            {
+                "user_id": user_id,
+            },
+        ).scalar()
+    )
+
+
+
+
+    return render_template(
+        'power_bi_landing_home.html',
+        role=role,
+        **bi_context,
+        **bi_rights_context,
+
+
+        # Passing the viewing rights
+         has_any_bi_view_rights=has_any_bi_view_rights,
+    )
+
+
+# Configure BI Template
+# Add this import with your other app.py imports:
+from ROUTES.bi_form_mapping_configure_bi_template import (
+    build_configure_bi_template_context,
+    delete_bi_configuration_page,
+    save_bi_configuration,
+)
+
+import json
+@app.route(
+    "/power/bi/and/reporting/configure/bi/template",
+    methods=["GET", "POST"],
+)
+@role_required("ADMIN", "SUPER_ADMIN", 'REVIEWER',)
+def power_bi_and_reporting_configure_bi_template():
+    user_id = session.get("id")
+
+    user = (
+        db_session.query(User)
+        .filter(User.user_id == user_id)
+        .first()
+    )
+
+    if not user:
+        if request.method == "POST":
+            return jsonify({
+                "success": False,
+                "message": "Your session has expired. Please log in again.",
+            }), 401
+
+        return redirect(url_for("login_page"))
+
+    role = user.role.value if user.role else None
+
+    bi_view_name = (
+        request.args.get("bi_view_name")
+        or (
+            request.get_json(silent=True) or {}
+        ).get("bi_view_name")
+        or ""
+    ).strip()
+
+    database_table = (
+        request.args.get("database_table")
+        or (
+            request.get_json(silent=True) or {}
+        ).get("database_table")
+        or ""
+    ).strip()
+
+    if request.method == "POST":
+        payload = request.get_json(silent=True) or {}
+        action = str(payload.get("action") or "save_all").strip().lower()
+
+        configured_by = (
+            getattr(user, "email", None)
+            or getattr(user, "full_name", None)
+            or str(user_id)
+        )
+
+        try:
+            if action == "delete_page":
+                result = delete_bi_configuration_page(
+                    db_session,
+                    bi_view_name=bi_view_name,
+                    database_table=database_table,
+                    page_name=payload.get("page_name") or "",
+                    configured_by=configured_by,
+                )
+            else:
+                result = save_bi_configuration(
+                    db_session,
+                    bi_view_name=bi_view_name,
+                    database_table=database_table,
+                    dashboard_pages=payload.get("dashboard_pages") or {},
+                    configured_by=configured_by,
+                    config_status=payload.get("config_status") or "Draft",
+                )
+
+            return jsonify(result), 200 if result.get("success") else 400
+
+        except ValueError as error:
+            db_session.rollback()
+            return jsonify({
+                "success": False,
+                "message": str(error),
+            }), 400
+
+        except SQLAlchemyError as error:
+            db_session.rollback()
+            app.logger.exception(
+                "Database error while saving BI configuration"
+            )
+            return jsonify({
+                "success": False,
+                "message": "A database error prevented the BI configuration from being saved.",
+                "error": str(error),
+            }), 500
+
+        except Exception as error:
+            db_session.rollback()
+            app.logger.exception(
+                "Unexpected error while saving BI configuration"
+            )
+            return jsonify({
+                "success": False,
+                "message": "The BI configuration could not be saved.",
+                "error": str(error),
+            }), 500
+
+    if not bi_view_name or not database_table:
+        flash(
+            "Select a BI view from the BI Dashboard and Reporting page first.",
+            "warning",
+        )
+        return redirect(url_for("power_bi_and_reporting"))
+
+    try:
+        configure_context = build_configure_bi_template_context(
+            db_session,
+            bi_view_name=bi_view_name,
+            database_table=database_table,
+            preview_limit=250,
+        )
+
+    except ValueError as error:
+        flash(str(error), "danger")
+        return redirect(url_for("power_bi_and_reporting"))
+
+    except SQLAlchemyError as error:
+        db_session.rollback()
+        app.logger.exception(
+            "Database error while opening BI configuration"
+        )
+        flash(
+            "The database table or its columns could not be loaded.",
+            "danger",
+        )
+        return redirect(url_for("power_bi_and_reporting"))
+
+    # Passing the viewing rights
+    # ==========================================================
+    # CHECK WHETHER USER CAN ACCESS BI REPORTING
+    # ==========================================================
+
+    has_any_bi_view_rights = bool(
+        db_session.execute(
+            text(
+                """
+                SELECT EXISTS
+                (
+                    SELECT 1
+                    FROM public.users_bi_config_rights
+                    WHERE user_id = :user_id
+                    AND lower(
+                            trim(
+                                has_bi_view_rights
+                            )
+                        ) = 'yes'
+                )
+                """
+            ),
+            {
+                "user_id": user_id,
+            },
+        ).scalar()
+    )
+
+    return render_template(
+        "power_bi_landing_home_configure_template.html",
+        role=role,
+        **configure_context,
+             # Passing the viewing rights
+         has_any_bi_view_rights=has_any_bi_view_rights,
+    )
+
+
+
+
+
+# View BI Report
+from ROUTES.bi_form_mapping_viewbi_report import (
+    get_bi_form_mapping_view_report_context,
+)
+
+
+@app.route(
+    "/power/bi/and/reporting/view/bi/report",
+    methods=["GET"],
+)
+@role_required("ADMIN", "SUPER_ADMIN", 'REVIEWER',)
+def power_bi_and_reporting_view_bi_report():
+    user_id = session.get("id")
+
+    user = (
+        db_session.query(User)
+        .filter(User.user_id == user_id)
+        .first()
+    )
+
+    if not user:
+        return redirect(url_for("login_page"))
+
+    role = user.role.value if user.role else None
+
+    bi_view_name = (
+        request.args.get("bi_view_name", "", type=str)
+        or ""
+    ).strip()
+
+    database_table = (
+        request.args.get("database_table", "", type=str)
+        or ""
+    ).strip()
+
+    if not bi_view_name or not database_table:
+        flash(
+            "Select a BI report from the BI Dashboard and Reporting page.",
+            "warning",
+        )
+        return redirect(url_for("power_bi_and_reporting"))
+
+    raw_connection = None
+
+    try:
+        raw_connection = db_session.get_bind().raw_connection()
+
+        report_context = get_bi_form_mapping_view_report_context(
+            raw_connection,
+            bi_view_name=bi_view_name,
+            database_table=database_table,
+            filters=request.args,
+            execute_visuals=True,
+        )
+
+    except ValueError as error:
+        if raw_connection is not None:
+            raw_connection.rollback()
+
+        app.logger.exception(
+            "Invalid BI report configuration: %s",
+            error,
+        )
+
+        flash(str(error), "danger")
+        return redirect(url_for("power_bi_and_reporting"))
+
+    except Exception as error:
+        if raw_connection is not None:
+            raw_connection.rollback()
+
+        app.logger.exception(
+            "Unable to render BI report: %s",
+            error,
+        )
+
+        flash(
+            "The BI report could not be loaded.",
+            "danger",
+        )
+        return redirect(url_for("power_bi_and_reporting"))
+
+    finally:
+        if raw_connection is not None:
+            raw_connection.close()
+
+    # Passing the viewing rights
+    # ==========================================================
+    # CHECK WHETHER USER CAN ACCESS BI REPORTING
+    # ==========================================================
+
+    has_any_bi_view_rights = bool(
+        db_session.execute(
+            text(
+                """
+                SELECT EXISTS
+                (
+                    SELECT 1
+                    FROM public.users_bi_config_rights
+                    WHERE user_id = :user_id
+                    AND lower(
+                            trim(
+                                has_bi_view_rights
+                            )
+                        ) = 'yes'
+                )
+                """
+            ),
+            {
+                "user_id": user_id,
+            },
+        ).scalar()
+    )
+
+    return render_template(
+        "power_bi_landing_home_view_bi_report.html",
+        role=role,
+        **report_context,
+             # Passing the viewing rights
+         has_any_bi_view_rights=has_any_bi_view_rights,
+    )
+
+
+
+
+
 
 if __name__ == '__main__':
     port = int(os.getenv("PORT", 5010))  

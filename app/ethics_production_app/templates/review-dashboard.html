@@ -1,308 +1,362 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <title>Reviewer Dashboard | JBS Ethics</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <link rel="stylesheet" href="/static/css/supervisor.css" />
-    <!-- <link rel="stylesheet" href="/static/css/review.css" /> -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/review.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/supervisor.css') }}">
+  <!-- <link rel="stylesheet" href="/static/css/review.css" /> -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/review.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/supervisor.css') }}">
 </head>
+
 <body>
 
-<div class="admin-wrapper">
+  <div class="admin-wrapper">
 
-  <!-- Sidebar -->
-  <aside class="sidebar">
-    <div class="sidebar-header">
-      <img src="{{ url_for('static',filename='img/image.png')}}" alt="UJ Logo" class="sidebar-logo" />
-      <h3>Reviewer Panel</h3>
-    </div>
-    <nav class="sidebar-nav">
-      <a href="{{url_for('review_dashboard')}}" class="sidebar-link">
-        <i class="fas fa-clipboard-check"></i> My Reviews
-      </a>
-      <a href="{{url_for('supervisor_dashboard')}}" class="sidebar-link">
-        <i class="fas fa-clipboard-check"></i> Supervisor Dashboard
-      </a>
-      <a href="{{url_for('rec_dashboard')}}" class="sidebar-link">
-        <i class="fas fa-users"></i> Rec Team Dashboard
-      </a>
-      <a href="{{url_for('logout')}}" class="sidebar-link">
-        <i class="fas fa-sign-out-alt"></i> Logout
-      </a>
-    </nav>
-  </aside>
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <img src="{{ url_for('static',filename='img/image.png')}}" alt="UJ Logo" class="sidebar-logo" />
+        <h3>Reviewer Panel</h3>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="{{url_for('review_dashboard')}}" class="sidebar-link">
+          <i class="fas fa-clipboard-check"></i> My Reviews
+        </a>
+        <a href="{{url_for('supervisor_dashboard')}}" class="sidebar-link">
+          <i class="fas fa-clipboard-check"></i> Supervisor Dashboard
+        </a>
+        <a href="{{url_for('rec_dashboard')}}" class="sidebar-link">
+          <i class="fas fa-users"></i> Rec Team Dashboard
+        </a>
 
-  <!-- Main -->
-  <main class="admin-main">
-    <header class="topbar">
-      <h2>Reviewer Dashboard</h2>
-    </header>
+        {% if has_any_bi_view_rights|default(false) %}
 
-    <section class="admin-content">
-      <h3>Assigned Submissions</h3>
-      <div class="mb-3">
-  <label for="formAStatusFilter" class="form-label">Filter Forms by Status:</label>
-  <select id="formAStatusFilter" class="form-select">
-    <option value="all">All</option>
-    <option value="awaiting-review">Awaiting Review</option>
-    <option value="submitted-admin">Reviewed</option>
-    
-    
-  </select>
-</div>
-    {% if submitted_form_a %}
-    
-      <table class="status-table">
-        <thead>
-          <tr>
-            <th>Student</th>
-            <th>Form</th>
-            <th>Risk Level</th>
-            <th>Date Assigned</th>
-            <th>Status</th>
-            <th>Documents</th>
-            <th>Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for item in submitted_form_a %}
-          {% set row_status = get_reviewer_row_status(item.forma, user_id) %}
-          <tr data-status="{{ row_status }}">
-            <td>{{item.forma.applicant_name}}</td>
-            <td>Form A</td>
-            <td>{{item.forma.risk_rating}}</td>
-            <td>{% if item.forma.ethics_signature_date %}{{item.forma.ethics_signature_date.strftime('%d/%m/%Y')}}
-              {% elif item.forma.signature_date%}{{item.forma.signature_date.strftime('%d/%m/%Y')}}{% endif%}</td>
-            <td><span class="badge status-pending">{{ get_reviewer_dashboard_status(item.forma, user_id) }}</span>
-           <br>
-            <br>
-             <span class="badge status-pending">
-              <a href="{{url_for('review_feedback',form_id=item.forma.form_id)}}" style="color:white; text-decoration:none;">View_feedback</a>
-             </span>
-            </td>
-            <td>
-              
-              <ul class="doc-link">
+        <a href="{{ url_for('power_bi_and_reporting') }}" class="sidebar-link">
+          <i class="fas fa-clock"></i>
+          BI Dashboard and Reporting
+        </a>
+
+        {% endif %}
+        <a href="{{url_for('logout')}}" class="sidebar-link">
+          <i class="fas fa-sign-out-alt"></i> Logout
+        </a>
+      </nav>
+    </aside>
+
+    <!-- Main -->
+    <main class="admin-main">
+      <header class="topbar">
+        <h2>Reviewer Dashboard</h2>
+      </header>
+
+      <section class="admin-content">
+        <h3>Assigned Submissions</h3>
+        <div class="mb-3">
+          <label for="formAStatusFilter" class="form-label">Filter Forms by Status:</label>
+          <select id="formAStatusFilter" class="form-select">
+            <option value="all">All</option>
+            <option value="awaiting-review">Awaiting Review</option>
+            <option value="submitted-admin">Reviewed</option>
+
+
+          </select>
+        </div>
+        {% if submitted_form_a %}
+
+        <table class="status-table">
+          <thead>
+            <tr>
+              <th>Student</th>
+              <th>Form</th>
+              <th>Risk Level</th>
+              <th>Date Assigned</th>
+              <th>Status</th>
+              <th>Documents</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in submitted_form_a %}
+            {% set row_status = get_reviewer_row_status(item.forma, user_id) %}
+            <tr data-status="{{ row_status }}">
+              <td>{{item.forma.applicant_name}}</td>
+              <td>Form A</td>
+              <td>{{item.forma.risk_rating}}</td>
+              <td>{% if item.forma.ethics_signature_date %}{{item.forma.ethics_signature_date.strftime('%d/%m/%Y')}}
+                {% elif item.forma.signature_date%}{{item.forma.signature_date.strftime('%d/%m/%Y')}}{% endif%}</td>
+              <td><span class="badge status-pending">{{ get_reviewer_dashboard_status(item.forma, user_id) }}</span>
+                <br>
+                <br>
+                <span class="badge status-pending">
+                  <a href="{{url_for('review_feedback',form_id=item.forma.form_id)}}"
+                    style="color:white; text-decoration:none;">View_feedback</a>
+                </span>
+              </td>
+              <td>
+
+                <ul class="doc-link">
                   {% if item.requirementsa.proposal_path %}
-                      
-                      <li><a href="{{ url_for('view_requirement_file', req_id=item.requirementsa.id, field='proposal_path') }}" target="_blank">Research Proposal</a></li>
+
+                  <li><a
+                      href="{{ url_for('view_requirement_file', req_id=item.requirementsa.id, field='proposal_path') }}"
+                      target="_blank">Research Proposal</a></li>
                   {% endif %}
 
                   {% if item.requirementsa.permission_letter %}
-                    <li><a href="{{ url_for('view_requirement_file', req_id=item.requirementsa.id, field='permission_letter') }}" target="_blank">Permission Letter</a></li>
+                  <li><a
+                      href="{{ url_for('view_requirement_file', req_id=item.requirementsa.id, field='permission_letter') }}"
+                      target="_blank">Permission Letter</a></li>
                   {% endif %}
                   {% if item.requirementsa.ethics_evidence %}
-                      <li><a href="{{ url_for('view_requirement_file', req_id=item.requirementsa.id, field='ethics_evidence') }}" target="_blank">Ethical Compliance</a></li>
+                  <li><a
+                      href="{{ url_for('view_requirement_file', req_id=item.requirementsa.id, field='ethics_evidence') }}"
+                      target="_blank">Ethical Compliance</a></li>
                   {% endif %}
 
                   {% if item.requirementsa.prior_clearance_path %}
-               
-                      <li><a href="{{ url_for('view_requirement_file', req_id=item.requirementsa.id, field='prior_clearance_path') }}" target="_blank">Ethics Clearance</a></li>
+
+                  <li><a
+                      href="{{ url_for('view_requirement_file', req_id=item.requirementsa.id, field='prior_clearance_path') }}"
+                      target="_blank">Ethics Clearance</a></li>
                   {% endif %}
                   {% if item.requirementsa.research_tools_path %}
-                      <li><a href="{{ url_for('view_requirement_file', req_id=item.requirementsa.id, field='research_tools_path') }}" target="_blank">Survey/Interview/Focus Group Questions</a></li>
+                  <li><a
+                      href="{{ url_for('view_requirement_file', req_id=item.requirementsa.id, field='research_tools_path') }}"
+                      target="_blank">Survey/Interview/Focus Group Questions</a></li>
                   {% endif %}
                   {% if item.requirementsa.impact_assessment_path %}
-                      <li><a href="{{ url_for('view_requirement_file', req_id=item.requirementsa.id, field='impact_assessment_path') }}" target="_blank">Personal Assessment Impact Form</a></li>
+                  <li><a
+                      href="{{ url_for('view_requirement_file', req_id=item.requirementsa.id, field='impact_assessment_path') }}"
+                      target="_blank">Personal Assessment Impact Form</a></li>
                   {% endif %}
                   {% if item.requirementsa.prior_clearance %}
-                  <li><a href="{{ url_for('view_requirement_file', req_id=item.requirementsa.id, field='prior_clearance') }}">Prior Clearance</a></li>
+                  <li><a
+                      href="{{ url_for('view_requirement_file', req_id=item.requirementsa.id, field='prior_clearance') }}">Prior
+                      Clearance</a></li>
                   {% endif %}
                   {% if item.requirementsa.prior_clearance1 %}
-                  <li><a href="{{ url_for('view_requirement_file', req_id=item.requirementsa.id, field='prior_clearance1') }}">POPIA Letter</a></li>
+                  <li><a
+                      href="{{ url_for('view_requirement_file', req_id=item.requirementsa.id, field='prior_clearance1') }}">POPIA
+                      Letter</a></li>
                   {% endif %}
                   {% if item.requirementsa.participation_info_sheet%}
-                  <li><a href="{{ url_for('view_requirement_file', req_id=item.requirementsa.id, field='participation_info_sheet') }}">Participation Info Sheet</a></li>
+                  <li><a
+                      href="{{ url_for('view_requirement_file', req_id=item.requirementsa.id, field='participation_info_sheet') }}">Participation
+                      Info Sheet</a></li>
                   {% endif %}
                   {% if item.requirementsa.pending_note %}
-                  <li><a href="{{ url_for('view_requirement_file', req_id=item.requirementsa.id, field='pending_note') }}">Pending Note</a></li>
+                  <li><a
+                      href="{{ url_for('view_requirement_file', req_id=item.requirementsa.id, field='pending_note') }}">Pending
+                      Note</a></li>
                   {% endif %}
-                  
+
+                  <br>
+                             
+                </ul>
+              </td>
+              <td>
+                <a href="{{url_for('review_version',user_id=item.forma.user_id,form_name='A')}}"
+                  class="view-btn">View</a>
+
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% endif %}
+        <br>
+        {% if submitted_form_b%}
+        <table class="status-table">
+          <thead>
+
+            <tr>
+              <th>Student</th>
+              <th>Form</th>
+              <th>Risk Level</th>
+              <th>Date Assigned</th>
+              <th>Status</th>
+              <th>Documents</th>
+              <th>Action</th>
+            </tr>
+
+          </thead>
+          <tbody>
+            {% for item in submitted_form_b%}
+            {% set row_status = get_reviewer_row_status(item.formb, user_id) %}
+            <tr data-status="{{ row_status }}">
+              <td>{{item.formb.applicant_name}}</td>
+              <td>Form B</td>
+              <td>{{item.formb.risk_level}}</span></td>
+              <td>{% if item.formb.ethics_signature_date %}{{item.formb.ethics_signature_date.strftime('%d/%m/%Y')}}
+                {% elif item.formb.signature_date%}{{item.formb.signature_date.strftime('%d/%m/%Y')}}{% endif%}</td>
+              <td><span class="badge status-pending">{{ get_reviewer_dashboard_status(item.formb, user_id) }}</span>
                 <br>
-              </ul>
-            </td>
-            <td>
-              <a href="{{url_for('review_version',user_id=item.forma.user_id,form_name='A')}}" class="view-btn">View</a>
-             
-            </td>
-          </tr>
-         {% endfor %}
-        </tbody>
-      </table>
-      {% endif %}
-      <br>
-      {% if submitted_form_b%}
-      <table class="status-table">
-        <thead>
-          
-          <tr>
-            <th>Student</th>
-            <th>Form</th>
-            <th>Risk Level</th>
-            <th>Date Assigned</th>
-            <th>Status</th>
-            <th>Documents</th>
-            <th>Action</th>
-          </tr>
-         
-        </thead>
-        <tbody>
-          {% for item in submitted_form_b%}
-          {% set row_status = get_reviewer_row_status(item.formb, user_id) %}
-          <tr data-status="{{ row_status }}">
-            <td>{{item.formb.applicant_name}}</td>
-            <td>Form B</td>
-            <td>{{item.formb.risk_level}}</span></td>
-            <td>{% if item.formb.ethics_signature_date %}{{item.formb.ethics_signature_date.strftime('%d/%m/%Y')}}
-              {% elif item.formb.signature_date%}{{item.formb.signature_date.strftime('%d/%m/%Y')}}{% endif%}</td>
-            <td><span class="badge status-pending">{{ get_reviewer_dashboard_status(item.formb, user_id) }}</span>
-           <br>
-            <br>
-             <span class="badge status-pending">
-              <a href="{{url_for('review_feedback',form_id=item.formb.form_id)}}" style="color:white; text-decoration:none;">View_feedback</a>
-             </span>
-            </td>
-            <td>
-              {% set popia_field = None %}
-              {% set form_popia_field = None %}
-              {% if item.formb.private_permission_file or item.formb.private_permission_filename %}
+                <br>
+                <span class="badge status-pending">
+                  <a href="{{url_for('review_feedback',form_id=item.formb.form_id)}}"
+                    style="color:white; text-decoration:none;">View_feedback</a>
+                </span>
+              </td>
+              <td>
+                {% set popia_field = None %}
+                {% set form_popia_field = None %}
+                {% if item.formb.private_permission_file or item.formb.private_permission_filename %}
                 {% set form_popia_field = 'private_permission_file' %}
-              {% elif item.formb.prior_clearance or item.formb.prior_clearance_filename %}
+                {% elif item.formb.prior_clearance or item.formb.prior_clearance_filename %}
                 {% set form_popia_field = 'prior_clearance' %}
-              {% endif %}
-              {% if item.requirementsb %}
-                {% if item.requirementsb.prior_clearance1 or item.requirementsb.prior_clearance1_filename %}
-                  {% set popia_field = 'prior_clearance1' %}
-                {% elif item.requirementsb.need_jbs_clearance or item.requirementsb.need_jbs_clearance_filename %}
-                  {% set popia_field = 'need_jbs_clearance' %}
-                {% elif item.requirementsb.need_jbs_clearance1 or item.requirementsb.need_jbs_clearance1_filename %}
-                  {% set popia_field = 'need_jbs_clearance1' %}
                 {% endif %}
-              {% endif %}
-              <ul class="doc-link">
-                
+                {% if item.requirementsb %}
+                {% if item.requirementsb.prior_clearance1 or item.requirementsb.prior_clearance1_filename %}
+                {% set popia_field = 'prior_clearance1' %}
+                {% elif item.requirementsb.need_jbs_clearance or item.requirementsb.need_jbs_clearance_filename %}
+                {% set popia_field = 'need_jbs_clearance' %}
+                {% elif item.requirementsb.need_jbs_clearance1 or item.requirementsb.need_jbs_clearance1_filename %}
+                {% set popia_field = 'need_jbs_clearance1' %}
+                {% endif %}
+                {% endif %}
+                <ul class="doc-link">
+
                   {% if item.requirementsb.proposal_path %}
-                      
-                      <li><a href="{{ url_for('view_requirement_file', req_id=item.requirementsb.id, field='proposal_path') }}" target="_blank">Proposal</a></li>
+
+                  <li><a
+                      href="{{ url_for('view_requirement_file', req_id=item.requirementsb.id, field='proposal_path') }}"
+                      target="_blank">Proposal</a></li>
                   {% endif %}
                   {% if item.requirementsb.permission_letter %}
-                  
-                      <li><a href="{{ url_for('view_requirement_file', req_id=item.requirementsb.id, field='permission_letter') }}" target="_blank">Impact Form</a></li>
+
+                  <li><a
+                      href="{{ url_for('view_requirement_file', req_id=item.requirementsb.id, field='permission_letter') }}"
+                      target="_blank">Impact Form</a></li>
                   {% endif %}
                   {% if item.requirementsb.ethics_evidence %}
-                
-                      <li><a href="{{ url_for('view_requirement_file', req_id=item.requirementsb.id, field='ethics_evidence') }}" target="_blank">Permission Letter</a></li>
+
+                  <li><a
+                      href="{{ url_for('view_requirement_file', req_id=item.requirementsb.id, field='ethics_evidence') }}"
+                      target="_blank">Permission Letter</a></li>
                   {% endif %}
                   {% if item.requirementsb.prior_clearance_path %}
-               
-                      <li><a href="{{ url_for('view_requirement_file', req_id=item.requirementsb.id, field='prior_clearance_path') }}" target="_blank">Ethics Clearance</a></li>
+
+                  <li><a
+                      href="{{ url_for('view_requirement_file', req_id=item.requirementsb.id, field='prior_clearance_path') }}"
+                      target="_blank">Ethics Clearance</a></li>
                   {% endif %}
                   {% if form_popia_field %}
-                  <li><a href="{{ url_for('view_form_file', form_type='B', form_id=item.formb.form_id, field_name=form_popia_field) }}" target="_blank">POPIA Letter</a></li>
+                  <li><a
+                      href="{{ url_for('view_form_file', form_type='B', form_id=item.formb.form_id, field_name=form_popia_field) }}"
+                      target="_blank">POPIA Letter</a></li>
                   {% elif popia_field %}
-                  <li><a href="{{ url_for('view_requirement_file', req_id=item.requirementsb.id, field=popia_field) }}">POPIA Letter</a></li>
+                  <li><a
+                      href="{{ url_for('view_requirement_file', req_id=item.requirementsb.id, field=popia_field) }}">POPIA
+                      Letter</a></li>
                   {% endif %}
                   {% if item.requirementsb.pending_note %}
-                  <li><a href="{{ url_for('view_requirement_file', req_id=item.requirementsb.id, field='pending_note') }}">Pending Note</a></li>
+                  <li><a
+                      href="{{ url_for('view_requirement_file', req_id=item.requirementsb.id, field='pending_note') }}">Pending
+                      Note</a></li>
                   {% endif %}
-                 
-                <br>
-                
-              </ul>
-            </td>
-            <td>
-             
-              <a href="{{url_for('review_version',user_id=item.formb.user_id,form_name='B')}}" class="view-btn">View</a>
-              
-            </td>
-          </tr>
-           {% endfor %}
-        </tbody>
-      </table>
-      {% endif %}
-      <br>
-      {% if submitted_form_c%}
-      <table class="status-table" >
-        <thead>
-          
-          <tr>
-            <th>Student</th>
-            <th>Form</th>
-            <th>Risk Level</th>
-            <th>Date Assigned</th>
-            <th>Status</th>
-            <th>Documents</th>
-            <th>Action</th>
-          </tr>
-         
-        </thead>
-        <tbody>
-        {% for item in  submitted_form_c%}
-          {% set row_status = get_reviewer_row_status(item.formc, user_id) %}
-          <tr data-status="{{ row_status }}">
-            <td>{{item.formc.applicant_name}}</td>
-            <td>Form C</td>
-            <td>{{item.formc.risk_level}}</td>
-            <td>{% if item.formc.ethics_signature_date %}{{item.formc.ethics_signature_date.strftime('%d/%m/%Y')}}
-              {% elif item.formc.signature_date%}{{item.formc.signature_date.strftime('%d/%m/%Y')}}{% endif%}</td>
-            <td><span class="badge status-pending">{{ get_reviewer_dashboard_status(item.formc, user_id) }}</span>
-             <br>
-            <br>
-             <span class="badge status-pending">
-              <a href="{{url_for('review_feedback',form_id=item.formc.form_id)}}" style="color:white; text-decoration:none;">View_feedback</a>
-             </span>
+
+                  <br>
+
+                </ul>
               </td>
-            <td>
-              <ul class="doc-link">
-                
-                  {% if requirement_file_available(item.requirementsc, 'files') %}
-                      
-                      <li><a href="{{ url_for('view_requirement_file', req_id=item.requirementsc.id, field='files') }}" target="_blank">Proposal</a></li>
-                  {% endif %}
-                  
+              <td>
+
+                <a href="{{url_for('review_version',user_id=item.formb.user_id,form_name='B')}}"
+                  class="view-btn">View</a>
+
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% endif %}
+        <br>
+        {% if submitted_form_c%}
+        <table class="status-table">
+          <thead>
+
+            <tr>
+              <th>Student</th>
+              <th>Form</th>
+              <th>Risk Level</th>
+              <th>Date Assigned</th>
+              <th>Status</th>
+              <th>Documents</th>
+              <th>Action</th>
+            </tr>
+
+          </thead>
+          <tbody>
+            {% for item in submitted_form_c%}
+            {% set row_status = get_reviewer_row_status(item.formc, user_id) %}
+            <tr data-status="{{ row_status }}">
+              <td>{{item.formc.applicant_name}}</td>
+              <td>Form C</td>
+              <td>{{item.formc.risk_level}}</td>
+              <td>{% if item.formc.ethics_signature_date %}{{item.formc.ethics_signature_date.strftime('%d/%m/%Y')}}
+                {% elif item.formc.signature_date%}{{item.formc.signature_date.strftime('%d/%m/%Y')}}{% endif%}</td>
+              <td><span class="badge status-pending">{{ get_reviewer_dashboard_status(item.formc, user_id) }}</span>
                 <br>
-              </ul>
-            </td>
-            <td>
-              
-              <a href="{{url_for('review_version',user_id=item.formc.user_id,form_name='C')}}" class="view-btn">View</a>
-              
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-      {% endif %}
-    
-    </section>
+                <br>
+                <span class="badge status-pending">
+                  <a href="{{url_for('review_feedback',form_id=item.formc.form_id)}}"
+                    style="color:white; text-decoration:none;">View_feedback</a>
+                </span>
+              </td>
+              <td>
+                <ul class="doc-link">
 
-  </main>
+                  {% if requirement_file_available(item.requirementsc, 'files') %}
 
-</div>
+                  <li><a href="{{ url_for('view_requirement_file', req_id=item.requirementsc.id, field='files') }}"
+                      target="_blank">Proposal</a></li>
+                  {% endif %}
+
+                  <br>
+                </ul>
+              </td>
+              <td>
+
+                <a href="{{url_for('review_version',user_id=item.formc.user_id,form_name='C')}}"
+                  class="view-btn">View</a>
+
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% endif %}
+
+      </section>
+
+    </main>
+
+  </div>
 
 
-    <!-- <footer class="footer">
+  <!-- <footer class="footer">
       <p>&copy; 2025 JBS Ethics | University of Johannesburg</p>
     </footer> -->
-<script>
-document.getElementById("formAStatusFilter").addEventListener("change", function () {
-  let selected = this.value;
-  let rows = document.querySelectorAll("table.status-table tbody tr");
+  <script>
+    document.getElementById("formAStatusFilter").addEventListener("change", function () {
+      let selected = this.value;
+      let rows = document.querySelectorAll("table.status-table tbody tr");
 
-  rows.forEach(row => {
-    let status = row.getAttribute("data-status");
-    if (selected === "all" || status === selected) {
-      row.style.display = "";
-    } else {
-      row.style.display = "none";
-    }
-  });
-});
-</script>
+      rows.forEach(row => {
+        let status = row.getAttribute("data-status");
+        if (selected === "all" || status === selected) {
+          row.style.display = "";
+        } else {
+          row.style.display = "none";
+        }
+      });
+    });
+  </script>
 </body>
+
 </html>

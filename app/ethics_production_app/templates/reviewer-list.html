@@ -25,7 +25,7 @@
       <nav class="sidebar-nav">
 
         {% if 'admin' == role|lower%}
-        <a href="{{url_for('chair_landing')}}" class="sidebar-link active">
+        <a href="{{url_for('chair_landing')}}" class="sidebar-link">
           <i class="fas fa-clipboard-list"></i> Dashboard
         </a>
         <a href="{{url_for('monitor')}}" class="sidebar-link"><i class="fas fa-user me-2"></i>Student List</a>
@@ -35,7 +35,7 @@
             class="fas fa-users-gear me-2"></i>Reassign Reviewers</a>
         <a href="{{url_for('admin_student_password_resets')}}" class="sidebar-link"><i
             class="fas fa-key me-2"></i>Student Password Resets</a>
-        <a href="{{url_for('reviewer_list')}}" class="sidebar-link">
+        <a href="{{url_for('reviewer_list')}}" class="sidebar-link active">
           <i class="fas fa-user"></i> Reviewer List
         </a>
 
@@ -47,6 +47,16 @@
         </a>
         <a href="{{ url_for('admin_status_monitor') }}" class="sidebar-link"><i class="fas fa-filter"></i> Admin Status
           Monitor</a>
+
+
+        {% if has_any_bi_view_rights|default(false) %}
+
+        <a href="{{ url_for('power_bi_and_reporting') }}" class="sidebar-link">
+          <i class="fas fa-clock"></i>
+          BI Dashboard and Reporting
+        </a>
+
+        {% endif %}
         <a class="dropdown-toggle" href="#" data-bs-toggle="collapse" data-bs-target="#monitoringFormsAdmin">
           <i class="fas fa-clipboard me-2"></i>Monitoring Forms
         </a>
@@ -69,7 +79,7 @@
             class="fas fa-users-gear me-2"></i>Reassign Reviewers</a>
         <a href="{{url_for('admin_student_password_resets')}}" class="sidebar-link"><i
             class="fas fa-key me-2"></i>Student Password Resets</a>
-        <a href="{{url_for('reviewer_list')}}" class="sidebar-link">
+        <a href="{{url_for('reviewer_list')}}" class="sidebar-link active">
           <i class="fas fa-user"></i> Reviewer List
         </a>
 
@@ -82,6 +92,15 @@
         </a>
         <a href="{{ url_for('admin_status_monitor') }}" class="sidebar-link"><i class="fas fa-filter"></i> Admin Status
           Monitor</a>
+
+        {% if has_any_bi_view_rights|default(false) %}
+
+        <a href="{{ url_for('power_bi_and_reporting') }}" class="sidebar-link">
+          <i class="fas fa-clock"></i>
+          BI Dashboard and Reporting
+        </a>
+
+        {% endif %}
 
         <div class="dropdown w-100">
           <a class="dropdown-toggle" href="#" data-bs-toggle="collapse" data-bs-target="#analyticsForms">
@@ -240,38 +259,38 @@
         </table>
 
         {% if total_pages and total_pages > 1 %}
-<nav aria-label="Reviewer pagination" class="mt-4">
-  <ul class="pagination justify-content-center flex-wrap">
+        <nav aria-label="Reviewer pagination" class="mt-4">
+          <ul class="pagination justify-content-center flex-wrap">
 
-    <!-- Previous -->
-    <li class="page-item {% if page <= 1 %}disabled{% endif %}">
-      <a class="page-link" href="{{ url_for(
+            <!-- Previous -->
+            <li class="page-item {% if page <= 1 %}disabled{% endif %}">
+              <a class="page-link" href="{{ url_for(
         'reviewer_list',
         page=page-1,
         filter_full_name=request.args.get('filter_full_name', ''),
         filter_email=request.args.get('filter_email', ''),
         filter_specialisation=request.args.get('filter_specialisation', '')
       ) }}">
-        Previous
-      </a>
-    </li>
+                Previous
+              </a>
+            </li>
 
-    <!-- Next -->
-    <li class="page-item {% if page >= total_pages %}disabled{% endif %}">
-      <a class="page-link" href="{{ url_for(
+            <!-- Next -->
+            <li class="page-item {% if page >= total_pages %}disabled{% endif %}">
+              <a class="page-link" href="{{ url_for(
         'reviewer_list',
         page=page+1,
         filter_full_name=request.args.get('filter_full_name', ''),
         filter_email=request.args.get('filter_email', ''),
         filter_specialisation=request.args.get('filter_specialisation', '')
       ) }}">
-        Next
-      </a>
-    </li>
+                Next
+              </a>
+            </li>
 
-  </ul>
-</nav>
-{% endif %}
+          </ul>
+        </nav>
+        {% endif %}
 
 
         {% else %}

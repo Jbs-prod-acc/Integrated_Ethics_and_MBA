@@ -203,7 +203,7 @@
     <!-- Sidebar -->
     <aside class="sidebar">
       <nav class="sidebar-nav">
-       
+
         {% if 'admin' == role|lower %}
         <a href="{{url_for('chair_landing')}}" class="sidebar-link">
           <i class="fas fa-clipboard-list me-2"></i>Dashboard
@@ -240,7 +240,24 @@
         <a href="{{ url_for('admin_status_monitor') }}" class="sidebar-link">
           <i class="fas fa-filter me-2"></i>Admin Status Monitor
         </a>
+        {% if has_any_bi_view_rights|default(false) %}
 
+        <a href="{{ url_for('power_bi_and_reporting') }}" class="sidebar-link">
+          <i class="fas fa-clock"></i>
+          BI Dashboard and Reporting
+        </a>
+
+        {% endif %}
+
+
+        {% if has_any_bi_access_rights|default(false) %}
+
+        <a href="{{ url_for('power_bi_and_reporting') }}" class="sidebar-link active">
+          <i class="fas fa-clock"></i>
+          BI Dashboard and Reporting
+        </a>
+
+        {% endif %}
         <div class="dropdown w-100">
           <a class="dropdown-toggle" href="#" data-bs-toggle="collapse" data-bs-target="#monitoringFormsAdmin">
             <i class="fas fa-clipboard me-2"></i>Monitoring Forms
@@ -288,6 +305,14 @@
         <a href="{{ url_for('admin_status_monitor') }}" class="sidebar-link">
           <i class="fas fa-filter me-2"></i>Admin Status Monitor
         </a>
+        {% if has_any_bi_view_rights|default(false) %}
+
+        <a href="{{ url_for('power_bi_and_reporting') }}" class="sidebar-link">
+          <i class="fas fa-clock"></i>
+          BI Dashboard and Reporting
+        </a>
+
+        {% endif %}
 
         <div class="dropdown w-100">
           <a class="dropdown-toggle" href="#" data-bs-toggle="collapse" data-bs-target="#analyticsForms">
@@ -402,8 +427,8 @@
                   {% if filter_users_list %}
                   {% for user in filter_users_list %}
                   <option value="{{ user.full_name }}">
-                  {% endfor %}
-                  {% endif %}
+                    {% endfor %}
+                    {% endif %}
                 </datalist>
               </div>
 
@@ -417,8 +442,8 @@
                   {% if filter_users_list %}
                   {% for user in filter_users_list %}
                   <option value="{{ user.email }}">
-                  {% endfor %}
-                  {% endif %}
+                    {% endfor %}
+                    {% endif %}
                 </datalist>
               </div>
 
@@ -444,7 +469,8 @@
                     Admin
                   </option>
 
-                  <option value="SUPER_ADMIN" {% if request.args.get('filter_role')=='SUPER_ADMIN' %}selected{% endif %}>
+                  <option value="SUPER_ADMIN" {% if request.args.get('filter_role')=='SUPER_ADMIN' %}selected{% endif
+                    %}>
                     Super Admin
                   </option>
                 </select>
