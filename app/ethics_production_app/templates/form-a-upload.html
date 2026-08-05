@@ -57,6 +57,11 @@
   <main class="main-content">
 
     <h2>Before You Start Form A</h2>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for category, message in messages %}
+        <div class="alert alert-{{ category }}" role="alert">{{ message }}</div>
+      {% endfor %}
+    {% endwith %}
     {% include '_uploaded_requirements.html' %}
     <form id="formARequirements" action="{{url_for('submit_form_a_requirements')}}" method="post" enctype="multipart/form-data">
       <input type="hidden" name="from_dashboard" value="{{ from_dashboard if from_dashboard else '' }}">
@@ -78,14 +83,14 @@
 
       <!-- <div class="question-block hidden" id="companyLetterUpload">       
         <label>Upload Company Permission Letter <small>(with a letterhead, signed and dated)</small></label>
-        <input type="file" name="permission_letter" accept=".pdf,.docx">
+        <input type="file" name="permission_letter" accept=".pdf,.docx,.doc">
       </div> -->
 
       <div class="question-block hidden" id="companyLetterUpload">       
         <label>Upload Company Permission Letter(s) <small>(with a letterhead, signed and dated)</small></label>
         <div id="permissionFilesContainer">
           <div class="file-input-group">
-            <input type="file" name="permission_letter[]" accept=".pdf,.docx">
+            <input type="file" name="permission_letter[]" accept=".pdf,.docx,.doc">
           </div>
         </div>
         <button type="button" class="btn btn-sm btn-outline-primary mt-2" onclick="addFileInput()">Add Another</button>
@@ -96,7 +101,7 @@
         <label>Upload Pending Note
           <small>(Briefly explain who you’ve contacted and expected timeline)</small>
         </label>
-        <input type="file" name="pending_note" accept=".pdf,.docx">
+        <input type="file" name="pending_note" accept=".pdf,.docx,.doc">
       </div>
 
 
@@ -114,7 +119,7 @@
 
       <div class="question-block hidden" id="clearanceUpload">
         <label>Upload Prior Ethical Clearance Document (Original Study)</label>
-        <input type="file" name="prior_clearance" accept=".pdf,.docx">
+        <input type="file" name="prior_clearance" accept=".pdf,.docx,.doc">
       </div>
 
       <div class="question-block">
@@ -130,27 +135,27 @@
 
       <div class="question-block hidden" id="clearanceUpload1">
         <label>Upload POPIA Information Letter and Consent Form</label>
-        <input type="file" name="prior_clearance1" accept=".pdf,.docx">
+        <input type="file" name="prior_clearance1" accept=".pdf,.docx,.doc">
       </div>
 
       <div class="question-block">
         <label>4. Upload Survey / Questionnaire / Focus Group Questions</label>
-        <input type="file" name="research_tools_path" accept=".pdf,.docx" {% if not from_dashboard or not from_dashboard.research_tools_path %}required{% endif %}>
+        <input type="file" name="research_tools_path" accept=".pdf,.docx,.doc" {% if not from_dashboard or not from_dashboard.research_tools_path %}required{% endif %}>
       </div>
 
       <div class="question-block">
         <label>5. Upload Research Proposal</label>
-        <input type="file" name="proposal_path" accept=".pdf,.docx" {% if not from_dashboard or not from_dashboard.proposal_path %}required{% endif %}>
+        <input type="file" name="proposal_path" accept=".pdf,.docx,.doc" {% if not from_dashboard or not from_dashboard.proposal_path %}required{% endif %}>
       </div>
 
       <div class="question-block">
         <label>6. Upload Personal Impact Assessment Form</label>
-        <input type="file" name="impact_assessment_path" accept=".pdf,.docx" {% if not from_dashboard or not from_dashboard.impact_assessment_path %}required{% endif %}>
+        <input type="file" name="impact_assessment_path" accept=".pdf,.docx,.doc" {% if not from_dashboard or not from_dashboard.impact_assessment_path %}required{% endif %}>
       </div>
 
       <div class="question-block">
         <label>7. Upload Participation Information Sheet & Consent Form</label>
-        <input type="file" name="participation_info_sheet" accept=".pdf,.docx" {% if not from_dashboard or not from_dashboard.participation_info_sheet %}required{% endif %}>
+        <input type="file" name="participation_info_sheet" accept=".pdf,.docx,.doc" {% if not from_dashboard or not from_dashboard.participation_info_sheet %}required{% endif %}>
       </div>
 
       <div class="form-navigation">
@@ -213,7 +218,7 @@
     const input = document.createElement("input");
     input.type = "file";
     input.name = "permission_letter[]";
-    input.accept = ".pdf,.docx";
+    input.accept = ".pdf,.docx,.doc";
     input.required = false;
 
     const removeBtn = document.createElement("button");
@@ -294,7 +299,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const input = document.createElement("input");
     input.type = "file";
     input.name = "permission_letter[]";
-    input.accept = ".pdf,.docx";
+    input.accept = ".pdf,.docx,.doc";
 
     // Make new inputs required only when 'Yes' is selected
     const selected = document.querySelector('input[name="need_permission"]:checked')?.value;

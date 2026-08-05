@@ -1,5 +1,16 @@
 from app_support import *
 
+
+def _send_stored_document(data, filename=None, fallback_name="document"):
+    data = decode_legacy_binary(data)
+    mimetype, download_name, as_attachment = response_document_metadata(
+        data, filename, fallback_name
+    )
+    return send_file(
+        io.BytesIO(data), mimetype=mimetype, download_name=download_name,
+        as_attachment=as_attachment
+    )
+
 @app.route('/view_requirement_file')
 @login_required
 def view_requirement_file():
@@ -45,14 +56,8 @@ def view_requirement_file():
     if not data:
         return "File content not found", 404
 
-    # NEW: Handle memoryview (common when Column(Text) points to a bytea in DB)
     if isinstance(data, memoryview):
-        try:
-            # Try to decode as string - if it's a path, it will succeed
-            data = bytes(data).decode('utf-8')
-        except Exception:
-            # It's likely actual binary data (BLOB)
-            data = bytes(data)
+        data = data.tobytes()
 
     # Determine filename
     filename = getattr(req, f"{actual_field}_filename", None) or \
@@ -71,52 +76,7 @@ def view_requirement_file():
             mtype, _ = mimetypes.guess_type(potential_path)
             return send_file(potential_path, mimetype=mtype or 'application/pdf', as_attachment=False, download_name=filename or os.path.basename(potential_path))
 
-    # Ensure data is bytes for processing if it was a BLOB
-    if isinstance(data, str):
-        if data.startswith('\\x'):
-            data = bytes.fromhex(data[2:])
-        else:
-            data = data.encode('latin-1', errors='ignore')
-    elif hasattr(data, 'read'): # Handle file-like objects
-        data = data.read()
-    
-    # MAGIC NUMBER DETECTION for robustness
-    is_pdf = data.startswith(b'%PDF-')
-    is_zip = data.startswith(b'PK\x03\x04')
-    
-    mimetype = 'application/pdf' if is_pdf else 'application/octet-stream'
-    
-    if filename:
-        filename = filename.strip()
-        ext = filename.lower().split('.')[-1]
-        if ext == 'pdf':
-            mimetype = 'application/pdf'
-        elif ext in ['doc', 'docx']:
-            mimetype = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' if ext == 'docx' else 'application/msword'
-        elif ext == 'zip':
-            mimetype = 'application/zip'
-        elif ext == 'png':
-            mimetype = 'image/png'
-        elif ext in ['jpg', 'jpeg']:
-            mimetype = 'image/jpeg'
-    else:
-        # Fallback filename based on magic numbers
-        if is_pdf:
-            filename = f"{f_name}.pdf"
-            mimetype = 'application/pdf'
-        elif is_zip:
-            filename = f"{f_name}.docx"
-            mimetype = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-        else:
-            filename = f"{f_name}.dat"
-            mimetype = 'application/octet-stream'
-
-    return send_file(
-        io.BytesIO(data),
-        mimetype=mimetype,
-        download_name=filename,
-        as_attachment=False
-    )
+    return _send_stored_document(data, filename, f_name)
 
 
 # --- Send Back for Corrections endpoint for FormB ---
@@ -964,23 +924,17 @@ def view_form_file(form_type, form_id, field_name=None):
     if not data:
         return "File not found", 404
 
-    # NEW: Handle memoryview
     if isinstance(data, memoryview):
-        try:
-            data = bytes(data).decode('utf-8')
-        except Exception:
-            data = bytes(data)
+        data = data.tobytes()
 
     # Better filename detection
     filename = getattr(form, f"{f_name}_filename", None) or \
                getattr(form, f_name.replace('_path', '') + "_filename", None) or \
                getattr(form, f_name.replace('_file', '') + "_filename", None)
                
-    # Ensure data is bytes for processing
+    # Backward compatibility for path-based legacy uploads.
     if isinstance(data, str):
-        if data.startswith('\\x'):
-            data = bytes.fromhex(data[2:])
-        elif len(data) < 500:
+        if not data.startswith('\\x') and len(data) < 500:
             # It might be a legacy file path if it's short
             clean_path = data.replace('\\', '/')
             if clean_path.startswith('static/'):
@@ -990,48 +944,8 @@ def view_form_file(form_type, form_id, field_name=None):
                 # Determine mimetype from filename or fallback
                 mtype, _ = mimetypes.guess_type(file_path)
                 return send_file(file_path, mimetype=mtype or 'application/pdf', as_attachment=False)
-            # If path doesn't exist, try encoding as bytes
-            data = data.encode('latin-1')
-        else:
-            data = data.encode('latin-1')
 
-    # MAGIC NUMBER DETECTION for robustness
-    is_pdf = data.startswith(b'%PDF-')
-    is_zip = data.startswith(b'PK\x03\x04')
-    
-    mimetype = 'application/pdf' if is_pdf else 'application/octet-stream'
-    
-    if filename:
-        filename = filename.strip()
-        ext = filename.lower().split('.')[-1]
-        if ext == 'pdf':
-            mimetype = 'application/pdf'
-        elif ext in ['doc', 'docx']:
-            mimetype = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' if ext == 'docx' else 'application/msword'
-        elif ext == 'zip':
-            mimetype = 'application/zip'
-        elif ext == 'png':
-            mimetype = 'image/png'
-        elif ext in ['jpg', 'jpeg']:
-            mimetype = 'image/jpeg'
-    else:
-        # Fallback filename based on magic numbers
-        if is_pdf:
-            filename = f"{f_name}.pdf"
-            mimetype = 'application/pdf'
-        elif is_zip:
-            filename = f"{f_name}.docx"
-            mimetype = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-        else:
-            filename = f"{f_name}.dat"
-            mimetype = 'application/octet-stream'
-
-    return send_file(
-        io.BytesIO(data),
-        mimetype=mimetype,
-        download_name=filename,
-        as_attachment=False
-    )
+    return _send_stored_document(data, filename, f_name)
 
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
@@ -1049,7 +963,7 @@ def health():
     return 'OK', 200
 
     
-ALLOWED_EXTENSIONS = {'pdf', 'docx'}
+ALLOWED_EXTENSIONS = {'pdf', 'docx', 'doc'}
 
 def get_upload_folder():
     """
@@ -1072,17 +986,13 @@ def allowed_file(filename):
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 def read_file_blob(file_obj_or_key):
-    """Read file content and return (binary_data, filename)."""
+    """Read and validate a PDF/DOCX upload."""
     if isinstance(file_obj_or_key, str):
         file = request.files.get(file_obj_or_key)
     else:
         file = file_obj_or_key
         
-    if not file or file.filename == '':
-        return None, None
-    if allowed_file(file.filename):
-        return file.read(), secure_filename(file.filename)
-    return None, None
+    return read_validated_upload(file, app.config.get('MAX_FILE_LENGTH', 524288000))
 
 
 # DEBUG ENDPOINT REMOVED FOR PRODUCTION SECURITY

@@ -447,8 +447,7 @@ def form_a_sec4():
             # --- Handle File Upload ---
             file = request.files.get('private_permission_file')
             if file and file.filename:
-                form.private_permission_file = file.read()
-                form.private_permission_filename = file.filename
+                assign_private_permission_upload(form, file)
 
             # --- Commit to Database ---
             db_session.commit()
@@ -556,8 +555,7 @@ def submit_form_a_sec4 ():
 
             file = request.files.get('private_permission_file')
             if file and file.filename:
-                form.private_permission_file = file.read()
-                form.private_permission_filename = file.filename
+                assign_private_permission_upload(form, file)
 
             db_session.commit()
             flash("Form A Section 4 submitted successfully.", "success")
@@ -849,10 +847,7 @@ def form_b_upload():
         os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
         def get_file_blob(field_name):
-            file = request.files.get(field_name)
-            if file and file.filename:
-                return file.read(), file.filename
-            return None, None
+            return read_file_blob(field_name)
 
         perm_data, perm_fname = get_file_blob('permission_letter_path')
         prior_data, prior_fname = get_file_blob('prior_clearance_path')
@@ -1025,8 +1020,7 @@ def form_b_sec2():
             # Handle file upload
             file = request.files.get('private_permission_file')
             if file and file.filename:
-                form.private_permission_file = file.read()
-                form.private_permission_filename = file.filename
+                assign_private_permission_upload(form, file)
 
             # ✅ Commit to database
             db_session.add(form)
@@ -2049,8 +2043,7 @@ def student_edit_forma():
         # Handle file upload
         file = request.files.get('private_permission_file')
         if file and file.filename:
-            form.private_permission_file = file.read()
-            form.private_permission_filename = file.filename
+            assign_private_permission_upload(form, file)
 
         # Update the form attributes
         form.attachment_id = form_requirements.id
@@ -2594,8 +2587,7 @@ def student_continue_forma():
                 # Handle file upload
             file = request.files.get('private_permission_file')
             if file and file.filename:
-                    form.private_permission_file = file.read()
-                    form.private_permission_filename = file.filename
+                    assign_private_permission_upload(form, file)
 
             interviews_one = request.form.get('interviews') == 'Yes'
             documents_one = request.form.get('documents') == 'Yes'
@@ -2807,8 +2799,7 @@ def student_continue_forma():
             # Handle file upload
             file = request.files.get('private_permission_file')
             if file and file.filename:
-                form.private_permission_file = file.read()
-                form.private_permission_filename = file.filename
+                assign_private_permission_upload(form, file)
     
             db_session.add(form)
             db_session.commit()
@@ -2941,8 +2932,7 @@ def submit_form_a(form_id):
                     form.private_permission = to_bool(request.form.get('privatePermission'))
                     file = request.files.get('private_permission_file')
                     if file and file.filename:
-                        form.private_permission_file = file.read()
-                        form.private_permission_filename = file.filename
+                        assign_private_permission_upload(form, file)
 
             # Assign all form fields
             form.user_id = user_id
@@ -3224,8 +3214,7 @@ def student_edit_formb():
         file = request.files.get('private_permission_file')
         if file and file.filename:
             print(f"[DEBUG] File uploaded: {file.filename}")
-            form.private_permission_file = file.read()
-            form.private_permission_filename = file.filename
+            assign_private_permission_upload(form, file)
         import traceback
         try:
             db_session.commit()
@@ -3335,8 +3324,7 @@ def student_continue_formb():
             # Handle file upload
             file = request.files.get('private_permission_file')
             if file and file.filename:
-                form.private_permission_file = file.read()
-                form.private_permission_filename = file.filename 
+                assign_private_permission_upload(form, file)
 
             form.limitations_reporting = request.form.get('limitations_reporting')
 
@@ -3467,8 +3455,7 @@ def submit_form_b(form_id):
             # Handle file upload
             file = request.files.get('private_permission_file')
             if file and file.filename:
-                form.private_permission_file = file.read()
-                form.private_permission_filename = file.filename
+                assign_private_permission_upload(form, file)
             
             form.limitations_reporting = request.form.get('limitations_reporting')
             form.original_clearance = request.form.get('original_clearance')

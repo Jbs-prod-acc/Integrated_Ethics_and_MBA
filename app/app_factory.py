@@ -1,3 +1,5 @@
+import threading
+
 from flask import Flask, abort, redirect, request, url_for
 from flask_login import current_user
 from sqlalchemy import inspect, text
@@ -33,14 +35,31 @@ def _bootstrap_sqlite_dev_database(app):
         app.logger.info("Initialized local SQLite database schema automatically.")
 
 
-def _mount_production_ethics_app(app):
-    try:
-        from .ethics_production_app import get_mounted_app
+class _LazyEthicsApplication:
+    """Load the legacy ethics application only when it is first requested."""
 
-        app.wsgi_app = DispatcherMiddleware(app.wsgi_app, {"/ethics": get_mounted_app()})
-        app.logger.info("Mounted production ethics app at /ethics")
-    except Exception as exc:
-        app.logger.exception("Failed to mount production ethics app: %s", exc)
+    def __init__(self, app):
+        self._parent_app = app
+        self._application = None
+        self._lock = threading.Lock()
+
+    def __call__(self, environ, start_response):
+        if self._application is None:
+            with self._lock:
+                if self._application is None:
+                    from .ethics_production_app import get_mounted_app
+
+                    self._application = get_mounted_app()
+                    self._parent_app.logger.info("Loaded production ethics app")
+        return self._application(environ, start_response)
+
+
+def _mount_production_ethics_app(app):
+    app.wsgi_app = DispatcherMiddleware(
+        app.wsgi_app,
+        {"/ethics": _LazyEthicsApplication(app)},
+    )
+    app.logger.info("Configured production ethics app at /ethics")
 
 
 def _ensure_postgres_support_tables(app):
@@ -150,6 +169,30 @@ def _ensure_postgres_support_tables(app):
         app.logger.info("Ensured required Postgres support tables exist.")
 
 
+def _ensure_ethics_postgres_columns(app):
+    """Keep the mounted legacy ORM compatible before its first request."""
+    database_uri = app.config.get("SQLALCHEMY_DATABASE_URI") or ""
+    if not database_uri.startswith("postgresql"):
+        return
+
+    with app.app_context():
+        for table_name in ("form_a", "form_b", "form_c"):
+            for column_name, column_type in (
+                ("form_supervisor_status", "TEXT"),
+                ("ethics_status", "TEXT"),
+                ("ethics_signature", "TEXT"),
+                ("ethics_signature_date", "TIMESTAMP WITH TIME ZONE"),
+            ):
+                db.session.execute(
+                    text(
+                        f'ALTER TABLE IF EXISTS "{table_name}" '
+                        f'ADD COLUMN IF NOT EXISTS "{column_name}" {column_type}'
+                    )
+                )
+        db.session.commit()
+        app.logger.info("Ensured required ethics workflow columns exist.")
+
+
 def create_app(config_class=Config):
     app = Flask(__name__)
     app.config.from_object(config_class)
@@ -185,6 +228,10 @@ def create_app(config_class=Config):
     def index():
         return redirect(url_for("mba.dashboard"))
 
+    @app.route("/health")
+    def health():
+        return {"status": "ok"}, 200
+
     @app.route("/switch/ethics-sso")
     def ethics_sso_bridge():
         token = request.args.get("token", "")
@@ -193,7 +240,7 @@ def create_app(config_class=Config):
         return redirect(f"/ethics/sso-login?token={token}")
 
     _bootstrap_sqlite_dev_database(app)
-    _ensure_postgres_support_tables(app)
+    _ensure_ethics_postgres_columns(app)
     _mount_production_ethics_app(app)
 
     return app

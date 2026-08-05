@@ -7,6 +7,7 @@ Revises: d4e5f6a7b8c9
 from typing import Sequence, Union
 
 from alembic import op
+import sqlalchemy as sa
 from sqlalchemy import inspect
 
 
@@ -25,10 +26,12 @@ def upgrade() -> None:
         columns = _columns(table_name)
 
         if "ethics_status" not in columns:
-            for legacy_name in ("ethics_form_status", "supervisor_form_status"):
-                if legacy_name in columns:
-                    op.alter_column(table_name, legacy_name, new_column_name="ethics_status")
-                    break
+            if "ethics_form_status" in columns:
+                op.alter_column(
+                    table_name, "ethics_form_status", new_column_name="ethics_status"
+                )
+            else:
+                op.add_column(table_name, sa.Column("ethics_status", sa.Text(), nullable=True))
 
         columns = _columns(table_name)
         if "ethics_signature_date" not in columns and "supervisor_signature_date" in columns:

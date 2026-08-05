@@ -57,6 +57,13 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     WTF_CSRF_ENABLED = os.getenv("WTF_CSRF_ENABLED", "true").lower() in {"1", "true", "yes"}
 
+    # Shared upload limits used by the mounted ethics application. The request
+    # limit covers the complete multipart body; the file limit is per document.
+    MAX_CONTENT_LENGTH = int(
+        os.getenv("MAX_REQUEST_SIZE", os.getenv("MAX_FILE_SIZE", "536870912"))
+    )
+    MAX_FILE_LENGTH = int(os.getenv("MAX_DOCUMENT_SIZE", "524288000"))
+
     MICROSOFT_CLIENT_ID = os.getenv("MICROSOFT_CLIENT_ID")
     MICROSOFT_CLIENT_SECRET = os.getenv("MICROSOFT_CLIENT_SECRET")
     MICROSOFT_TENANT_ID = os.getenv("MICROSOFT_TENANT_ID", "common")

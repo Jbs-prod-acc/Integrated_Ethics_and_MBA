@@ -28,6 +28,20 @@ class FlexibleBinary(TypeDecorator):
     """Handles both binary and string data in BYTEA columns"""
     impl = LargeBinary
     cache_ok = True
+
+    @staticmethod
+    def _decode_postgres_hex(value):
+        """Decode BYTEA hex text returned by legacy TEXT-backed columns."""
+        prefix = b'\\x' if isinstance(value, bytes) else '\\x'
+        if value.startswith(prefix):
+            encoded = value[2:]
+            try:
+                if isinstance(encoded, bytes):
+                    encoded = encoded.decode('ascii')
+                return bytes.fromhex(encoded)
+            except (UnicodeDecodeError, ValueError):
+                return value
+        return value
     
     def result_processor(self, dialect, coltype):
         """Override result processor to handle string data"""
@@ -35,9 +49,10 @@ class FlexibleBinary(TypeDecorator):
             if value is None:
                 return value
             if isinstance(value, bytes):
-                return value
+                return self._decode_postgres_hex(value)
             if isinstance(value, str):
-                return value.encode('utf-8')
+                value = self._decode_postgres_hex(value)
+                return value if isinstance(value, bytes) else value.encode('utf-8')
             # Try to convert to bytes with encoding
             try:
                 return bytes(value)

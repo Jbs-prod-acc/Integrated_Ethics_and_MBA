@@ -59,8 +59,12 @@ class Config:
     SESSION_COOKIE_SAMESITE = 'Lax'  # CSRF protection
     PERMANENT_SESSION_LIFETIME = 3600  # 1 hour timeout
     
-    # File Upload Security
-    MAX_CONTENT_LENGTH = int(os.getenv('MAX_FILE_SIZE', 10485760))  # 10MB default
+    # File Upload Security. Flask's limit applies to the complete multipart
+    # request, so keep it separate from the per-document validation limit.
+    MAX_CONTENT_LENGTH = int(
+        os.getenv('MAX_REQUEST_SIZE', os.getenv('MAX_FILE_SIZE', 536870912))
+    )  # 512MB request; MAX_FILE_SIZE retained as a legacy fallback
+    MAX_FILE_LENGTH = int(os.getenv('MAX_DOCUMENT_SIZE', 524288000))  # 500MB/document
     
     # CORS (restrict to your domain in production)
     CORS_ORIGINS = os.getenv('CORS_ORIGINS', 'https://jbs-ethics.onrender.com').split(',')

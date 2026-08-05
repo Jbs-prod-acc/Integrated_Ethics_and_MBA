@@ -5,14 +5,12 @@
 
 {% block content %}
 <div class="container py-4 admin-upload-page">
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% for category, message in messages %}
-            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                {{ message }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        {% endfor %}
-    {% endwith %}
+    {% for category, message in admin_messages %}
+        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    {% endfor %}
 
     <div class="card upload-card shadow-sm">
         <div class="card-body p-4 p-lg-5">
@@ -66,12 +64,12 @@
                     <div class="question-block conditional-upload" id="formAPermissionYes" hidden>
                         <label for="formAPermissionLetter">Upload Company Permission Letter</label>
                         <small>Company letterhead, signed and dated</small>
-                        <input id="formAPermissionLetter" type="file" name="permission_letter" class="form-control" accept=".pdf,.docx">
+                        <input id="formAPermissionLetter" type="file" name="permission_letter" class="form-control" accept=".pdf,.docx,.doc">
                     </div>
                     <div class="question-block conditional-upload" id="formAPermissionPending" hidden>
                         <label for="formAPendingNote">Upload Pending Note</label>
                         <small>Explain who was contacted and the expected timeline</small>
-                        <input id="formAPendingNote" type="file" name="pending_note" class="form-control" accept=".pdf,.docx">
+                        <input id="formAPendingNote" type="file" name="pending_note" class="form-control" accept=".pdf,.docx,.doc">
                     </div>
 
                     <div class="question-block">
@@ -83,7 +81,7 @@
                     </div>
                     <div class="question-block conditional-upload" id="formAClearanceYes" hidden>
                         <label for="formAPriorClearance">Upload Prior Ethical Clearance Document</label>
-                        <input id="formAPriorClearance" type="file" name="prior_clearance" class="form-control" accept=".pdf,.docx">
+                        <input id="formAPriorClearance" type="file" name="prior_clearance" class="form-control" accept=".pdf,.docx,.doc">
                     </div>
 
                     <div class="question-block">
@@ -95,13 +93,13 @@
                     </div>
                     <div class="question-block conditional-upload" id="formAPopiaYes" hidden>
                         <label for="formAPopiaLetter">Upload POPIA Information Letter and Consent Form</label>
-                        <input id="formAPopiaLetter" type="file" name="prior_clearance1" class="form-control" accept=".pdf,.docx">
+                        <input id="formAPopiaLetter" type="file" name="prior_clearance1" class="form-control" accept=".pdf,.docx,.doc">
                     </div>
 
-                    <div class="question-block"><label for="researchTools">4. Upload Survey / Questionnaire / Focus Group Questions</label><input id="researchTools" type="file" name="research_tools_path" class="form-control" accept=".pdf,.docx"></div>
-                    <div class="question-block"><label for="formAProposal">5. Upload Research Proposal</label><input id="formAProposal" type="file" name="proposal_path" class="form-control" accept=".pdf,.docx"></div>
-                    <div class="question-block"><label for="impactAssessment">6. Upload Personal Impact Assessment Form</label><input id="impactAssessment" type="file" name="impact_assessment_path" class="form-control" accept=".pdf,.docx"></div>
-                    <div class="question-block"><label for="participationSheet">7. Upload Participation Information Sheet &amp; Consent Form</label><input id="participationSheet" type="file" name="participation_info_sheet" class="form-control" accept=".pdf,.docx"></div>
+                    <div class="question-block"><label for="researchTools">4. Upload Survey / Questionnaire / Focus Group Questions</label><input id="researchTools" type="file" name="research_tools_path" class="form-control" accept=".pdf,.docx,.doc"></div>
+                    <div class="question-block"><label for="formAProposal">5. Upload Research Proposal</label><input id="formAProposal" type="file" name="proposal_path" class="form-control" accept=".pdf,.docx,.doc"></div>
+                    <div class="question-block"><label for="impactAssessment">6. Upload Personal Impact Assessment Form</label><input id="impactAssessment" type="file" name="impact_assessment_path" class="form-control" accept=".pdf,.docx,.doc"></div>
+                    <div class="question-block"><label for="participationSheet">7. Upload Participation Information Sheet &amp; Consent Form</label><input id="participationSheet" type="file" name="participation_info_sheet" class="form-control" accept=".pdf,.docx,.doc"></div>
                 </section>
 
                 <section class="form-type-section" data-form-section="FormB" aria-labelledby="formBHeading" hidden>
@@ -117,12 +115,12 @@
                     </div>
                     <div class="question-block conditional-upload" id="formBPermissionYes" hidden>
                         <label for="formBPermissionLetter">Upload Permission Letter</label>
-                        <input id="formBPermissionLetter" type="file" name="permission_letter" class="form-control" accept=".pdf,.docx">
+                        <input id="formBPermissionLetter" type="file" name="permission_letter" class="form-control" accept=".pdf,.docx,.doc">
                     </div>
                     <div class="question-block conditional-upload" id="formBPermissionPending" hidden>
                         <label for="formBPendingNote">Upload Pending Note</label>
                         <small>Explain who was contacted and the expected timeline</small>
-                        <input id="formBPendingNote" type="file" name="pending_note" class="form-control" accept=".pdf,.docx">
+                        <input id="formBPendingNote" type="file" name="pending_note" class="form-control" accept=".pdf,.docx,.doc">
                     </div>
 
                     <div class="question-block">
@@ -134,10 +132,10 @@
                     </div>
                     <div class="question-block conditional-upload" id="formBClearanceYes" hidden>
                         <label for="formBPriorClearance">Upload Prior Ethical Clearance Document</label>
-                        <input id="formBPriorClearance" type="file" name="prior_clearance_path" class="form-control" accept=".pdf,.docx">
+                        <input id="formBPriorClearance" type="file" name="prior_clearance_path" class="form-control" accept=".pdf,.docx,.doc">
                     </div>
 
-                    <div class="question-block"><label for="formBProposal">3. Upload Approved Proposal</label><input id="formBProposal" type="file" name="proposal_path" class="form-control" accept=".pdf,.docx"></div>
+                    <div class="question-block"><label for="formBProposal">3. Upload Approved Proposal</label><input id="formBProposal" type="file" name="proposal_path" class="form-control" accept=".pdf,.docx,.doc"></div>
 
                     <div class="question-block">
                         <label class="question-label">4. Does the student have access to personal information?</label>
@@ -148,7 +146,7 @@
                     </div>
                     <div class="question-block conditional-upload" id="formBPopiaYes" hidden>
                         <label for="formBPopiaLetter">Upload POPIA Information Letter and Consent Form</label>
-                        <input id="formBPopiaLetter" type="file" name="prior_clearance1" class="form-control" accept=".pdf,.docx">
+                        <input id="formBPopiaLetter" type="file" name="prior_clearance1" class="form-control" accept=".pdf,.docx,.doc">
                     </div>
                 </section>
 
@@ -156,7 +154,7 @@
                     <h3 id="formCHeading" class="form-section-title">Upload Proposal for Ethics Exemption (Form C)</h3>
                     <div class="question-block">
                         <label for="formCProposal">Upload the student's Research Proposal</label>
-                        <input id="formCProposal" type="file" name="files" class="form-control" accept=".pdf,.docx">
+                        <input id="formCProposal" type="file" name="files" class="form-control" accept=".pdf,.docx,.doc">
                     </div>
                 </section>
 

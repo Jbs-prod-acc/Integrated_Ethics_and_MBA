@@ -96,7 +96,7 @@
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <div class="question-block">
                     <label>Upload Your Research Proposal</label>
-                    <input type="file" name="proposal" {% if not requirement_file_available(from_dashboard, 'files') %}required{% endif %} accept=".pdf,.docx">
+                    <input type="file" name="proposal" {% if not requirement_file_available(from_dashboard, 'files') %}required{% endif %} accept=".pdf,.docx,.doc">
                 </div>
 
                 <!-- Navigation -->

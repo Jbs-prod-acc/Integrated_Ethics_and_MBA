@@ -5,9 +5,15 @@ load_dotenv()
 from app.models import db_session, User, Rec, UserRole, UserInfo, FormA, FormB, FormC, FormD, FormUploads, Documents, FormARequirements, Watched
 from app.models import db_session, User, Rec, UserRole, UserInfo, FormA, FormB, FormC, FormD, FormUploads, Documents, FormARequirements, Watched, UserActivityLog, LoginLog
 from flask import jsonify
-from flask import Flask, abort, flash, g, make_response, render_template, request, redirect, url_for, session, jsonify, send_from_directory, send_file
+from flask import Flask, abort, flash, g, get_flashed_messages, make_response, render_template, request, redirect, url_for, session, jsonify, send_from_directory, send_file
 from utils.helpers import generate_reset_token, send_email, validate_password
 from utils.activity_logger import log_user_activity
+from utils.document_files import (
+    UploadValidationError,
+    decode_legacy_binary,
+    read_validated_upload,
+    response_document_metadata,
+)
 import json
 import math
 import mimetypes
@@ -81,6 +87,29 @@ CORS(app, origins=app.config.get('CORS_ORIGINS', ['https://jbs-ethics.onrender.c
 
 csrf = CSRFProtect(app)
 configure_mail(app)
+
+
+@app.errorhandler(413)
+def upload_too_large(_error):
+    max_mb = app.config.get('MAX_CONTENT_LENGTH', 536870912) // (1024 * 1024)
+    message = (
+        f"The selected documents exceed the {max_mb} MB total upload limit. "
+        "Reduce the file sizes and try again."
+    )
+    if request.accept_mimetypes.best == 'application/json':
+        return jsonify({'error': message}), 413
+    category = 'admin-danger' if request.path.startswith('/admin/upload_student_docs') else 'danger'
+    flash(message, category)
+    return redirect(request.referrer or url_for('student_dashboard'))
+
+
+@app.errorhandler(UploadValidationError)
+def invalid_upload(error):
+    if request.accept_mimetypes.best == 'application/json':
+        return jsonify({'error': str(error)}), 400
+    category = 'admin-danger' if request.path.startswith('/admin/upload_student_docs') else 'danger'
+    flash(str(error), category)
+    return redirect(request.referrer or url_for('student_dashboard'))
 
 # --- Robust SQLAlchemy DB engine with pool_pre_ping ---
 if hasattr(sqlalchemy, 'create_engine'):
@@ -1354,6 +1383,20 @@ REQUIREMENT_FILE_FIELDS = {
 }
 
 
+def _send_stored_document(data, filename=None, fallback_name="document"):
+    """Serve document bytes using their detected format, not a stale extension."""
+    data = decode_legacy_binary(data)
+    mimetype, download_name, as_attachment = response_document_metadata(
+        data, filename, fallback_name
+    )
+    return send_file(
+        io.BytesIO(data),
+        mimetype=mimetype,
+        download_name=download_name,
+        as_attachment=as_attachment,
+    )
+
+
 def _resolve_requirement_file_field(requirements, requested_field):
     """Return the stored field that contains an uploaded requirement document.
 
@@ -1535,14 +1578,8 @@ def view_requirement_file():
     if not data:
         return "File content not found", 404
 
-    # NEW: Handle memoryview (common when Column(Text) points to a bytea in DB)
     if isinstance(data, memoryview):
-        try:
-            # Try to decode as string - if it's a path, it will succeed
-            data = bytes(data).decode('utf-8')
-        except Exception:
-            # It's likely actual binary data (BLOB)
-            data = bytes(data)
+        data = data.tobytes()
 
     # Determine filename
     filename = getattr(req, f"{actual_field}_filename", None) or \
@@ -1561,52 +1598,7 @@ def view_requirement_file():
             mtype, _ = mimetypes.guess_type(potential_path)
             return send_file(potential_path, mimetype=mtype or 'application/pdf', as_attachment=False, download_name=filename or os.path.basename(potential_path))
 
-    # Ensure data is bytes for processing if it was a BLOB
-    if isinstance(data, str):
-        if data.startswith('\\x'):
-            data = bytes.fromhex(data[2:])
-        else:
-            data = data.encode('latin-1', errors='ignore')
-    elif hasattr(data, 'read'): # Handle file-like objects
-        data = data.read()
-    
-    # MAGIC NUMBER DETECTION for robustness
-    is_pdf = data.startswith(b'%PDF-')
-    is_zip = data.startswith(b'PK\x03\x04')
-    
-    mimetype = 'application/pdf' if is_pdf else 'application/octet-stream'
-    
-    if filename:
-        filename = filename.strip()
-        ext = filename.lower().split('.')[-1]
-        if ext == 'pdf':
-            mimetype = 'application/pdf'
-        elif ext in ['doc', 'docx']:
-            mimetype = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' if ext == 'docx' else 'application/msword'
-        elif ext == 'zip':
-            mimetype = 'application/zip'
-        elif ext == 'png':
-            mimetype = 'image/png'
-        elif ext in ['jpg', 'jpeg']:
-            mimetype = 'image/jpeg'
-    else:
-        # Fallback filename based on magic numbers
-        if is_pdf:
-            filename = f"{f_name}.pdf"
-            mimetype = 'application/pdf'
-        elif is_zip:
-            filename = f"{f_name}.docx"
-            mimetype = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-        else:
-            filename = f"{f_name}.dat"
-            mimetype = 'application/octet-stream'
-
-    return send_file(
-        io.BytesIO(data),
-        mimetype=mimetype,
-        download_name=filename,
-        as_attachment=False
-    )
+    return _send_stored_document(data, filename, f_name)
 
 
 # --- Send Back for Corrections endpoint for FormB ---
@@ -2908,23 +2900,17 @@ def view_form_file(form_type, form_id, field_name=None):
     if not data:
         return "File not found", 404
 
-    # NEW: Handle memoryview
     if isinstance(data, memoryview):
-        try:
-            data = bytes(data).decode('utf-8')
-        except Exception:
-            data = bytes(data)
+        data = data.tobytes()
 
     # Better filename detection
     filename = getattr(form, f"{f_name}_filename", None) or \
                getattr(form, f_name.replace('_path', '') + "_filename", None) or \
                getattr(form, f_name.replace('_file', '') + "_filename", None)
                
-    # Ensure data is bytes for processing
+    # Backward compatibility for path-based legacy uploads.
     if isinstance(data, str):
-        if data.startswith('\\x'):
-            data = bytes.fromhex(data[2:])
-        elif len(data) < 500:
+        if not data.startswith('\\x') and len(data) < 500:
             # It might be a legacy file path if it's short
             clean_path = data.replace('\\', '/')
             if clean_path.startswith('static/'):
@@ -2993,7 +2979,7 @@ def health():
     return 'OK', 200
 
     
-ALLOWED_EXTENSIONS = {'pdf', 'docx'}
+ALLOWED_EXTENSIONS = {'pdf', 'docx', 'doc'}
 
 def get_upload_folder():
     """
@@ -3016,17 +3002,20 @@ def allowed_file(filename):
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 def read_file_blob(file_obj_or_key):
-    """Read file content and return (binary_data, filename)."""
+    """Read and validate a PDF/DOCX upload."""
     if isinstance(file_obj_or_key, str):
         file = request.files.get(file_obj_or_key)
     else:
         file = file_obj_or_key
         
-    if not file or file.filename == '':
-        return None, None
-    if allowed_file(file.filename):
-        return file.read(), secure_filename(file.filename)
-    return None, None
+    return read_validated_upload(file, app.config.get('MAX_FILE_LENGTH', 524288000))
+
+
+def assign_private_permission_upload(record, file_storage):
+    """Validate and assign a private-permission document to a form record."""
+    data, filename = read_file_blob(file_storage)
+    record.private_permission_file = data
+    record.private_permission_filename = filename
 
 
 # DEBUG ENDPOINT REMOVED FOR PRODUCTION SECURITY
@@ -4678,40 +4667,6 @@ def edit_user(id):
 @csrf.exempt
 @role_required('ADMIN', 'SUPER_ADMIN')
 def admin_upload_student_docs(id=None):
-    # Fetch all requirement records with distinct user_id to avoid duplicates
-    all_requirements = db_session.query(FormARequirements).distinct(FormARequirements.user_id).all()
-    
-    # Join with form tables to get applicant_name using form_id
-    for req in all_requirements:
-        student_name = None
-        
-        # Try to get applicant_name from FormA using form_id
-        if req.form_type == 'FormA' or not student_name:
-            form_a = db_session.query(FormA).filter_by(user_id=req.user_id).first()
-            if form_a and form_a.applicant_name:
-                student_name = form_a.applicant_name
-        
-        # Try to get applicant_name from FormB using form_id
-        if not student_name and (req.form_type == 'FormB' or not student_name):
-            form_b = db_session.query(FormB).options(
-                defer(FormB.permission_letter),
-                defer(FormB.prior_clearance),
-                defer(FormB.ethics_evidence),
-                defer(FormB.proposal_path),
-                defer(FormB.pending_note),
-                defer(FormB.private_permission_file)
-            ).filter_by(user_id=req.user_id).first()
-            if form_b and form_b.applicant_name:
-                student_name = form_b.applicant_name
-        
-        # Try to get applicant_name from FormC using form_id
-        if not student_name and (req.form_type == 'FormC' or not student_name):
-            form_c = db_session.query(FormC).filter_by(user_id=req.user_id).first()
-            if form_c and form_c.applicant_name:
-                student_name = form_c.applicant_name
-        
-        req.student_name = student_name if student_name else f"Unknown (ID: {req.user_id})"
-    
     # Optional: fetch user info for the sidebar if needed by the layout
     current_uid = session.get('id')
     current_user = db_session.query(User).filter_by(user_id=current_uid).first() if current_uid else None
@@ -4722,17 +4677,26 @@ def admin_upload_student_docs(id=None):
         allowed_form_types = {'FormA', 'FormB', 'FormC'}
         
         if not record_id:
-            flash("No Requirement ID provided. Please select one from the dropdown.", "warning")
+            flash("No Requirement ID provided. Please select one from the dropdown.", "admin-warning")
             return redirect(url_for('admin_upload_student_docs'))
 
         if form_type not in allowed_form_types:
-            flash("Please select a valid form type.", "warning")
+            flash("Please select a valid form type.", "admin-warning")
             return redirect(url_for('admin_upload_student_docs'))
 
-        # Locate the record by its Primary Key
-        req = db_session.query(FormARequirements).filter_by(id=record_id).first()
+        deferred_documents = [
+            defer(getattr(FormARequirements, field_name))
+            for field_name in REQUIREMENT_FILE_FIELDS
+            if hasattr(FormARequirements, field_name)
+        ]
+        req = (
+            db_session.query(FormARequirements)
+            .options(*deferred_documents)
+            .filter_by(id=record_id)
+            .first()
+        )
         if not req:
-            flash(f"Requirement record with ID '{record_id}' does not exist.", "danger")
+            flash(f"Requirement record with ID '{record_id}' does not exist.", "admin-danger")
             return redirect(url_for('admin_upload_student_docs'))
         
         # Accept only the fields displayed for the selected form so hidden
@@ -4758,7 +4722,6 @@ def admin_upload_student_docs(id=None):
             'ethics_evidence_path': 'ethics_evidence_path_filename'
         }
 
-        allowed_extensions = {'pdf', 'docx'}
         uploaded_any = False
         try:
             req.form_type = form_type
@@ -4772,16 +4735,7 @@ def admin_upload_student_docs(id=None):
                 if not file_obj or not file_obj.filename:
                     continue
 
-                safe_filename = secure_filename(file_obj.filename)
-                extension = safe_filename.rsplit('.', 1)[-1].lower() if '.' in safe_filename else ''
-                if not safe_filename or extension not in allowed_extensions:
-                    raise ValueError(
-                        f"'{file_obj.filename}' is not supported. Upload PDF or DOCX files only."
-                    )
-
-                file_data = file_obj.read()
-                if not file_data:
-                    raise ValueError(f"'{safe_filename}' is empty and could not be uploaded.")
+                file_data, safe_filename = read_file_blob(file_obj)
 
                 setattr(req, field, file_data)
                 filename_column = filename_mapping.get(field, f"{field}_filename")
@@ -4791,23 +4745,63 @@ def admin_upload_student_docs(id=None):
             req.updated_at = datetime.now()
             db_session.commit()
             if uploaded_any:
-                flash(f"Successfully uploaded documents and updated flags for ID: {record_id}", "success")
+                flash(f"Successfully uploaded documents and updated flags for ID: {record_id}", "admin-success")
             else:
-                flash(f"Updated status flags for ID: {record_id}", "success")
+                flash(f"Updated status flags for ID: {record_id}", "admin-success")
         except ValueError as e:
             db_session.rollback()
-            flash(str(e), "warning")
+            flash(str(e), "admin-warning")
         except Exception as e:
             db_session.rollback()
             app.logger.exception("Admin document upload failed for requirement %s", record_id)
-            flash(f"Error saving database changes: {str(e)}", "danger")
+            flash(f"Error saving database changes: {str(e)}", "admin-danger")
 
         return redirect(url_for('admin_upload_student_docs'))
 
-    return render_template("admin_upload_docs.html", 
-                         requirements=all_requirements, 
-                         user_profile=current_user, 
-                         role='super_admin')
+    requirement_rows = (
+        db_session.query(
+            FormARequirements.id,
+            FormARequirements.user_id,
+            FormARequirements.form_type,
+        )
+        .distinct(FormARequirements.user_id)
+        .all()
+    )
+    user_ids = [row.user_id for row in requirement_rows if row.user_id]
+    student_names = {}
+    if user_ids:
+        for model in (FormA, FormB, FormC):
+            for user_id, applicant_name in (
+                db_session.query(model.user_id, model.applicant_name)
+                .filter(model.user_id.in_(user_ids))
+                .all()
+            ):
+                if applicant_name and user_id not in student_names:
+                    student_names[user_id] = applicant_name
+
+    all_requirements = [
+        {
+            'id': row.id,
+            'user_id': row.user_id,
+            'form_type': row.form_type,
+            'student_name': student_names.get(
+                row.user_id, f"Unknown (ID: {row.user_id})"
+            ),
+        }
+        for row in requirement_rows
+    ]
+    admin_messages = [
+        (category.removeprefix('admin-'), message)
+        for category, message in get_flashed_messages(with_categories=True)
+        if category.startswith('admin-')
+    ]
+    return render_template(
+        "admin_upload_docs.html",
+        requirements=all_requirements,
+        user_profile=current_user,
+        role='super_admin',
+        admin_messages=admin_messages,
+    )
 
 
 @app.route('/super_admin', methods=['GET', 'POST'])
@@ -6129,17 +6123,18 @@ def submit_form_a_requirements():
             if needs_permission == 'Yes':
                 uploaded_files = request.files.getlist('permission_letter[]')
                 valid_files = [f for f in uploaded_files if f and f.filename != '']
+                validated_files = [read_file_blob(f) for f in valid_files]
                 
-                if len(valid_files) > 1:
+                if len(validated_files) > 1:
                     zip_buffer = io.BytesIO()
                     with zipfile.ZipFile(zip_buffer, "w") as zf:
-                        for f in valid_files:
-                            zf.writestr(secure_filename(f.filename), f.read())
+                        for file_data, safe_name in validated_files:
+                            zf.writestr(safe_name, file_data)
                     permission_letter_data = zip_buffer.getvalue()
                     permission_letter_fname = "permission_letters.zip"
                     needs_permission = True
-                elif len(valid_files) == 1:
-                    permission_letter_data, permission_letter_fname = read_file_blob(valid_files[0])
+                elif len(validated_files) == 1:
+                    permission_letter_data, permission_letter_fname = validated_files[0]
                     needs_permission = True
             else:
                 if needs_permission == 'No':
@@ -6263,6 +6258,10 @@ def submit_form_a_requirements():
                 # New form flow continues to section 1 as before
                 return redirect(url_for('form_a_sec1'))
 
+        except UploadValidationError as e:
+            db_session.rollback()
+            flash(str(e), 'danger')
+            return redirect(url_for('submit_form_a_requirements'))
         except Exception as e:
             db_session.rollback()
             return jsonify({'error': str(e)}), 500
@@ -6345,6 +6344,10 @@ def submit_form_c_requirements():
             
                 return redirect(url_for('form_c_sec1'))
             
+        except UploadValidationError as e:
+            db_session.rollback()
+            flash(str(e), 'danger')
+            return redirect(url_for('submit_form_c_requirements'))
         except Exception as e:
             db_session.rollback()
             return jsonify({'error': str(e)}), 500
@@ -6397,16 +6400,17 @@ def submit_form_b_requirements():
             if needs_permission_val == 'Yes':
                 uploaded_files = request.files.getlist('permission_letter_path[]')
                 valid_files = [f for f in uploaded_files if f and f.filename != '']
+                validated_files = [read_file_blob(f) for f in valid_files]
                 
-                if len(valid_files) > 1:
+                if len(validated_files) > 1:
                     zip_buffer = io.BytesIO()
                     with zipfile.ZipFile(zip_buffer, "w") as zf:
-                        for f in valid_files:
-                            zf.writestr(secure_filename(f.filename), f.read())
+                        for file_data, safe_name in validated_files:
+                            zf.writestr(safe_name, file_data)
                     permission_letter_data = zip_buffer.getvalue()
                     permission_letter_fname = "permission_letters.zip"
-                elif len(valid_files) == 1:
-                    permission_letter_data, permission_letter_fname = read_file_blob(valid_files[0])
+                elif len(validated_files) == 1:
+                    permission_letter_data, permission_letter_fname = validated_files[0]
             
             # Convert needs_permission to boolean/None for storage
             needs_permission_bool = None
@@ -6473,6 +6477,10 @@ def submit_form_b_requirements():
                 return redirect(url_for('form_b_sec1'))
             return redirect(url_for('student_dashboard'))
             
+        except UploadValidationError as e:
+            db_session.rollback()
+            flash(str(e), "danger")
+            return redirect(url_for('submit_form_b_requirements'))
         except Exception as e:
             traceback.print_exc()
             db_session.rollback()
@@ -7093,8 +7101,7 @@ def submit_form_a_sec4 ():
 
             file = request.files.get('private_permission_file')
             if file and file.filename:
-                form.private_permission_file = file.read()
-                form.private_permission_filename = file.filename
+                assign_private_permission_upload(form, file)
 
             db_session.commit()
             flash("Form A Section 4 submitted successfully.", "success")
@@ -7374,10 +7381,7 @@ def form_b_upload():
         os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
         def get_file_blob(field_name):
-            file = request.files.get(field_name)
-            if file and file.filename:
-                return file.read(), file.filename
-            return None, None
+            return read_file_blob(field_name)
 
         perm_data, perm_fname = get_file_blob('permission_letter_path')
         prior_data, prior_fname = get_file_blob('prior_clearance_path')
@@ -7543,8 +7547,7 @@ def form_b_sec2():
             # Handle file upload
             file = request.files.get('private_permission_file')
             if file and file.filename:
-                form.private_permission_file = file.read()
-                form.private_permission_filename = file.filename
+                assign_private_permission_upload(form, file)
 
             # ✅ Commit to database
             db_session.add(form)
@@ -8537,8 +8540,7 @@ def student_edit_forma():
 
         file = request.files.get('private_permission_file')
         if file and file.filename:
-            target_form.private_permission_file = file.read()
-            target_form.private_permission_filename = file.filename
+            assign_private_permission_upload(target_form, file)
 
         if not target_form.uses_secondary_data:
             _clear_forma_secondary_data_details(target_form)
@@ -8973,8 +8975,7 @@ def student_continue_forma():
                 # Handle file upload
             file = request.files.get('private_permission_file')
             if file and file.filename:
-                    form.private_permission_file = file.read()
-                    form.private_permission_filename = file.filename
+                    assign_private_permission_upload(form, file)
 
             interviews_one = request.form.get('interviews') == 'Yes'
             documents_one = request.form.get('documents') == 'Yes'
@@ -9192,8 +9193,7 @@ def student_continue_forma():
             # Handle file upload
             file = request.files.get('private_permission_file')
             if file and file.filename:
-                form.private_permission_file = file.read()
-                form.private_permission_filename = file.filename
+                assign_private_permission_upload(form, file)
 
             if not form.uses_secondary_data:
                 _clear_forma_secondary_data_details(form)
@@ -9337,8 +9337,7 @@ def submit_form_a(form_id):
                     form.private_permission = to_bool(request.form.get('privatePermission'))
                     file = request.files.get('private_permission_file')
                     if file and file.filename:
-                        form.private_permission_file = file.read()
-                        form.private_permission_filename = file.filename
+                        assign_private_permission_upload(form, file)
             else:
                 _clear_forma_secondary_data_details(form)
 
@@ -9910,8 +9909,7 @@ def submit_form_b(form_id):
             # Handle file upload
             file = request.files.get('private_permission_file')
             if file and file.filename:
-                form.private_permission_file = file.read()
-                form.private_permission_filename = file.filename
+                assign_private_permission_upload(form, file)
             
             form.limitations_reporting = request.form.get('limitations_reporting')
             form.original_clearance = request.form.get('original_clearance')

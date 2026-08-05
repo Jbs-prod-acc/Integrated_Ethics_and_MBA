@@ -1482,40 +1482,6 @@ def edit_user(id):
 @csrf.exempt
 @role_required('ADMIN', 'SUPER_ADMIN')
 def admin_upload_student_docs(id=None):
-    # Fetch all requirement records with distinct user_id to avoid duplicates
-    all_requirements = db_session.query(FormARequirements).distinct(FormARequirements.user_id).all()
-    
-    # Join with form tables to get applicant_name using form_id
-    for req in all_requirements:
-        student_name = None
-        
-        # Try to get applicant_name from FormA using form_id
-        if req.form_type == 'FormA' or not student_name:
-            form_a = db_session.query(FormA).filter_by(user_id=req.user_id).first()
-            if form_a and form_a.applicant_name:
-                student_name = form_a.applicant_name
-        
-        # Try to get applicant_name from FormB using form_id
-        if not student_name and (req.form_type == 'FormB' or not student_name):
-            form_b = db_session.query(FormB).options(
-                defer(FormB.permission_letter),
-                defer(FormB.prior_clearance),
-                defer(FormB.ethics_evidence),
-                defer(FormB.proposal_path),
-                defer(FormB.pending_note),
-                defer(FormB.private_permission_file)
-            ).filter_by(user_id=req.user_id).first()
-            if form_b and form_b.applicant_name:
-                student_name = form_b.applicant_name
-        
-        # Try to get applicant_name from FormC using form_id
-        if not student_name and (req.form_type == 'FormC' or not student_name):
-            form_c = db_session.query(FormC).filter_by(user_id=req.user_id).first()
-            if form_c and form_c.applicant_name:
-                student_name = form_c.applicant_name
-        
-        req.student_name = student_name if student_name else f"Unknown (ID: {req.user_id})"
-    
     # Optional: fetch user info for the sidebar if needed by the layout
     current_uid = session.get('id')
     current_user = db_session.query(User).filter_by(user_id=current_uid).first() if current_uid else None
@@ -1526,17 +1492,26 @@ def admin_upload_student_docs(id=None):
         allowed_form_types = {'FormA', 'FormB', 'FormC'}
         
         if not record_id:
-            flash("No Requirement ID provided. Please select one from the dropdown.", "warning")
+            flash("No Requirement ID provided. Please select one from the dropdown.", "admin-warning")
             return redirect(url_for('admin_upload_student_docs'))
 
         if form_type not in allowed_form_types:
-            flash("Please select a valid form type.", "warning")
+            flash("Please select a valid form type.", "admin-warning")
             return redirect(url_for('admin_upload_student_docs'))
 
-        # Locate the record by its Primary Key
-        req = db_session.query(FormARequirements).filter_by(id=record_id).first()
+        deferred_documents = [
+            defer(getattr(FormARequirements, field_name))
+            for field_name in REQUIREMENT_FILE_FIELDS
+            if hasattr(FormARequirements, field_name)
+        ]
+        req = (
+            db_session.query(FormARequirements)
+            .options(*deferred_documents)
+            .filter_by(id=record_id)
+            .first()
+        )
         if not req:
-            flash(f"Requirement record with ID '{record_id}' does not exist.", "danger")
+            flash(f"Requirement record with ID '{record_id}' does not exist.", "admin-danger")
             return redirect(url_for('admin_upload_student_docs'))
         
         form_file_fields = {
@@ -1553,7 +1528,6 @@ def admin_upload_student_docs(id=None):
             'ethics_evidence_path': 'ethics_evidence_path_filename'
         }
 
-        allowed_extensions = {'pdf', 'docx'}
         uploaded_any = False
         try:
             req.form_type = form_type
@@ -1563,13 +1537,7 @@ def admin_upload_student_docs(id=None):
                 file_obj = request.files.get(field)
                 if not file_obj or not file_obj.filename:
                     continue
-                safe_filename = secure_filename(file_obj.filename)
-                extension = safe_filename.rsplit('.', 1)[-1].lower() if '.' in safe_filename else ''
-                if not safe_filename or extension not in allowed_extensions:
-                    raise ValueError(f"'{file_obj.filename}' is not supported. Upload PDF or DOCX files only.")
-                file_data = file_obj.read()
-                if not file_data:
-                    raise ValueError(f"'{safe_filename}' is empty and could not be uploaded.")
+                file_data, safe_filename = read_file_blob(file_obj)
                 setattr(req, field, file_data)
                 filename_column = filename_mapping.get(field, f"{field}_filename")
                 setattr(req, filename_column, safe_filename)
@@ -1577,23 +1545,63 @@ def admin_upload_student_docs(id=None):
             req.updated_at = datetime.now()
             db_session.commit()
             if uploaded_any:
-                flash(f"Successfully uploaded documents and updated flags for ID: {record_id}", "success")
+                flash(f"Successfully uploaded documents and updated flags for ID: {record_id}", "admin-success")
             else:
-                flash(f"Updated status flags for ID: {record_id}", "success")
+                flash(f"Updated status flags for ID: {record_id}", "admin-success")
         except ValueError as e:
             db_session.rollback()
-            flash(str(e), "warning")
+            flash(str(e), "admin-warning")
         except Exception as e:
             db_session.rollback()
             app.logger.exception("Admin document upload failed for requirement %s", record_id)
-            flash(f"Error saving database changes: {str(e)}", "danger")
+            flash(f"Error saving database changes: {str(e)}", "admin-danger")
 
         return redirect(url_for('admin_upload_student_docs'))
 
-    return render_template("admin_upload_docs.html", 
-                         requirements=all_requirements, 
-                         user_profile=current_user, 
-                         role='super_admin')
+    requirement_rows = (
+        db_session.query(
+            FormARequirements.id,
+            FormARequirements.user_id,
+            FormARequirements.form_type,
+        )
+        .distinct(FormARequirements.user_id)
+        .all()
+    )
+    user_ids = [row.user_id for row in requirement_rows if row.user_id]
+    student_names = {}
+    if user_ids:
+        for model in (FormA, FormB, FormC):
+            for user_id, applicant_name in (
+                db_session.query(model.user_id, model.applicant_name)
+                .filter(model.user_id.in_(user_ids))
+                .all()
+            ):
+                if applicant_name and user_id not in student_names:
+                    student_names[user_id] = applicant_name
+
+    all_requirements = [
+        {
+            'id': row.id,
+            'user_id': row.user_id,
+            'form_type': row.form_type,
+            'student_name': student_names.get(
+                row.user_id, f"Unknown (ID: {row.user_id})"
+            ),
+        }
+        for row in requirement_rows
+    ]
+    admin_messages = [
+        (category.removeprefix('admin-'), message)
+        for category, message in get_flashed_messages(with_categories=True)
+        if category.startswith('admin-')
+    ]
+    return render_template(
+        "admin_upload_docs.html",
+        requirements=all_requirements,
+        user_profile=current_user,
+        role='super_admin',
+        admin_messages=admin_messages,
+    )
 
 
 @app.route('/super_admin', methods=['GET', 'POST'])

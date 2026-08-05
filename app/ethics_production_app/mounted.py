@@ -1,5 +1,4 @@
 import importlib.util
-import importlib
 import os
 import secrets
 import sqlite3
@@ -69,9 +68,6 @@ def get_mounted_app():
     project_root = app_dir.parent.parent
     if str(project_root) not in sys.path:
         sys.path.insert(0, str(project_root))
-
-    models_module = importlib.import_module("app.models")
-    models_module.Base.metadata.create_all(models_module.engine)
 
     spec = importlib.util.spec_from_file_location("ethics_production_runtime", app_file)
     if spec is None or spec.loader is None:

@@ -3,12 +3,18 @@ from datetime import datetime
 from app.models import db_session, User, Rec, UserRole, UserInfo, FormA, FormB, FormC, FormD, FormUploads, Documents, FormARequirements, Watched
 from app.models import db_session, User, Rec, UserRole, UserInfo, FormA, FormB, FormC, FormD, FormUploads, Documents, FormARequirements, Watched, UserActivityLog, LoginLog
 from flask import jsonify
-from flask import Flask, abort, flash, g, make_response, render_template, request, redirect, url_for, session, jsonify, send_from_directory, send_file
+from flask import Flask, abort, flash, g, get_flashed_messages, make_response, render_template, request, redirect, url_for, session, jsonify, send_from_directory, send_file
 from app.models import db_session, User, Rec, UserRole, UserInfo, FormA, FormB, FormC, FormD, FormUploads, Documents, FormARequirements, Watched
 from utils.helpers import generate_reset_token, send_email, validate_password
 from utils.activity_logger import log_user_activity
 import json
 import mimetypes
+from utils.document_files import (
+    UploadValidationError,
+    decode_legacy_binary,
+    read_validated_upload,
+    response_document_metadata,
+)
 from db_queries import getFormAData, getSupervisorsList
 import os
 import zipfile
@@ -81,6 +87,47 @@ CORS(app, origins=app.config.get('CORS_ORIGINS', ['https://jbs-ethics.onrender.c
 
 csrf = CSRFProtect(app)
 configure_mail(app)
+
+
+@app.errorhandler(413)
+def upload_too_large(_error):
+    max_mb = app.config.get('MAX_CONTENT_LENGTH', 536870912) // (1024 * 1024)
+    message = (
+        f"The selected documents exceed the {max_mb} MB total upload limit. "
+        "Reduce the file sizes and try again."
+    )
+    if request.accept_mimetypes.best == 'application/json':
+        return jsonify({'error': message}), 413
+    category = 'admin-danger' if request.path.startswith('/admin/upload_student_docs') else 'danger'
+    flash(message, category)
+    return redirect(request.referrer or url_for('student_dashboard'))
+
+
+@app.errorhandler(UploadValidationError)
+def invalid_upload(error):
+    if request.accept_mimetypes.best == 'application/json':
+        return jsonify({'error': str(error)}), 400
+    category = 'admin-danger' if request.path.startswith('/admin/upload_student_docs') else 'danger'
+    flash(str(error), category)
+    return redirect(request.referrer or url_for('student_dashboard'))
+
+
+def read_file_blob(file_obj_or_key):
+    """Read and validate a PDF/DOCX upload for modular route handlers."""
+    file_storage = (
+        request.files.get(file_obj_or_key)
+        if isinstance(file_obj_or_key, str)
+        else file_obj_or_key
+    )
+    return read_validated_upload(
+        file_storage, app.config.get('MAX_FILE_LENGTH', 524288000)
+    )
+
+
+def assign_private_permission_upload(record, file_storage):
+    data, filename = read_file_blob(file_storage)
+    record.private_permission_file = data
+    record.private_permission_filename = filename
 
 # --- Robust SQLAlchemy DB engine with pool_pre_ping ---
 if hasattr(sqlalchemy, 'create_engine'):

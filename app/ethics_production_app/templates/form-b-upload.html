@@ -85,14 +85,14 @@
 
       <!-- <div class="question-block hidden" id="permissionUpload">
         <label>Upload Permission Letter</label>
-        <input type="file" name="permission_letter_path" accept=".pdf,.docx">
+        <input type="file" name="permission_letter_path" accept=".pdf,.docx,.doc">
       </div> -->
 
       <div class="question-block hidden" id="permissionUpload">
         <label>Upload Permission Letter(s)</label>
         <div id="permissionFilesContainer">
           <div class="file-input-group">
-            <input type="file" name="permission_letter_path[]" accept=".pdf,.docx">
+            <input type="file" name="permission_letter_path[]" accept=".pdf,.docx,.doc">
           </div>
         </div>
         <button type="button" class="btn btn-sm btn-outline-primary mt-2" id="addLetterBtn">Add Another</button>
@@ -103,7 +103,7 @@
         <label>Upload Pending Note
           <small>(briefly explain who you’ve contacted and the expected timeline)</small>
         </label>
-        <input type="file" name="pending_note_path" accept=".pdf,.docx">
+        <input type="file" name="pending_note_path" accept=".pdf,.docx,.doc">
       </div>
 
 
@@ -121,13 +121,13 @@
 
       <div class="question-block hidden" id="clearanceUpload">
         <label>Upload Prior Ethical Clearance Document</label>
-        <input type="file" name="prior_clearance_path" accept=".pdf,.docx">
+        <input type="file" name="prior_clearance_path" accept=".pdf,.docx,.doc">
       </div>
 
     
       <div class="question-block">
         <label>3. Upload Approved Proposal</label>
-        <input type="file" name="proposal_path" {% if not from_dashboard or not from_dashboard.proposal_path %}required{% endif %} accept=".pdf,.docx">
+        <input type="file" name="proposal_path" {% if not from_dashboard or not from_dashboard.proposal_path %}required{% endif %} accept=".pdf,.docx,.doc">
       </div>
      
       <div class="question-block">
@@ -230,7 +230,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const input = document.createElement('input');
     input.type = 'file';
     input.name = 'permission_letter_path[]';
-    input.accept = '.pdf,.docx';
+    input.accept = '.pdf,.docx,.doc';
 
     // Make new inputs required only when "Yes" is selected
     const selected = document.querySelector('input[name="need_permission"]:checked')?.value;
