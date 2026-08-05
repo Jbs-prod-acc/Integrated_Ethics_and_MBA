@@ -42,6 +42,9 @@
         <a href="{{url_for('all_users')}}" class="sidebar-link">
           <i class="fas fa-users-cog"></i> User Management
         </a>
+        <a href="{{ url_for('admin_upload_student_docs') }}" class="sidebar-link">
+          <i class="fas fa-file-arrow-up"></i> Upload Student Documents
+        </a>
         <a href="{{url_for('admin_login_logs')}}" class="sidebar-link">
           <i class="fas fa-clock"></i> Login Logs
         </a>
@@ -76,10 +79,14 @@
         <a href="{{url_for('all_users')}}" class="sidebar-link">
           <i class="fas fa-users-cog"></i> User Management
         </a>
+        <a href="{{ url_for('admin_upload_student_docs') }}" class="sidebar-link">
+          <i class="fas fa-file-arrow-up"></i> Upload Student Documents
+        </a>
 
         <a href="{{url_for('admin_login_logs')}}" class="sidebar-link">
           <i class="fas fa-clock"></i> Login Logs
         </a>
+        
         <a href="{{ url_for('admin_status_monitor') }}" class="sidebar-link"><i class="fas fa-filter"></i> Admin Status
           Monitor</a>
 

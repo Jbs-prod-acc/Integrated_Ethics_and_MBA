@@ -13172,7 +13172,7 @@ def reviewer_form_c(id):
 
 
 @app.route('/rec_dashboard', methods=['GET', 'POST'])
-@role_required('REC')
+@role_required('ADMIN', 'SUPER_ADMIN', 'REC')
 def rec_dashboard():
     user_id = session.get('id')
     if not user_id:

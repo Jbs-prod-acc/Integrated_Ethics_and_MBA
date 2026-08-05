@@ -25,13 +25,15 @@
       <a href="{{url_for('chair_landing')}}" class="sidebar-link">
         <i class="fas fa-clipboard-list"></i> Dashboard
       </a>
+      <a href="{{url_for('monitor')}}" class="sidebar-link"><i class="fas fa-user me-2"></i>Student List</a>
       <a href="{{url_for('admin_reassign_supervisors')}}" class="sidebar-link">
         <i class="fas fa-user-gear"></i> Reassign Supervisors
       </a>
       <a href="{{url_for('admin_reassign_reviewers')}}" class="sidebar-link">
         <i class="fas fa-users-gear"></i> Reassign Reviewers
       </a>
-
+<a href="{{url_for('admin_student_password_resets')}}" class="sidebar-link"><i
+            class="fas fa-key me-2"></i>Student Password Resets</a>
       <a href="{{url_for('reviewer_list')}}" class="sidebar-link">
         <i class="fas fa-user"></i> Reviewer List
       </a>
@@ -41,7 +43,10 @@
       </a>
       <a href="{{ url_for('admin_upload_student_docs') }}" class="sidebar-link">
         <i class="fas fa-file-arrow-up"></i> Upload Student Documents
-      </a>
+        </a>
+        <a href="{{url_for('admin_login_logs')}}" class="sidebar-link">
+          <i class="fas fa-clock"></i> Login Logs
+        </a>
       <a href="{{ url_for('admin_status_monitor') }}" class="sidebar-link"><i class="fas fa-filter"></i> Admin Status Monitor</a>
       <a class="dropdown-toggle" href="#" data-bs-toggle="collapse" data-bs-target="#monitoringFormsAdmin">
             <i class="fas fa-clipboard me-2"></i>Monitoring Forms
@@ -60,13 +65,15 @@
       <a href="{{url_for('chair_landing')}}" class="sidebar-link">
         <i class="fas fa-clipboard-list"></i> Dashboard
       </a>
+      <a href="{{url_for('monitor')}}" class="sidebar-link"><i class="fas fa-user me-2"></i>Student List</a>
       <a href="{{url_for('admin_reassign_supervisors')}}" class="sidebar-link">
         <i class="fas fa-user-gear"></i> Reassign Supervisors
       </a>
       <a href="{{url_for('admin_reassign_reviewers')}}" class="sidebar-link">
         <i class="fas fa-users-gear"></i> Reassign Reviewers
       </a>
-
+      <a href="{{url_for('admin_student_password_resets')}}" class="sidebar-link"><i
+            class="fas fa-key me-2"></i>Student Password Resets</a>
       <a href="{{url_for('reviewer_list')}}" class="sidebar-link">
         <i class="fas fa-user"></i> Reviewer List
       </a>
@@ -77,6 +84,9 @@
       <a href="{{ url_for('admin_upload_student_docs') }}" class="sidebar-link">
         <i class="fas fa-file-arrow-up"></i> Upload Student Documents
       </a>
+      <a href="{{url_for('admin_login_logs')}}" class="sidebar-link">
+        <i class="fas fa-clock"></i> Login Logs
+      </a>
       <a href="{{ url_for('admin_status_monitor') }}" class="sidebar-link"><i class="fas fa-filter"></i> Admin Status Monitor</a>
       
       <div class="dropdown w-100">
@@ -84,9 +94,9 @@
             <i class="fas fa-chart-bar me-2"></i>Analytics Forms
         </a>
         <div class="collapse" id="analyticsForms">
-            <a class="dropdown-item" href="{{ url_for('super_admin_form_a') }}">Form A</a>
-            <a class="dropdown-item" href="{{ url_for('super_admin_form_b') }}">Form B</a>
-            <a class="dropdown-item" href="{{ url_for('super_admin_form_c') }}">Form C</a>
+            <a class="dropdown-item" href="{{ url for('super_admin_form_a') }}">Form A</a>
+            <a class="dropdown-item" href="{{ url for('super_admin_form_b') }}">Form B</a>
+            <a class="dropdown-item" href="{{ url for('super_admin_form_c') }}">Form C</a>
         </div>
     </div>
 
