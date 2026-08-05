@@ -183,6 +183,13 @@
              target="_blank">
             {{ formB.private_permission_filename or 'View permission document' }}
           </a>
+          {% if session.get('id') == formB.user_id and is_student_correction_state(formB) %}
+          <form action="{{ url_for('delete_form_b_private_permission', form_id=formB.form_id) }}"
+                method="post" class="no-print"
+                onsubmit="return confirm('Delete this permission document?');">
+            <button type="submit" class="btn btn-sm btn-danger">Delete document</button>
+          </form>
+          {% endif %}
         </span>
         {% endif %}
       </label>

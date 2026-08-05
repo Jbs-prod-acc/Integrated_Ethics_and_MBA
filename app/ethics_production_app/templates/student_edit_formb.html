@@ -216,7 +216,12 @@
             <div class="mt-2" id="current_private_permission_file">
                 <small class="text-success">Current file: {{ formB.private_permission_filename or 'Uploaded permission document' }}</small>
                 <a href="{{ url_for('view_form_file', form_type='B', form_id=formB.form_id, field_name='private_permission_file') }}" target="_blank" class="btn btn-sm btn-outline-primary ms-2">View</a>
-                <button type="button" class="btn btn-sm btn-outline-danger ms-2" onclick="deletePrivatePermissionUpload()">Delete upload</button>
+                {% if is_student_correction_state(formB) %}
+                <button type="submit"
+                        formaction="{{ url_for('delete_form_b_private_permission', form_id=formB.form_id) }}"
+                        formmethod="post" formnovalidate class="btn btn-sm btn-danger ms-2"
+                        onclick="return confirm('Delete this permission document?');">Delete upload</button>
+                {% endif %}
             </div>
         {% endif %}
       </div>

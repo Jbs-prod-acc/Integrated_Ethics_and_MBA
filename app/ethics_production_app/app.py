@@ -408,6 +408,35 @@ def role_required(*allowed_roles):
     return decorator
 
 
+def has_supervisor_submitted_feedback(form):
+    """Return True once the supervisor completed the current review cycle."""
+    return any(
+        marker not in (None, '', False)
+        for marker in (
+            getattr(form, 'supervisor_date', None),
+            getattr(form, 'signature_date', None),
+            getattr(form, 'ethics_signature_date', None),
+            getattr(form, 'submitted_to_admin', None),
+            getattr(form, 'rejected_or_accepted', None),
+        )
+    )
+
+
+def has_current_reviewer_submitted_feedback(form, user_id):
+    """Return True when the assigned reviewer already used a review slot."""
+    if user_id is None:
+        return False
+    reviewer_id = str(user_id)
+    return any(
+        str(completed_by) == reviewer_id
+        for completed_by in (
+            getattr(form, 'form_reviewed_by', None),
+            getattr(form, 'form_reviewed_by1', None),
+        )
+        if completed_by is not None
+    )
+
+
 def _find_latest_form_for_user(model, user_id):
     query = db_session.query(model).filter_by(user_id=user_id)
     if hasattr(model, 'submitted_at'):
@@ -859,6 +888,22 @@ def has_reviewer_approval(form_or_record):
     )
 
 
+def has_dual_reviewer_approval(form_or_record):
+    reviewer_recommendations = [
+        _status_text(_status_value(form_or_record, 'review_recommendation', '') or ''),
+        _status_text(_status_value(form_or_record, 'review_recommendation1', '') or ''),
+    ]
+    reviewer_ids = [
+        _status_value(form_or_record, 'form_reviewed_by'),
+        _status_value(form_or_record, 'form_reviewed_by1'),
+    ]
+    return (
+        all(reviewer_ids)
+        and all(reviewer_recommendations)
+        and all(value == 'Approved' for value in reviewer_recommendations)
+    )
+
+
 def _assigned_reviewer_count_any(form_or_record):
     if isinstance(form_or_record, dict):
         reviewer_values = [
@@ -1293,6 +1338,9 @@ app.jinja_env.globals['get_reviewer_row_status'] = get_reviewer_row_status
 app.jinja_env.globals['get_ethics_dashboard_status'] = get_ethics_dashboard_status
 app.jinja_env.globals['has_reviewer_feedback'] = has_reviewer_feedback
 app.jinja_env.globals['has_reviewer_approval'] = has_reviewer_approval
+app.jinja_env.globals['has_dual_reviewer_approval'] = has_dual_reviewer_approval
+app.jinja_env.globals['has_supervisor_submitted_feedback'] = has_supervisor_submitted_feedback
+app.jinja_env.globals['has_current_reviewer_submitted_feedback'] = has_current_reviewer_submitted_feedback
 app.jinja_env.filters['yes_no'] = format_yes_no
 
 
@@ -1326,6 +1374,32 @@ def can_access_form(user, form):
         return True
 
     return False
+
+
+def can_act_as_assigned_supervisor(user, form):
+    """Allow supervisor decisions only for students assigned to this user."""
+    if not user or not form:
+        return False
+    if str(role_value(user) or '').upper() not in {'SUPERVISOR', 'REVIEWER'}:
+        return False
+    form_owner = db_session.query(User).filter_by(
+        user_id=getattr(form, 'user_id', None)
+    ).first()
+    return bool(
+        form_owner and getattr(form_owner, 'supervisor_id', None) == user.user_id
+    )
+
+
+def can_access_as_assigned_reviewer(user, form):
+    """Allow reviewer actions only for reviewers assigned to the form."""
+    if not user or not form:
+        return False
+    if str(role_value(user) or '').upper() != 'REVIEWER':
+        return False
+    return (
+        getattr(form, 'reviewer_name1', None) == user.user_id
+        or getattr(form, 'reviewer_name2', None) == user.user_id
+    )
 
 
 def can_access_requirements(user, req):
@@ -3016,6 +3090,30 @@ def assign_private_permission_upload(record, file_storage):
     data, filename = read_file_blob(file_storage)
     record.private_permission_file = data
     record.private_permission_filename = filename
+
+
+@app.route('/delete_form_b_private_permission/<string:form_id>', methods=['POST'])
+@login_required
+def delete_form_b_private_permission(form_id):
+    """Delete the student's section 2.7 upload during corrections."""
+    user_id = session.get('id')
+    form = db_session.query(FormB).filter_by(form_id=form_id).first()
+    if not form:
+        return "Form not found", 404
+    if getattr(form, 'user_id', None) != user_id:
+        abort(403)
+    if not is_student_correction_state(form):
+        flash(
+            'This document can only be deleted while the form is with you for resubmission.',
+            'warning',
+        )
+        return redirect(url_for('student_form_pdf', form_id=form_id, form_type='B'))
+
+    form.private_permission_file = None
+    form.private_permission_filename = None
+    db_session.commit()
+    flash('The 2.7 permission document was deleted.', 'success')
+    return redirect(request.referrer or url_for('student_edit_formb'))
 
 
 # DEBUG ENDPOINT REMOVED FOR PRODUCTION SECURITY
@@ -6014,6 +6112,18 @@ _REQUIREMENT_DOCUMENTS = {
 }
 
 
+def _normalize_requirement_form_type(value):
+    """Normalize legacy values such as FormA, FORM_A, and FORM A."""
+    compact = ''.join(
+        character for character in str(value or '').upper() if character.isalnum()
+    )
+    return {
+        'FORMA': 'FORM A',
+        'FORMB': 'FORM B',
+        'FORMC': 'FORM C',
+    }.get(compact, str(value or '').strip().upper())
+
+
 def _student_requirement_documents(form, form_type):
     """Build the upload checklist without loading document bytes in the template."""
     documents = []
@@ -6042,38 +6152,48 @@ def download_student_requirement_document(field):
     filename = getattr(form, allowed[field], None)
     if not data or not filename:
         abort(404)
-    mimetype = mimetypes.guess_type(filename)[0] or 'application/octet-stream'
     if isinstance(data, memoryview):
         data = data.tobytes()
     if isinstance(data, bytes):
-        return send_file(io.BytesIO(data), mimetype=mimetype, as_attachment=True,
-                         download_name=filename)
+        data = decode_legacy_binary(data)
+        mimetype, filename, _ = response_document_metadata(data, filename, field)
+        return send_file(
+            io.BytesIO(data), mimetype=mimetype, as_attachment=True,
+            download_name=filename
+        )
     safe_name = os.path.basename(str(data).replace('\\', '/'))
     path = os.path.join(get_upload_folder(), safe_name)
     if not os.path.isfile(path):
         abort(404)
+    mimetype = mimetypes.guess_type(filename)[0] or 'application/octet-stream'
     return send_file(path, mimetype=mimetype, as_attachment=True, download_name=filename)
 
 
-@app.route('/student/requirements/document/<string:field>/delete', methods=['POST'])
+@app.route('/student/requirements/document/<string:field>/delete', methods=['GET', 'POST'])
 def delete_student_requirement_document(field):
     user_id = session.get('id')
+    if not user_id:
+        return redirect(url_for('login_page'))
     form = db_session.query(FormARequirements).filter_by(user_id=user_id).first() if user_id else None
     allowed = {item[0]: item[1] for items in _REQUIREMENT_DOCUMENTS.values() for item in items}
+    form_type = _normalize_requirement_form_type(form.form_type) if form else None
     if not form or field not in allowed or field not in {
-        item[0] for item in _REQUIREMENT_DOCUMENTS.get(form.form_type, [])
+        item[0] for item in _REQUIREMENT_DOCUMENTS.get(form_type, [])
     }:
         abort(404)
+    endpoint = {
+        "FORM A": "submit_form_a_requirements",
+        "FORM B": "submit_form_b_requirements",
+        "FORM C": "submit_form_c_requirements",
+    }.get(form_type, "student_dashboard")
+    if request.method == 'GET':
+        flash("Use the Delete button and confirm the action to remove a document.", "info")
+        return redirect(url_for(endpoint))
     setattr(form, field, None)
     setattr(form, allowed[field], None)
     form.updated_at = datetime.utcnow()
     db_session.commit()
     flash("Document deleted. It is now marked for re-upload.", "success")
-    endpoint = {
-        "FORM A": "submit_form_a_requirements",
-        "FORM B": "submit_form_b_requirements",
-        "FORM C": "submit_form_c_requirements",
-    }.get(form.form_type, "student_dashboard")
     return redirect(url_for(endpoint))
 
 @app.route('/submit_form_a_requirements', methods=['GET', 'POST'])
@@ -7705,7 +7825,7 @@ def form_a_supervisor(form_id):
     form = db_session.query(FormA).filter_by(form_id=form_id).order_by(FormA.submitted_at.desc()).first()
     if not form:
         return "Form not found", 404
-    if not can_access_form(get_current_user(), form):
+    if not can_act_as_assigned_supervisor(get_current_user(), form):
         abort(403)
     
     data={
@@ -7743,7 +7863,7 @@ def form_b_supervisor(form_id):
     ).filter_by(form_id=form_id).order_by(FormB.submitted_at.desc()).first()
     if not form:
         return "Form not found", 404
-    if not can_access_form(get_current_user(), form):
+    if not can_act_as_assigned_supervisor(get_current_user(), form):
         abort(403)
 
     return render_template("form_b_supervisor.html",formB=form)
@@ -7757,12 +7877,13 @@ def form_c_supervisor(form_id):
     form = db_session.query(FormC).filter_by(form_id=form_id).order_by(FormC.submission_date.desc()).first()
     if not form:
         return "Form not found", 404
-    if not can_access_form(get_current_user(), form):
+    if not can_act_as_assigned_supervisor(get_current_user(), form):
         abort(403)
     return render_template("form_c_supervisor.html",formc=form)
 
 
 @app.route('/reject_or_Accept_form_a/<string:id>',methods=['GET','POST'])
+@role_required('SUPERVISOR', 'REVIEWER')
 def reject_or_Accept_form_a(id):
 
     user_id=session.get('id')
@@ -7775,6 +7896,11 @@ def reject_or_Accept_form_a(id):
         # Handle corrupted date data in database
         app.logger.error(f"Date parsing error for form {id}: {e}")
         forma = db_session.query(FormA).filter_by(form_id=id).first()
+
+    if not forma:
+        return "Form not found", 404
+    if not can_act_as_assigned_supervisor(get_current_user(), forma):
+        abort(403)
     
     #admin=db_session.query(User).filter_by(role="Admin").all()
     data={
@@ -7794,9 +7920,16 @@ def reject_or_Accept_form_a(id):
         "inclusion_criteria": parse_field(forma.inclusion_criteria) if forma else []
     }
 
-    if not forma:
-        forma = FormA(form_id=id)
     if request.method=="POST":
+        forma = (
+            db_session.query(FormA)
+            .filter_by(form_id=id)
+            .with_for_update()
+            .first()
+        )
+        if has_supervisor_submitted_feedback(forma):
+            flash('You have already submitted feedback for this application. It was not submitted again.', 'warning')
+            return redirect(url_for('supervisor_dashboard'))
         org_permission_comment=(request.form.get('org_permission_comment') or '').strip()
         waiver_comment=(request.form.get('waiver_comment') or '').strip()
         form_a_comment=(request.form.get('form_a_comment') or '').strip()
@@ -7885,6 +8018,7 @@ def reject_or_Accept_form_a(id):
     return redirect(url_for('supervisor_dashboard'))
 
 @app.route('/reject_or_Accept_form_b/<string:id>',methods=['GET','POST'])
+@role_required('SUPERVISOR', 'REVIEWER')
 def reject_or_Accept_form_b(id):
     user_id=session.get('id')
     if not user_id:
@@ -7912,9 +8046,20 @@ def reject_or_Accept_form_b(id):
         ).filter_by(form_id=id).first()
     #admin=db_session.query(User).filter_by(role="Admin").all()
     if not formb:
-        formb = FormB(form_id=id)
+        return "Form not found", 404
+    if not can_act_as_assigned_supervisor(get_current_user(), formb):
+        abort(403)
     if request.method=="POST":
- 
+        formb = (
+            db_session.query(FormB)
+            .filter_by(form_id=id)
+            .with_for_update()
+            .first()
+        )
+        if has_supervisor_submitted_feedback(formb):
+            flash('You have already submitted feedback for this application. It was not submitted again.', 'warning')
+            return redirect(url_for('supervisor_dashboard'))
+
         org_permission_comment=(request.form.get('org_permission_comment') or '').strip()
         waiver_comment=(request.form.get('waiver_comment') or '').strip()
         form_a_comment=(request.form.get('form_a_comment') or '').strip()
@@ -7998,6 +8143,7 @@ def reject_or_Accept_form_b(id):
 
 
 @app.route('/reject_or_Accept_form_c/<string:id>',methods=['GET','POST'])
+@role_required('SUPERVISOR', 'REVIEWER')
 def reject_or_Accept_form_c(id):
     user_id=session.get('id')
     if not user_id:
@@ -8011,8 +8157,20 @@ def reject_or_Accept_form_c(id):
         formc = db_session.query(FormC).filter_by(form_id=id).first()
     #admin=db_session.query(User).filter_by(role="Admin").all()
     if not formc:
-        formc = FormC(form_id=id)
+        return "Form not found", 404
+    if not can_act_as_assigned_supervisor(get_current_user(), formc):
+        abort(403)
     if request.method=="POST":
+        formc = (
+            db_session.query(FormC)
+            .filter_by(form_id=id)
+            .with_for_update()
+            .first()
+        )
+        if has_supervisor_submitted_feedback(formc):
+            flash('You have already submitted feedback for this application. It was not submitted again.', 'warning')
+            return redirect(url_for('supervisor_dashboard'))
+
         org_permission_comment=(request.form.get('org_permission_comment') or '').strip()
         waiver_comment=(request.form.get('waiver_comment') or '').strip()
         form_a_comment=(request.form.get('form_a_comment') or '').strip()
@@ -11124,7 +11282,9 @@ def review_feedback(form_id):
         form = db_session.query(model).filter_by(form_id=form_id).first()
         if form:
             break  # Stop once the form is found
-    if form and not can_access_form(get_current_user(), form):
+    if not form:
+        return "Form not found", 404
+    if not can_access_as_assigned_reviewer(get_current_user(), form):
         abort(403)
 
     if form and is_submitted_form_record(form):
@@ -11178,6 +11338,34 @@ def chair_form_view(id,form_name):
         abort(404)
     if not can_access_form(user_name, requested_form):
         abort(403)
+
+    selected_form = requested_form
+    if user_role == 'REVIEWER' and not can_access_as_assigned_reviewer(
+        user_name, selected_form
+    ):
+        abort(403)
+
+    if request.method == 'POST' and user_role == 'REVIEWER':
+        selected_model = (
+            FormA if forma is not None else FormB if formb is not None else FormC
+        )
+        selected_form = (
+            db_session.query(selected_model)
+            .filter_by(form_id=id)
+            .with_for_update()
+            .first()
+        )
+        if not selected_form:
+            return "Form not found", 404
+        if selected_model is FormA:
+            forma = selected_form
+        elif selected_model is FormB:
+            formb = selected_form
+        else:
+            formc = selected_form
+        if has_current_reviewer_submitted_feedback(selected_form, user_id):
+            flash('You have already submitted feedback for this application. It was not submitted again.', 'warning')
+            return redirect(url_for('review_dashboard'))
 
     if forma:
         formReviewers = db_session.query(User).filter(
@@ -12902,8 +13090,13 @@ def submit_to_rec(id):
 @role_required('REVIEWER', 'ADMIN', 'SUPER_ADMIN', 'REC')
 def reviewer_form_a(id):
     form = db_session.query(FormA).filter_by(form_id=id).first()
-    if form and not can_access_form(get_current_user(), form):
+    if not form:
+        return "Form not found", 404
+    if not can_access_as_assigned_reviewer(get_current_user(), form):
         abort(403)
+    if has_current_reviewer_submitted_feedback(form, session.get('id')):
+        flash('You have already reviewed and submitted feedback for this application.', 'warning')
+        return redirect(url_for('review_dashboard'))
     data={}
     if form and is_submitted_form_record(form):
         data={
@@ -12942,8 +13135,13 @@ def reviewer_form_b(id):
         defer(FormB.pending_note),
         defer(FormB.private_permission_file)
     ).filter_by(form_id=id).first()
-    if form and not can_access_form(get_current_user(), form):
+    if not form:
+        return "Form not found", 404
+    if not can_access_as_assigned_reviewer(get_current_user(), form):
         abort(403)
+    if has_current_reviewer_submitted_feedback(form, session.get('id')):
+        flash('You have already reviewed and submitted feedback for this application.', 'warning')
+        return redirect(url_for('review_dashboard'))
 
     if form and is_submitted_form_record(form):
         return render_template("review_form_b.html",form=form)
@@ -12957,8 +13155,13 @@ def reviewer_form_b(id):
 @role_required('REVIEWER', 'ADMIN', 'SUPER_ADMIN', 'REC')
 def reviewer_form_c(id):
     form = db_session.query(FormC).filter_by(form_id=id).first()
-    if form and not can_access_form(get_current_user(), form):
+    if not form:
+        return "Form not found", 404
+    if not can_access_as_assigned_reviewer(get_current_user(), form):
         abort(403)
+    if has_current_reviewer_submitted_feedback(form, session.get('id')):
+        flash('You have already reviewed and submitted feedback for this application.', 'warning')
+        return redirect(url_for('review_dashboard'))
    
     if form and is_submitted_form_record(form):
         return render_template("review_form_c.html", form=form)
