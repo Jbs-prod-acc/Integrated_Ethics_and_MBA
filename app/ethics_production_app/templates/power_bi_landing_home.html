@@ -2837,7 +2837,9 @@
 
                   headers: {
                     "Content-Type":
-                      "application/json"
+                      "application/json",
+                    "X-CSRFToken":
+                      "{{ csrf_token() }}"
                   },
 
                   body: JSON.stringify({
@@ -2863,6 +2865,11 @@
 
               closeConfigurationRightsPanel();
 
+              window.alert(
+                result.message
+                || "BI rights saved successfully."
+              );
+
               reloadWithClosedPanel();
 
             } catch (error) {
@@ -2870,6 +2877,11 @@
               console.error(
                 "Save BI rights error:",
                 error
+              );
+
+              window.alert(
+                error.message
+                || "Unable to save BI rights."
               );
 
               saveConfigurationRightsButton.disabled =
