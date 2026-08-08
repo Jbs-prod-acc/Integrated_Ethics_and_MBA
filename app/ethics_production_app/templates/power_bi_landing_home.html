@@ -1,0 +1,2988 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+
+  <title>BI Dashboard and Reporting | JBS Ethics</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link rel="stylesheet" href="/static/css/supervisor.css">
+
+  <link rel="stylesheet" href="/static/css/review.css">
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/supervisor.css') }}">
+
+  <style>
+    /* =========================================================
+     BI CONFIGURATION RIGHTS SIDE PANEL
+  ========================================================= */
+
+    .bi-side-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.58);
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transition:
+        opacity 0.25s ease,
+        visibility 0.25s ease;
+      z-index: 9990;
+    }
+
+    .bi-side-backdrop.is-open {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+    }
+
+    .bi-side-panel {
+      position: fixed;
+      top: 0;
+      right: 0;
+      width: min(1500px, calc(100vw - 220px));
+      height: 100vh;
+      background: #ffffff;
+      z-index: 9991;
+      box-shadow: -20px 0 55px rgba(15, 23, 42, 0.30);
+
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+
+      transform: translate3d(102%, 0, 0);
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+
+      transition:
+        transform 0.28s ease,
+        opacity 0.18s ease,
+        visibility 0s linear 0.28s;
+
+      will-change:
+        transform,
+        opacity;
+
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+    }
+
+    .bi-side-panel.is-open {
+      transform: translate3d(0, 0, 0);
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+
+      transition:
+        transform 0.28s ease,
+        opacity 0.18s ease,
+        visibility 0s linear 0s;
+    }
+
+    .bi-side-header {
+      flex-shrink: 0;
+      padding: 18px 22px;
+      background: linear-gradient(135deg,
+          var(--bi-brand-purple),
+          var(--bi-brand-orange));
+      color: #ffffff;
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: flex-start;
+    }
+
+    .bi-side-header h2 {
+      margin: 0;
+      font-size: 19px;
+      font-weight: 950;
+      text-transform: uppercase;
+      color: #ffffff;
+    }
+
+    .bi-side-header p {
+      margin: 6px 0 0;
+      color: rgba(255, 255, 255, 0.82);
+      font-size: 13px;
+      font-weight: 700;
+      line-height: 1.45;
+    }
+
+    .bi-side-close {
+      width: 38px;
+      height: 38px;
+      border: none;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.14);
+      color: #ffffff;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+
+    .bi-side-close:hover {
+      background: rgba(255, 255, 255, 0.22);
+    }
+
+    .bi-side-body {
+      flex: 1;
+      overflow: auto;
+      padding: 18px 22px 24px;
+      background: #ffffff;
+    }
+
+    .bi-side-panel.is-open .bi-side-body,
+    .bi-side-panel.is-open .bi-filter-card,
+    .bi-side-panel.is-open .bi-table-card,
+    .bi-side-panel.is-open .bi-table-scroll,
+    .bi-side-panel.is-open .configured-bi-table {
+      visibility: visible;
+      opacity: 1;
+    }
+
+    #biConfigurationRightsTable {
+      width: 100%;
+      min-width: 100%;
+      table-layout: auto;
+      transform: translateZ(0);
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+    }
+
+    .bi-side-footer {
+      flex-shrink: 0;
+      padding: 14px 18px;
+      border-top: 1px solid #d8e1ee;
+      background: #ffffff;
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    @media (max-width: 900px) {
+      .bi-side-panel {
+        width: 100vw;
+      }
+    }
+
+
+    :root {
+      /*
+       * BI branding colours.
+       * These match the orange sidebar and purple active navigation.
+       */
+      --bi-brand-orange: #f5820b;
+      --bi-brand-orange-dark: #d96d00;
+      --bi-brand-orange-soft: #fff4e8;
+      --bi-brand-purple: #4f2365;
+      --bi-brand-purple-dark: #3c174f;
+      --bi-brand-white: #ffffff;
+    }
+
+    .folder-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 2rem;
+      padding: 2rem;
+    }
+
+    .folder-card {
+      text-align: center;
+      padding: 2rem;
+      background-color: #f7f7f7;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+
+    .folder-card:hover {
+      transform: scale(1.05);
+      background-color: #e9f3ff;
+    }
+
+    .folder-icon {
+      font-size: 3rem;
+      color: #4F2365;
+    }
+
+    .folder-label {
+      margin-top: 0.5rem;
+      font-weight: bold;
+      color: #022169;
+    }
+
+    .navbar {
+      background: #022169;
+      color: white;
+      padding: 1rem 2rem;
+    }
+
+    .navbar h2 {
+      margin: 0;
+    }
+
+    .footer {
+      text-align: center;
+      padding: 1rem;
+      background: #939598;
+      color: white;
+      margin-top: 2rem;
+    }
+
+    .btn {
+      background-color: #022169;
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 5px;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+    }
+
+    .btn:hover {
+      background-color: #4F2365;
+      color: white;
+    }
+
+    .btn-success {
+      background-color: #28a745;
+    }
+
+    .btn-success:hover {
+      background-color: #218838;
+    }
+
+    .year-section {
+      margin-bottom: 2rem;
+    }
+
+    .month-header {
+      font-weight: bold;
+      color: #022169;
+      margin-top: 1rem;
+    }
+
+    .form-list {
+      margin-left: 1rem;
+      list-style-type: square;
+    }
+
+    .no-data {
+      display: none;
+      text-align: center;
+      font-weight: bold;
+      color: #cc0000;
+      margin-top: 2rem;
+    }
+
+    .table-container {
+      display: block;
+    }
+
+    .table-container.hidden {
+      display: none;
+    }
+
+    /* =========================================================
+       BI CONTENT ONLY
+       Sidebar and navigation styling are not changed here.
+    ========================================================= */
+
+    .bi-content-section {
+      padding: 20px;
+    }
+
+    /* =========================================================
+       FILTER SECTION
+    ========================================================= */
+
+    .bi-filter-card {
+      background: #ffffff;
+      border: 1px solid #dcdcdc;
+      border-top: 3px solid var(--bi-brand-orange);
+      border-radius: 7px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+
+    .bi-filter-card-title {
+      margin: 0 0 14px;
+      color: #1d2f3d;
+      font-size: 16px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .bi-filter-grid {
+      display: grid;
+      grid-template-columns:
+        minmax(220px, 1.4fr) minmax(180px, 1fr) minmax(180px, 1fr) minmax(150px, 0.8fr) minmax(130px, 0.7fr) auto;
+      gap: 12px;
+      align-items: end;
+    }
+
+    .bi-filter-group {
+      min-width: 0;
+    }
+
+    .bi-filter-label {
+      display: block;
+      margin-bottom: 6px;
+      color: #333333;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .bi-filter-control {
+      width: 100%;
+      min-height: 38px;
+      border: 1px solid #cfd4da;
+      border-radius: 5px;
+      padding: 8px 10px;
+      background: #ffffff;
+      color: #333333;
+      font-size: 13px;
+      outline: none;
+      transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
+    }
+
+    .bi-filter-control:hover {
+      border-color: var(--bi-brand-orange);
+    }
+
+    .bi-filter-control:focus {
+      border-color: var(--bi-brand-orange);
+      box-shadow: 0 0 0 3px rgba(245, 130, 11, 0.15);
+    }
+
+    .bi-search-wrapper {
+      position: relative;
+    }
+
+    .bi-search-wrapper .bi-filter-control {
+      padding-left: 34px;
+      padding-right: 32px;
+    }
+
+    .bi-search-icon {
+      position: absolute;
+      top: 50%;
+      left: 11px;
+      color: var(--bi-brand-orange);
+      font-size: 12px;
+      pointer-events: none;
+      transform: translateY(-50%);
+    }
+
+    .bi-search-list-icon {
+      position: absolute;
+      top: 50%;
+      right: 11px;
+      color: #777777;
+      font-size: 11px;
+      pointer-events: none;
+      transform: translateY(-50%);
+    }
+
+    .bi-filter-buttons {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .bi-filter-button {
+      display: inline-flex;
+      min-height: 38px;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      border: 1px solid var(--bi-brand-orange);
+      border-radius: 4px;
+      padding: 8px 14px;
+      background: var(--bi-brand-orange);
+      color: var(--bi-brand-white);
+      font-size: 12px;
+      font-weight: 700;
+      text-decoration: none;
+      white-space: nowrap;
+      cursor: pointer;
+      transition:
+        background-color 0.2s ease,
+        border-color 0.2s ease,
+        transform 0.15s ease,
+        box-shadow 0.2s ease;
+    }
+
+    .bi-filter-button:hover {
+      border-color: var(--bi-brand-purple);
+      background: var(--bi-brand-purple);
+      color: var(--bi-brand-white);
+      box-shadow: 0 3px 8px rgba(79, 35, 101, 0.22);
+      transform: translateY(-1px);
+    }
+
+    .bi-filter-button:focus {
+      color: var(--bi-brand-white);
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(245, 130, 11, 0.24);
+    }
+
+    .bi-filter-button.bi-reset-button {
+      border-color: #777777;
+      background: #777777;
+    }
+
+    .bi-filter-button.bi-reset-button:hover {
+      border-color: var(--bi-brand-purple);
+      background: var(--bi-brand-purple);
+      color: var(--bi-brand-white);
+    }
+
+    /* =========================================================
+       TABLE SECTION
+    ========================================================= */
+
+    .bi-table-card {
+      background: #ffffff;
+      border: 1px solid #dcdcdc;
+      border-radius: 7px;
+      overflow: hidden;
+    }
+
+    .bi-table-heading {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding: 14px;
+      border-bottom: 1px solid #dcdcdc;
+      background: #ffffff;
+    }
+
+    .bi-table-heading h3 {
+      margin: 0;
+      color: #1d2f3d;
+      font-size: 17px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .bi-table-heading h3::before {
+      content: "";
+      display: inline-block;
+      width: 4px;
+      height: 17px;
+      margin-right: 8px;
+      background: var(--bi-brand-orange);
+      border-radius: 3px;
+      vertical-align: -3px;
+    }
+
+    .bi-table-scroll {
+      width: 100%;
+      overflow-x: auto;
+    }
+
+    .configured-bi-table {
+      width: 100%;
+      margin: 0;
+      border-collapse: collapse;
+      background: #ffffff;
+    }
+
+    .configured-bi-table thead th {
+      padding: 12px 10px;
+      background: #eeeeee;
+      border-bottom: 1px solid #d2d2d2;
+      color: #3a3029;
+      font-size: 12px;
+      font-weight: 700;
+      text-align: left;
+      text-transform: uppercase;
+      vertical-align: middle;
+      white-space: nowrap;
+    }
+
+    .configured-bi-table tbody td {
+      padding: 14px 10px;
+      border-bottom: 1px solid #e1e1e1;
+      color: #333333;
+      font-size: 12px;
+      vertical-align: middle;
+    }
+
+    .configured-bi-table tbody tr {
+      transition:
+        background-color 0.2s ease,
+        box-shadow 0.2s ease;
+    }
+
+    .configured-bi-table tbody tr:hover {
+      background: #fffaf4;
+      box-shadow: inset 4px 0 0 var(--bi-brand-orange);
+    }
+
+    .bi-action-cell {
+      width: 330px;
+      min-width: 330px;
+    }
+
+    .bi-view-cell {
+      min-width: 230px;
+    }
+
+    .bi-column-cell {
+      min-width: 230px;
+    }
+
+    .bi-status-cell {
+      min-width: 130px;
+    }
+
+    .bi-action-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      align-items: center;
+    }
+
+    /*
+     * Configure and View buttons now use the orange sidebar brand.
+     */
+    .bi-action-button {
+      display: inline-flex;
+      min-height: 31px;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      border: 1px solid var(--bi-brand-orange);
+      border-radius: 4px;
+      padding: 7px 10px;
+      background: var(--bi-brand-orange);
+      color: var(--bi-brand-white);
+      text-decoration: none;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      white-space: nowrap;
+      cursor: pointer;
+      transition:
+        background-color 0.2s ease,
+        border-color 0.2s ease,
+        box-shadow 0.2s ease,
+        transform 0.15s ease;
+    }
+
+    .bi-action-button:hover {
+      border-color: var(--bi-brand-purple);
+      background: var(--bi-brand-purple);
+      color: var(--bi-brand-white);
+      box-shadow: 0 3px 8px rgba(79, 35, 101, 0.22);
+      transform: translateY(-1px);
+    }
+
+    .bi-action-button:focus {
+      color: var(--bi-brand-white);
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(245, 130, 11, 0.24);
+    }
+
+    .bi-action-button:active {
+      border-color: var(--bi-brand-orange-dark);
+      background: var(--bi-brand-orange-dark);
+      transform: translateY(0);
+    }
+
+    .bi-column-name {
+      display: block;
+      margin-bottom: 3px;
+    }
+
+    .bi-column-ready {
+      display: block;
+      color: var(--bi-brand-purple);
+      font-size: 10px;
+      font-weight: 700;
+    }
+
+    .bi-status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      border-radius: 20px;
+      background: var(--bi-brand-orange-soft);
+      color: var(--bi-brand-orange-dark);
+      font-size: 10px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .bi-status-dot {
+      width: 9px;
+      height: 9px;
+      flex-shrink: 0;
+      border-radius: 50%;
+      background: var(--bi-brand-orange);
+    }
+
+    .bi-status-not-configured {
+      background: #fff1e5;
+      color: #c13f00;
+    }
+
+    .bi-status-inactive {
+      background: #fdecec;
+      color: #a61b1b;
+    }
+
+    .bi-status-inactive .bi-status-dot {
+      background: #b42318;
+    }
+
+    .bi-status-draft {
+      background: #f3eaf7;
+      color: var(--bi-brand-purple);
+    }
+
+    .bi-status-draft .bi-status-dot {
+      background: var(--bi-brand-purple);
+    }
+
+    .bi-empty-results {
+      padding: 35px !important;
+      text-align: center;
+      color: #777777 !important;
+      font-weight: 700;
+    }
+
+    /* =========================================================
+       PAGINATION
+    ========================================================= */
+
+    .bi-pagination-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 15px;
+      padding: 12px 10px;
+      background: #f4f4f4;
+      border-top: 1px solid #d7d7d7;
+    }
+
+    .bi-record-summary {
+      color: #3b3b3b;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .bi-pagination-controls {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .bi-page-button {
+      display: inline-flex;
+      min-height: 32px;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid #cfd4da;
+      border-radius: 5px;
+      padding: 6px 12px;
+      background: #ffffff;
+      color: #333333;
+      text-decoration: none;
+      font-size: 11px;
+      font-weight: 700;
+      white-space: nowrap;
+      transition:
+        background-color 0.2s ease,
+        border-color 0.2s ease,
+        color 0.2s ease;
+    }
+
+    .bi-page-button:hover {
+      border-color: var(--bi-brand-orange);
+      background: var(--bi-brand-orange-soft);
+      color: var(--bi-brand-orange-dark);
+    }
+
+    .bi-page-button.active {
+      border-color: var(--bi-brand-orange);
+      background: var(--bi-brand-orange);
+      color: var(--bi-brand-white);
+    }
+
+    .bi-page-button.active:hover {
+      border-color: var(--bi-brand-purple);
+      background: var(--bi-brand-purple);
+      color: var(--bi-brand-white);
+    }
+
+    .bi-page-button.disabled {
+      background: #eeeeee;
+      color: #999999;
+      pointer-events: none;
+    }
+
+    .bi-page-ellipsis {
+      display: inline-flex;
+      min-height: 32px;
+      align-items: center;
+      justify-content: center;
+      padding: 6px 5px;
+      color: #555555;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    @media (max-width: 1400px) {
+      .bi-filter-grid {
+        grid-template-columns: repeat(3, minmax(180px, 1fr));
+      }
+
+      .bi-filter-buttons {
+        grid-column: 1 / -1;
+      }
+    }
+
+    @media (max-width: 900px) {
+      .bi-filter-grid {
+        grid-template-columns: repeat(2, minmax(180px, 1fr));
+      }
+    }
+
+    @media (max-width: 768px) {
+      .bi-content-section {
+        padding: 10px;
+      }
+
+      .bi-filter-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .bi-filter-buttons {
+        grid-column: auto;
+      }
+
+      .bi-filter-button {
+        flex: 1;
+      }
+
+      .bi-pagination-footer {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .bi-pagination-controls {
+        justify-content: flex-start;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  {% set per_page_value = per_page|default(10)|int %}
+  {% set current_page_value = current_page|default(1)|int %}
+  {% set total_pages_value = total_pages|default(1)|int %}
+  {% set total_records_value = total_records|default(0)|int %}
+  {% set showing_from_value = showing_from|default(0)|int %}
+  {% set showing_to_value = showing_to|default(0)|int %}
+
+  <div class="admin-wrapper">
+
+    <aside class="sidebar">
+
+      <div class="sidebar-header">
+
+        <img src="/static/img/image.png" alt="UJ JBS Logo" class="sidebar-logo">
+
+        <h3>JBS Ethics Application</h3>
+
+      </div>
+
+      <nav class="sidebar-nav">
+
+        {% if 'admin' == role|default('')|lower %}
+
+        <div>
+
+          <a href="{{ url_for('chair_landing') }}" class="sidebar-link">
+            <i class="fas fa-clipboard-list"></i>
+            Dashboard
+          </a>
+
+          <a href="{{ url_for('monitor') }}" class="sidebar-link">
+            <i class="fas fa-user me-2"></i>
+            Student List
+          </a>
+
+          <a href="{{ url_for('admin_reassign_supervisors') }}" class="sidebar-link">
+            <i class="fas fa-user-gear me-2"></i>
+            Reassign Supervisors
+          </a>
+
+          <a href="{{ url_for('admin_reassign_reviewers') }}" class="sidebar-link">
+            <i class="fas fa-users-gear me-2"></i>
+            Reassign Reviewers
+          </a>
+
+          <a href="{{ url_for('admin_student_password_resets') }}" class="sidebar-link">
+            <i class="fas fa-key me-2"></i>
+            Student Password Resets
+          </a>
+
+          <a href="{{ url_for('reviewer_list') }}" class="sidebar-link">
+            <i class="fas fa-user"></i>
+            Reviewer List
+          </a>
+
+          <a href="{{ url_for('all_users') }}" class="sidebar-link">
+            <i class="fas fa-users-cog"></i>
+            User Management
+          </a>
+
+          <a href="{{ url_for('admin_upload_student_docs') }}" class="sidebar-link">
+            <i class="fas fa-file-arrow-up"></i>
+            Upload Student Documents
+          </a>
+
+          <a href="{{ url_for('admin_login_logs') }}" class="sidebar-link">
+            <i class="fas fa-clock"></i>
+            Login Logs
+          </a>
+
+          <a href="{{ url_for('admin_status_monitor') }}" class="sidebar-link">
+            <i class="fas fa-filter"></i>
+            Admin Status Monitor
+          </a>
+
+          {% if has_any_bi_view_rights|default(false) %}
+
+          <a href="{{ url_for('power_bi_and_reporting') }}" class="sidebar-link active">
+            <i class="fas fa-clock"></i>
+
+            BI Dashboard and Reporting
+          </a>
+
+          {% endif %}
+
+          <a class="dropdown-toggle" href="#" data-bs-toggle="collapse" data-bs-target="#monitoringFormsAdmin">
+            <i class="fas fa-clipboard me-2"></i>
+            Monitoring Forms
+          </a>
+
+          <div class="dropdown w-100">
+
+            <div class="collapse" id="monitoringFormsAdmin">
+
+              <a class="dropdown-item" href="{{ url_for('super_admin_monitoring_page_a') }}">
+                Form A
+              </a>
+
+              <a class="dropdown-item" href="{{ url_for('super_admin_monitoring_page_b') }}">
+                Form B
+              </a>
+
+              <a class="dropdown-item" href="{{ url_for('super_admin_monitoring_page_c') }}">
+                Form C
+              </a>
+
+            </div>
+
+          </div>
+
+        </div>
+
+        {% elif 'super_admin' == role|default('')|lower %}
+
+        <a href="{{ url_for('chair_landing') }}" class="sidebar-link">
+          <i class="fas fa-clipboard-list"></i>
+          Dashboard
+        </a>
+
+        <a href="{{ url_for('monitor') }}" class="sidebar-link">
+          <i class="fas fa-user me-2"></i>
+          Student List
+        </a>
+
+        <a href="{{ url_for('admin_reassign_supervisors') }}" class="sidebar-link">
+          <i class="fas fa-user-gear me-2"></i>
+          Reassign Supervisors
+        </a>
+
+        <a href="{{ url_for('admin_reassign_reviewers') }}" class="sidebar-link">
+          <i class="fas fa-users-gear me-2"></i>
+          Reassign Reviewers
+        </a>
+
+        <a href="{{ url_for('admin_student_password_resets') }}" class="sidebar-link">
+          <i class="fas fa-key me-2"></i>
+          Student Password Resets
+        </a>
+
+        <a href="{{ url_for('reviewer_list') }}" class="sidebar-link">
+          <i class="fas fa-user"></i>
+          Reviewer List
+        </a>
+
+        <a href="{{ url_for('all_users') }}" class="sidebar-link">
+          <i class="fas fa-users-cog"></i>
+          User Management
+        </a>
+
+        <a href="{{ url_for('admin_upload_student_docs') }}" class="sidebar-link">
+          <i class="fas fa-file-arrow-up"></i>
+          Upload Student Documents
+        </a>
+
+        <a href="{{ url_for('admin_login_logs') }}" class="sidebar-link">
+          <i class="fas fa-clock"></i>
+          Login Logs
+        </a>
+
+        <a href="{{ url_for('admin_status_monitor') }}" class="sidebar-link">
+          <i class="fas fa-filter"></i>
+          Admin Status Monitor
+        </a>
+
+        {% if has_any_bi_view_rights|default(false) %}
+
+        <a href="{{ url_for('power_bi_and_reporting') }}" class="sidebar-link">
+          <i class="fas fa-clock"></i>
+          BI Dashboard and Reporting
+        </a>
+
+        {% endif %}
+
+        <div class="dropdown w-100">
+
+          <a class="dropdown-toggle" href="#" data-bs-toggle="collapse" data-bs-target="#analyticsForms">
+            <i class="fas fa-chart-bar me-2"></i>
+            Analytics Forms
+          </a>
+
+          <div class="collapse" id="analyticsForms">
+
+            <a class="dropdown-item" href="{{ url_for('super_admin_form_a') }}">
+              Form A
+            </a>
+
+            <a class="dropdown-item" href="{{ url_for('super_admin_form_b') }}">
+              Form B
+            </a>
+
+            <a class="dropdown-item" href="{{ url_for('super_admin_form_c') }}">
+              Form C
+            </a>
+
+          </div>
+
+        </div>
+
+        <div class="dropdown w-100">
+
+          <a class="dropdown-toggle" href="#" data-bs-toggle="collapse" data-bs-target="#monitoringForms">
+            <i class="fas fa-clipboard me-2"></i>
+            Monitoring Forms
+          </a>
+
+          <div class="collapse" id="monitoringForms">
+
+            <a class="dropdown-item" href="{{ url_for('super_admin_monitoring_page_a') }}">
+              Form A
+            </a>
+
+            <a class="dropdown-item" href="{{ url_for('super_admin_monitoring_page_b') }}">
+              Form B
+            </a>
+
+            <a class="dropdown-item" href="{{ url_for('super_admin_monitoring_page_c') }}">
+              Form C
+            </a>
+
+          </div>
+
+        </div>
+
+        {% else %}
+
+        <a href="{{ url_for('review_dashboard') }}" class="sidebar-link">
+          <i class="fas fa-clipboard-check"></i>
+          My Reviews
+        </a>
+
+        {% endif %}
+
+        <a href="{{ url_for('rec_dashboard') }}" class="sidebar-link">
+          <i class="fas fa-users"></i>
+          Rec Team Dashboard
+        </a>
+
+        <a href="{{ url_for('logout') }}" class="sidebar-link">
+          <i class="fas fa-sign-out-alt"></i>
+          Logout
+        </a>
+
+      </nav>
+
+    </aside>
+
+    <main class="admin-main">
+      <header class="topbar">
+
+        <div class="d-flex justify-content-between align-items-center w-100">
+
+          <div>
+
+            <h2>
+              BI DASHBOARD AND REPORTING
+            </h2>
+
+            <p>
+              Configure, manage and view the available BI reports.
+            </p>
+
+          </div>
+
+
+          {% set permission_check = namespace(
+          allowed=false
+          ) %}
+
+          {% for bi_record in bi_records|default([]) %}
+
+          {% set config_value = (
+          bi_record.has_bi_config_rights
+          | default(false)
+          | string
+          | lower
+          | trim
+          ) %}
+
+          {% if config_value in ['true', 'yes', '1'] %}
+
+          {% set permission_check.allowed = true %}
+
+          {% endif %}
+
+          {% endfor %}
+
+
+          {% if permission_check.allowed %}
+
+          <button type="button" class="toolbar-refresh-btn" id="openBiConfigurationRightsPanel"
+            style="margin-left: auto;">
+            <i class="fa-solid fa-user-shield"></i>
+
+            <span>
+              Configuration Rights
+            </span>
+
+          </button>
+
+          {% endif %}
+
+        </div>
+
+      </header>
+
+
+
+      <div class="bi-content-section">
+
+
+
+        <!-- =====================================================
+             FILTER SECTION
+        ====================================================== -->
+
+        <section class="bi-filter-card">
+
+          <h3 class="bi-filter-card-title">
+            Filter BI Views
+          </h3>
+
+          <form method="GET" action="{{ url_for('power_bi_and_reporting') }}" class="bi-filter-grid">
+
+            <!-- SEARCH DATALIST -->
+
+            <div class="bi-filter-group">
+
+              <label class="bi-filter-label" for="search">
+                Search
+              </label>
+
+              <div class="bi-search-wrapper">
+
+                <i class="fas fa-magnifying-glass bi-search-icon"></i>
+
+                <input type="text" id="search" name="search" list="biSearchSuggestions" class="bi-filter-control"
+                  value="{{ search_text|default('') }}" placeholder="Start typing a BI view or database table..."
+                  autocomplete="off">
+
+                <i class="fas fa-chevron-down bi-search-list-icon"></i>
+
+              </div>
+
+              <datalist id="biSearchSuggestions">
+
+                {% for view_name in bi_view_names|default([]) %}
+
+                <option value="{{ view_name }}" label="BI View"></option>
+
+                {% endfor %}
+
+                {% for table_name in database_tables|default([]) %}
+
+                <option value="{{ table_name }}" label="Database Table"></option>
+
+                {% endfor %}
+
+              </datalist>
+
+            </div>
+
+            <div class="bi-filter-group">
+
+              <label class="bi-filter-label" for="bi_view_name">
+                BI View Name
+              </label>
+
+              <select id="bi_view_name" name="bi_view_name" class="bi-filter-control">
+
+                <option value="">
+                  All BI Views
+                </option>
+
+                {% for view_name in bi_view_names|default([]) %}
+
+                <option value="{{ view_name }}" {% if selected_view|default('')==view_name %}selected{% endif %}>
+                  {{ view_name }}
+                </option>
+
+                {% endfor %}
+
+              </select>
+
+            </div>
+
+            <div class="bi-filter-group">
+
+              <label class="bi-filter-label" for="database_table">
+                Database Table
+              </label>
+
+              <select id="database_table" name="database_table" class="bi-filter-control">
+
+                <option value="">
+                  All Database Tables
+                </option>
+
+                {% for table_name in database_tables|default([]) %}
+
+                <option value="{{ table_name }}" {% if selected_table|default('')==table_name %}selected{% endif %}>
+                  {{ table_name }}
+                </option>
+
+                {% endfor %}
+
+              </select>
+
+            </div>
+
+            <div class="bi-filter-group">
+
+              <label class="bi-filter-label" for="status">
+                Status
+              </label>
+
+              <select id="status" name="status" class="bi-filter-control">
+
+                <option value="">
+                  All Statuses
+                </option>
+
+                {% for status_name in statuses|default([]) %}
+
+                <option value="{{ status_name }}" {% if selected_status|default('')==status_name %}selected{% endif %}>
+                  {{ status_name }}
+                </option>
+
+                {% endfor %}
+
+              </select>
+
+            </div>
+
+            <div class="bi-filter-group">
+
+              <label class="bi-filter-label" for="per_page">
+                Records Per Page
+              </label>
+
+              <select id="per_page" name="per_page" class="bi-filter-control">
+
+                {% for page_size in [10, 25, 50, 100] %}
+
+                <option value="{{ page_size }}" {% if per_page_value==page_size %}selected{% endif %}>
+                  {{ page_size }}
+                </option>
+
+                {% endfor %}
+
+              </select>
+
+            </div>
+
+            <div class="bi-filter-buttons">
+
+              <button type="submit" class="bi-filter-button">
+                <i class="fas fa-filter"></i>
+                Apply
+              </button>
+
+              <a href="{{ url_for('power_bi_and_reporting') }}" class="bi-filter-button bi-reset-button">
+                <i class="fas fa-rotate-left"></i>
+                Reset
+              </a>
+
+            </div>
+
+          </form>
+
+        </section>
+
+        <!-- =====================================================
+             TABLE SECTION
+        ====================================================== -->
+
+        <section class="bi-table-card">
+
+          <div class="bi-table-heading">
+
+            <h3>
+              Configured BI Views
+            </h3>
+
+          </div>
+
+          <div class="bi-table-scroll">
+
+            <table class="configured-bi-table">
+
+              <thead>
+
+                <tr>
+
+                  <th class="bi-action-cell">
+                    Action
+                  </th>
+
+                  <th class="bi-view-cell">
+                    BI View Name
+                  </th>
+
+                  <th class="bi-column-cell">
+                    BI Column
+                  </th>
+
+                  <th class="bi-status-cell">
+                    Status
+                  </th>
+
+                </tr>
+
+              </thead>
+
+              <tbody>
+
+                {% for bi_record in bi_records|default([]) %}
+
+                {% set record_status =
+                bi_record.status|default('Active')|trim
+                %}
+
+                {% set status_lower =
+                record_status|lower
+                %}
+
+                <tr>
+
+                  <td>
+
+                    <div class="bi-action-buttons">
+
+                      {% if bi_record.has_bi_config_rights|default(false) %}
+
+                      <a href="{{ url_for(
+                          'power_bi_and_reporting_configure_bi_template',
+                          bi_view_name=bi_record.bi_view_name,
+                          database_table=bi_record.database_table
+                        ) }}" class="bi-action-button" title="Configure {{ bi_record.bi_view_name }}">
+                        <i class="fas fa-gear"></i>
+                        Configure BI Template
+                      </a>
+
+                      {% endif %}
+
+
+                      {% if bi_record.has_bi_view_rights|default(false) %}
+
+                      <a href="{{ url_for(
+                          'power_bi_and_reporting_view_bi_report',
+                          bi_view_name=bi_record.bi_view_name,
+                          database_table=bi_record.database_table
+                        ) }}" class="bi-action-button" title="View {{ bi_record.bi_view_name }} report">
+                        <i class="fas fa-chart-column"></i>
+                        View BI Report
+                      </a>
+
+                      {% endif %}
+
+
+                      {% if
+                      not bi_record.has_bi_config_rights|default(false)
+                      and
+                      not bi_record.has_bi_view_rights|default(false)
+                      %}
+
+                      <span class="bi-status-badge bi-status-inactive">
+                        <span class="bi-status-dot"></span>
+                        No BI rights
+                      </span>
+
+                      {% endif %}
+
+                    </div>
+
+                  </td>
+
+                  <td>
+                    {{ bi_record.bi_view_name }}
+                  </td>
+
+                  <td>
+
+                    <span class="bi-column-name">
+                      {{ bi_record.database_table }}
+                    </span>
+
+                    <span class="bi-column-ready">
+                      Column ready
+                    </span>
+
+                  </td>
+
+                  <td>
+
+                    <span class="
+                        bi-status-badge
+                        {% if status_lower == 'not configured' %}
+                          bi-status-not-configured
+                        {% elif status_lower == 'inactive' %}
+                          bi-status-inactive
+                        {% elif status_lower == 'draft' %}
+                          bi-status-draft
+                        {% endif %}
+                      ">
+
+                      <span class="bi-status-dot"></span>
+
+                      {{ record_status }}
+
+                    </span>
+
+                  </td>
+
+                </tr>
+
+                {% else %}
+
+                <tr>
+
+                  <td colspan="4" class="bi-empty-results">
+                    No BI views match the selected filters.
+                  </td>
+
+                </tr>
+
+                {% endfor %}
+
+              </tbody>
+
+            </table>
+
+          </div>
+
+          <!-- ===================================================
+               PAGINATION
+          ==================================================== -->
+
+          <div class="bi-pagination-footer">
+
+            <div class="bi-record-summary">
+
+              Showing {{ showing_from_value }} - {{ showing_to_value }}
+              of {{ total_records_value }} record(s)
+
+            </div>
+
+            <div class="bi-pagination-controls">
+
+              {% for page_size in [10, 25, 50, 100] %}
+
+              <a href="{{ url_for(
+                  'power_bi_and_reporting',
+                  page=1,
+                  per_page=page_size,
+                  search=search_text|default(''),
+                  bi_view_name=selected_view|default(''),
+                  database_table=selected_table|default(''),
+                  status=selected_status|default('')
+                ) }}" class="
+                  bi-page-button
+                  {% if per_page_value == page_size %}active{% endif %}
+                ">
+                {{ page_size }} per page
+              </a>
+
+              {% endfor %}
+
+              {% if current_page_value > 1 %}
+
+              <a href="{{ url_for(
+                  'power_bi_and_reporting',
+                  page=current_page_value - 1,
+                  per_page=per_page_value,
+                  search=search_text|default(''),
+                  bi_view_name=selected_view|default(''),
+                  database_table=selected_table|default(''),
+                  status=selected_status|default('')
+                ) }}" class="bi-page-button">
+                Previous
+              </a>
+
+              {% endif %}
+
+              {% for page_number in page_links|default([1]) %}
+
+              {% if page_number is none %}
+
+              <span class="bi-page-ellipsis">
+                ...
+              </span>
+
+              {% else %}
+
+              <a href="{{ url_for(
+                    'power_bi_and_reporting',
+                    page=page_number,
+                    per_page=per_page_value,
+                    search=search_text|default(''),
+                    bi_view_name=selected_view|default(''),
+                    database_table=selected_table|default(''),
+                    status=selected_status|default('')
+                  ) }}" class="
+                    bi-page-button
+                    {% if page_number == current_page_value %}active{% endif %}
+                  ">
+                {{ page_number }}
+              </a>
+
+              {% endif %}
+
+              {% endfor %}
+
+              {% if current_page_value < total_pages_value %} <a href="{{ url_for(
+                  'power_bi_and_reporting',
+                  page=current_page_value + 1,
+                  per_page=per_page_value,
+                  search=search_text|default(''),
+                  bi_view_name=selected_view|default(''),
+                  database_table=selected_table|default(''),
+                  status=selected_status|default('')
+                ) }}" class="bi-page-button">
+                Next
+                </a>
+
+                {% endif %}
+
+            </div>
+
+          </div>
+
+        </section>
+
+
+        <!--Modal Section to configure BI configurations-->
+        <!-- =====================================================
+     BI CONFIGURATION RIGHTS PANEL
+====================================================== -->
+
+        <div class="bi-side-backdrop" id="biConfigurationRightsBackdrop"></div>
+
+        <section class="bi-side-panel" id="biConfigurationRightsPanel" aria-hidden="true"
+          aria-labelledby="biConfigurationRightsTitle">
+
+          <div class="bi-side-header">
+
+            <div>
+
+              <h2 id="biConfigurationRightsTitle">
+                BI Configuration Rights
+              </h2>
+
+              <p>
+                Search users and control who can configure BI dashboards and reports.
+              </p>
+
+            </div>
+
+            <button type="button" class="bi-side-close" id="closeBiConfigurationRightsPanel"
+              aria-label="Close BI configuration rights">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+
+          </div>
+
+          <div class="bi-side-body">
+
+            <!-- =================================================
+         FILTER
+    ================================================== -->
+
+            <!-- =====================================================
+     FILTER BI CONFIGURATION RIGHTS USERS
+====================================================== -->
+
+            <!-- =====================================================
+     FILTER BI CONFIGURATION RIGHTS USERS
+====================================================== -->
+
+            <section class="bi-filter-card">
+
+              <h3 class="bi-filter-card-title">
+                Filter Users
+              </h3>
+
+              <form method="GET" action="{{ url_for('power_bi_and_reporting') }}" class="bi-filter-grid"
+                id="biConfigurationRightsFilterForm">
+
+                <!-- =================================================
+         PRESERVE MAIN BI TABLE FILTERS
+    ================================================== -->
+
+                <input type="hidden" name="search" value="{{ search_text|default('') }}">
+
+                <input type="hidden" name="bi_view_name" value="{{ selected_view|default('') }}">
+
+                <input type="hidden" name="database_table" value="{{ selected_table|default('') }}">
+
+                <input type="hidden" name="status" value="{{ selected_status|default('') }}">
+
+                <input type="hidden" name="page" value="{{ current_page|default(1) }}">
+
+                <input type="hidden" name="per_page" value="{{ per_page|default(10) }}">
+
+
+                <!-- =================================================
+         EXISTING BACKEND SEARCH VALUE
+    ================================================== -->
+
+                <input type="hidden" id="biConfigurationRightsSearch" name="bi_rights_search"
+                  value="{{ bi_rights_search_text|default('') }}">
+
+
+                <!-- =================================================
+         RIGHTS PAGINATION
+    ================================================== -->
+
+                <input type="hidden" name="bi_rights_page" value="1">
+
+                <input type="hidden" name="open_bi_rights" value="1">
+
+
+                <!-- =================================================
+         FULL NAME DATALIST
+    ================================================== -->
+
+                <div class="bi-filter-group">
+
+                  <label class="bi-filter-label" for="biConfigurationRightsFullName">
+                    Full Name
+                  </label>
+
+                  <div class="bi-search-wrapper">
+
+                    <i class="fas fa-user bi-search-icon"></i>
+
+                    <input type="text" id="biConfigurationRightsFullName"
+                      list="biConfigurationRightsFullNameSuggestions"
+                      class="bi-filter-control bi-rights-separate-filter" placeholder="Start typing a full name..."
+                      autocomplete="off">
+
+                    <i class="fas fa-chevron-down bi-search-list-icon"></i>
+
+                  </div>
+
+                  <datalist id="biConfigurationRightsFullNameSuggestions">
+
+                    {% for full_name in bi_rights_full_names|default([]) %}
+
+                    <option value="{{ full_name }}"></option>
+
+                    {% endfor %}
+
+                  </datalist>
+
+                </div>
+
+
+                <!-- =================================================
+         EMAIL DATALIST
+    ================================================== -->
+
+                <div class="bi-filter-group">
+
+                  <label class="bi-filter-label" for="biConfigurationRightsEmail">
+                    Email
+                  </label>
+
+                  <div class="bi-search-wrapper">
+
+                    <i class="fas fa-envelope bi-search-icon"></i>
+
+                    <input type="text" id="biConfigurationRightsEmail" list="biConfigurationRightsEmailSuggestions"
+                      class="bi-filter-control bi-rights-separate-filter" placeholder="Start typing an email..."
+                      autocomplete="off">
+
+                    <i class="fas fa-chevron-down bi-search-list-icon"></i>
+
+                  </div>
+
+                  <datalist id="biConfigurationRightsEmailSuggestions">
+
+                    {% for email in bi_rights_emails|default([]) %}
+
+                    <option value="{{ email }}"></option>
+
+                    {% endfor %}
+
+                  </datalist>
+
+                </div>
+
+
+                <!-- =================================================
+         CONFIGURATION RIGHTS DATALIST
+    ================================================== -->
+
+                <div class="bi-filter-group">
+
+                  <label class="bi-filter-label" for="biConfigurationRightsValue">
+                    Configuration Rights
+                  </label>
+
+                  <div class="bi-search-wrapper">
+
+                    <i class="fas fa-user-shield bi-search-icon"></i>
+
+                    <input type="text" id="biConfigurationRightsValue" list="biConfigurationRightsValueSuggestions"
+                      class="bi-filter-control bi-rights-separate-filter" placeholder="Select Yes or No..."
+                      autocomplete="off">
+
+                    <i class="fas fa-chevron-down bi-search-list-icon"></i>
+
+                  </div>
+
+                  <datalist id="biConfigurationRightsValueSuggestions">
+
+                    <option value="Yes"></option>
+
+                    <option value="No"></option>
+
+                  </datalist>
+
+                </div>
+
+
+                <!-- =================================================
+         RECORDS PER PAGE
+    ================================================== -->
+
+                <div class="bi-filter-group">
+
+                  <label class="bi-filter-label" for="biRightsPerPage">
+                    Records Per Page
+                  </label>
+
+                  <select id="biRightsPerPage" name="bi_rights_per_page" class="bi-filter-control">
+
+                    {% for page_size in [10, 25, 50, 100] %}
+
+                    <option value="{{ page_size }}" {% if bi_rights_per_page|default(10)|int==page_size %} selected {%
+                      endif %}>
+                      {{ page_size }}
+                    </option>
+
+                    {% endfor %}
+
+                  </select>
+
+                </div>
+
+
+                <!-- =================================================
+         FILTER BUTTONS
+    ================================================== -->
+
+                <div class="bi-filter-buttons">
+
+                  <button type="submit" class="bi-filter-button" id="applyBiConfigurationRightsFilters">
+                    <i class="fas fa-filter"></i>
+                    Apply
+                  </button>
+
+                  <button type="button" class="bi-filter-button bi-reset-button" id="resetBiConfigurationRightsSearch">
+                    <i class="fas fa-rotate-left"></i>
+                    Reset
+                  </button>
+
+                </div>
+
+              </form>
+
+            </section>
+
+
+            <!-- =====================================================
+     BI CONFIGURATION RIGHTS USERS TABLE
+====================================================== -->
+
+            <section class="bi-table-card">
+
+              <div class="bi-table-heading">
+
+                <h3>
+                  User Configuration Rights
+                </h3>
+
+              </div>
+
+
+              <div class="bi-table-scroll">
+
+                <table class="configured-bi-table" id="biConfigurationRightsTable">
+
+                  <thead>
+
+                    <tr>
+
+                      <th>
+                        Full Name
+                      </th>
+
+                      <th>
+                        Email
+                      </th>
+
+                      <th>
+                        User Role
+                      </th>
+
+                      <th>
+                        Configuration Rights
+                      </th>
+
+                      <th>
+                        Viewing Rights
+                      </th>
+
+                    </tr>
+
+                  </thead>
+
+
+                  <tbody>
+
+                    {% for user_item in bi_configuration_rights_users|default([]) %}
+
+                    <tr data-user-id="{{ user_item.user_id }}" data-full-name="{{ user_item.full_name }}"
+                      data-email="{{ user_item.email }}" data-role="{{ user_item.role }}"
+                      data-config-rights="{{ user_item.has_bi_config_rights }}"
+                      data-view-rights="{{ user_item.has_bi_view_rights }}">
+
+                      <td>
+                        {{ user_item.full_name }}
+                      </td>
+
+                      <td>
+                        {{ user_item.email }}
+                      </td>
+
+                      <td>
+                        {{ user_item.role }}
+                      </td>
+
+                      <td>
+
+                        <select class="bi-filter-control bi-configuration-right-select"
+                          name="has_bi_config_rights_{{ user_item.user_id }}" data-user-id="{{ user_item.user_id }}">
+
+                          <option value="No" {% if user_item.has_bi_config_rights|default('No')|lower=='no' %} selected
+                            {% endif %}>
+                            No
+                          </option>
+
+                          <option value="Yes" {% if user_item.has_bi_config_rights|default('No')|lower=='yes' %}
+                            selected {% endif %}>
+                            Yes
+                          </option>
+
+                        </select>
+
+                      </td>
+
+                      <td>
+
+                        <select class="bi-filter-control bi-view-right-select"
+                          name="has_bi_view_rights_{{ user_item.user_id }}" data-user-id="{{ user_item.user_id }}">
+
+                          <option value="No" {% if user_item.has_bi_view_rights|default('No')|lower=='no' %} selected {%
+                            endif %}>
+                            No
+                          </option>
+
+                          <option value="Yes" {% if user_item.has_bi_view_rights|default('No')|lower=='yes' %} selected
+                            {% endif %}>
+                            Yes
+                          </option>
+
+                        </select>
+
+                      </td>
+
+                    </tr>
+
+                    {% else %}
+
+                    <tr>
+
+                      <td colspan="5" class="bi-empty-results">
+                        No eligible users match the selected filter.
+                      </td>
+
+                    </tr>
+
+                    {% endfor %}
+
+
+                    <!-- Used by the live JavaScript filter -->
+
+                    <tr id="biConfigurationRightsEmptyRow" style="display: none;">
+
+                      <td colspan="5" class="bi-empty-results">
+                        No users match the entered filter.
+                      </td>
+
+                    </tr>
+
+                  </tbody>
+
+                </table>
+
+              </div>
+
+
+              <!-- ===================================================
+       BI CONFIGURATION RIGHTS PAGINATION
+  ==================================================== -->
+
+              <div class="bi-pagination-footer">
+
+                <div class="bi-record-summary">
+
+                  Showing
+                  {{ bi_rights_showing_from|default(0) }}
+                  -
+                  {{ bi_rights_showing_to|default(0) }}
+
+                  of
+
+                  {{ bi_rights_total_records|default(0) }}
+                  user(s)
+
+                </div>
+
+
+                <div class="bi-pagination-controls">
+
+                  <!-- Records per page shortcuts -->
+
+                  {% for page_size in [10, 25, 50, 100] %}
+
+                  <a href="{{ url_for(
+          'power_bi_and_reporting',
+          search=search_text|default(''),
+          bi_view_name=selected_view|default(''),
+          database_table=selected_table|default(''),
+          status=selected_status|default(''),
+          page=current_page|default(1),
+          per_page=per_page|default(10),
+          bi_rights_search=bi_rights_search_text|default(''),
+          bi_rights_page=1,
+          bi_rights_per_page=page_size,
+          open_bi_rights=1
+        ) }}" class="
+          bi-page-button
+          {% if bi_rights_per_page|default(10)|int == page_size %}
+          active
+          {% endif %}
+        ">
+                    {{ page_size }} per page
+                  </a>
+
+                  {% endfor %}
+
+
+                  <!-- Previous page -->
+
+                  {% if bi_rights_current_page|default(1)|int > 1 %}
+
+                  <a href="{{ url_for(
+          'power_bi_and_reporting',
+          search=search_text|default(''),
+          bi_view_name=selected_view|default(''),
+          database_table=selected_table|default(''),
+          status=selected_status|default(''),
+          page=current_page|default(1),
+          per_page=per_page|default(10),
+          bi_rights_search=bi_rights_search_text|default(''),
+          bi_rights_page=bi_rights_current_page|int - 1,
+          bi_rights_per_page=bi_rights_per_page|default(10),
+          open_bi_rights=1
+        ) }}" class="bi-page-button">
+                    Previous
+                  </a>
+
+                  {% endif %}
+
+
+                  <!-- Page numbers -->
+
+                  {% for page_number in bi_rights_page_links|default([1]) %}
+
+                  {% if page_number is none %}
+
+                  <span class="bi-page-ellipsis">
+                    ...
+                  </span>
+
+                  {% else %}
+
+                  <a href="{{ url_for(
+            'power_bi_and_reporting',
+            search=search_text|default(''),
+            bi_view_name=selected_view|default(''),
+            database_table=selected_table|default(''),
+            status=selected_status|default(''),
+            page=current_page|default(1),
+            per_page=per_page|default(10),
+            bi_rights_search=bi_rights_search_text|default(''),
+            bi_rights_page=page_number,
+            bi_rights_per_page=bi_rights_per_page|default(10),
+            open_bi_rights=1
+          ) }}" class="
+            bi-page-button
+            {% if page_number == bi_rights_current_page|default(1)|int %}
+            active
+            {% endif %}
+          ">
+                    {{ page_number }}
+                  </a>
+
+                  {% endif %}
+
+                  {% endfor %}
+
+
+                  <!-- Next page -->
+
+                  {% if
+                  bi_rights_current_page|default(1)|int
+                  < bi_rights_total_pages|default(1)|int %} <a href="{{ url_for(
+          'power_bi_and_reporting',
+          search=search_text|default(''),
+          bi_view_name=selected_view|default(''),
+          database_table=selected_table|default(''),
+          status=selected_status|default(''),
+          page=current_page|default(1),
+          per_page=per_page|default(10),
+          bi_rights_search=bi_rights_search_text|default(''),
+          bi_rights_page=bi_rights_current_page|int + 1,
+          bi_rights_per_page=bi_rights_per_page|default(10),
+          open_bi_rights=1
+        ) }}" class="bi-page-button">
+                    Next
+                    </a>
+
+                    {% endif %}
+
+                </div>
+
+              </div>
+
+            </section>
+
+          </div>
+
+          <div class="bi-side-footer">
+
+            <button type="button" class="bi-filter-button bi-reset-button" id="cancelBiConfigurationRights">
+              <i class="fa-solid fa-xmark"></i>
+              Close
+            </button>
+
+            <button type="button" class="bi-filter-button" id="saveBiConfigurationRights">
+              <i class="fa-solid fa-floppy-disk"></i>
+              Save Configuration Rights
+            </button>
+
+          </div>
+
+        </section>
+
+      </div>
+
+    </main>
+
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const perPageSelect = document.getElementById("per_page");
+      const searchInput = document.getElementById("search");
+      const filterForm = searchInput ? searchInput.closest("form") : null;
+
+      if (perPageSelect) {
+        perPageSelect.addEventListener("change", function () {
+          this.form.submit();
+        });
+      }
+
+      /*
+       * When a user selects a datalist suggestion,
+       * automatically submit the filter form.
+       */
+      if (searchInput && filterForm) {
+        searchInput.addEventListener("change", function () {
+          const selectedValue = this.value.trim();
+
+          if (selectedValue) {
+            filterForm.submit();
+          }
+        });
+      }
+    });
+  </script>
+
+  <!--Configuration rights script-->
+  <!--Configuration rights script-->
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+
+      /* =========================================================
+         ELEMENTS
+      ========================================================= */
+
+      const openConfigurationRightsButton =
+        document.getElementById(
+          "openBiConfigurationRightsPanel"
+        );
+
+      const closeConfigurationRightsButton =
+        document.getElementById(
+          "closeBiConfigurationRightsPanel"
+        );
+
+      const cancelConfigurationRightsButton =
+        document.getElementById(
+          "cancelBiConfigurationRights"
+        );
+
+      const configurationRightsPanel =
+        document.getElementById(
+          "biConfigurationRightsPanel"
+        );
+
+      const configurationRightsBackdrop =
+        document.getElementById(
+          "biConfigurationRightsBackdrop"
+        );
+
+      const configurationRightsFilterForm =
+        document.getElementById(
+          "biConfigurationRightsFilterForm"
+        );
+
+      const configurationRightsSearchInput =
+        document.getElementById(
+          "biConfigurationRightsSearch"
+        );
+
+      const configurationRightsFullNameInput =
+        document.getElementById(
+          "biConfigurationRightsFullName"
+        );
+
+      const configurationRightsEmailInput =
+        document.getElementById(
+          "biConfigurationRightsEmail"
+        );
+
+      const configurationRightsValueInput =
+        document.getElementById(
+          "biConfigurationRightsValue"
+        );
+
+      const resetConfigurationRightsButton =
+        document.getElementById(
+          "resetBiConfigurationRightsSearch"
+        );
+
+      const configurationRightsPerPage =
+        document.getElementById(
+          "biRightsPerPage"
+        );
+
+      const configurationRightsTable =
+        document.getElementById(
+          "biConfigurationRightsTable"
+        );
+
+      const saveConfigurationRightsButton =
+        document.getElementById(
+          "saveBiConfigurationRights"
+        );
+
+      const queryParameters =
+        new URLSearchParams(
+          window.location.search
+        );
+
+      const shouldOpenConfigurationRights =
+        queryParameters.get(
+          "open_bi_rights"
+        ) === "1";
+
+
+      /* =========================================================
+         OPEN SIDE PANEL
+      ========================================================= */
+
+      function openConfigurationRightsPanel() {
+
+        if (
+          !configurationRightsPanel
+          ||
+          !configurationRightsBackdrop
+        ) {
+          return;
+        }
+
+        /*
+         * Reset the internal panel position before opening.
+         */
+        const configurationRightsBody =
+          configurationRightsPanel.querySelector(
+            ".bi-side-body"
+          );
+
+        if (configurationRightsBody) {
+          configurationRightsBody.scrollTop = 0;
+        }
+
+        /*
+         * Open the backdrop first.
+         */
+        configurationRightsBackdrop
+          .classList
+          .add("is-open");
+
+        /*
+         * Force the browser to calculate the closed-panel layout
+         * before applying the open state.
+         */
+        void configurationRightsPanel.offsetWidth;
+
+        configurationRightsPanel
+          .classList
+          .add("is-open");
+
+        configurationRightsPanel.setAttribute(
+          "aria-hidden",
+          "false"
+        );
+
+        document.body.style.overflow = "hidden";
+
+        /*
+         * Force the table and filters to repaint after the panel
+         * becomes visible. This removes the role-specific behaviour
+         * where the content only appeared after another click.
+         */
+        window.requestAnimationFrame(function () {
+
+          window.requestAnimationFrame(function () {
+
+            const configurationRightsTableCard =
+              configurationRightsPanel.querySelector(
+                ".bi-table-card"
+              );
+
+            const configurationRightsFilterCard =
+              configurationRightsPanel.querySelector(
+                ".bi-filter-card"
+              );
+
+            if (configurationRightsFilterCard) {
+              configurationRightsFilterCard.style.display =
+                "none";
+
+              void configurationRightsFilterCard.offsetHeight;
+
+              configurationRightsFilterCard.style.display =
+                "";
+            }
+
+            if (configurationRightsTableCard) {
+              configurationRightsTableCard.style.display =
+                "none";
+
+              void configurationRightsTableCard.offsetHeight;
+
+              configurationRightsTableCard.style.display =
+                "";
+            }
+
+            if (configurationRightsTable) {
+              configurationRightsTable.style.visibility =
+                "visible";
+
+              configurationRightsTable.style.opacity =
+                "1";
+
+              void configurationRightsTable.offsetHeight;
+            }
+
+            window.dispatchEvent(
+              new Event("resize")
+            );
+
+          });
+
+        });
+      }
+
+
+      /* =========================================================
+         CLOSE SIDE PANEL
+      ========================================================= */
+
+      function closeConfigurationRightsPanel() {
+
+        if (
+          !configurationRightsPanel
+          ||
+          !configurationRightsBackdrop
+        ) {
+          return;
+        }
+
+        configurationRightsPanel
+          .classList
+          .remove("is-open");
+
+        configurationRightsBackdrop
+          .classList
+          .remove("is-open");
+
+        configurationRightsPanel.setAttribute(
+          "aria-hidden",
+          "true"
+        );
+
+        document.body.style.overflow = "";
+      }
+
+
+      /* =========================================================
+         GET THE SELECTED SEPARATE FILTER
+      ========================================================= */
+
+      function getSelectedRightsFilterValue() {
+
+        const fullNameValue =
+          configurationRightsFullNameInput
+            ? configurationRightsFullNameInput.value.trim()
+            : "";
+
+        const emailValue =
+          configurationRightsEmailInput
+            ? configurationRightsEmailInput.value.trim()
+            : "";
+
+        const configurationValue =
+          configurationRightsValueInput
+            ? configurationRightsValueInput.value.trim()
+            : "";
+
+        if (fullNameValue) {
+          return fullNameValue;
+        }
+
+        if (emailValue) {
+          return emailValue;
+        }
+
+        if (configurationValue) {
+          return configurationValue;
+        }
+
+        return "";
+      }
+
+
+      /* =========================================================
+         CLEAR THE OTHER FILTERS
+      ========================================================= */
+
+      function clearOtherRightsFilters(
+        activeInput
+      ) {
+
+        const filterInputs = [
+          configurationRightsFullNameInput,
+          configurationRightsEmailInput,
+          configurationRightsValueInput
+        ];
+
+        filterInputs.forEach(function (input) {
+
+          if (
+            input
+            &&
+            input !== activeInput
+          ) {
+            input.value = "";
+          }
+
+        });
+      }
+
+
+      /* =========================================================
+         SUBMIT SERVER-SIDE FILTER
+      ========================================================= */
+
+      function submitConfigurationRightsFilter() {
+
+        if (
+          !configurationRightsFilterForm
+          ||
+          !configurationRightsSearchInput
+        ) {
+          return;
+        }
+
+        configurationRightsSearchInput.value =
+          getSelectedRightsFilterValue();
+
+        const rightsPageInput =
+          configurationRightsFilterForm.querySelector(
+            'input[name="bi_rights_page"]'
+          );
+
+        const openRightsInput =
+          configurationRightsFilterForm.querySelector(
+            'input[name="open_bi_rights"]'
+          );
+
+        if (rightsPageInput) {
+          rightsPageInput.value = "1";
+        }
+
+        if (openRightsInput) {
+          openRightsInput.value = "1";
+        }
+
+        configurationRightsFilterForm.submit();
+      }
+
+
+      /* =========================================================
+         RESTORE EXISTING SEARCH VALUE
+      ========================================================= */
+
+      function restoreCurrentRightsFilter() {
+
+        if (!configurationRightsSearchInput) {
+          return;
+        }
+
+        const currentSearchValue =
+          configurationRightsSearchInput.value.trim();
+
+        if (!currentSearchValue) {
+          return;
+        }
+
+        const currentSearchLower =
+          currentSearchValue.toLowerCase();
+
+        const fullNameOptions =
+          document.querySelectorAll(
+            "#biConfigurationRightsFullNameSuggestions option"
+          );
+
+        const emailOptions =
+          document.querySelectorAll(
+            "#biConfigurationRightsEmailSuggestions option"
+          );
+
+        let matchedFullName = false;
+        let matchedEmail = false;
+
+        fullNameOptions.forEach(function (option) {
+
+          if (
+            String(option.value || "")
+              .trim()
+              .toLowerCase()
+            === currentSearchLower
+          ) {
+            matchedFullName = true;
+          }
+
+        });
+
+        emailOptions.forEach(function (option) {
+
+          if (
+            String(option.value || "")
+              .trim()
+              .toLowerCase()
+            === currentSearchLower
+          ) {
+            matchedEmail = true;
+          }
+
+        });
+
+        if (
+          matchedFullName
+          &&
+          configurationRightsFullNameInput
+        ) {
+          configurationRightsFullNameInput.value =
+            currentSearchValue;
+
+          return;
+        }
+
+        if (
+          matchedEmail
+          &&
+          configurationRightsEmailInput
+        ) {
+          configurationRightsEmailInput.value =
+            currentSearchValue;
+
+          return;
+        }
+
+        if (
+          ["yes", "no"].includes(
+            currentSearchLower
+          )
+          &&
+          configurationRightsValueInput
+        ) {
+          configurationRightsValueInput.value =
+            currentSearchValue;
+        }
+      }
+
+
+      /* =========================================================
+         RESET FILTERS
+      ========================================================= */
+
+      function resetConfigurationRightsFilters() {
+
+        if (configurationRightsFullNameInput) {
+          configurationRightsFullNameInput.value = "";
+        }
+
+        if (configurationRightsEmailInput) {
+          configurationRightsEmailInput.value = "";
+        }
+
+        if (configurationRightsValueInput) {
+          configurationRightsValueInput.value = "";
+        }
+
+        if (configurationRightsSearchInput) {
+          configurationRightsSearchInput.value = "";
+        }
+
+        submitConfigurationRightsFilter();
+      }
+
+
+      /* =========================================================
+         COLLECT RIGHTS VALUES
+      ========================================================= */
+
+      function collectRightsValues() {
+
+        if (!configurationRightsTable) {
+          return [];
+        }
+
+        const users = [];
+
+        configurationRightsTable
+          .querySelectorAll(
+            "tbody tr[data-user-id]"
+          )
+          .forEach(function (row) {
+
+            const configSelect =
+              row.querySelector(
+                ".bi-configuration-right-select"
+              );
+
+            const viewSelect =
+              row.querySelector(
+                ".bi-view-right-select"
+              );
+
+            users.push({
+              user_id:
+                row.dataset.userId || "",
+
+              has_bi_config_rights:
+                configSelect
+                  ? configSelect.value
+                  : "No",
+
+              has_bi_view_rights:
+                viewSelect
+                  ? viewSelect.value
+                  : "No"
+            });
+
+          });
+
+        return users;
+      }
+
+
+      /* =========================================================
+         RELOAD AFTER SAVE
+      ========================================================= */
+
+      function reloadWithClosedPanel() {
+
+        const nextUrl = new URL(
+          window.location.href
+        );
+
+        nextUrl.searchParams.delete(
+          "open_bi_rights"
+        );
+
+        window.location.href =
+          nextUrl.toString();
+      }
+
+
+      /* =========================================================
+         RESTORE AND REOPEN
+      ========================================================= */
+
+      restoreCurrentRightsFilter();
+
+      if (shouldOpenConfigurationRights) {
+
+        /*
+         * Wait until the complete role-specific sidebar and page
+         * layout have finished rendering before reopening the panel.
+         */
+        window.requestAnimationFrame(function () {
+
+          window.requestAnimationFrame(function () {
+
+            openConfigurationRightsPanel();
+
+          });
+
+        });
+      }
+
+      /* =========================================================
+         OPEN BUTTON
+      ========================================================= */
+
+      if (openConfigurationRightsButton) {
+
+        openConfigurationRightsButton.addEventListener(
+          "click",
+          function (event) {
+
+            event.preventDefault();
+
+            openConfigurationRightsPanel();
+          }
+        );
+      }
+
+
+      /* =========================================================
+         CLOSE BUTTONS
+      ========================================================= */
+
+      if (closeConfigurationRightsButton) {
+
+        closeConfigurationRightsButton.addEventListener(
+          "click",
+          closeConfigurationRightsPanel
+        );
+      }
+
+      if (cancelConfigurationRightsButton) {
+
+        cancelConfigurationRightsButton.addEventListener(
+          "click",
+          closeConfigurationRightsPanel
+        );
+      }
+
+      if (configurationRightsBackdrop) {
+
+        configurationRightsBackdrop.addEventListener(
+          "click",
+          closeConfigurationRightsPanel
+        );
+      }
+
+
+      /* =========================================================
+         RECORDS PER PAGE
+      ========================================================= */
+
+      if (
+        configurationRightsPerPage
+        &&
+        configurationRightsFilterForm
+      ) {
+
+        configurationRightsPerPage.addEventListener(
+          "change",
+          function () {
+
+            submitConfigurationRightsFilter();
+          }
+        );
+      }
+
+
+      /* =========================================================
+         FULL NAME DATALIST
+      ========================================================= */
+
+      if (configurationRightsFullNameInput) {
+
+        configurationRightsFullNameInput.addEventListener(
+          "input",
+          function () {
+
+            if (this.value.trim()) {
+              clearOtherRightsFilters(this);
+            }
+          }
+        );
+
+        configurationRightsFullNameInput.addEventListener(
+          "change",
+          function () {
+
+            if (this.value.trim()) {
+              clearOtherRightsFilters(this);
+              submitConfigurationRightsFilter();
+            }
+          }
+        );
+
+        configurationRightsFullNameInput.addEventListener(
+          "keydown",
+          function (event) {
+
+            if (event.key === "Enter") {
+              event.preventDefault();
+              clearOtherRightsFilters(this);
+              submitConfigurationRightsFilter();
+            }
+          }
+        );
+      }
+
+
+      /* =========================================================
+         EMAIL DATALIST
+      ========================================================= */
+
+      if (configurationRightsEmailInput) {
+
+        configurationRightsEmailInput.addEventListener(
+          "input",
+          function () {
+
+            if (this.value.trim()) {
+              clearOtherRightsFilters(this);
+            }
+          }
+        );
+
+        configurationRightsEmailInput.addEventListener(
+          "change",
+          function () {
+
+            if (this.value.trim()) {
+              clearOtherRightsFilters(this);
+              submitConfigurationRightsFilter();
+            }
+          }
+        );
+
+        configurationRightsEmailInput.addEventListener(
+          "keydown",
+          function (event) {
+
+            if (event.key === "Enter") {
+              event.preventDefault();
+              clearOtherRightsFilters(this);
+              submitConfigurationRightsFilter();
+            }
+          }
+        );
+      }
+
+
+      /* =========================================================
+         CONFIGURATION RIGHTS DATALIST
+      ========================================================= */
+
+      if (configurationRightsValueInput) {
+
+        configurationRightsValueInput.addEventListener(
+          "input",
+          function () {
+
+            if (this.value.trim()) {
+              clearOtherRightsFilters(this);
+            }
+          }
+        );
+
+        configurationRightsValueInput.addEventListener(
+          "change",
+          function () {
+
+            if (this.value.trim()) {
+              clearOtherRightsFilters(this);
+              submitConfigurationRightsFilter();
+            }
+          }
+        );
+
+        configurationRightsValueInput.addEventListener(
+          "keydown",
+          function (event) {
+
+            if (event.key === "Enter") {
+              event.preventDefault();
+              clearOtherRightsFilters(this);
+              submitConfigurationRightsFilter();
+            }
+          }
+        );
+      }
+
+
+      /* =========================================================
+         FILTER FORM APPLY BUTTON
+      ========================================================= */
+
+      if (configurationRightsFilterForm) {
+
+        configurationRightsFilterForm.addEventListener(
+          "submit",
+          function (event) {
+
+            event.preventDefault();
+
+            submitConfigurationRightsFilter();
+          }
+        );
+      }
+
+
+      /* =========================================================
+         RESET BUTTON
+      ========================================================= */
+
+      if (resetConfigurationRightsButton) {
+
+        resetConfigurationRightsButton.addEventListener(
+          "click",
+          resetConfigurationRightsFilters
+        );
+      }
+
+
+      /* =========================================================
+         SAVE RIGHTS
+      ========================================================= */
+
+      if (saveConfigurationRightsButton) {
+
+        saveConfigurationRightsButton.addEventListener(
+          "click",
+          async function () {
+
+            const users =
+              collectRightsValues();
+
+            if (!users.length) {
+              return;
+            }
+
+            const originalHtml =
+              saveConfigurationRightsButton.innerHTML;
+
+            saveConfigurationRightsButton.disabled =
+              true;
+
+            saveConfigurationRightsButton.innerHTML =
+              '<i class="fa-solid fa-spinner fa-spin"></i>'
+              + ' Saving...';
+
+            try {
+
+              const response = await fetch(
+                "{{ url_for('power_bi_and_reporting') }}",
+                {
+                  method: "POST",
+
+                  headers: {
+                    "Content-Type":
+                      "application/json"
+                  },
+
+                  body: JSON.stringify({
+                    users: users
+                  })
+                }
+              );
+
+              const result =
+                await response.json();
+
+              if (
+                !response.ok
+                ||
+                !result.success
+              ) {
+                throw new Error(
+                  result.message
+                  ||
+                  "Unable to save BI rights."
+                );
+              }
+
+              closeConfigurationRightsPanel();
+
+              reloadWithClosedPanel();
+
+            } catch (error) {
+
+              console.error(
+                "Save BI rights error:",
+                error
+              );
+
+              saveConfigurationRightsButton.disabled =
+                false;
+
+              saveConfigurationRightsButton.innerHTML =
+                originalHtml;
+            }
+          }
+        );
+      }
+
+
+      /* =========================================================
+         ESCAPE KEY
+      ========================================================= */
+
+      document.addEventListener(
+        "keydown",
+        function (event) {
+
+          if (
+            event.key === "Escape"
+            &&
+            configurationRightsPanel
+            &&
+            configurationRightsPanel
+              .classList
+              .contains("is-open")
+          ) {
+            closeConfigurationRightsPanel();
+          }
+        }
+      );
+
+    });
+  </script>
+
+</body>
+
+</html>

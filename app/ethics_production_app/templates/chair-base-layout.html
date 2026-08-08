@@ -46,6 +46,11 @@
         </a>
         <a href="{{ url_for('admin_status_monitor') }}" class="sidebar-link"><i class="fas fa-filter"></i> Admin Status
           Monitor</a>
+        {% if has_any_bi_view_rights|default(false) %}
+        <a href="{{ url_for('power_bi_and_reporting') }}" class="sidebar-link">
+          <i class="fas fa-chart-column"></i> BI Dashboard and Reporting
+        </a>
+        {% endif %}
 {% elif 'super_admin' == role|lower %}
         <a href="{{url_for('chair_landing')}}" class="sidebar-link">
           <i class="fas fa-clipboard-list"></i> Dashboard
@@ -70,6 +75,11 @@
         
         <a href="{{ url_for('admin_status_monitor') }}" class="sidebar-link"><i class="fas fa-filter"></i> Admin Status
           Monitor</a>
+        {% if has_any_bi_view_rights|default(false) %}
+        <a href="{{ url_for('power_bi_and_reporting') }}" class="sidebar-link">
+          <i class="fas fa-chart-column"></i> BI Dashboard and Reporting
+        </a>
+        {% endif %}
 
 {% else %}
         <a href="{{url_for('review_dashboard')}}" class="sidebar-link">

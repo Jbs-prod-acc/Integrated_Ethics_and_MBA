@@ -31,6 +31,11 @@
       <a href="{{url_for('rec_dashboard')}}" class="sidebar-link">
         <i class="fas fa-users"></i> Rec Team Dashboard
       </a>
+      {% if has_any_bi_view_rights|default(false) %}
+      <a href="{{ url_for('power_bi_and_reporting') }}" class="sidebar-link">
+        <i class="fas fa-chart-column"></i> BI Dashboard and Reporting
+      </a>
+      {% endif %}
       <a href="{{url_for('logout')}}" class="sidebar-link">
         <i class="fas fa-sign-out-alt"></i> Logout
       </a>
