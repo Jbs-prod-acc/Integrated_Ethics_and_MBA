@@ -1089,32 +1089,6 @@
                         BI Dashboard and Reporting
                     </a>
 
-                    <a class="dropdown-toggle" href="#" data-bs-toggle="collapse"
-                        data-bs-target="#monitoringFormsAdmin">
-                        <i class="fas fa-clipboard me-2"></i>
-                        Monitoring Forms
-                    </a>
-
-                    <div class="dropdown w-100">
-
-                        <div class="collapse" id="monitoringFormsAdmin">
-
-                            <a class="dropdown-item" href="{{ url_for('super_admin_monitoring_page_a') }}">
-                                Form A
-                            </a>
-
-                            <a class="dropdown-item" href="{{ url_for('super_admin_monitoring_page_b') }}">
-                                Form B
-                            </a>
-
-                            <a class="dropdown-item" href="{{ url_for('super_admin_monitoring_page_c') }}">
-                                Form C
-                            </a>
-
-                        </div>
-
-                    </div>
-
                 </div>
 
                 {% elif 'super_admin' == role|default('')|lower %}
@@ -1177,56 +1151,6 @@
                 </a>
 
                 {% endif %}
-
-                <div class="dropdown w-100">
-
-                    <a class="dropdown-toggle" href="#" data-bs-toggle="collapse" data-bs-target="#analyticsForms">
-                        <i class="fas fa-chart-bar me-2"></i>
-                        Analytics Forms
-                    </a>
-
-                    <div class="collapse" id="analyticsForms">
-
-                        <a class="dropdown-item" href="{{ url_for('super_admin_form_a') }}">
-                            Form A
-                        </a>
-
-                        <a class="dropdown-item" href="{{ url_for('super_admin_form_b') }}">
-                            Form B
-                        </a>
-
-                        <a class="dropdown-item" href="{{ url_for('super_admin_form_c') }}">
-                            Form C
-                        </a>
-
-                    </div>
-
-                </div>
-
-                <div class="dropdown w-100">
-
-                    <a class="dropdown-toggle" href="#" data-bs-toggle="collapse" data-bs-target="#monitoringForms">
-                        <i class="fas fa-clipboard me-2"></i>
-                        Monitoring Forms
-                    </a>
-
-                    <div class="collapse" id="monitoringForms">
-
-                        <a class="dropdown-item" href="{{ url_for('super_admin_monitoring_page_a') }}">
-                            Form A
-                        </a>
-
-                        <a class="dropdown-item" href="{{ url_for('super_admin_monitoring_page_b') }}">
-                            Form B
-                        </a>
-
-                        <a class="dropdown-item" href="{{ url_for('super_admin_monitoring_page_c') }}">
-                            Form C
-                        </a>
-
-                    </div>
-
-                </div>
 
                 {% else %}
 

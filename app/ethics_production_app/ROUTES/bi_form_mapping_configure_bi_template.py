@@ -3,7 +3,7 @@ from decimal import Decimal
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
-from sqlalchemy import inspect, text
+from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 
 from ROUTES.bi_form_mapping import BI_FORM_MAPPING
@@ -1011,18 +1011,23 @@ def fetch_database_table_columns(
     database_table: str,
 ) -> List[str]:
     schema_name, table_name = _split_table_name(database_table)
-    inspector = inspect(db_session.get_bind())
+    columns = db_session.execute(
+        text(
+            """
+            SELECT column_name
+            FROM information_schema.columns
+            WHERE table_schema = :schema_name
+              AND table_name = :table_name
+            ORDER BY ordinal_position
+            """
+        ),
+        {
+            "schema_name": schema_name,
+            "table_name": table_name,
+        },
+    ).scalars().all()
 
-    columns = inspector.get_columns(
-        table_name,
-        schema=schema_name,
-    )
-
-    return [
-        str(column["name"])
-        for column in columns
-        if column.get("name")
-    ]
+    return [str(column_name) for column_name in columns if column_name]
 
 
 def fetch_database_table_preview_rows(
@@ -1072,7 +1077,7 @@ def fetch_saved_bi_configuration(
     bi_view_name: str,
     database_table: str,
 ) -> Dict[str, Any]:
-    row = db_session.execute(
+    rows = db_session.execute(
         text(
             f"""
             SELECT
@@ -1097,7 +1102,9 @@ def fetch_saved_bi_configuration(
             "bi_view_name": _clean_text(bi_view_name),
             "database_table": _clean_text(database_table),
         },
-    ).mappings().first()
+    ).mappings().all()
+
+    row = rows[0] if rows else None
 
     if not row:
         return {

@@ -199,6 +199,7 @@
         <h3>JBS Ethics</h3>
     </div>
     <nav class="sidebar-nav">
+      {% include '_bi_reporting_nav.html' %}
       {% if 'admin' == role|lower%}
         <a href="{{url_for('chair_landing')}}" class="sidebar-link active">
           <i class="fas fa-clipboard-list"></i> Dashboard

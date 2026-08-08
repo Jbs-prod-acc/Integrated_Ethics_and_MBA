@@ -739,6 +739,64 @@ BI_CONFIGURATION_RIGHTS_EXCLUDED_ROLES = {
 }
 
 
+def ensure_bi_configuration_rights_table(db_session):
+    """Create the BI rights table when deploying the feature to an older DB."""
+    try:
+        db_session.execute(
+            text(
+                """
+                CREATE TABLE IF NOT EXISTS public.users_bi_config_rights
+                (
+                    id BIGSERIAL PRIMARY KEY,
+                    user_id VARCHAR(255) NOT NULL UNIQUE,
+                    full_name VARCHAR(255),
+                    email VARCHAR(255),
+                    role VARCHAR(100),
+                    has_bi_config_rights VARCHAR(3) NOT NULL DEFAULT 'No',
+                    has_bi_view_rights VARCHAR(3) NOT NULL DEFAULT 'No',
+                    created_by VARCHAR(255),
+                    created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                    updated_by VARCHAR(255),
+                    updated_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                    CONSTRAINT users_bi_config_rights_config_check
+                        CHECK (has_bi_config_rights IN ('Yes', 'No')),
+                    CONSTRAINT users_bi_config_rights_view_check
+                        CHECK (has_bi_view_rights IN ('Yes', 'No'))
+                )
+                """
+            )
+        )
+        db_session.execute(
+            text(
+                """
+                CREATE TABLE IF NOT EXISTS public.bi_dashboard_saved_configurations_dashbooards
+                (
+                    bi_view_id BIGSERIAL PRIMARY KEY,
+                    bi_view_name VARCHAR(255) NOT NULL UNIQUE,
+                    database_tables VARCHAR(255) NOT NULL,
+                    config_status VARCHAR(50) NOT NULL DEFAULT 'Draft',
+                    dashboard_pages JSONB NOT NULL DEFAULT '{}'::jsonb,
+                    created_by VARCHAR(255),
+                    created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                    updated_by VARCHAR(255),
+                    updated_at TIMESTAMP WITHOUT TIME ZONE,
+                    CONSTRAINT bi_dashboard_saved_config_status_check CHECK
+                    (
+                        LOWER(config_status) IN
+                        ('draft', 'active', 'inactive', 'archived', 'not configured')
+                    )
+                )
+                """
+            )
+        )
+        db_session.commit()
+        return True
+    except Exception as error:
+        db_session.rollback()
+        print("ensure_bi_configuration_rights_table error:", error)
+        return False
+
+
 def normalise_bi_configuration_rights_users(
     db_session,
 ):
@@ -1332,7 +1390,7 @@ def attach_bi_access_rights_to_records(
     has_view_rights = False
 
     try:
-        rights_record = db_session.execute(
+        rights_records = db_session.execute(
             text(
                 """
                 SELECT
@@ -1357,7 +1415,9 @@ def attach_bi_access_rights_to_records(
                 "user_id":
                     clean_user_id,
             },
-        ).mappings().first()
+        ).mappings().all()
+
+        rights_record = rights_records[0] if rights_records else None
 
         if rights_record:
             has_config_rights = (

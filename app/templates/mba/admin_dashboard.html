@@ -1680,23 +1680,23 @@
     </div>
     <div class="admin-project-toolbar" style="margin-bottom:1rem;">
       <div class="admin-project-toolbar__views" role="tablist" aria-label="User access filters">
-        <a href="{{ url_for('mba.admin_dashboard', panel='users', user_q=user_search or None, user_access='all') }}"
+        <a href="{{ url_for('mba.admin_dashboard', panel='users', user_q=user_search or None, user_role=user_role_filter if user_role_filter != 'all' else None, user_access='all') }}"
           class="filter-pill {% if (user_access_filter or 'all') == 'all' %}is-active{% endif %}">
           All <strong>{{ shared_user_access_counts.all }}</strong>
         </a>
-        <a href="{{ url_for('mba.admin_dashboard', panel='users', user_q=user_search or None, user_access='mba') }}"
+        <a href="{{ url_for('mba.admin_dashboard', panel='users', user_q=user_search or None, user_role=user_role_filter if user_role_filter != 'all' else None, user_access='mba') }}"
           class="filter-pill {% if user_access_filter == 'mba' %}is-active{% endif %}">
           MBA Only <strong>{{ shared_user_access_counts.mba }}</strong>
         </a>
-        <a href="{{ url_for('mba.admin_dashboard', panel='users', user_q=user_search or None, user_access='ethics') }}"
+        <a href="{{ url_for('mba.admin_dashboard', panel='users', user_q=user_search or None, user_role=user_role_filter if user_role_filter != 'all' else None, user_access='ethics') }}"
           class="filter-pill {% if user_access_filter == 'ethics' %}is-active{% endif %}">
           Ethics Only <strong>{{ shared_user_access_counts.ethics }}</strong>
         </a>
-        <a href="{{ url_for('mba.admin_dashboard', panel='users', user_q=user_search or None, user_access='both') }}"
+        <a href="{{ url_for('mba.admin_dashboard', panel='users', user_q=user_search or None, user_role=user_role_filter if user_role_filter != 'all' else None, user_access='both') }}"
           class="filter-pill {% if user_access_filter == 'both' %}is-active{% endif %}">
           Both <strong>{{ shared_user_access_counts.both }}</strong>
         </a>
-        <a href="{{ url_for('mba.admin_dashboard', panel='users', user_q=user_search or None, user_access='none') }}"
+        <a href="{{ url_for('mba.admin_dashboard', panel='users', user_q=user_search or None, user_role=user_role_filter if user_role_filter != 'all' else None, user_access='none') }}"
           class="filter-pill {% if user_access_filter == 'none' %}is-active{% endif %}">
           No Access <strong>{{ shared_user_access_counts.none }}</strong>
         </a>
@@ -1709,9 +1709,18 @@
         <span>Search users</span>
         <input type="text" name="user_q" placeholder="Email or name" value="{{ user_search or '' }}" class="admin-filter-input">
       </label>
+      <label class="admin-filter-field">
+        <span>MBA role</span>
+        <select name="user_role" class="admin-filter-input">
+          <option value="all" {% if user_role_filter == 'all' %}selected{% endif %}>All roles</option>
+          {% for value, label in mba_role_choices %}
+          <option value="{{ value }}" {% if user_role_filter == value %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </label>
       <div class="admin-filter-actions">
         <button type="submit" class="secondary-button small-button">Search</button>
-        {% if user_search or (user_access_filter and user_access_filter != 'all') %}
+        {% if user_search or (user_access_filter and user_access_filter != 'all') or user_role_filter != 'all' %}
         <a href="{{ url_for('mba.admin_dashboard', panel='users') }}" class="text-link">Reset</a>
         {% endif %}
       </div>
@@ -1747,6 +1756,7 @@
                 <input type="hidden" name="user_id" value="{{ user.id }}">
                 <input type="hidden" name="user_q" value="{{ user_search or '' }}">
                 <input type="hidden" name="user_access" value="{{ user_access_filter or 'all' }}">
+                <input type="hidden" name="user_role" value="{{ user_role_filter or 'all' }}">
                 <div style="display:grid; grid-template-columns:repeat(2, minmax(180px, 1fr)); gap:0.5rem;">
                   <label class="admin-filter-field" style="margin:0;">
                     <span>MBA role</span>

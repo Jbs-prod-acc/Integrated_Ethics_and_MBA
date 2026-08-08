@@ -26,7 +26,8 @@
         <img src="{{ url_for('static',filename='img/image.png')}}" alt="UJ Logo" class="sidebar-logo" />
         <h3>Student Portal</h3>
       </div>
-      <nav class="sidebar-nav">
+    <nav class="sidebar-nav">
+      {% include '_bi_reporting_nav.html' %}
 
         <a href="{{url_for('student_dashboard')}}" class="sidebar-link active">
           <i class="fas fa-home"></i> Dashboard

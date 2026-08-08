@@ -15743,7 +15743,19 @@ from ROUTES.bi_form_mapping import (
     get_bi_configuration_rights_context,
     save_bi_configuration_and_view_rights,
     attach_bi_access_rights_to_records,
+    ensure_bi_configuration_rights_table,
 )
+
+
+_bi_rights_schema_ready = False
+
+
+@app.before_request
+def ensure_bi_rights_schema_is_ready():
+    """Ensure databases upgraded from older releases can serve BI pages."""
+    global _bi_rights_schema_ready
+    if not _bi_rights_schema_ready:
+        _bi_rights_schema_ready = ensure_bi_configuration_rights_table(db_session)
 
 
 @app.route(
@@ -15908,6 +15920,13 @@ def power_bi_and_reporting():
             user_id=user_id,
         )
     )
+
+    # Admins are the bootstrap owners of BI settings. They must be able to
+    # configure reports and assign rights even before a rights row exists.
+    if role in {'ADMIN', 'SUPER_ADMIN'}:
+        for bi_record in bi_context['bi_records']:
+            bi_record['has_bi_config_rights'] = True
+            bi_record['has_bi_view_rights'] = True
 
     # ==========================================================
     # BI RIGHTS FILTER VALUES

@@ -780,6 +780,10 @@ def admin_dashboard():
     user_access_filter = (request.args.get("user_access") or "all").strip().lower()
     if user_access_filter not in {"all", "mba", "ethics", "both", "none"}:
         user_access_filter = "all"
+    allowed_user_roles = {value for value, _label in MBA_ROLE_CHOICES}
+    user_role_filter = (request.args.get("user_role") or "all").strip().lower()
+    if user_role_filter != "all" and user_role_filter not in allowed_user_roles:
+        user_role_filter = "all"
     assessor_page = parse_positive_int(request.args.get("assessor_page"), 1)
     assessor_per_page = parse_page_size(request.args.get("assessor_per_page"), 10)
     supervisor_page = parse_positive_int(request.args.get("supervisor_page"), 1)
@@ -929,6 +933,28 @@ def admin_dashboard():
         shared_users_query = shared_users_query.filter(MbaUser.mba_access.is_(True), MbaUser.ethics_access.is_(True))
     elif user_access_filter == "none":
         shared_users_query = shared_users_query.filter(MbaUser.mba_access.is_(False), MbaUser.ethics_access.is_(False))
+    if user_role_filter == "student":
+        shared_users_query = shared_users_query.filter(MbaUser.role == MbaRole.STUDENT.value)
+    elif user_role_filter == "supervisor":
+        shared_users_query = shared_users_query.filter(
+            MbaUser.role == MbaRole.SCHOLAR.value,
+            MbaUser.scholar_role == MbaScholarRole.SUPERVISOR.value,
+        )
+    elif user_role_filter == "examiner":
+        shared_users_query = shared_users_query.filter(
+            or_(
+                MbaUser.role == MbaRole.EXAMINER.value,
+                MbaUser.scholar_role == MbaScholarRole.EXAMINER.value,
+            )
+        )
+    elif user_role_filter == "supervisor_examiner":
+        shared_users_query = shared_users_query.filter(MbaUser.scholar_role == MbaScholarRole.BOTH.value)
+    elif user_role_filter == "hdc":
+        shared_users_query = shared_users_query.filter(MbaUser.role == MbaRole.HDC.value)
+    elif user_role_filter == "admin":
+        shared_users_query = shared_users_query.filter(MbaUser.role == MbaRole.ADMIN.value)
+    elif user_role_filter == "main_admin":
+        shared_users_query = shared_users_query.filter(MbaUser.role == MbaRole.MAIN_ADMIN.value)
     user_pagination_args = request_query_args({"user_page", "user_per_page"})
     user_pagination_args["panel"] = "users"
     shared_users, user_pagination = paginate_query(
@@ -1061,6 +1087,7 @@ def admin_dashboard():
         ethics_role_label=_ethics_role_label,
         user_search=user_search,
         user_access_filter=user_access_filter,
+        user_role_filter=user_role_filter,
         shared_user_access_counts=shared_user_access_counts,
         mba_role_choices=MBA_ROLE_CHOICES,
         ethics_role_choices=ETHICS_ROLE_CHOICES,
@@ -1162,6 +1189,7 @@ def admin_user_access_action():
             panel="users",
             user_q=(request.form.get("user_q") or "").strip() or None,
             user_access=(request.form.get("user_access") or "").strip().lower() or None,
+            user_role=(request.form.get("user_role") or "").strip().lower() or None,
         )
     )
 

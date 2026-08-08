@@ -19,7 +19,8 @@
         <img src="/static/img/image.png" alt="UJ JBS Logo" class="sidebar-logo">
         <h3>JBS Ethics Application</h3>
       </div>
-      <nav class="sidebar-nav">
+    <nav class="sidebar-nav">
+      {% include '_bi_reporting_nav.html' %}
         {% if 'admin' == role|lower%}
         <a href="{{url_for('chair_landing')}}" class="sidebar-link active">
           <i class="fas fa-clipboard-list"></i> Dashboard

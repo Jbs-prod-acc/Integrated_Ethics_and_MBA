@@ -154,9 +154,6 @@
               <a href="{{ url_for('ethics.chair_landing') }}#admin-queue" class="ethics-sidebar__item">
                 <i class="nav-icon fas fa-clipboard-list" aria-hidden="true"></i><span>Admin Queue</span>
               </a>
-              <a href="{{ url_for('ethics.monitoring_forms') }}" class="ethics-sidebar__item {% if request.endpoint == 'ethics.monitoring_forms' %}is-active{% endif %}">
-                <i class="nav-icon fas fa-clipboard" aria-hidden="true"></i><span>Monitoring Forms</span>
-              </a>
               <a href="{{ url_for('ethics.activity_logs') }}" class="ethics-sidebar__item {% if request.endpoint == 'ethics.activity_logs' %}is-active{% endif %}">
                 <i class="nav-icon fas fa-clock-rotate-left" aria-hidden="true"></i><span>Activity Logs</span>
               </a>
@@ -169,11 +166,6 @@
               <a href="{{ url_for('ethics.chair_landing') }}#old-forms" class="ethics-sidebar__item">
                 <i class="nav-icon fas fa-certificate" aria-hidden="true"></i><span>Certificates</span>
               </a>
-              {% if current_user.role == 'super_admin' %}
-                <a href="{{ url_for('ethics.analytics') }}" class="ethics-sidebar__item {% if request.endpoint == 'ethics.analytics' %}is-active{% endif %}">
-                  <i class="nav-icon fas fa-chart-bar" aria-hidden="true"></i><span>Analytics</span>
-                </a>
-              {% endif %}
             {% elif current_user.role == 'reviewer' %}
               <a href="{{ url_for('ethics.review_dashboard') }}#reviewer-queue" class="ethics-sidebar__item">
                 <i class="nav-icon fas fa-clipboard-check" aria-hidden="true"></i><span>My Reviews</span>

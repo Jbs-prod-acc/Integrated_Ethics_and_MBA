@@ -18,6 +18,7 @@
       <img src="{{ url_for('static',filename='img/image.png')}}" alt="UJ JBS Logo" class="logo uj">
     </div>
     <nav class="sidebar-nav">
+      {% include '_bi_reporting_nav.html' %}
       <a href="{{url_for('supervisor_dashboard')}}" class="sidebar-link active">
         <i class="fas fa-home"></i> Dashboard
       </a>

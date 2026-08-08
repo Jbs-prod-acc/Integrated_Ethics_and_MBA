@@ -20,6 +20,7 @@
       <h3>Dean Portal</h3>
     </div>
     <nav class="sidebar-nav">
+      {% include '_bi_reporting_nav.html' %}
       <a href="{{url_for('supervisor_dashboard')}}" class="active">🏠 Dashboard</a>
       <a href="{{url_for('logout')}}">🔒 Logout</a>
     </nav>
