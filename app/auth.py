@@ -546,7 +546,9 @@ def authenticate_production_ethics_user(email, password):
         if not user or not user.verify_password(password):
             return None, "Invalid email or password."
 
-        if not user.authenticate_student or str(user.authenticate_student).lower() in {"false", "0", "none"}:
+        legacy_activated = str(getattr(user, "authenticate_student", "") or "").lower() in {"true", "1", "yes"}
+        integrated_activated = bool(getattr(user, "authenticated_student", False))
+        if not (legacy_activated or integrated_activated):
             return None, "Access denied."
 
         return user, None
@@ -987,17 +989,31 @@ def register():
         db.session.add(user)
         db.session.flush()
 
-        if system == "mba":
+        # Non-UJ email addresses do not encode a student number.  Their MBA
+        # profile is created when they complete the profile page, where the
+        # real student number is collected.  Creating a blank profile here can
+        # violate older production schemas and was incorrectly reported as a
+        # duplicate email address.
+        if system == "mba" and student_number:
             db.session.add(MbaStudentProfile(user_id=user.id, student_number=student_number or None))
 
         try:
             db.session.commit()
-        except IntegrityError:
+        except IntegrityError as error:
             db.session.rollback()
-            flash("An account already exists for that student email address.", "error")
+            constraint_name = getattr(getattr(error, "orig", None), "diag", None)
+            constraint_name = getattr(constraint_name, "constraint_name", "") or ""
+            if constraint_name in {"users_email_key", "ix_users_email"}:
+                message = "An account already exists for that student email address."
+            elif constraint_name == "uq_mba_student_number":
+                message = "That student number is already linked to another MBA account."
+            else:
+                current_app.logger.exception("MBA student registration failed")
+                message = "The account could not be created. Please check the details and try again."
+            flash(message, "error")
             return render_template("auth/register.html", system=system, student_email=email)
         login_user(user)
-        log_ethics_auth_activity(user, "register", "Student registered an Ethics account")
+        log_ethics_auth_activity(user, "register", "Student registered an MBA account")
         db.session.commit()
         return post_login_redirect(user)
 

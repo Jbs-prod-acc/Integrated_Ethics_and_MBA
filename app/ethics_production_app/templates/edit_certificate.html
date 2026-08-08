@@ -1,255 +1,109 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Ethical Clearance Certificate</title>
-      <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-
-    <style>
-        body, html {
-            height: 100%;
-            margin: 0;
-            font-family: "Segoe UI", sans-serif;
-            background-color: #fdfdfd;
-        }
-
-        .container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 40px;
-            min-height: 100vh;
-        }
-
-        .certificate-content {
-            max-width: 800px;
-            background: white;
-            border: 1px solid #ccc;
-            padding: 40px;
-            box-shadow: 0 0 15px rgba(0,0,0,0.1);
-        }
-
-        .header {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-
-        .header img {
-            width: 100px;
-        }
-
-        .header h2, .header h3 {
-            margin: 0;
-        }
-
-        .header h2 {
-            font-size: 1.4rem;
-        }
-
-        .header h3 {
-            font-size: 1.2rem;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 20px 0;
-        }
-
-        table td {
-            padding: 8px 12px;
-            vertical-align: top;
-        }
-
-        .highlight {
-            font-weight: bold;
-            width: 30%;
-            background-color: #f0f0f0;
-        }
-
-        ol {
-            padding-left: 20px;
-        }
-
-        .signature {
-            margin-top: 30px;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Certificate Editor | JBS Ethics</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body { background:#f3f5f8; color:#1f2937; }
+    .workflow-step { border-left:4px solid #d1d5db; padding:.75rem 1rem; background:#fff; }
+    .workflow-step.active { border-color:#ef820d; background:#fff8ef; }
+    .workflow-step.done { border-color:#198754; }
+    .certificate-card { background:#fff; border:1px solid #d8dee6; box-shadow:0 8px 25px rgba(0,0,0,.07); }
+    .certificate-header { border-bottom:3px solid #022169; }
+    .field-help { font-size:.85rem; color:#667085; }
+    .sticky-actions { position:sticky; bottom:0; background:rgba(255,255,255,.97); border-top:1px solid #ddd; padding:1rem; z-index:10; }
+  </style>
 </head>
 <body>
-<form action="{{ url_for('modify_certificate', id=certificate_details.form_id) }}" method="POST" style="margin-top: 30px;">
-<!-- Error Messages -->
-    {% if messages %}
-        <div id="alertMessage" class="alert alert-danger alert-dismissible fade show">
-            {% for message in messages %}
-                {{ message }}
-            {% endfor %}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    {% endif %}
-
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-    <div class="container">
-    <div class="certificate-content">
-        <!-- Header Section -->
-        <div class="header">
-            <img src="{{ url_for('static', filename='img/uj.png') }}" alt="UJ JBS Logo">
-            <div>
-                <h2>JBSREC & Subcommittees</h2>
-                <h3>Johannesburg Business School Research Ethics Committee (JBSREC)</h3>
-            </div>
-        </div>
-
-        <!-- Body -->
-        <p>Dear <strong>{{certificate_details.applicant_name}}</strong>,</p>
-
-        <h4>
-            <input type="text" style="width: 100%;" name="heading" value="{% if certificate_details.certificate_heading and not certificate_details.certificate_heading.startswith('[') and '|||' not in certificate_details.certificate_heading %}{{certificate_details.certificate_heading}}{% else %}ETHICAL APPROVAL GRANTED FOR RESEARCH PROJECT{% endif %}">
-        </h4>
-
-        <p>
-            This letter serves to confirm that the proposed research project indicated in the table below,
-            has been reviewed by the Johannesburg Business School Research Ethics Committee (JBSREC)
-            at the University of Johannesburg. Ethical clearance is granted for <input type="number" name="valid_years"  required placeholder="number of year"> years,
-            from <strong>{% if certificate_details.certificate_issued %}{{certificate_details.certificate_issued.strftime('%Y-%m-%d')}}{% else %}<input type="date" name="certificate_issued" requred>{% endif%}</strong> to <input type="date" name="end_date" placeholder="specify the end date" required >.
-        </p>
-
-        <table>
-            <tr><td class="highlight">Applicant</td><td>{{certificate_details.applicant_name}}</td></tr>
-            <tr><td class="highlight">Supervisor</td><td>{% if certificate_details.supervisor%}{{certificate_details.supervisor}}{% elif certificate_details.supervisor_name%}{{certificate_details.supervisor_name}}{% endif%}</td></tr>
-            <tr><td class="highlight">Staff/Student number</td><td>{{certificate_details.student_number}}</td></tr>
-            <tr><td class="highlight">Title of Research</td><td>{% if certificate_details.study_title%}{{certificate_details.study_title}}{% elif certificate_details.project_title %} {{certificate_details.project_title}}{% endif%}</td></tr>
-            <!-- <tr><td class="highlight">Academic article/MCom</td><td>MCom</td></tr> -->
-            <tr><td class="highlight">Decision date</td><td>{% if certificate_details.certificate_issued %}{{certificate_details.certificate_issued.strftime('%Y-%m-%d')}}{% else %}<input type="date" name="certificate_issued" requred>{% endif%}</td></tr>
-            <tr><td class="highlight">Reviewers</td><td>JBS REC Members</td></tr>
-            <tr><td class="highlight">Ethical clearance code</td><td>{% if certificate_details.certificate_code %}{{certificate_details.certificate_code}}{% endif%}</td></tr>
-            <tr><td class="highlight">Rating of application</td><td>
-               <br> {% if certificate_details.rec_status=='Approved' or certificate_details.status=='Approved'%}
-            CODE 2
-            {% elif certificate_details.rec_status =='Approved with suggestions without re-submission' or certificate_details.status =='Approved with suggestions without re-submission'%}
-            CODE 2
-            {% elif certificate_details.rec_status=='Referred back' or certificate_details.status=='Referred back'%}
-            CODE 3
-            {% elif certificate_details.rec_status=='Disapproved, cannot re-submit' or certificate_details.status=='Disapproved, cannot re-submit'%}
-            CODE 4
-            {% endif %}
-            </td></tr>
-        </table>
-
-        <div class="conditions">
-            <p>The researcher may now commence with the study provided that:</p>
-            <ol id="conditions-list">
-                <li>
-                    <div class="input-group mb-2">
-                        <input type="text" name="conditions[]" class="form-control condition-item" value="The researcher ensures adherence to POPI Act." />
-                        <button type="button" class="btn btn-outline-danger remove-condition">Remove</button>
-                    </div>
-                </li>
-                <li>
-                    <div class="input-group mb-2">
-                        <input type="text" name="conditions[]" class="form-control condition-item" value="The researcher ensures adherence to conditions of use of open source questionnaires." />
-                        <button type="button" class="btn btn-outline-danger remove-condition">Remove</button>
-                    </div>
-                </li>
-                <li>
-                    <div class="input-group mb-2">
-                        <input type="text" name="conditions[]" class="form-control condition-item" value="The researcher ensures that the project adheres to ethical research requirements." />
-                        <button type="button" class="btn btn-outline-danger remove-condition">Remove</button>
-                    </div>
-                </li>
-                <li>
-                    <div class="input-group mb-2">
-                        <input type="text" name="conditions[]" class="form-control condition-item" value="The researcher conducts the study as set out in the approval application." />
-                        <button type="button" class="btn btn-outline-danger remove-condition">Remove</button>
-                    </div>
-                </li>
-                <li>
-                    <div class="input-group mb-2">
-                        <input type="text" name="conditions[]" class="form-control condition-item" value="The researcher ensures that the project adheres to all applicable legislation, scopes of practice, professional codes of conduct and scientific standards as they pertain to the field or study." />
-                        <button type="button" class="btn btn-outline-danger remove-condition">Remove</button>
-                    </div>
-                </li>
-                <li>
-                    <div class="input-group mb-2">
-                        <input type="text" name="conditions[]" class="form-control condition-item" value="The researcher brings to the attention of the JBSREC any proposed changes, concerns that arise, and unexpected ethical management issues." />
-                        <button type="button" class="btn btn-outline-danger remove-condition">Remove</button>
-                    </div>
-                </li>
-                <li>
-                    <div class="input-group mb-2">
-                        <input type="text" name="conditions[]" class="form-control condition-item" value="Any changes that can affect the study-related risks for participants or researchers must be reported to the JBSREC in writing." />
-                        <button type="button" class="btn btn-outline-danger remove-condition">Remove</button>
-                    </div>
-                </li>
-                <li>
-                    <div class="input-group mb-2">
-                        <input type="text" name="conditions[]" class="form-control condition-item" value="All relevant permissions required to access data, organisations, etc. have been obtained." />
-                        <button type="button" class="btn btn-outline-danger remove-condition">Remove</button>
-                    </div>
-                </li>
-                <li>
-                    <div class="input-group mb-2">
-                        <input type="text" name="conditions[]" class="form-control condition-item" value="No fieldwork activities may continue after the ethical clearance has expired. A request for an extension of ethical clearance can be made in writing to the JBSREC." />
-                        <button type="button" class="btn btn-outline-danger remove-condition">Remove</button>
-                    </div>
-                </li>
-            </ol>
-            <button type="button" id="add-condition" class="btn btn-secondary btn-sm">Add item</button>
-        </div>
-
-        <div class="signature">
-            <p><strong>Date:</strong> {% if certificate_details.certificate_issued %}{{certificate_details.certificate_issued.strftime('%Y-%m-%d')}}{% else %}<input type="date" name="certificate_issued" requred>{% endif%}</p>
-            <!-- <p><strong>Name <input type="text" name="certificate_issuer" required></strong><br> -->
-               Chairperson: JBS Research Ethics Committee<br>
-               Email: <a href="mailto:user@example.com" class="text-primary">jbssubmissions@uj.ac.za</a>
-        </div>
+<main class="container py-4">
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+    <div>
+      <h1 class="h3 mb-1">Ethical Clearance Certificate</h1>
+      <p class="text-muted mb-0">Prepare, review, and issue the certificate for {{ certificate_details.applicant_name }}.</p>
     </div>
+    <a class="btn btn-outline-secondary" href="{{ url_for('chair_landing') }}">Back to dashboard</a>
+  </div>
 
-    
-</div>
-<div class="d-flex" style="gap:8px;">
-    <button type="submit" class="btn btn-success" style="padding: 10px 20px;">Save Certificate</button>
-    <a class="btn btn-secondary" href="{{ url_for('view_certificate', id=certificate_details.form_id) }}">Cancel</a>
-    <a class="btn btn-primary ml-5" href="{{ url_for('chair_landing') }}">Go Back</a>
-</div>
-</form>
-<br>
-{% if certificate_details.certificate_issued and not certificate_details.certificate_received and certificate_details.certificate_modified %}
-<form action="{{url_for('send_certificate',id=certificate_details.form_id)}}" method="post">
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for category, message in messages %}
+      <div class="alert alert-{{ 'danger' if category == 'error' else category }}">{{ message }}</div>
+    {% endfor %}
+  {% endwith %}
+
+  <div class="row g-2 mb-4">
+    <div class="col-md-4"><div class="workflow-step {{ 'active' if certificate_is_draft else 'done' }}"><strong>1. Prepare draft</strong><br><small>Complete and save all editable details.</small></div></div>
+    <div class="col-md-4"><div class="workflow-step {{ 'active' if certificate_details.certificate_code and certificate_is_draft else ('done' if certificate_details.certificate_issued else '') }}"><strong>2. Preview and issue</strong><br><small>Check the certificate before confirming issue.</small></div></div>
+    <div class="col-md-4"><div class="workflow-step {{ 'done' if certificate_details.certificate_received else ('active' if certificate_details.certificate_issued else '') }}"><strong>3. Send to student</strong><br><small>Send only after the final certificate is correct.</small></div></div>
+  </div>
+
+  <form method="post" action="{{ url_for('modify_certificate' if certificate_details.certificate_code else 'certificate', id=certificate_details.form_id) }}">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-    <button type="submit" class="btn btn-success">Send certificate</button>
-</form>
-{% endif%}
-<br>
-</body>
+    <section class="certificate-card rounded p-4 p-lg-5">
+      <div class="certificate-header d-flex align-items-center gap-3 pb-3 mb-4">
+        <img src="{{ url_for('static', filename='img/uj.png') }}" alt="UJ JBS logo" width="90">
+        <div><h2 class="h5 mb-1">JBSREC &amp; Subcommittees</h2><div>Johannesburg Business School Research Ethics Committee</div></div>
+      </div>
+
+      <div class="alert alert-info">
+        {% if certificate_is_draft %}<strong>Draft:</strong> Saving does not issue or send the certificate. You may return and edit it as often as needed.
+        {% else %}<strong>Issued:</strong> Changes can still be saved, but the issue date remains {{ certificate_details.certificate_issued.strftime('%Y-%m-%d') }}.{% endif %}
+      </div>
+
+      <div class="row g-3 mb-4">
+        <div class="col-md-6"><label class="form-label fw-semibold">Applicant</label><input class="form-control" value="{{ certificate_details.applicant_name }}" disabled></div>
+        <div class="col-md-6"><label class="form-label fw-semibold">Student number</label><input class="form-control" value="{{ certificate_details.student_number or '' }}" disabled></div>
+        <div class="col-12"><label class="form-label fw-semibold">Research title</label><textarea class="form-control" rows="2" disabled>{{ certificate_details.study_title or certificate_details.project_title or '' }}</textarea></div>
+        <div class="col-md-4"><label class="form-label fw-semibold" for="valid_years">Validity (years)</label><input id="valid_years" class="form-control" type="number" min="1" max="10" name="valid_years" value="{{ certificate_details.certificate_valid_years or 1 }}" required></div>
+        <div class="col-md-4"><label class="form-label fw-semibold" for="end_date">Clearance end date</label><input id="end_date" class="form-control" type="date" name="end_date" value="{% if certificate_details.certificate_end_date %}{{ certificate_details.certificate_end_date.strftime('%Y-%m-%d') }}{% endif %}" required><button type="button" id="calculate-end-date" class="btn btn-link btn-sm px-0">Calculate from validity</button></div>
+        <div class="col-md-4"><label class="form-label fw-semibold">Clearance code</label><input class="form-control" value="{{ certificate_details.certificate_code or 'Generated when draft is saved' }}" disabled></div>
+        <div class="col-md-6"><label class="form-label fw-semibold" for="certificate_issuer">Issued by</label><input id="certificate_issuer" class="form-control" name="certificate_issuer" value="{{ certificate_details.certificate_issuer or 'JBS Research Ethics Committee' }}" required></div>
+        <div class="col-md-6"><label class="form-label fw-semibold" for="email">Contact email</label><input id="email" class="form-control" type="email" name="email" value="{{ certificate_details.certificate_email or 'jbssubmissions@uj.ac.za' }}" required></div>
+      </div>
+
+      <div class="d-flex justify-content-between align-items-center mb-2"><div><h3 class="h5 mb-0">Certificate conditions</h3><div class="field-help">Edit, remove, or add conditions before issuing.</div></div><button type="button" id="add-condition" class="btn btn-sm btn-outline-primary">Add condition</button></div>
+      <ol id="conditions-list" class="ps-4">
+        {% for condition in certificate_conditions %}
+          <li class="mb-2"><div class="input-group"><textarea name="conditions[]" class="form-control" rows="2" required>{{ condition }}</textarea><button type="button" class="btn btn-outline-danger remove-condition">Remove</button></div></li>
+        {% endfor %}
+      </ol>
+    </section>
+
+    <div class="sticky-actions d-flex flex-wrap gap-2 mt-3 rounded shadow-sm">
+      <button type="submit" class="btn btn-primary">Save {{ 'changes' if certificate_details.certificate_code else 'draft' }}</button>
+      {% if certificate_details.certificate_code %}<a class="btn btn-outline-primary" href="{{ url_for('edited_certificate', id=certificate_details.form_id) }}" target="_blank">Preview certificate</a>{% endif %}
+      {% if certificate_details.certificate_code and certificate_is_draft %}
+        <button type="submit" class="btn btn-success ms-md-auto" form="issue-certificate-form" onclick="return confirm('Issue this certificate now? You should preview and check it first.')">Issue certificate</button>
+      {% elif certificate_details.certificate_issued and not certificate_details.certificate_received %}
+        <button type="submit" class="btn btn-success ms-md-auto" form="send-certificate-form" onclick="return confirm('Send this issued certificate to the student now?')">Send to student</button>
+      {% elif certificate_details.certificate_received %}<span class="badge bg-success align-self-center ms-md-auto p-2">Sent to student</span>{% endif %}
+    </div>
+  </form>
+
+  {% if certificate_details.certificate_code and certificate_is_draft %}<form id="issue-certificate-form" method="post" action="{{ url_for('issue_certificate', id=certificate_details.form_id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"></form>{% endif %}
+  {% if certificate_details.certificate_issued and not certificate_details.certificate_received %}<form id="send-certificate-form" method="post" action="{{ url_for('send_certificate', id=certificate_details.form_id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"></form>{% endif %}
+</main>
+
 <script>
-// Conditions list add/remove functionality
-(function(){
-    function bindRemove(btn){
-        btn.addEventListener('click', function(){
-            const li = btn.closest('li');
-            if(li) li.remove();
-        });
-    }
-
-    document.querySelectorAll('.remove-condition').forEach(function(b){ bindRemove(b); });
-
-    var addBtn = document.getElementById('add-condition');
-    if(addBtn){
-        addBtn.addEventListener('click', function(){
-            var ol = document.getElementById('conditions-list');
-            var li = document.createElement('li');
-            li.innerHTML = '<div class="input-group mb-2">'
-                        + '<input type="text" name="conditions[]" class="form-control condition-item" placeholder="Condition text" />'
-                        + '<button type="button" class="btn btn-outline-danger remove-condition">Remove</button>'
-                        + '</div>';
-            ol.appendChild(li);
-            bindRemove(li.querySelector('.remove-condition'));
-            li.querySelector('input').focus();
-        });
-    }
-})();
+  const list = document.getElementById('conditions-list');
+  document.getElementById('calculate-end-date').addEventListener('click', () => {
+    const years = Number(document.getElementById('valid_years').value || 1);
+    const endDate = new Date();
+    endDate.setFullYear(endDate.getFullYear() + years);
+    document.getElementById('end_date').value = endDate.toISOString().slice(0, 10);
+  });
+  document.getElementById('add-condition').addEventListener('click', () => {
+    const item = document.createElement('li');
+    item.className = 'mb-2';
+    item.innerHTML = '<div class="input-group"><textarea name="conditions[]" class="form-control" rows="2" required placeholder="Enter a certificate condition"></textarea><button type="button" class="btn btn-outline-danger remove-condition">Remove</button></div>';
+    list.appendChild(item); item.querySelector('textarea').focus();
+  });
+  list.addEventListener('click', (event) => {
+    if (!event.target.classList.contains('remove-condition')) return;
+    if (list.children.length === 1) { alert('The certificate must contain at least one condition.'); return; }
+    event.target.closest('li').remove();
+  });
 </script>
+</body>
 </html>

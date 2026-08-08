@@ -315,8 +315,9 @@
   <br>
 
   <div class="section">
-    <h3>Comments</h3>
-    <textarea name="additional_comments" required></textarea>
+              <h3>Comments</h3>
+              <textarea name="ethics_form_status" required class="form-control" rows="5"
+                placeholder="Provide any feedback or required revisions...">{% if formB.ethics_form_status and formB.ethics_form_status|string|lower != 'none' %}{{ formB.ethics_form_status }}{% elif formB.recommendation and formB.recommendation|string|lower != 'none' %}{{ formB.recommendation }}{% endif %}</textarea>
   </div>
 
   <!-- Radio Buttons -->

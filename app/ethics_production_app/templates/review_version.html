@@ -115,7 +115,9 @@
               </ul>
             </td>
             <td>
-              {% if loop.first%}
+              {% if is_reviewed_by(item, user_id) %}
+              <span class="text-muted">Already reviewed</span>
+              {% elif loop.first%}
               <a href="{{url_for('reviewer_form_a',id=item.form_id)}}" class="view-btn">Review</a>
              
               {% else %}
@@ -195,7 +197,9 @@
               </ul>
             </td>
             <td>
-              {% if loop.first %}
+              {% if is_reviewed_by(item, user_id) %}
+              <span class="text-muted">Already reviewed</span>
+              {% elif loop.first %}
               <a href="{{url_for('reviewer_form_b',id=item.form_id)}}" class="view-btn">Review</a>
               {% else %}
                <a href="{{url_for('reviewer_form_b',id=item.form_id)}}" class="view-btn">Review Old Form</a>
@@ -247,7 +251,9 @@
               </ul>
             </td>
             <td>
-              {% if loop.first %}
+              {% if is_reviewed_by(item, user_id) %}
+              <span class="text-muted">Already reviewed</span>
+              {% elif loop.first %}
               <a href="{{url_for('reviewer_form_c',id=item.form_id)}}" class="view-btn">Review</a>
               {% else %}
               <a href="{{url_for('reviewer_form_b',id=item.form_id)}}" class="view-btn">Review Old Form</a>

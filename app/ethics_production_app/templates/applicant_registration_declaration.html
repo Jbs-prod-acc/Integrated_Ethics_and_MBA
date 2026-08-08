@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Applicant Declaration | JBS Ethics</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body { background:#f3f5f8; color:#1f2937; }
+    .declaration-card { max-width:900px; margin:auto; background:#fff; border-top:5px solid #ef820d; box-shadow:0 12px 35px rgba(2,33,105,.12); }
+    .declaration-list li { margin-bottom:1rem; padding-left:.35rem; }
+    .agreement-box { background:#f8fafc; border:2px solid #cbd5e1; }
+    .agreement-box:focus-within { border-color:#ef820d; }
+  </style>
+</head>
+<body>
+<main class="container py-5">
+  <section class="declaration-card rounded p-4 p-md-5">
+    <div class="text-center mb-4">
+      <img src="{{ url_for('static', filename='img/uj.png') }}" alt="University of Johannesburg" width="100">
+    </div>
+
+    {% if completed %}
+      <div class="text-center py-4">
+        <div class="display-5 text-success mb-3">✓</div>
+        <h1 class="h2">Account successfully created</h1>
+        <p class="lead mt-3">Thank you, {{ user.full_name }}. Your declaration has been recorded.</p>
+        <div class="alert alert-warning text-start mt-4">
+          Your account is not active yet. Please wait for an administrator to activate your account before attempting to log in.
+        </div>
+        <a href="{{ url_for('login_page') }}" class="btn btn-primary mt-3">Go to login</a>
+      </div>
+    {% else %}
+      <h1 class="h2">Declaration by the Applicant</h1>
+      <p class="text-muted">Please read the complete declaration before agreeing.</p>
+
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}<div class="alert alert-{{ 'danger' if category == 'error' else category }}">{{ message }}</div>{% endfor %}
+      {% endwith %}
+
+      <p class="fw-semibold">I hereby declare that:</p>
+      <ol class="declaration-list">
+        <li>The information and supporting documents I have provided in this application are true, complete, and accurate to the best of my knowledge.</li>
+        <li>I understand that providing false, misleading, or incomplete information may result in the rejection of my application, withdrawal of ethics approval, or other actions in accordance with the University's policies and procedures.</li>
+        <li>I undertake to conduct my research in accordance with the approved ethics protocol, the University's research ethics policies, and all applicable laws and regulations.</li>
+        <li>I acknowledge that my personal information and application data will be collected, processed, stored, and used solely for the purpose of administering and evaluating this ethics application.</li>
+        <li>I understand that my ethics application records will be retained for a period of five (5) years after the conclusion of the project or as required by applicable legislation or University policy. After the applicable retention period has expired, my personal information will be securely deleted or destroyed, unless a longer retention period is required by law or for legitimate institutional purposes.</li>
+        <li>By selecting “I Agree” and submitting this declaration, I confirm that I have read, understood, and accept the above terms.</li>
+      </ol>
+
+      <p><a href="https://www.uj.ac.za/research/research-policies/" target="_blank" rel="noopener noreferrer">UJ Ethics Policy <span aria-hidden="true">↗</span></a></p>
+
+      <form method="post" class="mt-4">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="agreement-box rounded p-3">
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" value="yes" id="applicant-declaration-agreed" name="applicant_declaration_agreed" required>
+            <label class="form-check-label fw-semibold" for="applicant-declaration-agreed">I have read and agree to the above declaration.</label>
+          </div>
+          <p class="small text-muted mt-2 mb-0"><strong>Electronic Signature:</strong> By selecting “I Agree”, I acknowledge that this constitutes my electronic signature and is legally binding.</p>
+        </div>
+        <button type="submit" class="btn btn-success btn-lg w-100 mt-4">I Agree and Continue</button>
+      </form>
+    {% endif %}
+  </section>
+</main>
+</body>
+</html>

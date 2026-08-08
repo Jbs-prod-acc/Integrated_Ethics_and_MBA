@@ -144,6 +144,7 @@
     }
   </style>
 </head>
+<script defer src="{{ url_for('static', filename='js/sample_size_validation.js') }}"></script>
 
 <body>
 
@@ -1252,32 +1253,13 @@
             <label>5.5.7.1 Comment / Justification</label>
             <textarea name="anonymization_comment" rows="3" class="form-control"
               placeholder="Justify anonymization or explain why not applicable.">{% if formA.anonymization_comment and formA.anonymization_comment|string|lower != 'none' %}{{ formA.anonymization_comment }}{% endif %}</textarea>
-
-            <!-- 5.5.9 PRIVATE DATA SECTION -->
-            <div id="privateDataSection" style="margin-top: 1rem;">
-              <label>5.5.9 Private Database Permission Letter</label>
-              <div class="mb-3">
-                <label for="private_permission_file" class="form-label">Upload proof of permission for private data
-                  access:</label>
-                <input class="form-control" type="file" id="private_permission_file" name="private_permission_file">
-                {% if formA.private_permission_file %}
-                <div class="mt-2">
-                  <small class="text-success">Current file: {{ formA.private_permission_filename }}</small>
-                  <a href="{{ url_for('view_form_file', form_type='A', form_id=formA.form_id, field_name='private_permission_file') }}"
-                    target="_blank" class="btn btn-sm btn-outline-primary ms-2">View</a>
-                </div>
-                {% endif %}
-              </div>
-            </div>
-
-            <!-- PUBLIC DATA SECTION -->
+              <!-- PUBLIC DATA SECTION -->
             <div id="publicDataSection">
               <!-- 5.5.8 -->
               <label>5.5.8 What type of public data will be used?</label>
               <textarea name="public_data_description" rows="3" class="form-control"
                 placeholder="e.g., Stats SA, open government data, research archives">{% if formA.public_data_description and formA.public_data_description|string|lower != 'none' %}{{ formA.public_data_description }}{% endif %}</textarea>
             </div>
-
             <label>5.5.9 Will data shortcomings/incompleteness be reported?</label><br>
             <div class="d-flex gap-4 toggle-checkbox-group" data-group-name="shortcomings_reported">
               <input type="hidden" name="shortcomings_reported"
@@ -2001,17 +1983,7 @@
     }
 
     function handleDataType() {
-      const type = document.getElementById("dataType").value;
-      document.getElementById("privateDataSection").style.display = (type === "private" || type === "both") ? "block" : "none";
-      document.getElementById("publicDataSection").style.display = (type === "public" || type === "both") ? "block" : "none";
-    }
-
-    function handlePrivatePermission() {
-      const privatePermission = document.getElementById("privatePermission");
-      const uploadPrivatePermission = document.getElementById("uploadPrivatePermission");
-      if (!privatePermission || !uploadPrivatePermission) return;
-      const val = privatePermission.value;
-      uploadPrivatePermission.style.display = val === "No" ? "block" : "none";
+      // Data type remains part of 5.5.2; the removed 5.5.8 fields no longer need toggling.
     }
 
     document.addEventListener('DOMContentLoaded', function () {
@@ -2020,7 +1992,6 @@
       });
       if (typeof handleSecondaryData === 'function') handleSecondaryData();
       if (typeof handleDataType === 'function') handleDataType();
-      if (typeof handlePrivatePermission === 'function') handlePrivatePermission();
       if (typeof togglePersonalInfo === 'function') togglePersonalInfo();
     });
 
@@ -2170,9 +2141,9 @@
           'observation_details', 'documents_details', 'other_details',
           'data_collection_procedure', 'data_collectors', 'intervention', 'intervention_details',
           'sensitive_data', 'translator', 'translator_procedure',
-          'uses_secondary_data', 'secondary_data', 'data_type', 'private_permission', 'privatePermission',
+          'uses_secondary_data', 'secondary_data', 'data_type',
           'data_nature', 'data_origin', 'access_conditions', 'personal_info', 'personal_info_comment',
-          'data_anonymized', 'anonymization_comment', 'permission_details', 'public_data_description',
+          'data_anonymized', 'anonymization_comment',
           'shortcomings_reported', 'limitations_reporting', 'methodology_alignment', 'data_acknowledgment'
         ]);
 

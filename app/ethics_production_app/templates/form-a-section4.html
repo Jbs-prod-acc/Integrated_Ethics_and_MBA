@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/loading.css') }}">
   <!-- <link rel="stylesheet" href="{{ url_for('static', filename='css/form_a.css') }}"> -->
 </head>
+<script defer src="{{ url_for('static', filename='js/sample_size_validation.js') }}"></script>
 <body>
 
   <!-- Navbar -->
@@ -355,31 +356,13 @@
 
   <label>5.5.7.1 Comment / Justification:</label>
   <textarea name="anonymization_comment" class="form-control" rows="3" placeholder="Justify anonymization or explain why not applicable."></textarea>
-
-
-  <!-- PRIVATE SECTION -->
-  <div id="privateDataSection" style="display: none;">
-    <label>5.5.8 Is the data from a company that has provided permission?</label>
-    <select id="privatePermission" name="privatePermission" class="form-select" onchange="handlePrivatePermission()">
-      <option value="" {% if not form_data or not form_data.private_permission %}selected{% endif %}>-- Select --</option>
-      <option value="Yes" {% if form_data and form_data.private_permission == 'Yes' %}selected{% endif %}>Yes</option>
-      <option value="No" {% if form_data and form_data.private_permission == 'No' %}selected{% endif %}>No</option>
-    </select>
-
-    <div id="uploadPrivatePermission" style="display: none; margin-top: 1rem;">
-      <label>5.5.8.1 Upload permission document:</label>
-      <input type="file" name="private_permission_file" class="form-control">
-      <br>
-      <label>OR provide details:</label>
-      <textarea name="permission_details" class="form-control" rows="3" placeholder="Describe the permission granted."></textarea>
-    </div>
-  </div>
-
-  <!-- PUBLIC SECTION -->
-  <div id="publicDataSection" >
-    <label>5.5.8 What type of public data will be used?</label>
-    <textarea name="public_data_description" class="form-control" rows="3" placeholder="e.g., Government stats, open access articles, datasets."></textarea>
-  </div>
+ <!-- PUBLIC DATA SECTION -->
+            <div id="publicDataSection">
+              <!-- 5.5.8 -->
+              <label>5.5.8 What type of public data will be used?</label>
+              <textarea name="public_data_description" rows="3" class="form-control"
+                placeholder="e.g., Stats SA, open government data, research archives">{% if formA.public_data_description and formA.public_data_description|string|lower != 'none' %}{{ formA.public_data_description }}{% endif %}</textarea>
+            </div>
 
   <label>5.5.9 Will data shortcomings/incompleteness be reported?</label>
   <div class="d-flex gap-4">
@@ -476,21 +459,7 @@
   }
 
   function handleDataType() {
-    const dataType = document.getElementById("dataType");
-    const privateSection = document.getElementById("privateDataSection");
-    const publicSection = document.getElementById("publicDataSection");
-    if (!dataType || !privateSection || !publicSection) return;
-    const type = dataType.value;
-    privateSection.style.display = (type === "private" || type === "both") ? "block" : "none";
-    publicSection.style.display = (type === "public" || type === "both") ? "block" : "none";
-  }
-
-  function handlePrivatePermission() {
-    const privatePermission = document.getElementById("privatePermission");
-    const uploadPrivatePermission = document.getElementById("uploadPrivatePermission");
-    if (!privatePermission || !uploadPrivatePermission) return;
-    const val = privatePermission.value;
-    uploadPrivatePermission.style.display = val === "No" ? "block" : "none";
+    // Data type remains part of 5.5.2; the removed 5.5.8 fields no longer need toggling.
   }
 
   function resetFields() {
@@ -637,7 +606,6 @@
       'translator_procedure': form_data.translator_procedure if form_data else '',
       'secondary_data': ('Yes' if form_data and form_data.uses_secondary_data else 'No') if form_data and form_data.uses_secondary_data is not none else '',
       'data_type': form_data.secondary_data_type if form_data else '',
-      'privatePermission': form_data.private_permission if form_data else '',
       'data_nature': form_data.data_nature if form_data else '',
       'data_origin': form_data.data_origin if form_data else '',
       'access_conditions': form_data.access_conditions if form_data else '',
@@ -645,8 +613,6 @@
       'personal_info_comment': form_data.personal_info_comment if form_data else '',
       'data_anonymized': form_data.data_anonymized if form_data else '',
       'anonymization_comment': form_data.anonymization_comment if form_data else '',
-      'permission_details': form_data.permission_details if form_data else '',
-      'public_data_description': form_data.public_data_description if form_data else '',
       'shortcomings_reported': form_data.shortcomings_reported if form_data else '',
       'limitations_reporting': form_data.limitations_reporting if form_data else '',
       'methodology_alignment': form_data.methodology_alignment if form_data else '',
@@ -694,7 +660,6 @@
     setVal('translator_procedure', initialData.translator_procedure);
     setRadio('secondary_data', initialData.secondary_data);
     setVal('data_type', initialData.data_type);
-    setVal('privatePermission', initialData.privatePermission);
     setVal('data_nature', initialData.data_nature);
     setVal('data_origin', initialData.data_origin);
     setVal('access_conditions', initialData.access_conditions);
@@ -702,8 +667,6 @@
     setVal('personal_info_comment', initialData.personal_info_comment);
     setRadio('data_anonymized', initialData.data_anonymized);
     setVal('anonymization_comment', initialData.anonymization_comment);
-    setVal('permission_details', initialData.permission_details);
-    setVal('public_data_description', initialData.public_data_description);
     setRadio('shortcomings_reported', initialData.shortcomings_reported);
     setVal('limitations_reporting', initialData.limitations_reporting);
     setRadio('methodology_alignment', initialData.methodology_alignment);
@@ -750,7 +713,6 @@
     toggleIntervention();
     handleSecondaryData();
     handleDataType();
-    handlePrivatePermission();
     togglePersonalInfo();
 
     let autosaveTimeout = null;

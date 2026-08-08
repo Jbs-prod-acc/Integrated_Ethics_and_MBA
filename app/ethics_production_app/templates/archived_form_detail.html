@@ -155,17 +155,11 @@
         <a href="{{url_for('chair_landing')}}" class="sidebar-link">
           <i class="fas fa-clipboard-list me-2"></i>Dashboard
         </a>
-        <a href="{{url_for('monitor')}}" class="sidebar-link">
-          <i class="fas fa-user me-2"></i>Student List
-        </a>
         <a href="{{url_for('admin_reassign_supervisors')}}" class="sidebar-link">
           <i class="fas fa-user-gear me-2"></i>Reassign Supervisors
         </a>
         <a href="{{url_for('admin_reassign_reviewers')}}" class="sidebar-link">
           <i class="fas fa-users-gear me-2"></i>Reassign Reviewers
-        </a>
-        <a href="{{url_for('reviewer_list')}}" class="sidebar-link">
-          <i class="fas fa-user me-2"></i>Reviewer List
         </a>
         <a href="{{url_for('admin_student_password_resets')}}" class="sidebar-link">
           <i class="fas fa-key me-2"></i>Student Password Resets
@@ -180,29 +174,7 @@
           <i class="fas fa-box-archive me-2"></i>Archived Forms
         </a>
 
-        <div class="dropdown w-100">
-          <a class="dropdown-toggle" href="#" data-bs-toggle="collapse" data-bs-target="#analyticsForms">
-            <i class="fas fa-chart-bar me-2"></i>Analytics Forms
-          </a>
-          <div class="collapse" id="analyticsForms">
-            <a class="dropdown-item" href="{{ url_for('super_admin_form_a') }}">Form A</a>
-            <a class="dropdown-item" href="{{ url_for('super_admin_form_b') }}">Form B</a>
-            <a class="dropdown-item" href="{{ url_for('super_admin_form_c') }}">Form C</a>
-          </div>
-        </div>
-
-        <div class="dropdown w-100">
-          <a class="dropdown-toggle" href="#" data-bs-toggle="collapse" data-bs-target="#monitoringForms">
-            <i class="fas fa-clipboard me-2"></i>Monitoring Forms
-          </a>
-          <div class="collapse" id="monitoringForms">
-            <a class="dropdown-item" href="{{ url_for('super_admin_monitoring_page_a') }}">Form A</a>
-            <a class="dropdown-item" href="{{ url_for('super_admin_monitoring_page_b') }}">Form B</a>
-            <a class="dropdown-item" href="{{ url_for('super_admin_monitoring_page_c') }}">Form C</a>
-          </div>
-        </div>
-
-        <a href="{{url_for('rec_dashboard')}}" class="sidebar-link">
+<a href="{{url_for('rec_dashboard')}}" class="sidebar-link">
           <i class="fas fa-users me-2"></i>Rec Team Dashboard
         </a>
         <a href="{{url_for('logout')}}" class="sidebar-link">
@@ -219,7 +191,24 @@
             <p class="text-muted mb-0">Read-only snapshot of the archived submission, including saved answers and timestamps.</p>
           </div>
           <a href="{{ url_for('archived_forms') }}" class="btn btn-outline-secondary">Back to Archived Forms</a>
+          <form
+            action="{{ url_for('restore_archived_form', archive_id=archive.archive_id) }}"
+            method="post"
+            class="d-inline"
+            onsubmit="return confirm('Restore this {{ form_type }} to the active workflow?');"
+          >
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-success" {% if restore_block_reason %}disabled{% endif %}>
+              Restore Form
+            </button>
+          </form>
         </div>
+
+        {% if restore_block_reason %}
+          <div class="alert alert-warning">
+            <strong>Restore unavailable:</strong> {{ restore_block_reason }}
+          </div>
+        {% endif %}
 
         {% with flashed_messages = get_flashed_messages(with_categories=true) %}
           {% if flashed_messages %}
@@ -283,8 +272,8 @@
                 </div>
               </div>
               <div class="meta-card">
-                <div class="meta-label">Archived By User ID</div>
-                <div class="meta-value">{{ archive.archived_by_user_id }}</div>
+                <div class="meta-label">Archived By</div>
+                <div class="meta-value">{{ archived_by_name }}</div>
               </div>
               <div class="meta-card">
                 <div class="meta-label">Archive Reason</div>

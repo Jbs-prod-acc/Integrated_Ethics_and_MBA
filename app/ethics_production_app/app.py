@@ -2,7 +2,7 @@
 from datetime import datetime
 from dotenv import load_dotenv
 load_dotenv()
-from app.models import db_session, User, Rec, UserRole, UserInfo, FormA, FormB, FormC, FormD, FormUploads, Documents, FormARequirements, Watched
+from app.models import ArchivedEthicsForm, db_session, User, Rec, UserRole, UserInfo, FormA, FormB, FormC, FormD, FormUploads, Documents, FormARequirements, Watched
 from app.models import db_session, User, Rec, UserRole, UserInfo, FormA, FormB, FormC, FormD, FormUploads, Documents, FormARequirements, Watched, UserActivityLog, LoginLog
 from flask import jsonify
 from flask import Flask, abort, flash, g, get_flashed_messages, make_response, render_template, request, redirect, url_for, session, jsonify, send_from_directory, send_file
@@ -15,6 +15,7 @@ from utils.document_files import (
     response_document_metadata,
 )
 import json
+import base64
 import math
 import mimetypes
 from db_queries import getFormAData, getSupervisorsList
@@ -30,7 +31,7 @@ import pdfkit
 from werkzeug.utils import secure_filename
 import secrets
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from datetime import time as dt_time
 import pytz
 from flask_cors import CORS
@@ -695,6 +696,46 @@ def has_blocking_student_form(model, user_id, *, options=None):
     return student_form_has_meaningful_data(form)
 
 
+def normalize_forma_sample_sizes(sample_sizes):
+    """Accept positive integers or numeric intervals for Form A sample sizes."""
+    cleaned_sizes = []
+    for index, raw_value in enumerate(sample_sizes, start=1):
+        value = str(raw_value or '').strip()
+        if not value:
+            return None, (
+                f"Sample Size row {index} is required. Enter a number like 100 "
+                "or an interval like 100-150."
+            )
+        compact_value = value.replace(' ', '')
+        if compact_value.isdigit():
+            if int(compact_value) < 1:
+                return None, f"Sample Size row {index} must be greater than zero."
+            cleaned_sizes.append(compact_value)
+            continue
+        parts = compact_value.split('-')
+        if len(parts) == 2 and all(part.isdigit() for part in parts):
+            start_value, end_value = map(int, parts)
+            if start_value < 1 or end_value < 1:
+                return None, f"Sample Size row {index} must use positive numbers."
+            if end_value < start_value:
+                return None, (
+                    f"Sample Size row {index} must use an interval like 100-150, "
+                    "where the second number is not smaller than the first."
+                )
+            if end_value > start_value * 2:
+                return None, (
+                    f"Sample Size row {index} is too wide. For example, an interval "
+                    "starting at 100 may not end above 200."
+                )
+            cleaned_sizes.append(f"{start_value}-{end_value}")
+            continue
+        return None, (
+            f"Sample Size row {index} may contain numbers and one hyphen only. "
+            "Enter a number like 100 or an interval like 100-150."
+        )
+    return cleaned_sizes, None
+
+
 def get_student_supervisor_or_flash(user, *, redirect_endpoint='student_dashboard'):
     if not user or not getattr(user, 'supervisor_id', None):
         flash("No supervisor is assigned to your account. Please contact admin.", "danger")
@@ -1059,6 +1100,11 @@ def get_supervisor_dashboard_status(form):
     return 'Draft saved - not yet submitted'
 
 
+def is_with_ethics(form):
+    """Return whether supervisor review is complete and Ethics owns the form."""
+    return get_supervisor_dashboard_status(form) == 'With Ethics'
+
+
 def get_supervisor_row_status(form):
     stage = get_workflow_stage(form)
     if stage == 'process-complete':
@@ -1095,6 +1141,15 @@ def get_reviewer_dashboard_status(form, reviewer_id=None):
     if stage == 'with-supervisor':
         return 'With Supervisor'
     return 'Awaiting for review'
+
+
+def is_reviewed_by(form, reviewer_id):
+    """Return whether this specific reviewer already submitted feedback."""
+    return bool(
+        form
+        and reviewer_id
+        and has_current_reviewer_submitted_feedback(form, reviewer_id)
+    )
 
 
 def get_ethics_dashboard_status(form):
@@ -1272,27 +1327,49 @@ def has_all_required_reviews(form):
     return completed_reviewer_count(form) >= assigned_count
 
 
+def get_admin_reviewer_outcome(form):
+    """Return the completed reviewer outcome that requires an admin decision."""
+    if not form or not has_all_required_reviews(form):
+        return ''
+
+    completed_ids = set(get_completed_reviewer_ids(form))
+    recommendations = []
+    for reviewer_id, recommendation in (
+        (getattr(form, 'form_reviewed_by', None), getattr(form, 'review_recommendation', None)),
+        (getattr(form, 'form_reviewed_by1', None), getattr(form, 'review_recommendation1', None)),
+    ):
+        if reviewer_id in completed_ids and recommendation:
+            recommendations.append(str(recommendation).strip().lower())
+
+    if not recommendations:
+        return ''
+    if any('approved with minor changes' in value for value in recommendations):
+        return 'approved_with_minor_changes'
+    if all(value == 'approved' for value in recommendations):
+        return 'approved'
+    return 'other'
+
+
 def apply_reviewer_recommendation_routing(form, recommendation):
     """Route a form immediately after its assigned reviewer completes a review."""
     if not has_all_required_reviews(form):
         return
 
-    normalized_recommendation = (recommendation or '').strip().lower()
-    if normalized_recommendation == 'approved':
+    outcome = get_admin_reviewer_outcome(form)
+    if outcome == 'approved':
         form.status = 'Approved'
         form.submitted_to_admin = True
         form.submitted_to_reviewers = False
         form.visible_to_student = False
         form.rejected_or_accepted = True
-    elif normalized_recommendation in {
-        'approved with minor changes',
-        'approved with minor changes, resubmission required',
-        'resubmission required',
-    }:
-        form.status = 'Submitted to Student for Corrections'
-        form.submitted_to_admin = False
+    elif outcome == 'approved_with_minor_changes':
+        # A reviewer recommendation is advice to the ethics administrator.  The
+        # administrator must still choose whether to return the form, escalate
+        # it to REC, or issue a certificate.
+        form.status = 'Reviewed - Pending Admin Decision'
+        form.submitted_to_admin = True
         form.submitted_to_reviewers = False
-        form.visible_to_student = True
+        form.visible_to_student = False
         form.rejected_or_accepted = False
 
 
@@ -1324,6 +1401,7 @@ def is_waiting_for_additional_reviewer(form):
 app.jinja_env.globals['assigned_reviewer_count'] = assigned_reviewer_count
 app.jinja_env.globals['completed_reviewer_count'] = completed_reviewer_count
 app.jinja_env.globals['has_all_required_reviews'] = has_all_required_reviews
+app.jinja_env.globals['get_admin_reviewer_outcome'] = get_admin_reviewer_outcome
 app.jinja_env.globals['is_waiting_for_additional_reviewer'] = is_waiting_for_additional_reviewer
 app.jinja_env.globals['is_student_form_locked'] = is_student_form_locked
 app.jinja_env.globals['is_student_correction_state'] = is_student_correction_state
@@ -1332,8 +1410,10 @@ app.jinja_env.globals['get_student_dashboard_status'] = get_student_dashboard_st
 app.jinja_env.globals['get_workflow_stage'] = get_workflow_stage
 app.jinja_env.globals['get_workflow_location'] = get_workflow_location
 app.jinja_env.globals['get_supervisor_dashboard_status'] = get_supervisor_dashboard_status
+app.jinja_env.globals['is_with_ethics'] = is_with_ethics
 app.jinja_env.globals['get_supervisor_row_status'] = get_supervisor_row_status
 app.jinja_env.globals['get_reviewer_dashboard_status'] = get_reviewer_dashboard_status
+app.jinja_env.globals['is_reviewed_by'] = is_reviewed_by
 app.jinja_env.globals['get_reviewer_row_status'] = get_reviewer_row_status
 app.jinja_env.globals['get_ethics_dashboard_status'] = get_ethics_dashboard_status
 app.jinja_env.globals['has_reviewer_feedback'] = has_reviewer_feedback
@@ -1428,11 +1508,11 @@ def can_access_requirements(user, req):
 
 FORM_FILE_FIELDS = {
     'A': {
-        'private_permission_file', 'proposal_path', 'proposal', 'permission_letter',
+        'proposal_path', 'proposal', 'permission_letter',
         'prior_clearance', 'ethics_evidence', 'pending_note'
     },
     'FORMA': {
-        'private_permission_file', 'proposal_path', 'proposal', 'permission_letter',
+        'proposal_path', 'proposal', 'permission_letter',
         'prior_clearance', 'ethics_evidence', 'pending_note'
     },
     'B': {
@@ -1677,6 +1757,7 @@ def view_requirement_file():
 
 # --- Send Back for Corrections endpoint for FormB ---
 @app.route('/send_back_for_corrections_b/<id>', methods=['POST'])
+@role_required('ADMIN', 'SUPER_ADMIN')
 def send_back_for_corrections_b(id):
     try:
         form = db_session.query(FormB).filter_by(form_id=id).first()
@@ -1685,6 +1766,9 @@ def send_back_for_corrections_b(id):
             return redirect(url_for('ethics_reviewer_committee_form_b'))
         if not has_all_required_reviews(form):
             flash('Form B can only be sent back after all assigned reviewers have submitted their reviews.', 'danger')
+            return redirect(url_for('ethics_reviewer_committee_form_b'))
+        if get_admin_reviewer_outcome(form) != 'approved_with_minor_changes':
+            flash('Only a form approved with minor changes can be returned for corrections.', 'danger')
             return redirect(url_for('ethics_reviewer_committee_form_b'))
         feedback = (request.form.get('corrections_feedback') or '').strip()
         if not feedback:
@@ -1861,6 +1945,7 @@ def get_reviewers_for_ethics_assignment(current_form, model, order_column):
 
 # --- Send Back for Corrections endpoint for FormC ---
 @app.route('/send_back_for_corrections_c/<id>', methods=['POST'])
+@role_required('ADMIN', 'SUPER_ADMIN')
 def send_back_for_corrections_c(id):
     try:
         form = db_session.query(FormC).filter_by(form_id=id).first()
@@ -1870,6 +1955,9 @@ def send_back_for_corrections_c(id):
             return redirect(url_for('ethics_reviewer_committee_form_c'))
         if not has_all_required_reviews(form):
             flash('Form C can only be sent back after all assigned reviewers have submitted their reviews.', 'danger')
+            return redirect(url_for('ethics_reviewer_committee_form_c'))
+        if get_admin_reviewer_outcome(form) != 'approved_with_minor_changes':
+            flash('Only a form approved with minor changes can be returned for corrections.', 'danger')
             return redirect(url_for('ethics_reviewer_committee_form_c'))
         print(f"Form C status before corrections: {form.status}")
         feedback = (request.form.get('corrections_feedback') or '').strip()
@@ -2627,15 +2715,11 @@ def _clear_forma_secondary_data_details(form):
     for field in [
         'secondary_data_type', 'data_nature', 'data_origin', 'access_conditions',
         'personal_info', 'personal_info_comment', 'data_anonymized',
-        'anonymization_comment', 'permission_details', 'private_permission',
-        'public_data_description', 'shortcomings_reported',
+        'anonymization_comment', 'shortcomings_reported',
         'limitations_reporting', 'methodology_alignment', 'data_acknowledgment',
     ]:
         if hasattr(form, field):
             setattr(form, field, '')
-    for field in ['private_permission_file', 'private_permission_filename']:
-        if hasattr(form, field):
-            setattr(form, field, None)
 
 
 def _apply_forma_autosave_payload(form, form_payload, section='all', include_declaration=False):
@@ -2643,9 +2727,6 @@ def _apply_forma_autosave_payload(form, form_payload, section='all', include_dec
 
     if 'secondary_data' in data and 'uses_secondary_data' not in data:
         data['uses_secondary_data'] = data['secondary_data']
-    if 'privatePermission' in data and 'private_permission' not in data:
-        data['private_permission'] = data['privatePermission']
-
     if 'questionnaire_permission' in data:
         questionnaire_permission = (data.get('questionnaire_permission') or '').strip()
         if questionnaire_permission == 'Yes':
@@ -2745,7 +2826,7 @@ def _apply_forma_autosave_payload(form, form_payload, section='all', include_dec
             if section == 'all' and paradigm_field not in data:
                 setattr(form, paradigm_field, False)
 
-        for key in ['paradigm_explanation', 'design', 'participants_description', 'duration_timing', 'contact_details_method', 'conflict_explanation', 'questionnaire_type', 'permission_obtained', 'open_source', 'instrument_attachment_reason', 'interview_type', 'interview_recording', 'focus_recording', 'observation_details', 'documents_details', 'other_details', 'data_collection_procedure', 'data_collectors', 'intervention_details', 'sensitive_data', 'translator_procedure', 'data_nature', 'data_origin', 'access_conditions', 'personal_info', 'personal_info_comment', 'data_anonymized', 'anonymization_comment', 'permission_details', 'public_data_description', 'shortcomings_reported', 'limitations_reporting', 'methodology_alignment', 'data_acknowledgment', 'secondary_data_type', 'private_permission']:
+        for key in ['paradigm_explanation', 'design', 'participants_description', 'duration_timing', 'contact_details_method', 'conflict_explanation', 'questionnaire_type', 'permission_obtained', 'open_source', 'instrument_attachment_reason', 'interview_type', 'interview_recording', 'focus_recording', 'observation_details', 'documents_details', 'other_details', 'data_collection_procedure', 'data_collectors', 'intervention_details', 'sensitive_data', 'translator_procedure', 'data_nature', 'data_origin', 'access_conditions', 'personal_info', 'personal_info_comment', 'data_anonymized', 'anonymization_comment', 'shortcomings_reported', 'limitations_reporting', 'methodology_alignment', 'data_acknowledgment', 'secondary_data_type']:
             if key in data and hasattr(form, key):
                 setattr(form, key, data.get(key, ''))
 
@@ -2760,13 +2841,6 @@ def _apply_forma_autosave_payload(form, form_payload, section='all', include_dec
 
         if 'data_type' in data:
             form.secondary_data_type = data.get('data_type', '')
-
-        if 'private_permission' in data:
-            private_permission_value = data.get('private_permission')
-            if isinstance(private_permission_value, str) and private_permission_value.lower() in ['yes', 'no']:
-                form.private_permission = private_permission_value.capitalize()
-            else:
-                form.private_permission = 'Yes' if _autosave_str_to_bool(private_permission_value) else 'No'
 
         if hasattr(form, 'uses_secondary_data') and not form.uses_secondary_data:
             _clear_forma_secondary_data_details(form)
@@ -2879,7 +2953,14 @@ def form_a_sec4_autosave():
     if error_response:
         return error_response
 
+    cleaned_sample_sizes, sample_size_error = normalize_forma_sample_sizes(
+        request.form.getlist('sample_size[]')
+    )
+    if sample_size_error:
+        return jsonify({'success': False, 'error': sample_size_error}), 422
+
     _apply_forma_autosave_payload(form, request.form, section='sec4', include_declaration=False)
+    form.sampling_size = ','.join(cleaned_sample_sizes)
     
     try:
         db_session.commit()
@@ -3125,6 +3206,7 @@ from sqlalchemy.exc import SQLAlchemyError
 # --- Send Back for Corrections endpoint for FormA ---
 @app.route('/send_back_for_corrections/<id>', methods=['POST'], endpoint='send_back_for_corrections')
 @app.route('/send_back_for_corrections_a/<id>', methods=['POST'])
+@role_required('ADMIN', 'SUPER_ADMIN')
 def send_back_for_corrections_a(id):
     try:
         form = db_session.query(FormA).filter_by(form_id=id).first()
@@ -3133,6 +3215,9 @@ def send_back_for_corrections_a(id):
             return redirect(url_for('ethics_reviewer_committee_form_a'))
         if not has_all_required_reviews(form):
             flash('Form A can only be sent back after all assigned reviewers have submitted their reviews.', 'danger')
+            return redirect(url_for('ethics_reviewer_committee_form_a'))
+        if get_admin_reviewer_outcome(form) != 'approved_with_minor_changes':
+            flash('Only a form approved with minor changes can be returned for corrections.', 'danger')
             return redirect(url_for('ethics_reviewer_committee_form_a'))
         # Mark the form as needing corrections and add feedback
         feedback = (request.form.get('corrections_feedback') or '').strip()
@@ -3354,8 +3439,9 @@ def student_dashboard():
         files_missing = False
         missing_files_info = {}
         
-        if not form_requirements:
-            # Check if uploaded files still exist on the filesystem
+        if not form_requirements and not (formA or formB or formC):
+            # A student with no form has not started the workflow yet. Existing
+            # (including restored) forms must always take priority over this gate.
             return redirect(url_for('ethics_pack'))
             
             
@@ -3491,6 +3577,12 @@ def capture_logged_in_user_exceptions(exception=None):
     return None
 
 
+def is_student_account_activated(user):
+    """Accept activation performed through either integrated or legacy admin UI."""
+    legacy_value = str(getattr(user, 'authenticate_student', '') or '').strip().lower()
+    return legacy_value in {'true', '1', 'yes'} or bool(getattr(user, 'authenticated_student', False))
+
+
 ###
 ###
 ### this is the function to focus on when intergrating MBA and Ethics
@@ -3515,7 +3607,7 @@ def login_page():
             if user.verify_password(user_password):
                 # Block unauthenticated user from logging in
                 # Check if authenticate_student is falsy (False, "False", "false", None, empty string, etc.)
-                if not user.authenticate_student or str(user.authenticate_student).lower() in ['false', '0', 'none']:
+                if not is_student_account_activated(user):
                         clear_auth_session()
                         return redirect_to_shared_login("You are authenticated. Please wait for admin approval.")
                 return _complete_ethics_login(user)
@@ -3558,10 +3650,7 @@ def sso_login():
         return redirect_to_shared_login("Access denied.")
 
     user_role = str(getattr(user.role, 'value', user.role) or '').upper()
-    if user_role == 'STUDENT' and (
-        not user.authenticate_student
-        or str(user.authenticate_student).lower() in ['false', '0', 'none']
-    ):
+    if user_role == 'STUDENT' and not is_student_account_activated(user):
         clear_auth_session()
         return redirect_to_shared_login("Access denied.")
 
@@ -3643,18 +3732,8 @@ def register():
                 db_session.commit()
 
                 stored_user = db_session.query(User).filter_by(email=email).first()
-
-                # Send confirmation email
-                try:
-                    message = f'An account was created for this student number - {student_number}. Please wait for authentication before login.'
-                    send_email(app, mail, message, [email])
-                    msg = 'You have successfully registered!'
-                except Exception as e:
-                    app.logger.error(f"Email sending error: {e}")
-                    msg = "Account created, but confirmation email could not be sent."
-
-                flash("Account created successfully")
-                return render_template("login.html", messages=[msg])
+                session['pending_registration_declaration_user_id'] = stored_user.user_id
+                return redirect(url_for('applicant_registration_declaration'))
 
             except Exception as e:
                 db_session.rollback()
@@ -3667,6 +3746,49 @@ def register():
     except Exception as e:
         app.logger.error(f"Unexpected error in register route: {e}")
         return render_template('register.html', messages=["Unexpected error occurred. Please try again later."])
+
+
+@app.route('/registration/applicant-declaration', methods=['GET', 'POST'])
+def applicant_registration_declaration():
+    user_id = session.get('pending_registration_declaration_user_id')
+    if not user_id:
+        flash('Please register an account before completing the applicant declaration.', 'warning')
+        return redirect(url_for('register'))
+
+    user = db_session.query(User).filter_by(user_id=user_id).first()
+    if not user:
+        session.pop('pending_registration_declaration_user_id', None)
+        flash('Your registration could not be found. Please register again.', 'danger')
+        return redirect(url_for('register'))
+
+    if request.method == 'POST':
+        if request.form.get('applicant_declaration_agreed') != 'yes':
+            flash('You must read and agree to the declaration before continuing.', 'danger')
+            return render_template('applicant_registration_declaration.html', user=user, completed=False)
+
+        create_user_activity_entry(
+            user.user_id,
+            'applicant_registration_declaration_agreed',
+            page='registration/applicant-declaration',
+            details={
+                'declaration_version': '2026-08-07',
+                'electronic_signature': True,
+                'student_number': user.student_number,
+            },
+        )
+        try:
+            message = (
+                f'An account was created for student number {user.student_number}. '
+                'Please wait for an administrator to activate your account before logging in.'
+            )
+            send_email(app, mail, message, [user.email])
+        except Exception as error:
+            app.logger.error('Registration confirmation email failed for %s: %s', user.email, error)
+
+        session.pop('pending_registration_declaration_user_id', None)
+        return render_template('applicant_registration_declaration.html', user=user, completed=True)
+
+    return render_template('applicant_registration_declaration.html', user=user, completed=False)
 
 
 @app.route("/student_choose_supervisor",methods=['POST','GET'])
@@ -3978,6 +4100,65 @@ def build_student_password_pdf(student, password, admin_user):
     return build_simple_text_pdf(lines, title="UJ Ethics Password Reset")
 
 
+def get_supervisor_reassignment_state(student_id, forms=None):
+    """Allow supervisor changes only while every existing form is with the student."""
+    if forms is None:
+        forms = []
+        for model, label in ((FormA, 'Form A'), (FormB, 'Form B'), (FormC, 'Form C')):
+            for form in db_session.query(model).filter_by(user_id=student_id).all():
+                forms.append((label, form))
+
+    blocking_forms = []
+    for label, form in forms:
+        stage = get_workflow_stage(form)
+        if stage not in {'draft', 'with-student-revisions'}:
+            blocking_forms.append(f"{label}: {get_workflow_location(form)}")
+
+    if blocking_forms:
+        return {
+            'allowed': False,
+            'message': (
+                'The supervisor cannot be changed after submission. Wait until the form '
+                'is returned to the student. Current location: ' + '; '.join(blocking_forms)
+            ),
+        }
+    return {
+        'allowed': True,
+        'message': 'Supervisor reassignment is available because the form is with the student.',
+    }
+
+
+def build_supervisor_reassignment_states(students):
+    """Build reassignment states with one query per form type instead of per student."""
+    student_ids = [student.user_id for student in students]
+    if not student_ids:
+        return {}
+
+    forms_by_student = defaultdict(list)
+    try:
+        for model, label in ((FormA, 'Form A'), (FormB, 'Form B'), (FormC, 'Form C')):
+            for form in db_session.query(model).filter(model.user_id.in_(student_ids)).all():
+                forms_by_student[form.user_id].append((label, form))
+    except SQLAlchemyError:
+        db_session.rollback()
+        app.logger.exception('Could not calculate supervisor reassignment workflow states')
+        return {
+            student_id: {
+                'allowed': False,
+                'message': 'Workflow status is temporarily unavailable. No supervisor change was permitted.',
+            }
+            for student_id in student_ids
+        }
+
+    return {
+        student_id: get_supervisor_reassignment_state(
+            student_id,
+            forms=forms_by_student.get(student_id, []),
+        )
+        for student_id in student_ids
+    }
+
+
 @app.route('/admin/reassign_supervisors', methods=['GET', 'POST'])
 def admin_reassign_supervisors():
     admin_id = session.get('id')
@@ -4032,6 +4213,11 @@ def admin_reassign_supervisors():
         supervisor = db_session.query(User).filter_by(user_id=supervisor_id).first()
         if not supervisor or supervisor.role not in [UserRole.SUPERVISOR, UserRole.REVIEWER]:
             flash("The selected supervisor could not be found.", "danger")
+            return redirect(url_for('admin_reassign_supervisors', **redirect_filters))
+
+        reassignment_state = get_supervisor_reassignment_state(student.user_id)
+        if not reassignment_state['allowed']:
+            flash(reassignment_state['message'], 'danger')
             return redirect(url_for('admin_reassign_supervisors', **redirect_filters))
 
         student.supervisor_id = supervisor.user_id
@@ -4104,6 +4290,7 @@ def admin_reassign_supervisors():
     total_pages = (total_students + per_page - 1) // per_page
 
     supervisor_lookup = {supervisor.user_id: supervisor for supervisor in supervisors}
+    reassignment_states = build_supervisor_reassignment_states(students)
 
     filter_students_list = db_session.query(User).filter(
         User.role == UserRole.STUDENT
@@ -4116,6 +4303,7 @@ def admin_reassign_supervisors():
         students=students,
         supervisors=supervisors,
         supervisor_lookup=supervisor_lookup,
+        reassignment_states=reassignment_states,
         page=page,
         total_pages=total_pages,
         total_students=total_students,
@@ -4365,6 +4553,7 @@ def authenticate_student(id):
             if user:
                 print(f"Authenticating student: {user.full_name}")
                 user.authenticate_student='true'
+                user.authenticated_student=True
                 # Log admin action
                 db_session.add(UserActivityLog(
                     user_id=admin_id,
@@ -4409,6 +4598,7 @@ def diactivate_user_account(id):
             if user:
                 print(f"Deactivating user account: {user.full_name}")
                 user.authenticate_student='false'
+                user.authenticated_student=False
                 # Log admin action
                 db_session.add(UserActivityLog(
                     user_id=admin_id,
@@ -4919,370 +5109,7 @@ def super_admin():
 
 ### Enhanced Analytics Dashboard
 ### Form A Analytics with Professional Visualizations
-@app.route('/super_admin_form_a', methods=['GET', 'POST'])
 @role_required('SUPER_ADMIN')
-def super_admin_form_a():
-    from data_ploting import (
-        plot_risk_rating_distribution_a,
-        plot_review_recommendations_a,
-        plot_supervisor_recommendations_a,
-        plot_rec_member_distribution_a,
-        plot_certificate_status_a,
-        plot_submissions_over_time_a,
-        plot_review_by_risk_rating_a,
-        plot_top_applicants_a,
-        plot_certificate_received_percentage_a,
-        plot_review_recommendation_comparison_a,
-        plot_applications_vs_certificates_a,
-        calculate_kpis_a,
-        create_sunburst_chart_a,
-    )
-    from enhanced_analytics import analytics
-
-    user_id = session.get('id')
-    if not user_id:
-        return redirect(url_for('login_page'))
-    user = db_session.query(User).filter(User.user_id==user_id).first()
-    if not user:
-        return redirect(url_for('login_page'))
-    role = user.role.value
-
-    forma = 'A'
-
-    analytics_rows = (
-        db_session.query(FormA, Rec)
-        .outerjoin(Rec, FormA.form_id == Rec.form_id)
-        .filter(FormA.submitted_at.isnot(None))  # Only include submitted forms
-        .order_by(FormA.submitted_at.desc())
-        .limit(200)  # Increased limit for better analytics
-        .all()
-    )
-    reviewer_name_lookup = build_reviewer_name_lookup([form for form, _ in analytics_rows])
-
-    # Enhanced data collection with additional fields for better analytics
-    forms_list = [
-    {
-        "id": form.form_id,
-        "applicant_name": form.applicant_name,
-        "submitted_at": form.submitted_at,
-        "risk_rating": form.risk_rating or 'Not Assessed',
-        "supervisor": form.supervisor,
-        "ethics_signature_date": form.supervisor_date,
-        "supervisor_recommendation": form.recommendation,
-        "first_reviewer_name": reviewer_name_lookup.get(form.form_reviewed_by),
-        "second_reviewer_name": reviewer_name_lookup.get(form.form_reviewed_by1),
-        "review_signature_date": form.review_signature_date,
-        "review_recommendation": form.review_recommendation,
-        "review_signature_date1": form.review_signature_date1,
-        "review_recommendation1": form.review_recommendation1,
-        "certificate_issued": form.certificate_issued,
-        "certificate_received": form.certificate_received,
-        "first_reviewer": reviewer_name_lookup.get(form.reviewer_name1, form.reviewer_name1),
-        "second_reviewer": reviewer_name_lookup.get(form.reviewer_name2, form.reviewer_name2),
-        "submitted_to_rec": form.submitted_to_rec if rec else False,
-        "rec_full_name": rec.full_name if rec else None,
-        "student_number": form.student_number,
-        "department": form.department,
-        "degree": form.degree
-    }
-    for form, rec in analytics_rows
-    ]
-    
-    # Debug log
-    app.logger.info(f"Found {len(forms_list)} Form A submissions for analytics")
-    
-    if forms_list:
-        df = pd.DataFrame(forms_list)
-        
-        # Calculate KPIs
-        kpis = calculate_kpis_a(df)
-        
-        # Create enhanced visualizations with error handling
-        context = {"kpis": kpis}
-        
-        try:
-            context.update({
-                # Interactive Plotly charts
-                "sunburst_chart": create_sunburst_chart_a(df),
-                "interactive_timeline": analytics.create_interactive_timeline(df, 'A'),
-                "risk_analysis": analytics.create_advanced_risk_analysis(df, 'A'),
-                "reviewer_performance": analytics.create_reviewer_performance_dashboard(df, 'A'),
-                
-                # Enhanced matplotlib charts
-                "risk_rating_distribution": plot_risk_rating_distribution_a(df),
-                "review_recommendations": plot_review_recommendations_a(df),
-                "supervisor_recommendations": plot_supervisor_recommendations_a(df),
-                "rec_member_distribution": plot_rec_member_distribution_a(df),
-                "certificate_status": plot_certificate_status_a(df),
-                "submissions_over_time": plot_submissions_over_time_a(df),
-                "review_by_risk_rating": plot_review_by_risk_rating_a(df),
-                "top_applicants": plot_top_applicants_a(df),
-                "certificate_received_percentage": plot_certificate_received_percentage_a(df),
-                "review_recommendation_comparison": plot_review_recommendation_comparison_a(df),
-                "plot_applications_vs_certificates": plot_applications_vs_certificates_a(df),
-            })
-        except Exception as e:
-            print(f"Error generating charts for Form A: {e}")
-            # Charts will be None if not generated, templates handle this gracefully
-
-        return render_template("super_admin_form_a.html", role=role, forma=forma, **context)
-    else:
-        # Empty state with sample KPIs
-        kpis = {
-            'total_applications': 0,
-            'this_month': 0,
-            'growth_rate': 0,
-            'certificates_issued': 0,
-            'certificates_received': 0,
-            'completion_rate': 0,
-            'high_risk_count': 0
-        }
-        return render_template("super_admin_form_a.html", role=role, forma=forma, kpis=kpis)
-
-### Form B Analytics with Professional Visualizations
-@app.route('/super_admin_form_b', methods=['GET', 'POST'])
-@role_required('SUPER_ADMIN')
-def super_admin_form_b():
-    from data_ploting import (
-        plot_risk_rating_distribution_b,
-        plot_review_recommendations_b,
-        plot_supervisor_recommendations_b,
-        plot_rec_member_distribution_b,
-        plot_certificate_status_b,
-        plot_submissions_over_time_b,
-        plot_review_by_risk_rating_b,
-        plot_top_applicants_b,
-        plot_certificate_received_percentage_b,
-        plot_review_recommendation_comparison_b,
-        plot_applications_vs_certificates_b,
-        calculate_kpis_b,
-        create_sunburst_chart_b,
-    )
-    from enhanced_analytics import analytics
-
-    user_id = session.get('id')
-    if not user_id:
-        return redirect(url_for('login_page'))
-    user = db_session.query(User).filter(User.user_id==user_id).first()
-    if not user:
-        return redirect(url_for('login_page'))
-    role = user.role.value
-
-    formb = 'B'
-
-    analytics_rows = (
-        db_session.query(FormB, Rec)
-        .outerjoin(Rec, FormB.form_id == Rec.form_id)
-        .filter(FormB.submitted_at.isnot(None))  # Only include submitted forms
-        .order_by(FormB.submitted_at.desc())
-        .limit(200)  # Increased limit for better analytics
-        .all()
-    )
-    reviewer_name_lookup = build_reviewer_name_lookup([form for form, _ in analytics_rows])
-
-    # Enhanced data collection with additional fields for better analytics
-    forms_list = [
-    {
-        "id": form.form_id,
-        "applicant_name": form.applicant_name,
-        "submitted_at": form.submitted_at,
-        "risk_rating": form.risk_level or 'Not Assessed',  # Map risk_level to risk_rating for consistency
-        "supervisor": getattr(form, 'supervisor', None),
-        "ethics_signature_date": form.supervisor_date,
-        "supervisor_recommendation": form.recommendation,
-        "first_reviewer_name": reviewer_name_lookup.get(form.form_reviewed_by),
-        "second_reviewer_name": reviewer_name_lookup.get(form.form_reviewed_by1),
-        "review_signature_date": form.review_signature_date,
-        "review_recommendation": form.review_recommendation,
-        "review_signature_date1": form.review_signature_date1,
-        "review_recommendation1": form.review_recommendation1,
-        "first_reviewer": reviewer_name_lookup.get(form.reviewer_name1, form.reviewer_name1),
-        "second_reviewer": reviewer_name_lookup.get(form.reviewer_name2, form.reviewer_name2),
-        "certificate_issued": form.certificate_issued,
-        "certificate_received": form.certificate_received,
-        "submitted_to_rec": form.submitted_to_rec if rec else False,
-        "rec_full_name": rec.full_name if rec else None,
-        "student_number": getattr(form, 'student_number', None),
-        "department": getattr(form, 'department', None),
-        "degree": getattr(form, 'degree', None)
-    }
-    for form, rec in analytics_rows
-    ]
-    
-    # Debug log
-    app.logger.info(f"Found {len(forms_list)} Form B submissions for analytics")
-    
-    if forms_list:
-        df = pd.DataFrame(forms_list)
-        
-        # Calculate KPIs
-        kpis = calculate_kpis_b(df)
-        
-        # Create enhanced visualizations with error handling
-        context = {"kpis": kpis}
-        
-        try:
-            context.update({
-                # Interactive Plotly charts
-                "sunburst_chart": create_sunburst_chart_b(df),
-                "interactive_timeline": analytics.create_interactive_timeline(df, 'B'),
-                "risk_analysis": analytics.create_advanced_risk_analysis(df, 'B'),
-                "reviewer_performance": analytics.create_reviewer_performance_dashboard(df, 'B'),
-                
-                # Enhanced matplotlib charts
-                "risk_rating_distribution": plot_risk_rating_distribution_b(df),
-                "review_recommendations": plot_review_recommendations_b(df),
-                "supervisor_recommendations": plot_supervisor_recommendations_b(df),
-                "rec_member_distribution": plot_rec_member_distribution_b(df),
-                "certificate_status": plot_certificate_status_b(df),
-                "submissions_over_time": plot_submissions_over_time_b(df),
-                "review_by_risk_rating": plot_review_by_risk_rating_b(df),
-                "top_applicants": plot_top_applicants_b(df),
-                "certificate_received_percentage": plot_certificate_received_percentage_b(df),
-                "review_recommendation_comparison": plot_review_recommendation_comparison_b(df),
-                "plot_applications_vs_certificates": plot_applications_vs_certificates_b(df),
-            })
-        except Exception as e:
-            print(f"Error generating charts for Form B: {e}")
-            # Charts will be None if not generated, templates handle this gracefully
-
-        return render_template("super_admin_form_b.html", role=role, formb=formb, **context)
-    else:
-        # Empty state with sample KPIs
-        kpis = {
-            'total_applications': 0,
-            'this_month': 0,
-            'growth_rate': 0,
-            'certificates_issued': 0,
-            'certificates_received': 0,
-            'completion_rate': 0,
-            'high_risk_count': 0
-        }
-        return render_template("super_admin_form_b.html", role=role, formb=formb, kpis=kpis)
-### Ploting form C
-
-### Form C Analytics with Professional Visualizations  
-@app.route('/super_admin_form_c', methods=['GET', 'POST'])
-@role_required('SUPER_ADMIN')
-def super_admin_form_c():
-    from data_ploting import (
-        plot_risk_rating_distribution_c,
-        plot_review_recommendations_c,
-        plot_supervisor_recommendations_c,
-        plot_rec_member_distribution_c,
-        plot_certificate_status_c,
-        plot_submissions_over_time_c,
-        plot_review_by_risk_rating_c,
-        plot_top_applicants_c,
-        plot_certificate_received_percentage_c,
-        plot_review_recommendation_comparison_c,
-        plot_applications_vs_certificates_c,
-        calculate_kpis_c,
-        create_sunburst_chart_c,
-    )
-    from enhanced_analytics import analytics
-
-    user_id = session.get('id')
-    if not user_id:
-        return redirect(url_for('login_page'))
-    user = db_session.query(User).filter(User.user_id==user_id).first()
-    if not user:
-        return redirect(url_for('login_page'))
-    role = user.role.value
-
-    formc = 'C'
-    
-    analytics_rows = (
-        db_session.query(FormC, Rec)
-        .outerjoin(Rec, FormC.form_id == Rec.form_id)
-        .filter(FormC.submission_date.isnot(None))  # Only include submitted forms
-        .order_by(FormC.submission_date.desc())
-        .limit(200)  # Increased limit for better analytics
-        .all()
-    )
-    reviewer_name_lookup = build_reviewer_name_lookup([form for form, _ in analytics_rows])
-
-    # Enhanced data collection with additional fields for better analytics
-    forms_list = [
-    {
-        "id": form.form_id,
-        "applicant_name": form.applicant_name,
-        "submitted_at": form.submission_date,  # Keep parity with other analytics helpers
-        "submission_date": form.submission_date,
-        "risk_rating": form.risk_level or 'Not Assessed',  # Map risk_level to risk_rating for consistency
-        "supervisor": getattr(form, 'supervisor', None),
-        "ethics_signature_date": form.supervisor_date,
-        "supervisor_recommendation": form.recommendation,
-        "first_reviewer_name": reviewer_name_lookup.get(form.form_reviewed_by),
-        "second_reviewer_name": reviewer_name_lookup.get(form.form_reviewed_by1),
-        "review_signature_date": form.review_signature_date,
-        "review_recommendation": form.review_recommendation,
-        "review_signature_date1": form.review_signature_date1,
-        "review_recommendation1": form.review_recommendation1,
-        "first_reviewer": reviewer_name_lookup.get(form.reviewer_name1, form.reviewer_name1),
-        "second_reviewer": reviewer_name_lookup.get(form.reviewer_name2, form.reviewer_name2),
-        "certificate_issued": form.certificate_issued,
-        "certificate_received": form.certificate_received,
-        "submitted_to_rec": form.submitted_to_rec if rec else False,
-        "rec_full_name": rec.full_name if rec else None,
-        "student_number": getattr(form, 'student_number', None),
-        "department": getattr(form, 'department', None),
-        "degree": getattr(form, 'degree', None)
-    }
-    for form, rec in analytics_rows
-    ]
-    
-    # Debug log
-    app.logger.info(f"Found {len(forms_list)} Form C submissions for analytics")
-    
-    if forms_list:
-        df = pd.DataFrame(forms_list)
-        
-        # Calculate KPIs
-        kpis = calculate_kpis_c(df)
-        
-        # Create enhanced visualizations with error handling
-        context = {"kpis": kpis}
-        
-        try:
-            context.update({
-                # Interactive Plotly charts
-                "sunburst_chart": create_sunburst_chart_c(df),
-                "interactive_timeline": analytics.create_interactive_timeline(df, 'C'),
-                "risk_analysis": analytics.create_advanced_risk_analysis(df, 'C'),
-                "reviewer_performance": analytics.create_reviewer_performance_dashboard(df, 'C'),
-                
-                # Enhanced matplotlib charts
-                "risk_rating_distribution": plot_risk_rating_distribution_c(df),
-                "review_recommendations": plot_review_recommendations_c(df),
-                "supervisor_recommendations": plot_supervisor_recommendations_c(df),
-                "rec_member_distribution": plot_rec_member_distribution_c(df),
-                "certificate_status": plot_certificate_status_c(df),
-                "submissions_over_time": plot_submissions_over_time_c(df),
-                "review_by_risk_rating": plot_review_by_risk_rating_c(df),
-                "top_applicants": plot_top_applicants_c(df),
-                "certificate_received_percentage": plot_certificate_received_percentage_c(df),
-                "review_recommendation_comparison": plot_review_recommendation_comparison_c(df),
-                "plot_applications_vs_certificates": plot_applications_vs_certificates_c(df),
-            })
-        except Exception as e:
-            print(f"Error generating charts for Form C: {e}")
-            # Charts will be None if not generated, templates handle this gracefully
-
-        return render_template("super_admin_form_c.html", role=role, formc=formc, **context)
-    else:
-        # Empty state with sample KPIs
-        kpis = {
-            'total_applications': 0,
-            'this_month': 0,
-            'growth_rate': 0,
-            'certificates_issued': 0,
-            'certificates_received': 0,
-            'completion_rate': 0,
-            'high_risk_count': 0
-        }
-        return render_template("super_admin_form_c.html", role=role, formc=formc, kpis=kpis)
-
 # =====================================================================================================
 # ADMIN/SUPERADMIN STATUS MONITORING PAGE
 # =====================================================================================================
@@ -5480,331 +5307,6 @@ def admin_status_monitor():
         name_suggestions=name_suggestions
     )
 
-@app.route('/super_admin_monitoring_page_a',methods=['GET','POST'])
-def super_admin_monitoring_page_a():
-    user_id = session.get('id')
-    if not user_id:
-        return redirect(url_for('login_page'))
-    user=db_session.query(User).filter(User.user_id==user_id).first()
-    if not user:
-        return redirect(url_for('login_page'))
-    role=user.role.value
-
-    # Step 1: Subquery to get the latest submitted_at per student
-    latest_subq = (
-        db_session.query(
-            FormA.user_id,
-            func.max(FormA.submitted_at).label("latest_date")
-        )
-        .group_by(FormA.user_id)
-        .subquery()
-    )
-    
-    # Pagination
-    page = request.args.get('page', 1, type=int)
-    per_page = 20
-    base_query = (
-        db_session.query(FormA, Rec)
-        .join(latest_subq,
-              (FormA.user_id == latest_subq.c.user_id) &
-              (FormA.submitted_at == latest_subq.c.latest_date))
-        .outerjoin(Rec, FormA.form_id == Rec.form_id)
-        .order_by(FormA.user_id, FormA.submitted_at.desc())
-    )
-    results = base_query.offset((page-1)*per_page).limit(per_page).all()
-    total = base_query.count()
-
-   
-    # Step 3: Merge REC names into one form entry
-    forms_dict = {}
-    for form, rec in results:
-        # Resolve First Reviewer Info
-        first_reviewer_user = db_session.query(User).filter(User.user_id == form.reviewer_name1).first()
-        second_reviewer_user = db_session.query(User).filter(User.user_id == form.reviewer_name2).first()
-        
-        # Correctly attribute feedback regardless of slot order in DB
-        rev1_data = {"name": first_reviewer_user.full_name if first_reviewer_user else None, "date": None, "recommendation": None}
-        rev2_data = {"name": second_reviewer_user.full_name if second_reviewer_user else None, "date": None, "recommendation": None}
-        
-        # Check Slot 0
-        if form.form_reviewed_by == form.reviewer_name1:
-            rev1_data["date"] = form.review_signature_date
-            rev1_data["recommendation"] = form.review_recommendation
-        elif form.form_reviewed_by == form.reviewer_name2:
-            rev2_data["date"] = form.review_signature_date
-            rev2_data["recommendation"] = form.review_recommendation
-            
-        # Check Slot 1
-        if form.form_reviewed_by1 == form.reviewer_name1:
-            rev1_data["date"] = form.review_signature_date1
-            rev1_data["recommendation"] = form.review_recommendation1
-        elif form.form_reviewed_by1 == form.reviewer_name2:
-            rev2_data["date"] = form.review_signature_date1
-            rev2_data["recommendation"] = form.review_recommendation1
-
-        if form.form_id not in forms_dict:
-            # Create the base form entry
-            forms_dict[form.form_id] = {
-                "id": form.form_id,
-                "applicant_name": form.applicant_name,
-                "submitted_at": form.submitted_at,
-                "risk_rating": form.risk_rating,
-                "supervisor": form.supervisor,
-                "supervisor_date": form.supervisor_date,
-                "ethics_signature_date": form.ethics_signature_date,
-                "supervisor_recommendation": form.recommendation,
-                "first_reviewer_name": rev1_data["name"],
-                "first_reviewer_date": rev1_data["date"],
-                "first_reviewer_recommendation": rev1_data["recommendation"],
-                "second_reviewer_name": rev2_data["name"],
-                "second_reviewer_date": rev2_data["date"],
-                "first_reviewer": form.reviewer_name1,
-                "second_reviewer": form.reviewer_name2,
-                "signature_date": form.signature_date,
-                "recommendation": form.review_recommendation,
-                "status": form.status,
-                "second_reviewer_recommendation": rev2_data["recommendation"],
-                "certificate_issued": form.certificate_issued if form.certificate_issued is not None else 'Not Issued',
-                "certificate_received": form.certificate_received,
-                "submitted_to_reviewers": form.submitted_to_reviewers,
-                "submitted_to_rec": form.submitted_to_rec,
-                "rec_status": form.rec_status,
-                "rejected_or_accepted": form.rejected_or_accepted,
-                "form_supervisor_status": form.form_supervisor_status,
-                "ethics_status": form.ethics_status,
-                "form_review_comment": form.form_review_comment,
-                "form_review_comment1": form.form_review_comment1,
-                "rec_full_names": []  # Store list of REC full names
-            }
-        # Add REC name if available
-        if rec and rec.full_name and rec.full_name not in forms_dict[form.form_id]["rec_full_names"]:
-            forms_dict[form.form_id]["rec_full_names"].append(rec.full_name)
-
-    # Step 4: Convert to list for output
-    forms_list = list(forms_dict.values())
-    current = datetime.now(timezone.utc)
-    return render_template('super_admin_monitoring_page_a.html',role=role,current_time=current, forms_list=forms_list, page=page, per_page=per_page, total=total)
-
-
-@app.route('/super_admin_monitoring_page_b',methods=['GET','POST'])
-def super_admin_monitoring_page_b():
-    user_id = session.get('id')
-    if not user_id:
-        return redirect(url_for('login_page'))
-    user=db_session.query(User).filter(User.user_id==user_id).first()
-    if not user:
-        return redirect(url_for('login_page'))
-    role=user.role.value
-    # Step 1: Subquery to get the latest submitted_at per student
-    latest_subq = (
-        db_session.query(
-            FormB.user_id,
-            func.max(FormB.submitted_at).label("latest_date")
-        )
-        .group_by(FormB.user_id)
-        .subquery()
-    )
-    
-    # Pagination
-    page = request.args.get('page', 1, type=int)
-    per_page = 20
-    base_query = (
-        db_session.query(FormB, Rec)
-        .options(
-            defer(FormB.permission_letter),
-            defer(FormB.prior_clearance),
-            defer(FormB.ethics_evidence),
-            defer(FormB.proposal_path),
-            defer(FormB.pending_note),
-            defer(FormB.private_permission_file)
-        )
-        .join(latest_subq,
-              (FormB.user_id == latest_subq.c.user_id) &
-              (FormB.submitted_at == latest_subq.c.latest_date))
-        .outerjoin(Rec, FormB.form_id == Rec.form_id)
-        .order_by(FormB.user_id, FormB.submitted_at.desc())
-    )
-    results = base_query.offset((page-1)*per_page).limit(per_page).all()
-    total = base_query.count()
-
-   
-    # Step 3: Merge REC names into one form entry
-    forms_dict = {}
-    for form, rec in results:
-        # Resolve First Reviewer Info
-        first_reviewer_user = db_session.query(User).filter(User.user_id == form.reviewer_name1).first()
-        second_reviewer_user = db_session.query(User).filter(User.user_id == form.reviewer_name2).first()
-        
-        # Correctly attribute feedback regardless of slot order in DB
-        rev1_data = {"name": first_reviewer_user.full_name if first_reviewer_user else None, "date": None, "recommendation": None}
-        rev2_data = {"name": second_reviewer_user.full_name if second_reviewer_user else None, "date": None, "recommendation": None}
-        
-        # Check Slot 0
-        if form.form_reviewed_by == form.reviewer_name1:
-            rev1_data["date"] = form.review_signature_date
-            rev1_data["recommendation"] = form.review_recommendation
-        elif form.form_reviewed_by == form.reviewer_name2:
-            rev2_data["date"] = form.review_signature_date
-            rev2_data["recommendation"] = form.review_recommendation
-            
-        # Check Slot 1
-        if form.form_reviewed_by1 == form.reviewer_name1:
-            rev1_data["date"] = form.review_signature_date1
-            rev1_data["recommendation"] = form.review_recommendation1
-        elif form.form_reviewed_by1 == form.reviewer_name2:
-            rev2_data["date"] = form.review_signature_date1
-            rev2_data["recommendation"] = form.review_recommendation1
-
-        if form.form_id not in forms_dict:
-            # Create the base form entry
-            forms_dict[form.form_id] = {
-                "id": form.form_id,
-                "applicant_name": form.applicant_name,
-                "submitted_at": form.submitted_at,
-                "risk_rating": form.risk_level,
-                "supervisor": form.supervisor,
-                "supervisor_date": form.supervisor_date,
-                "ethics_signature_date": form.ethics_signature_date,
-                "supervisor_recommendation": form.recommendation,
-                "first_reviewer": form.reviewer_name1,
-                "second_reviewer": form.reviewer_name2,
-                "signature_date": form.signature_date,
-                "recommendation": form.review_recommendation,
-                "status": form.status,
-                "first_reviewer_name": rev1_data["name"],
-                "first_reviewer_date": rev1_data["date"],
-                "first_reviewer_recommendation": rev1_data["recommendation"],
-                "second_reviewer_name": rev2_data["name"],
-                "second_reviewer_date": rev2_data["date"],
-                "second_reviewer_recommendation": rev2_data["recommendation"],
-                "certificate_issued": form.certificate_issued if form.certificate_issued is not None else 'Not Issued',
-                "certificate_received": form.certificate_received,
-                "submitted_to_reviewers": form.submitted_to_reviewers,
-                "submitted_to_rec": form.submitted_to_rec,
-                "rec_status": form.rec_status,
-                "rejected_or_accepted": form.rejected_or_accepted,
-                "form_supervisor_status": form.form_supervisor_status,
-                "ethics_status": form.ethics_status,
-                "form_review_comment": form.form_review_comment,
-                "form_review_comment1": form.form_review_comment1,
-                "rec_full_names": []  # Store list of REC full names
-            }
-        # Add REC name if available
-        if rec and rec.full_name and rec.full_name not in forms_dict[form.form_id]["rec_full_names"]:
-            forms_dict[form.form_id]["rec_full_names"].append(rec.full_name)
-
-    # Step 4: Convert to list for output
-    forms_list = list(forms_dict.values())
-    current = datetime.now(timezone.utc)
-    return render_template('super_admin_monitoring_page_b.html',role=role,current_time=current, forms_list=forms_list, page=page, per_page=per_page, total=total)
-
-
-
-
-@app.route('/super_admin_monitoring_page_c',methods=['GET','POST'])
-def super_admin_monitoring_page_c():
-    user_id=session.get('id')
-    user=db_session.query(User).filter(User.user_id==user_id).first()
-    role=user.role.value
-    # Step 1: Subquery to get the latest submitted_at per student
-    latest_subq = (
-        db_session.query(
-            FormC.user_id,
-            func.max(FormC.submission_date).label("latest_date")
-        )
-        .group_by(FormC.user_id)
-        .subquery()
-    )
-    
-    # Pagination
-    page = request.args.get('page', 1, type=int)
-    per_page = 20
-    base_query = (
-        db_session.query(FormC, Rec)
-        .join(latest_subq,
-              (FormC.user_id == latest_subq.c.user_id) &
-              (FormC.submission_date == latest_subq.c.latest_date))
-        .outerjoin(Rec, FormC.form_id == Rec.form_id)
-        .order_by(FormC.user_id, FormC.submission_date.desc())
-    )
-    results = base_query.offset((page-1)*per_page).limit(per_page).all()
-    total = base_query.count()
-
-   
-    # Step 3: Merge REC names into one form entry
-    forms_dict = {}
-    for form, rec in results:
-        # Resolve First Reviewer Info
-        first_reviewer_user = db_session.query(User).filter(User.user_id == form.reviewer_name1).first()
-        second_reviewer_user = db_session.query(User).filter(User.user_id == form.reviewer_name2).first()
-        
-        # Correctly attribute feedback regardless of slot order in DB
-        rev1_data = {"name": first_reviewer_user.full_name if first_reviewer_user else None, "date": None, "recommendation": None}
-        rev2_data = {"name": second_reviewer_user.full_name if second_reviewer_user else None, "date": None, "recommendation": None}
-        
-        # Check Slot 0
-        if form.form_reviewed_by == form.reviewer_name1:
-            rev1_data["date"] = form.review_signature_date
-            rev1_data["recommendation"] = form.review_recommendation
-        elif form.form_reviewed_by == form.reviewer_name2:
-            rev2_data["date"] = form.review_signature_date
-            rev2_data["recommendation"] = form.review_recommendation
-            
-        # Check Slot 1
-        if form.form_reviewed_by1 == form.reviewer_name1:
-            rev1_data["date"] = form.review_signature_date1
-            rev1_data["recommendation"] = form.review_recommendation1
-        elif form.form_reviewed_by1 == form.reviewer_name2:
-            rev2_data["date"] = form.review_signature_date1
-            rev2_data["recommendation"] = form.review_recommendation1
-
-        if form.form_id not in forms_dict:
-            # Create the base form entry
-            forms_dict[form.form_id] = {
-                "id": form.form_id,
-                "applicant_name": form.applicant_name,
-                "submission_date": form.submission_date,
-                "risk_level": form.risk_level,
-                "supervisor_name": form.supervisor_name,
-                "supervisor_date": form.supervisor_date,
-                "ethics_signature_date": form.ethics_signature_date,
-                "supervisor_recommendation": form.recommendation,
-                "first_reviewer": form.reviewer_name1,
-                "second_reviewer": form.reviewer_name2,
-                "signature_date": form.signature_date,
-                "recommendation": form.review_recommendation,
-                "status": form.status,
-                "first_reviewer_name": rev1_data["name"],
-                "first_reviewer_date": rev1_data["date"],
-                "first_reviewer_recommendation": rev1_data["recommendation"],
-                "second_reviewer_name": rev2_data["name"],
-                "second_reviewer_date": rev2_data["date"],
-                "second_reviewer_recommendation": rev2_data["recommendation"],
-                "certificate_issued": form.certificate_issued if form.certificate_issued is not None else 'Not Issued',
-                "certificate_received": form.certificate_received,
-                "submitted_to_reviewers": form.submitted_to_reviewers,
-                "submitted_to_rec": form.submitted_to_rec,
-                "rec_status": form.rec_status,
-                "rejected_or_accepted": form.rejected_or_accepted,
-                "form_supervisor_status": form.form_supervisor_status,
-                "ethics_status": form.ethics_status,
-                "form_review_comment": form.form_review_comment,
-                "form_review_comment1": form.form_review_comment1,
-                "rec_full_names": []  # Store list of REC full names
-            }
-        # Add REC name if available
-        if rec and rec.full_name and rec.full_name not in forms_dict[form.form_id]["rec_full_names"]:
-            forms_dict[form.form_id]["rec_full_names"].append(rec.full_name)
-
-    # Step 4: Convert to list for output
-    forms_list = list(forms_dict.values())
-    current = datetime.now(timezone.utc)
-    return render_template('super_admin_monitoring_page_c.html',role=role,current_time=current, forms_list=forms_list, page=page, per_page=per_page, total=total)
-
-
-
-
-
 @app.route('/delete_user/<string:id>', methods=['GET','POST'])
 @role_required('ADMIN', 'SUPER_ADMIN')
 def delete_user(id):
@@ -5880,6 +5382,13 @@ def all_users():
         users_query = users_query.filter(User.role != UserRole.SUPER_ADMIN)
     search_query = (request.args.get('search') or '').strip()
     auth_status = (request.args.get('auth_status') or '').strip().lower()
+    role_filter = (request.args.get('role') or '').strip().upper()
+
+    allowed_role_filters = {role.name for role in UserRole}
+    if is_admin(user_profile):
+        allowed_role_filters.discard(UserRole.SUPER_ADMIN.name)
+    if role_filter not in allowed_role_filters:
+        role_filter = ''
 
     if search_query:
         search_term = f"%{search_query}%"
@@ -5900,6 +5409,9 @@ def all_users():
             func.lower(func.coalesce(cast(User.authenticate_student, String), 'false')).in_(['false', '0', 'none', ''])
         )
 
+    if role_filter:
+        users_query = users_query.filter(User.role == UserRole[role_filter])
+
     total_users = users_query.count()
     all_users = users_query.offset((page - 1) * per_page).limit(per_page).all()
     total_pages = (total_users + per_page - 1) // per_page
@@ -5919,6 +5431,7 @@ def all_users():
         messages=query_messages,
         search_query=search_query,
         auth_status=auth_status,
+        role_filter=role_filter,
         page=page,
         total_pages=total_pages,
     )
@@ -7057,40 +6570,291 @@ def monitor():
 
 @app.route('/back_end/monitor_forms/view_forms/<string:user_id>', methods=['GET','POST'])
 @role_required('ADMIN', 'SUPER_ADMIN')
-def monitor_forms (user_id):
-    id=session.get('id')
-    user_profile=db_session.query(User).filter_by(user_id=id).first()
-    form = None
-    all_users=db_session.query(User).filter(User.role=="STUDENT").all()
-    for model in [FormA, FormB, FormC]:
-        form = db_session.query(model).filter_by(user_id=user_id).all()
-        if form:
-            break  # Stop once the form is found
-    users_list = []
-    for user in all_users:
-        users_list.append({
-            "user_id": user.user_id,
-            "full_name": user.full_name,
-            "email": user.email,
-            "role": user.role.value,
-        })
-    if request.method=="POST":
-        for items in form:
+def monitor_forms(user_id):
+    current_user_id = session.get('id')
+    user_profile = db_session.query(User).filter_by(user_id=current_user_id).first()
+    student = db_session.query(User).filter_by(user_id=user_id).first()
 
-            db_session.delete(items)
+    if not user_profile or not student or student.role != UserRole.STUDENT:
+        flash("The selected student could not be found.", "danger")
+        return redirect(url_for('all_users', role='STUDENT'))
+
+    form_models = {"A": FormA, "B": FormB, "C": FormC}
+
+    if request.method == "POST":
+        selected_forms = request.form.getlist('selected_forms')
+        if not selected_forms:
+            flash("Select at least one form to archive.", "warning")
+            return redirect(url_for('monitor_forms', user_id=user_id))
+
+        archived_count = 0
+        try:
+            for selection in dict.fromkeys(selected_forms):
+                try:
+                    form_type, form_id = selection.split(':', 1)
+                except ValueError:
+                    continue
+                model = form_models.get(form_type.upper())
+                if model is None:
+                    continue
+
+                form_record = db_session.query(model).filter_by(
+                    form_id=form_id,
+                    user_id=user_id,
+                ).first()
+                if not form_record:
+                    continue
+
+                snapshot = {}
+                for column in form_record.__table__.columns:
+                    value = getattr(form_record, column.name)
+                    if isinstance(value, (bytes, bytearray, memoryview)):
+                        raw_value = bytes(value)
+                        value = {
+                            "__archive_type__": "bytes",
+                            "base64": base64.b64encode(raw_value).decode("ascii"),
+                            "size": len(raw_value),
+                        }
+                    elif isinstance(value, (datetime, date)):
+                        value = value.isoformat()
+                    elif hasattr(value, 'value'):
+                        value = value.value
+                    snapshot[column.name] = value
+
+                submitted_at = (
+                    getattr(form_record, 'submitted_at', None)
+                    or getattr(form_record, 'submission_date', None)
+                )
+                db_session.add(ArchivedEthicsForm(
+                    form_type=f"Form {form_type.upper()}",
+                    original_form_id=form_record.form_id,
+                    student_user_id=user_id,
+                    student_name=student.full_name,
+                    student_email=student.email,
+                    original_created_at=getattr(form_record, 'created_at', None),
+                    original_submitted_at=submitted_at,
+                    archived_by_user_id=current_user_id,
+                    archive_reason=(request.form.get('archive_reason') or '').strip() or None,
+                    snapshot_json=json.dumps(snapshot, ensure_ascii=False, default=str),
+                ))
+                db_session.delete(form_record)
+                archived_count += 1
+
+            if not archived_count:
+                flash("None of the selected forms could be archived.", "warning")
+                return redirect(url_for('monitor_forms', user_id=user_id))
+
             db_session.commit()
-            msg = "User deleted successfully"
-            return redirect(url_for('monitor', messages=[msg]))
-    
-   
-    role=user_profile.role.value
-    return render_template('monitor.html',role=role,users_list=users_list,form=form)
+            flash(
+                f"{archived_count} form{'s' if archived_count != 1 else ''} moved to the archive.",
+                "success",
+            )
+        except Exception:
+            db_session.rollback()
+            app.logger.exception("Unable to archive forms for student %s", user_id)
+            flash("The selected forms could not be archived. No changes were saved.", "danger")
+
+        return redirect(url_for('monitor_forms', user_id=user_id))
+
+    forms = []
+    for form_type, model in form_models.items():
+        for record in db_session.query(model).filter_by(user_id=user_id).all():
+            forms.append({
+                "selection_value": f"{form_type}:{record.form_id}",
+                "form_type": f"Form {form_type}",
+                "form_id": record.form_id,
+                "applicant_name": getattr(record, 'applicant_name', None) or student.full_name,
+                "email": (
+                    getattr(record, 'email_address', None)
+                    or getattr(record, 'email', None)
+                    or student.email
+                ),
+                "submitted_at": (
+                    getattr(record, 'submitted_at', None)
+                    or getattr(record, 'submission_date', None)
+                ),
+            })
+
+    return render_template(
+        'monitor.html',
+        role=user_profile.role.value,
+        user_profile=user_profile,
+        student=student,
+        users_list=[],
+        form=forms,
+    )
+
+
+@app.route('/back_end/archived_forms', methods=['GET'])
+@role_required('ADMIN', 'SUPER_ADMIN')
+def archived_forms():
+    current_user = db_session.query(User).filter_by(user_id=session.get('id')).first()
+    archives = db_session.query(ArchivedEthicsForm).order_by(
+        ArchivedEthicsForm.archived_at.desc()
+    ).all()
+    return render_template(
+        'archived_forms.html',
+        role=current_user.role.value,
+        user_profile=current_user,
+        archives=archives,
+    )
+
+
+@app.route('/back_end/archived_forms/<string:form_type_key>/<string:archive_id>', methods=['GET'])
+@role_required('ADMIN', 'SUPER_ADMIN')
+def archived_form_detail(form_type_key, archive_id):
+    current_user = db_session.query(User).filter_by(user_id=session.get('id')).first()
+    archive = db_session.query(ArchivedEthicsForm).filter_by(archive_id=archive_id).first()
+    if not archive or archive.form_type_key != form_type_key.lower():
+        abort(404)
+
+    snapshot = json.loads(archive.snapshot_json or '{}')
+    archived_by = db_session.query(User).filter_by(
+        user_id=archive.archived_by_user_id
+    ).first()
+    form_models = {"form-a": FormA, "form-b": FormB, "form-c": FormC}
+    archive_model = form_models.get(archive.form_type_key)
+    active_form_types = [
+        label
+        for label, model in (("Form A", FormA), ("Form B", FormB), ("Form C", FormC))
+        if db_session.query(model).filter_by(user_id=archive.student_user_id).first()
+    ]
+    restore_block_reason = None
+    if archive_model is None:
+        restore_block_reason = "This archive has an unsupported form type."
+    if not restore_block_reason and active_form_types:
+        restore_block_reason = (
+            f"The student has already started an active {', '.join(active_form_types)}. "
+            f"Archive that active form before restoring this {archive.form_type}."
+        )
+    if (
+        not restore_block_reason
+        and db_session.query(archive_model).filter_by(
+            form_id=archive.original_form_id
+        ).first()
+    ):
+        restore_block_reason = "This exact form record is already active."
+
+    def archived_display_value(value):
+        if isinstance(value, dict) and value.get("__archive_type__") == "bytes":
+            return f"[Archived binary data: {value.get('size', 0)} bytes]"
+        return '' if value is None else str(value)
+
+    form_fields = [
+        {
+            'label': key.replace('_', ' ').title(),
+            'display_value': archived_display_value(value),
+        }
+        for key, value in snapshot.items()
+    ]
+    return render_template(
+        'archived_form_detail.html',
+        role=current_user.role.value,
+        user_profile=current_user,
+        archive=archive,
+        archived_by_name=archived_by.full_name if archived_by else 'Former or unavailable user',
+        restore_block_reason=restore_block_reason,
+        form_type=archive.form_type,
+        form_fields=form_fields,
+    )
+
+
+@app.route('/back_end/archived_forms/<string:archive_id>/restore', methods=['POST'])
+@role_required('ADMIN', 'SUPER_ADMIN')
+def restore_archived_form(archive_id):
+    archive = db_session.query(ArchivedEthicsForm).filter_by(archive_id=archive_id).first()
+    if not archive:
+        abort(404)
+
+    form_models = {"form-a": FormA, "form-b": FormB, "form-c": FormC}
+    archive_model = form_models.get(archive.form_type_key)
+    if archive_model is None:
+        flash("This archived form type cannot be restored.", "danger")
+        return redirect(url_for(
+            'archived_form_detail',
+            form_type_key=archive.form_type_key,
+            archive_id=archive.archive_id,
+        ))
+
+    active_forms = [
+        label
+        for label, model in (("Form A", FormA), ("Form B", FormB), ("Form C", FormC))
+        if db_session.query(model).filter_by(user_id=archive.student_user_id).first()
+    ]
+    if active_forms:
+        flash(
+            f"Restore blocked: the student has already started an active {', '.join(active_forms)}. "
+            f"Archive the active form before restoring {archive.form_type}.",
+            "warning",
+        )
+        return redirect(url_for(
+            'archived_form_detail',
+            form_type_key=archive.form_type_key,
+            archive_id=archive.archive_id,
+        ))
+    if db_session.query(archive_model).filter_by(
+        form_id=archive.original_form_id
+    ).first():
+        flash("Restore blocked: this exact form record is already active.", "warning")
+        return redirect(url_for(
+            'archived_form_detail',
+            form_type_key=archive.form_type_key,
+            archive_id=archive.archive_id,
+        ))
+
+    try:
+        snapshot = json.loads(archive.snapshot_json or '{}')
+        restored_values = {}
+        for column in archive_model.__table__.columns:
+            if column.name not in snapshot:
+                continue
+            value = snapshot[column.name]
+            if isinstance(value, dict) and value.get("__archive_type__") == "bytes":
+                value = base64.b64decode(value.get("base64") or "")
+            elif isinstance(value, str) and value.startswith("[binary data archived:"):
+                value = None
+            elif isinstance(value, str):
+                try:
+                    if column.type.python_type is datetime:
+                        value = datetime.fromisoformat(value)
+                except (AttributeError, NotImplementedError, TypeError, ValueError):
+                    pass
+            restored_values[column.name] = value
+
+        restored_values["user_id"] = archive.student_user_id
+        restored_values["form_id"] = archive.original_form_id
+        restored_form_type = archive.form_type
+        restored_student_name = archive.student_name
+        restored_student_id = archive.student_user_id
+        db_session.add(archive_model(**restored_values))
+        db_session.delete(archive)
+        db_session.commit()
+        flash(
+            f"{restored_form_type} was restored successfully for {restored_student_name}.",
+            "success",
+        )
+        return redirect(url_for('monitor_forms', user_id=restored_student_id))
+    except Exception:
+        db_session.rollback()
+        app.logger.exception("Unable to restore archived ethics form %s", archive_id)
+        flash("The archived form could not be restored. No changes were saved.", "danger")
+        return redirect(url_for(
+            'archived_form_detail',
+            form_type_key=archive.form_type_key,
+            archive_id=archive.archive_id,
+        ))
 
 # ---------------- Section 4 ------------------
 @app.route('/form_a_sec4', methods=['GET', 'POST'])
 def form_a_sec4():
     if request.method == 'POST':
         try:
+            cleaned_sample_sizes, sample_size_error = normalize_forma_sample_sizes(
+                request.form.getlist('sample_size[]')
+            )
+            if sample_size_error:
+                flash(sample_size_error, "danger")
+                return redirect(request.referrer or url_for('form_a_sec4'))
             def to_bool(val):
                 if isinstance(val, bool):
                     return val
@@ -7108,12 +6872,7 @@ def form_a_sec4():
                 return "No existing Form A record found for this user.", 404
 
             _apply_forma_autosave_payload(form, request.form, section='sec4', include_declaration=False)
-
-            # --- Handle File Upload ---
-            file = request.files.get('private_permission_file')
-            if file and file.filename:
-                form.private_permission_file = file.read()
-                form.private_permission_filename = file.filename
+            form.sampling_size = ','.join(cleaned_sample_sizes)
 
             # --- Commit to Database ---
             db_session.commit()
@@ -7141,6 +6900,12 @@ def form_a_sec4():
 def submit_form_a_sec4 ():
     try:
         if request.method == 'POST':
+            cleaned_sample_sizes, sample_size_error = normalize_forma_sample_sizes(
+                request.form.getlist('sample_size[]')
+            )
+            if sample_size_error:
+                flash(sample_size_error, "danger")
+                return redirect(request.referrer or url_for('form_a_sec4'))
             user_id = session.get('id')
             if not user_id:
                 return "Unauthorized access. Please log in.", 401
@@ -7159,7 +6924,7 @@ def submit_form_a_sec4 ():
             form.participants_description = request.form.get('participants_description', '')
             form.population = data.get('population', '')
             form.sampling_method = data.get('sampling_method', '')
-            form.sampling_size = data.get('sample_size', '')
+            form.sampling_size = ','.join(cleaned_sample_sizes)
             form.inclusion_criteria = data.get('inclusion_criteria', '')
             form.duration_timing = request.form.get('duration_timing', '')
             form.contact_details_method = request.form.get('contact_details_method', '')
@@ -7201,7 +6966,7 @@ def submit_form_a_sec4 ():
             shared_fields = [
                 'data_nature', 'data_origin', 'access_conditions', 'personal_info',
                 'personal_info_comment', 'data_anonymized', 'anonymization_comment',
-                'permission_details', 'public_data_description', 'shortcomings_reported',
+                'shortcomings_reported',
                 'limitations_reporting', 'methodology_alignment', 'data_acknowledgment'
             ]
             for field in shared_fields:
@@ -7210,18 +6975,8 @@ def submit_form_a_sec4 ():
 
             if form.uses_secondary_data:
                 form.secondary_data_type = request.form.get('data_type', '')
-                if form.secondary_data_type in ['public','private', 'both']:
-                    private_permission_value = request.form.get('privatePermission', request.form.get('private_permission'))
-                    form.private_permission = 'Yes' if _autosave_str_to_bool(private_permission_value) else 'No'
-                else:
-                    form.private_permission = ''
             else:
                 form.secondary_data_type = ''
-                form.private_permission = ''
-
-            file = request.files.get('private_permission_file')
-            if file and file.filename:
-                assign_private_permission_upload(form, file)
 
             db_session.commit()
             flash("Form A Section 4 submitted successfully.", "success")
@@ -7827,6 +7582,9 @@ def form_a_supervisor(form_id):
         return "Form not found", 404
     if not can_act_as_assigned_supervisor(get_current_user(), form):
         abort(403)
+    if is_with_ethics(form):
+        flash('You have already reviewed this form. It is currently with Ethics.', 'info')
+        return redirect(url_for('supervisor_dashboard'))
     
     data={
         "org_name" : parse_field(form.org_name),
@@ -7865,6 +7623,9 @@ def form_b_supervisor(form_id):
         return "Form not found", 404
     if not can_act_as_assigned_supervisor(get_current_user(), form):
         abort(403)
+    if is_with_ethics(form):
+        flash('You have already reviewed this form. It is currently with Ethics.', 'info')
+        return redirect(url_for('supervisor_dashboard'))
 
     return render_template("form_b_supervisor.html",formB=form)
 
@@ -7879,6 +7640,9 @@ def form_c_supervisor(form_id):
         return "Form not found", 404
     if not can_act_as_assigned_supervisor(get_current_user(), form):
         abort(403)
+    if is_with_ethics(form):
+        flash('You have already reviewed this form. It is currently with Ethics.', 'info')
+        return redirect(url_for('supervisor_dashboard'))
     return render_template("form_c_supervisor.html",formc=form)
 
 
@@ -7901,6 +7665,9 @@ def reject_or_Accept_form_a(id):
         return "Form not found", 404
     if not can_act_as_assigned_supervisor(get_current_user(), forma):
         abort(403)
+    if is_with_ethics(forma):
+        flash('You have already reviewed this form. It is currently with Ethics.', 'info')
+        return redirect(url_for('supervisor_dashboard'))
     
     #admin=db_session.query(User).filter_by(role="Admin").all()
     data={
@@ -8049,6 +7816,9 @@ def reject_or_Accept_form_b(id):
         return "Form not found", 404
     if not can_act_as_assigned_supervisor(get_current_user(), formb):
         abort(403)
+    if is_with_ethics(formb):
+        flash('You have already reviewed this form. It is currently with Ethics.', 'info')
+        return redirect(url_for('supervisor_dashboard'))
     if request.method=="POST":
         formb = (
             db_session.query(FormB)
@@ -8160,6 +7930,9 @@ def reject_or_Accept_form_c(id):
         return "Form not found", 404
     if not can_act_as_assigned_supervisor(get_current_user(), formc):
         abort(403)
+    if is_with_ethics(formc):
+        flash('You have already reviewed this form. It is currently with Ethics.', 'info')
+        return redirect(url_for('supervisor_dashboard'))
     if request.method=="POST":
         formc = (
             db_session.query(FormC)
@@ -8632,7 +8405,7 @@ def student_edit_forma():
         target_form.participants_description = request.form.get('participants_description')
         target_form.population = join_list('population[]')
         target_form.sampling_method = join_list('sampling_method[]')
-        target_form.sampling_size = join_list('sample_size[]')
+        target_form.sampling_size = ','.join(cleaned_sample_sizes)
         target_form.inclusion_criteria = join_list('inclusion_criteria[]')
         target_form.duration_timing = request.form.get('duration_timing')
         target_form.contact_details_method = request.form.get('contact_details_method')
@@ -8696,10 +8469,6 @@ def student_edit_forma():
         target_form.private_permission = request.form.get('privatePermission')
         target_form.public_data_description = request.form.get('public_data_description')
 
-        file = request.files.get('private_permission_file')
-        if file and file.filename:
-            assign_private_permission_upload(target_form, file)
-
         if not target_form.uses_secondary_data:
             _clear_forma_secondary_data_details(target_form)
 
@@ -8732,6 +8501,14 @@ def student_edit_forma():
 
     if request.method == 'POST':
         autosave_only = request.form.get('autosave_only') == '1'
+        cleaned_sample_sizes, sample_size_error = normalize_forma_sample_sizes(
+            request.form.getlist('sample_size[]')
+        )
+        if sample_size_error:
+            if autosave_only:
+                return jsonify({'success': False, 'error': sample_size_error}), 422
+            flash(sample_size_error, "danger")
+            return redirect(request.referrer or url_for('student_edit_forma'))
 
         if autosave_only:
             autosave_form, error_response = _get_or_create_forma_draft(user_id, request.form)
@@ -8885,6 +8662,13 @@ def student_continue_forma():
         
     if request.method == 'POST':
         try:
+            cleaned_sample_sizes, sample_size_error = normalize_forma_sample_sizes(
+                request.form.getlist('sample_size[]')
+            )
+            if sample_size_error:
+                flash(sample_size_error, "danger")
+                return redirect(request.referrer or url_for('student_continue_forma'))
+
             if request.form.get('survey')=='Yes':
                 survey=True
             else:
@@ -9130,11 +8914,6 @@ def student_continue_forma():
             methodology_alignment=request.form.get('methodology_alignment')
             data_acknowledgment=request.form.get('data_acknowledgment')
 
-                # Handle file upload
-            file = request.files.get('private_permission_file')
-            if file and file.filename:
-                    assign_private_permission_upload(form, file)
-
             interviews_one = request.form.get('interviews') == 'Yes'
             documents_one = request.form.get('documents') == 'Yes'
             
@@ -9246,7 +9025,7 @@ def student_continue_forma():
             form.participants_description = request.form.get('participants_description')
             form.population = ','.join(request.form.getlist('population[]'))
             form.sampling_method = ','.join(request.form.getlist('sampling_method[]'))
-            form.sampling_size = ','.join(request.form.getlist('sample_size[]'))
+            form.sampling_size = ','.join(cleaned_sample_sizes)
             form.inclusion_criteria =','.join(request.form.getlist('inclusion_criteria[]'))
             form.duration_timing = request.form.get('duration_timing')
             form.contact_details_method = request.form.get('contact_details_method')
@@ -9348,11 +9127,6 @@ def student_continue_forma():
             form.ethics_reporting=request.form.get('ethics_reporting')
             
 
-            # Handle file upload
-            file = request.files.get('private_permission_file')
-            if file and file.filename:
-                assign_private_permission_upload(form, file)
-
             if not form.uses_secondary_data:
                 _clear_forma_secondary_data_details(form)
     
@@ -9413,6 +9187,13 @@ def submit_form_a(form_id):
     form_requirements = db_session.query(FormARequirements).filter(FormARequirements.user_id == user_id).first()
     
     if request.method=='POST':
+        cleaned_sample_sizes, sample_size_error = normalize_forma_sample_sizes(
+            request.form.getlist('sample_size[]')
+        )
+        if sample_size_error:
+            flash(sample_size_error, "danger")
+            return redirect(request.referrer or url_for('student_continue_forma', form_id=form_id))
+
         submitted_at=get_local_time()
         declaration_name = request.form.get('declaration_name')
         applicant_signature = request.form.get('applicant_signature')
@@ -9493,9 +9274,6 @@ def submit_form_a(form_id):
                 form.secondary_data_type = request.form.get('data_type')
                 if form.secondary_data_type == 'private':
                     form.private_permission = to_bool(request.form.get('privatePermission'))
-                    file = request.files.get('private_permission_file')
-                    if file and file.filename:
-                        assign_private_permission_upload(form, file)
             else:
                 _clear_forma_secondary_data_details(form)
 
@@ -9599,7 +9377,7 @@ def submit_form_a(form_id):
             form.paradigm_explanation = request.form.get('paradigm_explanation')
             form.population = ','.join(request.form.getlist('population[]'))
             form.sampling_method = ','.join(request.form.getlist('sampling_method[]'))
-            form.sampling_size = ','.join(request.form.getlist('sample_size[]'))
+            form.sampling_size = ','.join(cleaned_sample_sizes)
             form.inclusion_criteria = ','.join(request.form.getlist('inclusion_criteria[]'))
             form.translator = to_bool(request.form.get('translator'))
             form.translator_details = request.form.get('translator_details')
@@ -11084,31 +10862,32 @@ def chair_form_view_fixed(user_id):
 
 
 @app.route("/send_certificate/<string:id>",methods=['POST'])
+@role_required('ADMIN', 'SUPER_ADMIN', 'REC')
 def send_certificate(id):
-    if request.method=='POST':
-        certificate_details = None
-        for model in [FormA, FormB, FormC]:
-            
-            certificate_details = db_session.query(model).filter_by(form_id=id).first()
-            #user=db_session.query(User).filter(certificate_details.user_id==id).first()
-
-            if certificate_details:    
-                certificate_details.certificate_received=True
-                certificate_details.certificate_modified=False
-                db_session.commit()
-                
-                #Uncomment the code bellow for testing
-                ##
-                try:
-                    message=(f'You have been issued with the Ethical Clearance Certificate. '
-                    f'Please follow the link {web_url} to view your certificate.')
-                    if certificate_details.email:
-                        send_email(app,mail, message,[certificate_details.email])
-                    elif certificate_details.email_address:
-                        send_email(app,mail, message,[certificate_details.email_address])
-                except Exception as e:
-                    app.logger.error(f"Failed to send email : {e}")
+    certificate_details = get_certificate_form(id)
+    if not certificate_details:
+        flash('Certificate record not found.', 'danger')
         return redirect(url_for('chair_landing'))
+    if not certificate_details.certificate_issued:
+        flash('Issue the certificate before sending it to the student.', 'danger')
+        return redirect(url_for('modify_certificate', id=id))
+
+    certificate_details.certificate_received = True
+    certificate_details.certificate_modified = False
+    db_session.commit()
+    try:
+        message = (
+            'You have been issued with the Ethical Clearance Certificate. '
+            f'Please follow the link {web_url} to view your certificate.'
+        )
+        recipient = getattr(certificate_details, 'email', None) or getattr(certificate_details, 'email_address', None)
+        if recipient:
+            send_email(app, mail, message, [recipient])
+    except Exception as error:
+        app.logger.error('Failed to send certificate email: %s', error)
+
+    flash('Certificate sent to the student.', 'success')
+    return redirect(url_for('modify_certificate', id=id))
 
 
 
@@ -11344,6 +11123,9 @@ def chair_form_view(id,form_name):
         user_name, selected_form
     ):
         abort(403)
+    if user_role == 'REVIEWER' and is_reviewed_by(selected_form, user_id):
+        flash('You have already reviewed and submitted feedback for this application.', 'info')
+        return redirect(url_for('review_dashboard'))
 
     if request.method == 'POST' and user_role == 'REVIEWER':
         selected_model = (
@@ -12915,6 +12697,9 @@ def review_version(user_id,form_name):
     form = query.all()
     if current_role == 'REVIEWER' and not form:
         abort(403)
+    if current_role == 'REVIEWER' and is_reviewed_by(form[0][0], current_user.user_id):
+        flash('You have already reviewed and submitted feedback for this application.', 'info')
+        return redirect(url_for('review_dashboard'))
 
    
     user_id=session.get('id')
@@ -13063,25 +12848,42 @@ def review_dashboard():
 
 
 
-@app.route('/submit_to_rec/<string:id>', methods=['GET'])
+@app.route('/submit_to_rec/<string:id>', methods=['POST'])
+@role_required('ADMIN', 'SUPER_ADMIN')
 def submit_to_rec(id):
-   
     form = None
     for model in [FormA, FormB, FormC]:
         form = db_session.query(model).filter_by(form_id=id).first()
         if form:
             break  # Stop once the form is found
     
-    if form:
-        missing_submission_redirect = redirect_if_missing_student_submission(
-            form,
-            'REC',
-            'chair_landing',
-        )
-        if missing_submission_redirect:
-            return missing_submission_redirect
-        form.submitted_to_rec=True
-        db_session.commit()
+    if not form:
+        flash('Form not found.', 'danger')
+        if not certificate_details:
+            flash('Certificate record not found.', 'danger')
+            return redirect(url_for('chair_landing'))
+        flash('Certificate sent to the student.', 'success')
+        return redirect(url_for('modify_certificate', id=id))
+
+    outcome = get_admin_reviewer_outcome(form)
+    if outcome not in {'approved', 'approved_with_minor_changes'}:
+        flash('This form cannot be sent to REC until all assigned reviewers have approved it.', 'danger')
+        return redirect(request.referrer or url_for('chair_landing'))
+
+    risk = str(getattr(form, 'risk_level', None) or getattr(form, 'risk_rating', None) or '').lower()
+    if outcome == 'approved_with_minor_changes' and not any(level in risk for level in ('mid', 'medium', 'high')):
+        flash('A low-risk form with minor changes should be returned to the student or approved for a certificate.', 'warning')
+        return redirect(request.referrer or url_for('chair_landing'))
+
+    missing_submission_redirect = redirect_if_missing_student_submission(form, 'REC', 'chair_landing')
+    if missing_submission_redirect:
+        return missing_submission_redirect
+    form.submitted_to_rec = True
+    form.submitted_to_admin = False
+    form.visible_to_student = False
+    form.status = 'Submitted to REC'
+    db_session.commit()
+    flash('The form was sent to REC.', 'success')
     return redirect(url_for('chair_landing'))
     
 
@@ -13483,50 +13285,95 @@ def generate_clearance_code(committee_acronym, decision_date=None):
     return clearance_code
 
 
+DEFAULT_CERTIFICATE_CONDITIONS = [
+    'The researcher ensures adherence to the POPI Act.',
+    'The researcher ensures adherence to conditions of use of open source questionnaires.',
+    'The project adheres to ethical research requirements.',
+    'The study is conducted as set out in the approved application.',
+    'The project adheres to applicable legislation, professional codes and scientific standards.',
+    'Proposed changes, concerns and unexpected ethical issues are reported to JBSREC.',
+    'Changes affecting study-related risks are reported to JBSREC in writing.',
+    'All permissions required to access data and organisations have been obtained.',
+    'No fieldwork may continue after clearance expires without an approved extension.',
+]
+
+
+def get_certificate_form(form_id):
+    for model in (FormA, FormB, FormC):
+        record = db_session.query(model).filter_by(form_id=form_id).first()
+        if record:
+            return record
+    return None
+
+
+def get_certificate_conditions(record):
+    raw = getattr(record, 'certificate_heading', None)
+    if not raw:
+        return list(DEFAULT_CERTIFICATE_CONDITIONS)
+    try:
+        values = json.loads(raw)
+        if isinstance(values, list):
+            return [str(value).strip() for value in values if str(value).strip()]
+    except (TypeError, ValueError):
+        pass
+    separator = '|||' if '|||' in str(raw) else ','
+    values = [value.strip() for value in str(raw).split(separator) if value.strip()]
+    return values or list(DEFAULT_CERTIFICATE_CONDITIONS)
+
+
+def save_certificate_draft(record):
+    try:
+        valid_years = int(request.form.get('valid_years', ''))
+    except (TypeError, ValueError):
+        raise ValueError('Enter a valid number of years for the certificate.')
+    if valid_years < 1 or valid_years > 10:
+        raise ValueError('Certificate validity must be between 1 and 10 years.')
+
+    end_date_value = (request.form.get('end_date') or '').strip()
+    try:
+        end_date = datetime.strptime(end_date_value, '%Y-%m-%d')
+    except ValueError:
+        raise ValueError('Select a valid certificate end date.')
+    if end_date.date() <= date.today():
+        raise ValueError('The certificate end date must be after today.')
+
+    conditions = [value.strip() for value in request.form.getlist('conditions[]') if value.strip()]
+    if not conditions:
+        raise ValueError('Add at least one certificate condition.')
+
+    if not getattr(record, 'certificate_code', None):
+        record.certificate_code = generate_clearance_code('JBSREC')
+    record.certificate_valid_years = valid_years
+    record.certificate_end_date = end_date
+    record.certificate_issuer = (request.form.get('certificate_issuer') or '').strip() or 'JBS Research Ethics Committee'
+    record.certificate_email = (request.form.get('email') or '').strip() or 'jbssubmissions@uj.ac.za'
+    record.certificate_heading = json.dumps(conditions)
+    record.certificate_modified = True
+    record.certificate_received = False
+
+
 @app.route('/certificate/<string:id>', methods=['GET', 'POST'])
+@role_required('ADMIN', 'SUPER_ADMIN', 'REC')
 def certificate(id):
-
-    if 'id' not in session:
-        flash("Unauthorized access", "error")
-        return redirect(url_for('login_page'))
-    
-    code = 'JBSREC'
-    certification_code = generate_clearance_code(code)
-
-    certificate_details = None
-    for model in [FormA, FormB, FormC]:
-        certificate_details = db_session.query(model).filter_by(form_id=id).first()
-        if certificate_details:
-            
-
-            if request.method == 'POST':
-                certificate_details.certificate_code = certification_code
-                
-                certificate_details.certificate_issued = datetime.now()
-                certificate_details.certificate_received = False
-                certificate_details.certificate_valid_years = int(request.form.get('valid_years'))
-                certificate_details.certificate_end_date = request.form.get('end_date')
-                certificate_details.certificate_issuer = request.form.get('certificate_issuer')
-                certificate_details.certificate_email = request.form.get('email')
-                
-            
-                # Overwrite with provided issued date if present
-                issued_date = request.form.get('certificate_issued')
-                if issued_date:
-                    certificate_details.certificate_issued = datetime.now()
-            
-            db_session.add(certificate_details)
-            db_session.commit()
-            
-            break
-
+    certificate_details = get_certificate_form(id)
     if not certificate_details:
         return "No certificate data found.", 404
-    
+
+    if request.method == 'POST':
+        try:
+            save_certificate_draft(certificate_details)
+            db_session.commit()
+            flash('Certificate draft saved. Review it below, then issue it when ready.', 'success')
+            return redirect(url_for('modify_certificate', id=id))
+        except ValueError as error:
+            db_session.rollback()
+            flash(str(error), 'danger')
+
     return render_template(
-        'certificate.html',
+        'edit_certificate.html',
         certificate_details=certificate_details,
-        certification_code=certificate_details.certificate_code
+        certificate_conditions=get_certificate_conditions(certificate_details),
+        certificate_is_draft=not bool(certificate_details.certificate_issued),
     )
 
 
@@ -13534,56 +13381,53 @@ def certificate(id):
 @app.route('/modify_certificate/<string:id>', methods=['GET', 'POST'])
 @role_required('ADMIN', 'SUPER_ADMIN', 'REC')
 def modify_certificate(id):
-
-    if 'id' not in session:
-        flash("Unauthorized access", "error")   
-        return redirect(url_for('login_page'))
-    
-    code = 'JBSREC'
-    
-    certificate_details = None
-    for model in [FormA, FormB, FormC]:
-        certificate_details = db_session.query(model).filter_by(form_id=id).first()
-        if certificate_details:
-            
-
-            if request.method == 'POST':
-                
-                
-                certificate_details.certificate_issued = datetime.now()
-                certificate_details.certificate_valid_years = int(request.form.get('valid_years'))
-                certificate_details.certificate_end_date = request.form.get('end_date')
-                certificate_details.certificate_issuer = request.form.get('certificate_issuer')
-                certificate_details.certificate_email = request.form.get('email')
-                # Collect condition items, trim whitespace and ignore empty entries
-                conditions = [c.strip() for c in request.form.getlist('conditions[]') if c and c.strip()]
-                # Store conditions as a JSON array string to avoid ambiguous splitting on commas
-                try:
-                    heading = json.dumps(conditions)
-                except Exception:
-                    # Fallback to join with comma if JSON serialization fails
-                    heading = ",".join(conditions)
-                certificate_details.certificate_heading = heading if heading else None
-                certificate_details.certificate_modified=True
-                certificate_details.certificate_received=False
-                # Overwrite with provided issued date if present
-                issued_date = request.form.get('certificate_issued')
-                if issued_date:
-                    certificate_details.certificate_issued = datetime.now()
-            
-            db_session.add(certificate_details)
-            db_session.commit()
-            
-            break
-
+    certificate_details = get_certificate_form(id)
     if not certificate_details:
         return "No certificate data found.", 404
-    
+
+    if request.method == 'POST':
+        try:
+            save_certificate_draft(certificate_details)
+            db_session.commit()
+            flash('Certificate changes saved.', 'success')
+            return redirect(url_for('modify_certificate', id=id))
+        except ValueError as error:
+            db_session.rollback()
+            flash(str(error), 'danger')
+
     return render_template(
         'edit_certificate.html',
-        certificate_details=certificate_details
-        
+        certificate_details=certificate_details,
+        certificate_conditions=get_certificate_conditions(certificate_details),
+        certificate_is_draft=not bool(certificate_details.certificate_issued),
     )
+
+
+@app.route('/issue_certificate/<string:id>', methods=['POST'])
+@role_required('ADMIN', 'SUPER_ADMIN', 'REC')
+def issue_certificate(id):
+    certificate_details = get_certificate_form(id)
+    if not certificate_details:
+        flash('Certificate record not found.', 'danger')
+        return redirect(url_for('chair_landing'))
+    required = (
+        certificate_details.certificate_code,
+        certificate_details.certificate_valid_years,
+        certificate_details.certificate_end_date,
+        certificate_details.certificate_heading,
+    )
+    if not all(required):
+        flash('Save the complete certificate draft before issuing it.', 'danger')
+        return redirect(url_for('modify_certificate', id=id))
+    if certificate_details.certificate_issued:
+        flash('This certificate has already been issued. You can still edit or view it.', 'info')
+        return redirect(url_for('modify_certificate', id=id))
+
+    certificate_details.certificate_issued = datetime.now()
+    certificate_details.certificate_received = False
+    db_session.commit()
+    flash('Certificate issued successfully. Review the final copy, then send it to the student.', 'success')
+    return redirect(url_for('edited_certificate', id=id))
 
 
 @app.route('/view_certificate/<string:id>',methods=['GET','POST'])

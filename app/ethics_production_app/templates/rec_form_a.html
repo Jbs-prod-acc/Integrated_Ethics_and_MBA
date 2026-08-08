@@ -766,21 +766,6 @@
 <label>5.5.7.1 Comment / Justification:</label><br>
 <span class="form-answer">{{ form.anonymization_comment or 'Not Applicable' }}</span>
 
-<!-- <label>5.5.8 Is the data from a company that has provided permission?</label><br>
-<span class="form-answer">{{ form.org_permision or 'Not Applicable' }}</span>
-
-<label>5.5.8.1 Uploaded permission document:</label><br>
-{% if form.private_permission_file %}
-  <a href="{{ url_for('view_form_file', form_type='A', form_id=form.form_id, field_name='private_permission_file') }}" target="_blank">View Document</a>
-{% else %}
-  <span class="form-answer">No file uploaded</span>
-{% endif %}
-
-<br><br> -->
-
-<label>5.5.8 What type of public data will be used?</label><br>
-<span class="form-answer">{{ form.public_data_description or 'Not Applicable' }}</span>
-
 <label>5.5.9 Will data shortcomings/incompleteness be reported?</label><br>
 <span class="form-answer">{{ form.shortcomings_reported or 'Not Applicable' }}</span>
 

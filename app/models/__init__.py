@@ -1,4 +1,5 @@
 from .entities import (
+    ArchivedEthicsForm,
     Base,
     Documents,
     EthicsActivityLog,
@@ -57,6 +58,7 @@ from .enums import (
 )
 from .helpers import UJ_STUDENT_EMAIL_RE, is_uj_student_email, normalize_email, student_email_for
 __all__ = [
+    "ArchivedEthicsForm",
     "EthicsActivityLog",
     "EthicsApplication",
     "EthicsFormDraft",

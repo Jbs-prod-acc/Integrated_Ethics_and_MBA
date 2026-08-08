@@ -43,6 +43,14 @@
         Please review the student submissions below. You can click on the form name to view the details and take necessary actions.
       </p>
     </header>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for category, message in messages %}
+        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      {% endfor %}
+    {% endwith %}
     <br>
 <div class="mb-3">
   <label for="formAStatusFilter" class="form-label">Filter Forms by Status:</label>
@@ -174,7 +182,12 @@
               {% endif %}
             </td>
             <td>
-              <a href="{{url_for('form_a_supervisor',form_id=forma.form_id)}}" class="view-btn">Review</a><br>            </td>
+              {% if is_with_ethics(forma) %}
+                <span class="text-muted">Already reviewed — with Ethics</span>
+              {% else %}
+                <a href="{{url_for('form_a_supervisor',form_id=forma.form_id)}}" class="view-btn">Review</a><br>
+              {% endif %}
+            </td>
           </tr>
           {% endfor %}
           {% endif%}
@@ -269,7 +282,12 @@
               {% endif %}
             </td>
             <td>
-              <a href="{{url_for('form_b_supervisor',form_id=formb.form_id)}}" class="view-btn">Review</a><br>            </td>
+              {% if is_with_ethics(formb) %}
+                <span class="text-muted">Already reviewed — with Ethics</span>
+              {% else %}
+                <a href="{{url_for('form_b_supervisor',form_id=formb.form_id)}}" class="view-btn">Review</a><br>
+              {% endif %}
+            </td>
           </tr>
           {% endfor %}
           {% endif %}
@@ -340,7 +358,11 @@
               <p class="text-muted"><em>No documents uploaded</em></p>
               {% endif %}
             </td>            <td>
-              <a href="{{url_for('form_c_supervisor',form_id=formc.form_id)}}" class="view-btn">Review</a>
+              {% if is_with_ethics(formc) %}
+                <span class="text-muted">Already reviewed — with Ethics</span>
+              {% else %}
+                <a href="{{url_for('form_c_supervisor',form_id=formc.form_id)}}" class="view-btn">Review</a>
+              {% endif %}
              
             </td>
           </tr>

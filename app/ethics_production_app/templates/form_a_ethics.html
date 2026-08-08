@@ -1052,23 +1052,6 @@
           <span class="form-answer">{{ formA.anonymization_comment or 'Not Applicable' }}</span>
 
 
-          <!-- <label>5.5.8 Is the data from a company that has provided permission?</label><br>
-<span class="form-answer">{{ formA.org_permision or 'Not Applicable' }}</span>
-
-<br><br>
-
-<label>5.5.8.1 Uploaded permission document:</label><br>
-{% if formA.private_permission_file %}
-  <a href="{{ url_for('view_form_file', form_type='A', form_id=formA.form_id, field_name='private_permission_file') }}" target="_blank">View Document</a>
-{% else %}
-  <span class="form-answer">No file uploaded</span>
-{% endif %} -->
-
-
-          <label>5.5.8 What type of public data will be used?</label><br>
-          <span class="form-answer">{{ formA.public_data_description or 'Not Applicable' }}</span>
-
-
           <label>5.5.9 Will data shortcomings/incompleteness be reported?</label><br>
           <span class="form-answer">{{ formA.shortcomings_reported or 'Not Applicable' }}</span>
 
@@ -1470,8 +1453,8 @@
 
             <div class="section">
               <h3>Comments</h3>
-              <textarea name="additional_comments" required class="form-control" rows="5"
-                placeholder="Provide any feedback or required revisions...">{% if formA.review_additional_comments and formA.review_additional_comments|string|lower != 'none' %}{{ formA.review_additional_comments }}{% elif formA.review_form_comments and formA.review_form_comments|string|lower != 'none' %}{{ formA.review_form_comments }}{% endif %}</textarea>
+              <textarea name="ethics_form_status" required class="form-control" rows="5"
+                placeholder="Provide any feedback or required revisions...">{% if formA.ethics_form_status and formA.ethics_form_status|string|lower != 'none' %}{{ formA.ethics_form_status }}{% elif formA.recommendation and formA.recommendation|string|lower != 'none' %}{{ formA.recommendation }}{% endif %}</textarea>
             </div>
 
             <!-- Radio Buttons -->

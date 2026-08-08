@@ -995,7 +995,7 @@
         <br>
         <br>
 
-        {% if formA.uses_secondary_data or formA.secondary_data_type or formA.data_nature or formA.data_origin or formA.access_conditions or formA.personal_info or formA.personal_info_comment or formA.data_anonymized or formA.anonymization_comment or formA.public_data_description or formA.shortcomings_reported or formA.limitations_reporting or formA.methodology_alignment or formA.data_acknowledgment %}
+        {% if formA.uses_secondary_data or formA.secondary_data_type or formA.data_nature or formA.data_origin or formA.access_conditions or formA.personal_info or formA.personal_info_comment or formA.data_anonymized or formA.anonymization_comment or formA.shortcomings_reported or formA.limitations_reporting or formA.methodology_alignment or formA.data_acknowledgment %}
         <label>5.5 Secondary Data Usage</label>
         {% if formA.uses_secondary_data %}
         <label>5.5.1 Will secondary data be used?</label><br>
@@ -1045,12 +1045,6 @@
         {% if formA.anonymization_comment %}
         <label>5.5.7.1 Comment / Justification:</label><br>
         <span class="form-answer">{{ formA.anonymization_comment }}</span>
-        {% endif %}
-
-
-        {% if formA.public_data_description %}
-        <label>5.5.8 What type of public data will be used?</label><br>
-        <span class="form-answer">{{ formA.public_data_description }}</span>
         {% endif %}
 
 

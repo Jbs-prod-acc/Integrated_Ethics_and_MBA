@@ -42,6 +42,14 @@
     <header class="topbar">
       <h2>Reviewer Dashboard</h2>
     </header>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for category, message in messages %}
+        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      {% endfor %}
+    {% endwith %}
 
     <section class="admin-content">
       <h3>Assigned Submissions</h3>
@@ -127,7 +135,11 @@
               </ul>
             </td>
             <td>
-              <a href="{{url_for('review_version',user_id=item.forma.user_id,form_name='A')}}" class="view-btn">View</a>
+              {% if is_reviewed_by(item.forma, user_id) %}
+                <span class="text-muted">Already reviewed</span>
+              {% else %}
+                <a href="{{url_for('review_version',user_id=item.forma.user_id,form_name='A')}}" class="view-btn">Review</a>
+              {% endif %}
              
             </td>
           </tr>
@@ -217,7 +229,11 @@
             </td>
             <td>
              
-              <a href="{{url_for('review_version',user_id=item.formb.user_id,form_name='B')}}" class="view-btn">View</a>
+              {% if is_reviewed_by(item.formb, user_id) %}
+                <span class="text-muted">Already reviewed</span>
+              {% else %}
+                <a href="{{url_for('review_version',user_id=item.formb.user_id,form_name='B')}}" class="view-btn">Review</a>
+              {% endif %}
               
             </td>
           </tr>
@@ -270,7 +286,11 @@
             </td>
             <td>
               
-              <a href="{{url_for('review_version',user_id=item.formc.user_id,form_name='C')}}" class="view-btn">View</a>
+              {% if is_reviewed_by(item.formc, user_id) %}
+                <span class="text-muted">Already reviewed</span>
+              {% else %}
+                <a href="{{url_for('review_version',user_id=item.formc.user_id,form_name='C')}}" class="view-btn">Review</a>
+              {% endif %}
               
             </td>
           </tr>

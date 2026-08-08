@@ -145,6 +145,26 @@ class UserRole(enum.Enum):
     DEAN = "DEAN" ##chairman, no responsibility
     SUPER_ADMIN="SUPER_ADMIN"
 
+class ArchivedEthicsForm(Base):
+    __tablename__ = "archived_ethics_forms"
+
+    archive_id = Column(String(255), primary_key=True, default=generate_uuid)
+    form_type = Column(String(20), nullable=False, index=True)
+    original_form_id = Column(String(255), nullable=False, index=True)
+    student_user_id = Column(String(255), nullable=False, index=True)
+    student_name = Column(String(255), nullable=True)
+    student_email = Column(String(255), nullable=True)
+    original_created_at = Column(DateTime(timezone=True), nullable=True)
+    original_submitted_at = Column(DateTime(timezone=True), nullable=True)
+    archived_at = Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow, index=True)
+    archived_by_user_id = Column(String(255), nullable=False)
+    archive_reason = Column(Text, nullable=True)
+    snapshot_json = Column(Text, nullable=False)
+
+    @property
+    def form_type_key(self):
+        return (self.form_type or "").lower().replace(" ", "-")
+
 class LoginLog(Base):
     __tablename__ = "login_logs"
     log_id = Column(String(255), primary_key=True, default=generate_uuid)
@@ -172,6 +192,8 @@ class User(Base):
     reset_token = Column(String, nullable=True)
     reset_token_expiry = Column(DateTime(timezone=True), nullable=True)
     authenticate_student=Column(String,default=False)
+    # Integrated activation flag stored alongside the legacy string flag.
+    authenticated_student=Column(Boolean, nullable=False, default=False)
     form_a = relationship("FormA", backref="user", lazy=True)
     form_b = relationship("FormB", backref="user", lazy=True)
     form_c = relationship("FormC", backref="user", lazy=True)

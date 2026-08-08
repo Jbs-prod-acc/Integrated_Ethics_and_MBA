@@ -1,3 +1,44 @@
+{% macro admin_decision_actions(form, form_label, send_back_endpoint) %}
+  {% set outcome = get_admin_reviewer_outcome(form) %}
+  {% set risk = (form.risk_level or form.risk_rating or '')|lower %}
+  {% if form.certificate_issued or form.certificate_received %}
+    <span class="status-pill approved">{{ 'Certificate sent to student' if form.certificate_received else 'Certificate issued' }}</span><br><br>
+    <a href="{{ url_for('edited_certificate', id=form.form_id) }}" class="btn btn-sm btn-outline-success">View Certificate</a>
+    <a href="{{ url_for('modify_certificate', id=form.form_id) }}" class="btn btn-sm btn-warning">Edit Certificate</a>
+  {% elif form.certificate_code %}
+    <span class="status-pill minor-changes">Certificate draft saved</span><br><br>
+    <a href="{{ url_for('modify_certificate', id=form.form_id) }}" class="btn btn-sm btn-primary">Continue Certificate</a>
+  {% elif form.submitted_to_rec %}
+    <span class="status-pill approved">Form submitted to REC</span>
+  {% elif form.status == 'Submitted to Student for Corrections' %}
+    <span class="status-pill approved">Form was sent back to student</span>
+  {% elif outcome == 'approved' %}
+    <p class="mb-2"><strong>Reviewer decision:</strong> Approved</p>
+    <form method="post" action="{{ url_for('submit_to_rec', id=form.form_id) }}" class="d-inline">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button type="submit" class="btn btn-sm btn-primary">Send to REC</button>
+    </form>
+  {% elif outcome == 'approved_with_minor_changes' %}
+    <p class="mb-2"><strong>Reviewer decision:</strong> Approved with minor changes</p>
+    <button type="button" class="btn btn-warning btn-sm open-send-back-modal"
+      data-bs-toggle="modal" data-bs-target="#sendBackModal"
+      data-action="{{ url_for(send_back_endpoint, id=form.form_id) }}"
+      data-form-label="{{ form_label }} for {{ form.applicant_name }}">
+      Send Back to Student
+    </button>
+    {% if 'mid' in risk or 'medium' in risk or 'high' in risk %}
+      <form method="post" action="{{ url_for('submit_to_rec', id=form.form_id) }}" class="d-inline">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="btn btn-sm btn-primary">Send to REC</button>
+      </form>
+    {% endif %}
+    <a href="{{ url_for('certificate', id=form.form_id) }}" class="btn btn-sm btn-success text-white">
+      Generate Certificate
+    </a>
+  {% elif outcome == 'other' %}
+    <span class="status-pill resubmission">Reviewer decision requires admin attention</span>
+  {% endif %}
+{% endmacro %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -37,16 +78,12 @@
         <a href="{{url_for('chair_landing')}}" class="sidebar-link active">
           <i class="fas fa-clipboard-list"></i> Dashboard
         </a>
-        <a href="{{url_for('monitor')}}" class="sidebar-link"><i class="fas fa-user me-2"></i>Student List</a>
         <a href="{{url_for('admin_reassign_supervisors')}}" class="sidebar-link"><i
             class="fas fa-user-gear me-2"></i>Reassign Supervisors</a>
         <a href="{{url_for('admin_reassign_reviewers')}}" class="sidebar-link"><i
             class="fas fa-users-gear me-2"></i>Reassign Reviewers</a>
         <a href="{{url_for('admin_student_password_resets')}}" class="sidebar-link"><i
             class="fas fa-key me-2"></i>Student Password Resets</a>
-        <a href="{{url_for('reviewer_list')}}" class="sidebar-link">
-          <i class="fas fa-user"></i> Reviewer List
-        </a>
 
         <a href="{{url_for('all_users')}}" class="sidebar-link">
           <i class="fas fa-users-cog"></i> User Management
@@ -56,31 +93,16 @@
         </a>
         <a href="{{ url_for('admin_status_monitor') }}" class="sidebar-link"><i class="fas fa-filter"></i> Admin Status
           Monitor</a>
-        <a class="dropdown-toggle" href="#" data-bs-toggle="collapse" data-bs-target="#monitoringFormsAdmin">
-          <i class="fas fa-clipboard me-2"></i>Monitoring Forms
-        </a>
-        <div class="dropdown w-100">
-
-          <div class="collapse" id="monitoringFormsAdmin">
-            <a class="dropdown-item" href="{{ url_for('super_admin_monitoring_page_a') }}">Form A</a>
-            <a class="dropdown-item" href="{{ url_for('super_admin_monitoring_page_b') }}">Form B</a>
-            <a class="dropdown-item" href="{{ url_for('super_admin_monitoring_page_c') }}">Form C</a>
-          </div>
-        </div>
-        {% elif 'super_admin' == role|lower %}
+{% elif 'super_admin' == role|lower %}
         <a href="{{url_for('chair_landing')}}" class="sidebar-link">
           <i class="fas fa-clipboard-list"></i> Dashboard
         </a>
-        <a href="{{url_for('monitor')}}" class="sidebar-link"><i class="fas fa-user me-2"></i>Student List</a>
         <a href="{{url_for('admin_reassign_supervisors')}}" class="sidebar-link"><i
             class="fas fa-user-gear me-2"></i>Reassign Supervisors</a>
         <a href="{{url_for('admin_reassign_reviewers')}}" class="sidebar-link"><i
             class="fas fa-users-gear me-2"></i>Reassign Reviewers</a>
         <a href="{{url_for('admin_student_password_resets')}}" class="sidebar-link"><i
             class="fas fa-key me-2"></i>Student Password Resets</a>
-        <a href="{{url_for('reviewer_list')}}" class="sidebar-link">
-          <i class="fas fa-user"></i> Reviewer List
-        </a>
 
         <a href="{{url_for('all_users')}}" class="sidebar-link">
           <i class="fas fa-users-cog"></i> User Management
@@ -92,28 +114,7 @@
         <a href="{{ url_for('admin_status_monitor') }}" class="sidebar-link"><i class="fas fa-filter"></i> Admin Status
           Monitor</a>
 
-        <div class="dropdown w-100">
-          <a class="dropdown-toggle" href="#" data-bs-toggle="collapse" data-bs-target="#analyticsForms">
-            <i class="fas fa-chart-bar me-2"></i>Analytics Forms
-          </a>
-          <div class="collapse" id="analyticsForms">
-            <a class="dropdown-item" href="{{ url_for('super_admin_form_a') }}">Form A</a>
-            <a class="dropdown-item" href="{{ url_for('super_admin_form_b') }}">Form B</a>
-            <a class="dropdown-item" href="{{ url_for('super_admin_form_c') }}">Form C</a>
-          </div>
-        </div>
-
-        <div class="dropdown w-100">
-          <a class="dropdown-toggle" href="#" data-bs-toggle="collapse" data-bs-target="#monitoringForms">
-            <i class="fas fa-clipboard me-2"></i>Monitoring Forms
-          </a>
-          <div class="collapse" id="monitoringForms">
-            <a class="dropdown-item" href="{{ url_for('super_admin_monitoring_page_a') }}">Form A</a>
-            <a class="dropdown-item" href="{{ url_for('super_admin_monitoring_page_b') }}">Form B</a>
-            <a class="dropdown-item" href="{{ url_for('super_admin_monitoring_page_c') }}">Form C</a>
-          </div>
-        </div>
-        {% else %}
+{% else %}
         <a href="{{url_for('review_dashboard')}}" class="sidebar-link">
           <i class="fas fa-clipboard-check"></i> My Reviews
         </a>
@@ -330,33 +331,7 @@
               <a href="{{url_for('chair_forma_view',id=forma.user_id)}}" class="btn btn-sm btn-success text-white" >Review</a>
               <br>
               <br>
-              {% if has_reviewer_approval(forma) and not forma.certificate_issued %}
-                  <button type="button" class="btn btn-sm btn-success text-white open-certificate-status-modal" data-bs-toggle="modal" data-bs-target="#certificateStatusModal" data-action="{{ url_for('update_certificate_status', id=forma.form_id) }}" data-form-label="Form A for {{ forma.applicant_name }}">
-                    🎓 Update Certificate Status
-                  </button>
-                <br><br>
-              {% elif forma.status == 'Submitted to Student for Corrections' %}
-                <span class="status-pill approved">Form was sent back to student</span>
-                <br><br>
-              {% elif (
-                (forma.review_recommendation in ['Approved', 'Approved with Minor Changes']) and
-                (forma.review_recommendation1 in ['Approved', 'Approved with Minor Changes']) and
-                forma.form_reviewed_by and forma.form_reviewed_by1 and
-                ('Approved with Minor Changes' in [forma.review_recommendation, forma.review_recommendation1])
-                ) and not forma.certificate_received %}
-                <button
-                  type="button"
-                  class="btn btn-warning btn-sm open-send-back-modal"
-                  data-bs-toggle="modal"
-                  data-bs-target="#sendBackModal"
-                  data-action="{{ url_for('send_back_for_corrections_a', id=forma.form_id) }}"
-                  data-form-label="Form A for {{ forma.applicant_name }}">
-                  Send Back for Corrections
-                </button>
-                <br><br>
-              {% elif forma.certificate_received %}
-                <span class="status-pill approved">🎓 Certificate was issued</span>
-              {% endif %}
+              {{ admin_decision_actions(forma, 'Form A', 'send_back_for_corrections_a') }}
             </td>
           </tr>
           {% endfor %}
@@ -545,36 +520,7 @@
               <a href="{{url_for('chair_formb_view',id=formb.user_id)}}" class="btn btn-sm btn-success text-white" >Review</a>
             <br>
               <br>
-              {% if has_reviewer_approval(formb) and not formb.certificate_issued %}
-              <button type="button" class="btn btn-sm btn-success text-white open-certificate-status-modal" data-bs-toggle="modal" data-bs-target="#certificateStatusModal" data-action="{{ url_for('update_certificate_status', id=formb.form_id) }}" data-form-label="Form B for {{ formb.applicant_name }}">
-                Update Certificate Status
-              </button>
-            <br>
-            <br>
-            {% elif formb.status == 'Submitted to Student for Corrections' %}
-            <span class="status-pill approved">Form was sent back to student</span>
-            <br>
-            <br>
-            {% elif (
-              (formb.review_recommendation in ['Approved', 'Approved with Minor Changes']) and
-              (formb.review_recommendation1 in ['Approved', 'Approved with Minor Changes']) and
-              formb.form_reviewed_by and formb.form_reviewed_by1 and
-              ('Approved with Minor Changes' in [formb.review_recommendation, formb.review_recommendation1])
-              ) and not formb.certificate_received %}
-            <button
-              type="button"
-              class="btn btn-warning btn-sm open-send-back-modal"
-              data-bs-toggle="modal"
-              data-bs-target="#sendBackModal"
-              data-action="{{ url_for('send_back_for_corrections_b', id=formb.form_id) }}"
-              data-form-label="Form B for {{ formb.applicant_name }}">
-              Send Back for Corrections
-            </button>
-            <br>
-            <br>
-            {% elif formb.certificate_received %}
-            <span class="status-pill approved">🎓 Certificate was issued</span>
-            {% endif %}
+              {{ admin_decision_actions(formb, 'Form B', 'send_back_for_corrections_b') }}
             </td>
           </tr>
           {% endfor %}
@@ -747,36 +693,7 @@
               <a href="{{url_for('chair_formc_view',id=formc.user_id)}}" class="btn btn-sm btn-success text-white">Review</a>
              <br>
               <br>
-              {% if has_reviewer_approval(formc) and not formc.certificate_issued %}
-              <button type="button" class="btn btn-sm btn-success text-white open-certificate-status-modal" data-bs-toggle="modal" data-bs-target="#certificateStatusModal" data-action="{{ url_for('update_certificate_status', id=formc.form_id) }}" data-form-label="Form C for {{ formc.applicant_name }}">
-                Update Certificate Status
-              </button>
-            <br>
-            <br>
-            {% elif formc.status == 'Submitted to Student for Corrections' %}
-            <span class="status-pill approved">Form was sent back to student</span>
-            <br>
-            <br>
-            {% elif (
-              (formc.review_recommendation in ['Approved', 'Approved with Minor Changes']) and
-              (formc.review_recommendation1 in ['Approved', 'Approved with Minor Changes']) and
-              formc.form_reviewed_by and formc.form_reviewed_by1 and
-              ('Approved with Minor Changes' in [formc.review_recommendation, formc.review_recommendation1])
-              ) and not formc.certificate_received %}
-            <button
-              type="button"
-              class="btn btn-warning btn-sm open-send-back-modal"
-              data-bs-toggle="modal"
-              data-bs-target="#sendBackModal"
-              data-action="{{ url_for('send_back_for_corrections_c', id=formc.form_id) }}"
-              data-form-label="Form C for {{ formc.applicant_name }}">
-              Send Back for Corrections
-            </button>
-            <br>
-            <br>
-            {% elif formc.certificate_received %}
-            <span class="status-pill approved">🎓 Certificate was issued</span>
-            {% endif %}
+              {{ admin_decision_actions(formc, 'Form C', 'send_back_for_corrections_c') }}
             </td>
           </tr>
           {% endfor %}

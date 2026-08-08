@@ -767,6 +767,7 @@ def _before_update_mba_user(mapper, connection, target):
 
 
 from .ethics_legacy import (  # noqa: E402
+    ArchivedEthicsForm,
     Base,
     Documents,
     FlexibleBinary,
