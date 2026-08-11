@@ -1,5 +1,8 @@
 {% set bi_nav_role = role|default(session.get('role', ''), true)|string|lower %}
 {% if bi_nav_role in ['admin', 'super_admin'] %}
+<a href="{{ url_for('ethics_reviewer_committee_form') }}" class="sidebar-link">
+  <i class="fas fa-certificate"></i> Certificate Generator
+</a>
 <a href="{{ url_for('power_bi_and_reporting') }}" class="sidebar-link">
   <i class="fas fa-chart-column"></i> BI Dashboard and Reporting
 </a>

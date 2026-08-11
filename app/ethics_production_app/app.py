@@ -1329,7 +1329,31 @@ def has_all_required_reviews(form):
 
 def get_admin_reviewer_outcome(form):
     """Return the completed reviewer outcome that requires an admin decision."""
-    if not form or not has_all_required_reviews(form):
+    if not form:
+        return ''
+
+    # Older applications can retain a stale second reviewer assignment even
+    # after the workflow stored its final reviewer decision. Honour the final
+    # status in those records so admins can complete the certificate workflow.
+    if not has_all_required_reviews(form):
+        stored_status = str(getattr(form, 'status', None) or '').strip().lower()
+        stored_recommendations = [
+            str(value).strip().lower()
+            for value in (
+                getattr(form, 'review_recommendation', None),
+                getattr(form, 'review_recommendation1', None),
+                getattr(form, 'form_review_comment', None),
+                getattr(form, 'form_review_comment1', None),
+            )
+            if value
+        ]
+        if (
+            'approved with minor changes' in stored_status
+            and any('approved with minor changes' in value for value in stored_recommendations)
+        ):
+            return 'approved_with_minor_changes'
+        if stored_status == 'approved' and any(value == 'approved' for value in stored_recommendations):
+            return 'approved'
         return ''
 
     completed_ids = set(get_completed_reviewer_ids(form))
@@ -12049,8 +12073,17 @@ def chair_form_view(id,form_name):
 
 
 @app.route('/ethics_reviewer_committee_form', methods=['GET'])
+@role_required('ADMIN', 'SUPER_ADMIN', 'REC')
 def ethics_reviewer_committee_form():
-    return redirect(url_for('ethics_reviewer_committee_form_a', **request.args.to_dict()))
+    form_type = str(request.args.get('form_type') or 'A').strip().upper()
+    endpoint = {
+        'A': 'ethics_reviewer_committee_form_a',
+        'B': 'ethics_reviewer_committee_form_b',
+        'C': 'ethics_reviewer_committee_form_c',
+    }.get(form_type, 'ethics_reviewer_committee_form_a')
+    forwarded_args = request.args.to_dict()
+    forwarded_args.pop('form_type', None)
+    return redirect(url_for(endpoint, **forwarded_args))
 
 
 @app.route('/ethics_reviewer_committee_form_a', methods=['GET','POST'])
@@ -13335,16 +13368,11 @@ def rec_dashboard():
 
     # Shared filter conditions
     def get_common_filters(FormModel):
-        return [
-            FormModel.rejected_or_accepted == True,
-            FormModel.review_signature_date != None,
-            ~func.lower(FormModel.risk_level if hasattr(FormModel, 'risk_level') else FormModel.risk_rating).like('%low%'),
-            FormModel.review_status == True,
-            FormModel.review_status1 == True,
-            FormModel.submitted_to_rec == True,
-            FormModel.reviewer_name1 != user_id,
-            FormModel.reviewer_name2 != user_id,
-        ]
+        # submit_to_rec is set only after the admin workflow validates the
+        # reviewer decision and risk. It is the authoritative REC queue flag.
+        # Rechecking both reviewer slots here hid valid one-reviewer forms
+        # because SQL treats `NULL != user_id` as unknown.
+        return [FormModel.submitted_to_rec.is_(True)]
 
     def rec_sort_timestamp(form):
         return (
@@ -13369,7 +13397,6 @@ def rec_dashboard():
         (form, req, form_review_counts.get(form.form_id, 0))
         for form, req in db_session.query(FormA, FormARequirements)
             .outerjoin(FormARequirements, FormA.user_id == FormARequirements.user_id)
-            .outerjoin(Rec, Rec.form_id == FormA.form_id)
             .filter(*get_common_filters(FormA))
             .all()
     ]
@@ -13388,7 +13415,6 @@ def rec_dashboard():
                 defer(FormB.private_permission_file)
             )
             .outerjoin(FormARequirements, FormB.user_id == FormARequirements.user_id)
-            .outerjoin(Rec, Rec.form_id == FormB.form_id)
             .filter(*get_common_filters(FormB))
             .all()
     ]
@@ -13399,7 +13425,6 @@ def rec_dashboard():
         (form, req, form_review_counts.get(form.form_id, 0))
         for form, req in db_session.query(FormC, FormARequirements)
             .outerjoin(FormARequirements, FormC.user_id == FormARequirements.user_id)
-            .outerjoin(Rec, Rec.form_id == FormC.form_id)
             .filter(*get_common_filters(FormC))
             .all()
     ]
@@ -13678,9 +13703,19 @@ def generate_clearance_code(committee_acronym, decision_date=None):
     # Increment for the new decision
     decision_number = total_count + 1
     
-    # Format the final clearance code
-    clearance_code = f"{committee_acronym}{date_str}{decision_number:02d}"
-    return clearance_code
+    # Drafts do not increment REC decision counts, so verify uniqueness before
+    # returning a code when multiple certificates are prepared on the same day.
+    while True:
+        clearance_code = f"{committee_acronym}{date_str}{decision_number:02d}"
+        exists = any(
+            db_session.query(model.form_id)
+            .filter(model.certificate_code == clearance_code)
+            .first()
+            for model in (FormA, FormB, FormC)
+        )
+        if not exists:
+            return clearance_code
+        decision_number += 1
 
 
 DEFAULT_CERTIFICATE_CONDITIONS = [

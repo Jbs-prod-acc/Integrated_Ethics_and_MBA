@@ -18,6 +18,9 @@
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <button type="submit" class="btn btn-sm btn-primary">Send to REC</button>
     </form>
+    <a href="{{ url_for('certificate', id=form.form_id) }}" class="btn btn-sm btn-success text-white">
+      Generate Certificate
+    </a>
   {% elif outcome == 'approved_with_minor_changes' %}
     <p class="mb-2"><strong>Reviewer decision:</strong> Approved with minor changes</p>
     <button type="button" class="btn btn-warning btn-sm open-send-back-modal"
@@ -138,7 +141,24 @@
     </header>
 
     <section class="admin-content">
-      <h3>Submitted Student Forms</h3>
+      <div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-3">
+        <div>
+          <h3 class="mb-1">Certificate Generator</h3>
+          <p class="text-muted mb-0">Select a form type, then generate or continue an eligible certificate.</p>
+        </div>
+        {% set active_form_type = 'A' if submitted_form_a is defined else ('B' if submitted_form_b is defined else 'C') %}
+        <form method="get" action="{{ url_for('ethics_reviewer_committee_form') }}" class="d-flex align-items-end gap-2">
+          <label class="form-label mb-0" for="certificateFormType">
+            <span class="d-block fw-semibold mb-1">Form type</span>
+            <select id="certificateFormType" name="form_type" class="form-select" onchange="this.form.submit()">
+              <option value="A" {% if active_form_type == 'A' %}selected{% endif %}>Form A</option>
+              <option value="B" {% if active_form_type == 'B' %}selected{% endif %}>Form B</option>
+              <option value="C" {% if active_form_type == 'C' %}selected{% endif %}>Form C</option>
+            </select>
+          </label>
+          <noscript><button type="submit" class="btn btn-primary">Apply</button></noscript>
+        </form>
+      </div>
 <div class="mb-3">
   <label for="formAStatusFilter" class="form-label">Filter Forms by Status:</label>
   <select id="formAStatusFilter" class="form-select">
