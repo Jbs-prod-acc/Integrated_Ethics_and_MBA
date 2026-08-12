@@ -275,8 +275,8 @@ def login_page():
                 # Check if authenticate_student is falsy (False, "False", "false", None, empty string, etc.)
                 if not user.authenticate_student or str(user.authenticate_student).lower() in ['false', '0', 'none']:
                         clear_auth_session()
-                        flash("You are authenticated. Please wait for admin approval.", "danger")
-                        return render_template('login.html', messages=["You are authenticated. Please wait for admin approval."])
+                        flash("You have successfully registered. Please await for Authentication.", "danger")
+                        return render_template('login.html', messages=["You have successfully registered. Please await for Authentication."])
                 
                 clear_auth_session()
                 session['loggedin'] = True
