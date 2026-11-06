@@ -270,7 +270,7 @@
             <td>Form C</td>
             <td>{{item.formc.risk_level}}</td>
             <td>{% if item.formc.ethics_signature_date %}{{item.formc.ethics_signature_date.strftime('%d/%m/%Y')}}
-              {% elif item.formc.signature_date%}{{item.formc.signature_date.strftime('%d/%m/%Y')}}{% endif%}</td>
+              {% elif item.formc.supervisor_signature_date%}{{item.formc.supervisor_signature_date.strftime('%d/%m/%Y')}}{% endif%}</td>
             <td><span class="badge status-pending">{{ get_reviewer_dashboard_status(item.formc, user_id) }}</span>
              <br>
             <br>

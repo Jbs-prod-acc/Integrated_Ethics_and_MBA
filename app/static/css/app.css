@@ -504,6 +504,12 @@ textarea {
   color: #065f46;
 }
 
+.flash--info {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  color: #1e40af;
+}
+
 .mba-page-stack {
   display: grid;
   gap: 24px;
@@ -4953,7 +4959,7 @@ a {
 }
 
 :where(a, button, input, select, textarea, summary):focus-visible {
-  outline: 3px solid rgba(239, 130, 13, 0.28);
+  outline: 3px solid #b45309;
   outline-offset: 2px;
 }
 
@@ -5047,6 +5053,12 @@ a {
   background: #fffbeb;
   border-color: #fde68a;
   color: #92400e;
+}
+
+.flash--info {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  color: #1e40af;
 }
 
 .ethics-welcome-banner,
@@ -5390,7 +5402,8 @@ textarea:focus,
 .admin-filter-input:focus {
   border-color: var(--primary);
   box-shadow: 0 0 0 4px rgba(239, 130, 13, 0.13);
-  outline: none;
+  outline: 3px solid #b45309;
+  outline-offset: 2px;
 }
 
 input[type="checkbox"],
@@ -6106,7 +6119,8 @@ body,
 }
 
 :where(a, button, input, select, textarea, summary):focus-visible {
-  outline: 3px solid rgba(247, 148, 29, 0.28);
+  outline: 3px solid #b45309;
+  outline-offset: 2px;
 }
 
 .ethics-layout {
@@ -6913,10 +6927,38 @@ a.text-link,
 }
 
 .small-button {
-  min-height: 34px;
+  min-height: 44px;
   padding: 8px 12px;
   font-size: 0.82rem;
   line-height: 1.15;
+}
+
+.primary-button:active:not([disabled]),
+.secondary-button:active:not([disabled]),
+.banner-button:active:not([disabled]),
+.small-button:active:not([disabled]),
+.login-btn:active:not([disabled]) {
+  transform: translateY(1px);
+  filter: brightness(0.9);
+}
+
+.small-button:hover:not([disabled]),
+.login-btn:hover:not([disabled]) {
+  filter: brightness(0.94);
+}
+
+button.is-loading,
+input[type="submit"].is-loading {
+  cursor: wait;
+  opacity: 0.72;
+}
+
+.mba-nav-gated[aria-disabled="true"] {
+  opacity: 0.55;
+}
+
+.mba-nav-gated[aria-disabled="true"] .ethics-sidebar__item {
+  cursor: not-allowed;
 }
 
 .text-link,
@@ -6957,6 +6999,8 @@ textarea:focus,
 .admin-filter-input:focus {
   border-color: var(--primary);
   box-shadow: 0 0 0 3px rgba(247, 148, 29, 0.16);
+  outline: 3px solid #b45309;
+  outline-offset: 2px;
 }
 
 input[type="checkbox"],

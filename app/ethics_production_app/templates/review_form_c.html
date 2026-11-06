@@ -311,7 +311,7 @@
     <strong>{{form.declaration_name}}</strong>
 
     <label>Date of Submission:</label>
-    <strong>{% if form.submission_date%}{{form.submission_date.strftime('%d/%m/%Y')}}{% endif%}</strong>
+    <strong>{% if form.submitted_at%}{{form.submitted_at.strftime('%d/%m/%Y')}}{% endif%}</strong>
 
     <label>Supervisor:</label>
     <strong>{{form.supervisor_name}}</strong>
@@ -319,9 +319,9 @@
     <label>Title of Research:</label>
     <strong>{% if form.study_title%}{{form.study_title}}{% elif form.project_title%}{{form.project_title}}{% endif%}</strong>
 
-    {% if not form.submission_date and form.signature_date %}
+    {% if not form.submitted_at and form.supervisor_signature_date %}
     <label>Date of Re-submission:</label>
-    <strong>{{form.signature_date.strftime('%d/%m/%Y')}}</strong>
+    <strong>{{form.supervisor_signature_date.strftime('%d/%m/%Y')}}</strong>
     {% endif %}
 
     <label>Date of Review:</label>
@@ -387,8 +387,8 @@
     </div>
 
     <div class="form-group">
-      <label for="signature_date">Date:</label>
-      <input type="date" class="form-control" id="signature_date" name="signature_date" required placeholder="dd/mm/yyyy">
+      <label for="supervisor_signature_date">Date:</label>
+      <input type="date" class="form-control" id="supervisor_signature_date" name="supervisor_signature_date" required placeholder="dd/mm/yyyy">
       <div class="date-format-hint"></div>
     </div>
     <div class="submit-row">

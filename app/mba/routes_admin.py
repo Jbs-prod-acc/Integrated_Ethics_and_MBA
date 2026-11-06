@@ -187,7 +187,10 @@ def _apply_shared_access_mode(user, access_mode):
     if enable_mba and user.role == MbaRole.STUDENT.value:
         student_number_value = str(user.student_number) if user.student_number is not None else None
         existing_profile_id = db.session.execute(
-            text("SELECT id FROM mba_student_profiles WHERE user_id = :user_id LIMIT 1"),
+            # MAX always returns one row (with NULL when no profile exists).
+            # This avoids a psycopg empty-result cursor regression that can
+            # raise "row must be included between 0 and 0" on scalar().
+            text("SELECT MAX(id) FROM mba_student_profiles WHERE user_id = :user_id"),
             {"user_id": user.id},
         ).scalar()
         if existing_profile_id:

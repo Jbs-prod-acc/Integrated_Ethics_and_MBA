@@ -1144,9 +1144,9 @@ def plot_submissions_over_time_c(df):
     if df.empty:
         return "<div class='alert alert-info'>No Form C data available</div>"
     
-    # Check for submission_date column
+    # Check for submitted_at column
     date_col = None
-    for col_name in ['submission_date', 'submitted_at', 'created_at']:
+    for col_name in ['submitted_at', 'created_at']:
         if col_name in df.columns:
             date_col = col_name
             break

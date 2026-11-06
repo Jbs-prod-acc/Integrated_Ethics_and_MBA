@@ -33,11 +33,16 @@
           {% elif current_user.is_authenticated and current_user.system_name == 'mba' %}
             {% set corrections_nav = mba_corrections_nav() %}
             {% set additional_assessment_nav = mba_additional_assessment_nav() %}
-            <a href="{{ url_for('mba.dashboard') }}" class="ethics-sidebar__item {% if request.endpoint == 'mba.dashboard' %}is-active{% endif %}">
-              <i class="nav-icon fas fa-briefcase" aria-hidden="true"></i><span>MBA Workspace</span>
-            </a>
+            {% set profile_gate = mba_profile_gate_state() %}
             <a href="{{ mba_profile_url() }}" class="ethics-sidebar__item {% if request.endpoint == 'mba.profile' %}is-active{% endif %}">
               <i class="nav-icon fas fa-user" aria-hidden="true"></i><span>My Profile</span>
+            </a>
+            {% if profile_gate.locked %}
+              <p class="ethics-sidebar__section-label" role="status">Complete {{ profile_gate.missing_count }} profile field(s) to unlock the workspace</p>
+            {% endif %}
+            <div class="mba-nav-gated" {% if profile_gate.locked %}inert aria-disabled="true"{% endif %}>
+            <a href="{{ url_for('mba.dashboard') }}" class="ethics-sidebar__item {% if request.endpoint == 'mba.dashboard' %}is-active{% endif %}">
+              <i class="nav-icon fas fa-briefcase" aria-hidden="true"></i><span>MBA Workspace</span>
             </a>
             {% if current_user.role == 'student' %}
               <a href="{{ url_for('mba.student_dashboard') }}" class="ethics-sidebar__item {% if request.endpoint == 'mba.student_dashboard' %}is-active{% endif %}">
@@ -132,6 +137,7 @@
                 </a>
               {% endif %}
             {% endif %}
+            </div>
             <a href="{{ url_for('auth.switch_to_ethics') }}" class="ethics-sidebar__item">
               <i class="nav-icon fas fa-arrow-right-arrow-left" aria-hidden="true"></i><span>Ethics</span>
             </a>
@@ -250,7 +256,7 @@
           {% if messages %}
             <div class="flash-stack">
               {% for category, message in messages %}
-                <div class="flash flash--{{ category }}">{{ message }}</div>
+                <div class="flash flash--{{ category }}" role="status">{{ message }}</div>
               {% endfor %}
             </div>
           {% endif %}
@@ -278,10 +284,36 @@
 
         document.addEventListener('DOMContentLoaded', function () {
           document.querySelectorAll('form').forEach(ensureCsrfField);
+          document.querySelectorAll('.ethics-sidebar__item.is-active').forEach(function (item) {
+            item.setAttribute('aria-current', 'page');
+          });
+          document.querySelectorAll('details').forEach(function (details) {
+            const summary = details.querySelector(':scope > summary');
+            if (!summary) return;
+            const syncExpanded = function () {
+              summary.setAttribute('aria-expanded', details.open ? 'true' : 'false');
+            };
+            syncExpanded();
+            details.addEventListener('toggle', syncExpanded);
+          });
         });
 
         document.addEventListener('submit', function (event) {
-          ensureCsrfField(event.target);
+          const form = event.target;
+          ensureCsrfField(form);
+          if (form.dataset.submitting === 'true') {
+            event.preventDefault();
+            return;
+          }
+          if (!form.checkValidity()) return;
+          form.dataset.submitting = 'true';
+          form.setAttribute('aria-busy', 'true');
+          const submitter = event.submitter || form.querySelector('button[type="submit"], input[type="submit"]');
+          if (submitter) {
+            submitter.classList.add('is-loading');
+            submitter.setAttribute('aria-disabled', 'true');
+            setTimeout(function () { submitter.disabled = true; }, 0);
+          }
         }, true);
 
         const originalFetch = window.fetch;

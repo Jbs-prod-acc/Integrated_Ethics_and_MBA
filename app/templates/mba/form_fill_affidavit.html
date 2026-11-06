@@ -33,24 +33,24 @@
 
         <p class="affidavit-line">
           <span>This serves to confirm that I</span>
-          <input class="jbs-doc-line-fill affidavit-name-fill" name="full_name" value="{{ prefill.get('full_name','') }}" required>
+          <input type="text" class="jbs-doc-line-fill affidavit-name-fill" name="full_name" value="{{ prefill.get('full_name','') }}" required>
         </p>
         <div class="affidavit-helper">(Full Name(s) and Surname)</div>
 
         <p class="affidavit-line">
           <span>ID Number</span>
-          <input class="jbs-doc-line-fill affidavit-id-fill" name="student_id_number" value="{{ prefill.get('student_id_number','') }}" required>
+          <input type="text" class="jbs-doc-line-fill affidavit-id-fill" name="student_id_number" value="{{ prefill.get('student_id_number','') }}" required>
         </p>
 
         <p class="affidavit-line">
           <span>Student number</span>
-          <input class="jbs-doc-line-fill affidavit-student-number-fill" name="student_number" value="{{ prefill.get('student_number','') }}" required>
+          <input type="text" class="jbs-doc-line-fill affidavit-student-number-fill" name="student_number" value="{{ prefill.get('student_number','') }}" required>
           <span>enrolled for the</span>
         </p>
 
         <p class="affidavit-line">
           <span>Qualification</span>
-          <input class="jbs-doc-line-fill affidavit-qualification-fill" name="qualification" value="{{ prefill.get('qualification','') }}" required>
+          <input type="text" class="jbs-doc-line-fill affidavit-qualification-fill" name="qualification" value="{{ prefill.get('qualification','') }}" required>
           <span>in the</span>
         </p>
 
@@ -72,13 +72,13 @@
 
         <p class="affidavit-line affidavit-signing-line">
           <span>Signed at</span>
-          <input class="jbs-doc-line-fill affidavit-location-fill" name="signing_location" value="{{ prefill.get('signing_location','') }}" required>
+          <input type="text" class="jbs-doc-line-fill affidavit-location-fill" name="signing_location" value="{{ prefill.get('signing_location','') }}" required>
           <span>on this</span>
-          <input class="jbs-doc-line-fill affidavit-day-fill" name="affidavit_day" value="{{ prefill.get('affidavit_day','') }}" required>
+          <input type="text" class="jbs-doc-line-fill affidavit-day-fill" name="affidavit_day" value="{{ prefill.get('affidavit_day','') }}" required>
           <span>day of</span>
-          <input class="jbs-doc-line-fill affidavit-month-fill" name="affidavit_month" value="{{ prefill.get('affidavit_month','') }}" required>
+          <input type="text" class="jbs-doc-line-fill affidavit-month-fill" name="affidavit_month" value="{{ prefill.get('affidavit_month','') }}" required>
           <span>20</span>
-          <input class="jbs-doc-line-fill affidavit-year-fill" name="affidavit_year" value="{{ prefill.get('affidavit_year','') }}" required>
+          <input type="text" class="jbs-doc-line-fill affidavit-year-fill" name="affidavit_year" value="{{ prefill.get('affidavit_year','') }}" required>
           <span>.</span>
         </p>
 
@@ -88,10 +88,10 @@
             {% if prefill.get('signature_name_image') %}
               <img class="mba-doc-signature-image" src="{{ prefill.get('signature_name_image') }}" alt="Saved signature">
             {% endif %}
-            <input class="jbs-doc-line-fill affidavit-signature-fill" name="signature_name" value="{{ prefill.get('signature_name','') }}" required>
+            <input type="text" class="jbs-doc-line-fill affidavit-signature-fill" name="signature_name" value="{{ prefill.get('signature_name','') }}" required>
           </span>
           <span>Print name</span>
-          <input class="jbs-doc-line-fill affidavit-print-name-fill" value="{{ prefill.get('full_name','') }}" readonly>
+          <input type="text" class="jbs-doc-line-fill affidavit-print-name-fill" value="{{ prefill.get('full_name','') }}" readonly>
         </p>
 
         <div class="affidavit-commissioner-space"></div>

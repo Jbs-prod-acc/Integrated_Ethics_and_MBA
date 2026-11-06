@@ -177,8 +177,7 @@
               <td>{% if form.supervisor%}{{form.supervisor}}{% elif form.supervisor_name%}{{form.supervisor_name}}{%
                 endif%}</td>
               <td>{{form_name}}</td>
-              <td>{% if form_name == 'FORM C' and form.submission_date
-                %}{{form.submission_date.strftime('%d/%m/%Y %H:%M')}}{% elif form.submitted_at
+              <td>{% if form.submitted_at
                 %}{{form.submitted_at.strftime('%d/%m/%Y %H:%M')}}{% elif form.declaration_date
                 %}{{form.declaration_date.strftime('%d/%m/%Y %H:%M')}}{% elif form.created_at
                 %}{{form.created_at.strftime('%d/%m/%Y %H:%M')}}{% endif%}</td>

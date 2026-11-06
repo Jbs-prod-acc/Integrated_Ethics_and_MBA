@@ -232,7 +232,23 @@ def _enable_ethics_access_for_shared_user(shared_user, *, target_role, first_nam
         },
     )
     db.session.expire_all()
-    return EthicsUser.find_by_email(shared_user["email"])
+    ethics_user = EthicsUser.find_by_email(shared_user["email"])
+    if ethics_user:
+        return ethics_user
+
+    ethics_user = EthicsUser(
+        email=shared_user["email"],
+        role=target_role,
+        first_name=resolved_first_name,
+        last_name=resolved_last_name,
+        student_number=str(resolved_student_number) if resolved_student_number is not None else None,
+        staff_number=resolved_staff_number,
+        authenticated_student=authenticated_student,
+        is_active=True,
+    )
+    db.session.add(ethics_user)
+    db.session.flush()
+    return ethics_user
 
 
 def _enable_mba_access_for_shared_user(shared_user, *, descriptor, first_name=None, last_name=None, student_number=None, staff_number=None):
@@ -1089,8 +1105,12 @@ def microsoft_callback():
 @login_required
 def switch_to_ethics():
     if current_user.system_name == "mba" and not EthicsUser.find_by_email(current_user.email):
-        flash("This account does not have Ethics access.", "error")
-        return redirect(url_for("mba.dashboard"))
+        ethics_user = _ensure_ethics_access_for_mba_user(current_user)
+        if not ethics_user:
+            db.session.rollback()
+            flash("This account does not have Ethics access.", "error")
+            return redirect(url_for("mba.dashboard"))
+        db.session.commit()
     destination = (request.args.get("destination") or "").strip()
     token = build_ethics_sso_token(current_user, destination=destination)
     return redirect(url_for("ethics_sso_bridge", token=token))

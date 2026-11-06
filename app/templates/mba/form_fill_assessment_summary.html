@@ -10,7 +10,7 @@
 {% set summary_coursework_modules = summary_coursework_modules|default(['AFM9X01', 'CSM9X01', 'DIG9X01', 'PEM9X01', 'CON9X00', 'ADM9X02', 'AEP9X02', 'EIB9X02', 'OPS9X02', 'CSQ9X01', 'ELD9X01', 'IEA9X01', 'BDD9X01', 'CPM9X01']) %}
 
 {% macro readonly_input(value) -%}
-  <input class="mba-doc-input" value="{{ value or '' }}" readonly>
+  <input type="text" class="mba-doc-input" value="{{ value or '' }}" readonly>
 {%- endmacro %}
 
 {% macro readonly_textarea(value, rows=2) -%}

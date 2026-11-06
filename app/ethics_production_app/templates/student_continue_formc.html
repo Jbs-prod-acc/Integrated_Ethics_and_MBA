@@ -25,7 +25,7 @@
 (function() {
     const form = document.querySelector('form');
     if (!form) return;
-    const declarationFields = ['declaration_name', 'full_name', 'submission_date'];
+    const declarationFields = ['declaration_name', 'full_name', 'submitted_at'];
     let autosaveTimeout = null;
     let savingIndicator = document.getElementById('autosave-status');
     if (!savingIndicator) {
@@ -314,8 +314,8 @@ input[type="checkbox"]:checked::after {
       </div>
 
       <div class="form-group">
-        <label for="submission_date">Date</label>
-        <input type="date" name="submission_date" id="submission_date" >
+        <label for="submitted_at">Date</label>
+        <input type="date" name="submitted_at" id="submitted_at" >
       </div>
 
       <p class="form-note">
@@ -354,7 +354,7 @@ input[type="checkbox"]:checked::after {
   (function() {
     const form = document.querySelector('form');
     if (!form) return;
-    const declarationFields = ['declaration_name', 'full_name', 'submission_date'];
+    const declarationFields = ['declaration_name', 'full_name', 'submitted_at'];
     let autosaveTimeout = null;
     let savingIndicator = document.getElementById('autosave-status');
     function showSaving() {
@@ -462,7 +462,7 @@ input[type="checkbox"]:checked::after {
     // Validate Section 4 (Declaration) fields before showing modal
     var declarationName = document.getElementById('declaration-name').value.trim();
     var fullName = document.getElementById('full_name').value.trim();
-    var submissionDate = document.getElementById('submission_date').value;
+    var submissionDate = document.getElementById('submitted_at').value;
     
     if (!declarationName || !fullName || !submissionDate) {
       alert('Please complete all Section 4 (Declaration) fields before submitting to supervisor.');

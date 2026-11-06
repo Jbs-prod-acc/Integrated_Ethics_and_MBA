@@ -7,7 +7,7 @@
 {% set active_form_type = form_type|default(prefill.get('_doc_type', 'external_examiner_nomination')) %}
 
 {% macro readonly_input(value) -%}
-  <input class="mba-doc-input" value="{{ value or '' }}" readonly>
+  <input type="text" class="mba-doc-input" value="{{ value or '' }}" readonly>
 {%- endmacro %}
 
 {% macro readonly_textarea(value, rows=3) -%}
@@ -28,7 +28,7 @@
     {% if prefill.get(name ~ '_image') %}
       <img class="mba-doc-signature-image" src="{{ prefill.get(name ~ '_image') }}" alt="Saved signature">
     {% endif %}
-    <input class="mba-doc-input" value="{{ value or '' }}" readonly>
+    <input type="text" class="mba-doc-input" value="{{ value or '' }}" readonly>
   </div>
 {%- endmacro %}
 

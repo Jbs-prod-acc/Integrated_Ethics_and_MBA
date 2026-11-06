@@ -6,7 +6,7 @@
     'applicant_signature',
     'full_name',
     'declaration_date',
-    'submission_date'
+    'submitted_at'
   ]);
 
   function normalizeEthicsAutosaveUrl(url) {

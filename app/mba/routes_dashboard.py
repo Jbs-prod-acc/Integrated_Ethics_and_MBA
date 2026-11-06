@@ -11,6 +11,8 @@ from ..models import MbaForm, MbaProject, MbaRole, MbaScholarProfile, MbaStudent
 from .route_support import *  # noqa: F403
 from .grading import project_grade_summary
 
+PROFILE_TITLE_CHOICES = ("Prof", "Dr", "Mr", "Mrs", "Ms", "Miss", "Mx")
+
 
 @mba_bp.route("/")
 @login_required
@@ -102,9 +104,13 @@ def profile():
             profile = MbaStudentProfile(user_id=current_user.id)
         if request.method == "POST":
             submitted_student_number = (request.form.get("student_number") or "").strip()
+            submitted_title = (request.form.get("title") or "").strip()
+            if submitted_title not in PROFILE_TITLE_CHOICES:
+                flash("Select a valid title.", "error")
+                return redirect(url_for("mba.profile"))
             profile.name = (request.form.get("name") or "").strip() or None
             profile.surname = (request.form.get("surname") or "").strip() or None
-            profile.title = (request.form.get("title") or "").strip() or None
+            profile.title = submitted_title
             profile.contact = (request.form.get("contact") or "").strip() or None
             profile.secondary_email = (request.form.get("secondary_email") or "").strip() or None
             profile.module = (request.form.get("module") or "").strip() or None
@@ -154,9 +160,13 @@ def profile():
         if not profile:
             profile = MbaScholarProfile(user_id=current_user.id)
         if request.method == "POST":
+            submitted_title = (request.form.get("title") or "").strip()
+            if not is_hdc_committee_profile and submitted_title not in PROFILE_TITLE_CHOICES:
+                flash("Select a valid title.", "error")
+                return redirect(url_for("mba.profile"))
             profile.name = (request.form.get("name") or "").strip() or None
             profile.surname = (request.form.get("surname") or "").strip() or None
-            profile.title = (request.form.get("title") or "").strip() or None
+            profile.title = submitted_title or None
             profile.contact = (request.form.get("contact") or "").strip() or None
             profile.department = (request.form.get("department") or "").strip() or None
             profile.position = (request.form.get("position") or "").strip() or None
@@ -268,6 +278,7 @@ def profile():
         requires_academic_profile=mba_profile_requires_academic_fields(current_user),
         is_hdc_committee_profile=is_hdc_committee_profile,
         requires_signature=mba_profile_requires_signature(current_user),
+        title_choices=PROFILE_TITLE_CHOICES,
     )
 
 

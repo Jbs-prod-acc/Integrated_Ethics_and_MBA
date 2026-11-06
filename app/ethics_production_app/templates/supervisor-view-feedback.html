@@ -67,9 +67,8 @@
           </div>
           <br>
           <div class="form-group">
-            <label for="submission_date">Date of Submission:</label>
-            <strong id="submission_date">{% if view_form.submitted_at%}{{view_form.submitted_at.strftime('%d/%m/%Y')}}{%
-              elif view_form.submission_date%}{{view_form.submission_date.strftime('%d/%m/%Y')}}{% endif%}</strong>
+            <label for="submitted_at">Date of Submission:</label>
+            <strong id="submitted_at">{% if view_form.submitted_at %}{{ view_form.submitted_at.strftime('%d/%m/%Y') }}{% endif %}</strong>
           </div>
           <br>
           <div class="form-group">
@@ -193,7 +192,7 @@
             <br>
             <label>Date of Submission:</label>
             <strong>{% if view_form.submitted_at%}{{view_form.submitted_at.strftime('%d/%m/%Y')}}{% elif
-              view_form.submission_date%}{{view_form.submission_date.strftime('%d/%m/%Y')}}{% endif%}</strong>
+              view_form.submitted_at%}{{view_form.submitted_at.strftime('%d/%m/%Y')}}{% endif%}</strong>
             <br>
             <label>Supervisor:</label>
             <strong>{% if view_form.supervisor_name%}{{view_form.supervisor_name}}{% elif

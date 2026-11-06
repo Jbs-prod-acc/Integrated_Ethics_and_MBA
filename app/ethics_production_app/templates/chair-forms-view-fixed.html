@@ -140,7 +140,6 @@
                 }}{% endif %}</td>
               <td>Student :
                 {% if form.submitted_at %}{{ form.submitted_at.strftime('%d/%m/%Y') }}
-                {% elif form.submission_date %}{{ form.submission_date.strftime('%d/%m/%Y') }}
                 {% endif %}</td>
               <td>{% if form.risk_level %}{{ form.risk_level }}{% elif form.risk_rating %}{{ form.risk_rating }}{% endif
                 %}</td>
@@ -179,7 +178,7 @@
               <td>{{ form.applicant_name }}</td>
               <td>{% if form.supervisor %}{{ form.supervisor }}{% elif form.supervisor_name %}{{ form.supervisor_name
                 }}{% endif %}</td>
-              <td>{% if form.submission_date %}{{ form.submission_date.strftime('%d/%m/%Y') }}{% endif %}</td>
+              <td>{% if form.submitted_at %}{{ form.submitted_at.strftime('%d/%m/%Y') }}{% endif %}</td>
               <td>{% if form.risk_level %}{{ form.risk_level }}{% elif form.risk_rating %}{{ form.risk_rating }}{% endif
                 %}</td>
               <td>

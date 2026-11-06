@@ -546,7 +546,7 @@ def get_form_submission_timestamp(form, form_type):
         return getattr(form, 'submitted_at', None) or getattr(form, 'created_at', None)
     if form_type == 'FORM B':
         return getattr(form, 'submitted_at', None) or getattr(form, 'created_at', None)
-    return getattr(form, 'submission_date', None) or getattr(form, 'created_at', None)
+    return getattr(form, 'submitted_at', None) or getattr(form, 'created_at', None)
 
 
 def get_latest_forms_for_reviewer_reassignment():
@@ -555,7 +555,7 @@ def get_latest_forms_for_reviewer_reassignment():
     form_configs = [
         ('FORM A', FormA, func.coalesce(FormA.submitted_at, FormA.created_at)),
         ('FORM B', FormB, func.coalesce(FormB.submitted_at, FormB.created_at)),
-        ('FORM C', FormC, func.coalesce(FormC.submission_date, FormC.created_at)),
+        ('FORM C', FormC, func.coalesce(FormC.submitted_at, FormC.created_at)),
     ]
 
     for form_type, model, order_column in form_configs:
@@ -1684,20 +1684,6 @@ def admin_status_monitor():
                 (model.user_id == latest_subq.c.user_id) &
                 (model.submitted_at == latest_subq.c.latest_date))
             results = query.order_by(model.submitted_at.desc()).all()
-        elif hasattr(model, 'submission_date'):
-            latest_subq = (
-                db_session.query(
-                    model.user_id,
-                    func.max(model.submission_date).label("latest_date")
-                )
-                .group_by(model.user_id)
-                .subquery()
-            )
-            query = db_session.query(model)
-            query = query.join(latest_subq,
-                (model.user_id == latest_subq.c.user_id) &
-                (model.submission_date == latest_subq.c.latest_date))
-            results = query.order_by(model.submission_date.desc()).all()
         else:
             query = db_session.query(model)
             results = query.all()
@@ -1742,7 +1728,7 @@ def admin_status_monitor():
                 "form_type": form_type,
                 "user_id":form.user_id,
                 "applicant_name": getattr(form, 'applicant_name', None),
-                "submitted_at": normalize_datetime(getattr(form, 'submitted_at', None) or getattr(form, 'submission_date', None)),
+                "submitted_at": normalize_datetime(getattr(form, 'submitted_at', None)),
                 "submitted": getattr(form, 'submitted', None),
                 "risk_rating": getattr(form, 'risk_rating', None) or getattr(form, 'risk_level', None),
                 "supervisor": getattr(form, 'supervisor', None) if hasattr(form, 'supervisor') else getattr(form, 'supervisor_name', None),

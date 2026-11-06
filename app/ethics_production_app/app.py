@@ -415,6 +415,7 @@ def has_supervisor_submitted_feedback(form):
         marker not in (None, '', False)
         for marker in (
             getattr(form, 'supervisor_date', None),
+            getattr(form, 'supervisor_signature_date', None),
             getattr(form, 'signature_date', None),
             getattr(form, 'ethics_signature_date', None),
             getattr(form, 'submitted_to_admin', None),
@@ -442,8 +443,6 @@ def _find_latest_form_for_user(model, user_id):
     query = db_session.query(model).filter_by(user_id=user_id)
     if hasattr(model, 'submitted_at'):
         query = query.order_by(model.submitted_at.desc().nullslast(), model.created_at.desc().nullslast())
-    elif hasattr(model, 'submission_date'):
-        query = query.order_by(model.submission_date.desc().nullslast(), model.created_at.desc().nullslast())
     return query.first()
 
 
@@ -456,12 +455,6 @@ def _find_all_forms_for_user(model, user_id, *, options=None):
         query = query.order_by(
             model.submitted_at.is_(None).desc(),
             model.submitted_at.desc().nullslast(),
-            model.created_at.desc().nullslast(),
-        )
-    elif hasattr(model, 'submission_date'):
-        query = query.order_by(
-            model.submission_date.is_(None).desc(),
-            model.submission_date.desc().nullslast(),
             model.created_at.desc().nullslast(),
         )
     else:
@@ -580,8 +573,6 @@ def merge_reviewer_feedback_from_related_draft(form):
     timestamp_field_name = None
     if hasattr(type(form), 'submitted_at'):
         timestamp_field_name = 'submitted_at'
-    elif hasattr(type(form), 'submission_date'):
-        timestamp_field_name = 'submission_date'
 
     if not timestamp_field_name or getattr(form, timestamp_field_name, None) is None:
         return form
@@ -640,8 +631,8 @@ def merge_reviewer_feedback_from_related_draft(form):
 def get_form_submission_field(model):
     if hasattr(model, 'submitted_at'):
         return getattr(model, 'submitted_at')
-    if hasattr(model, 'submission_date'):
-        return getattr(model, 'submission_date')
+    if hasattr(model, 'submitted_at'):
+        return getattr(model, 'submitted_at')
     return None
 
 
@@ -650,7 +641,7 @@ def is_submitted_form_record(form):
         return False
     return bool(
         getattr(form, 'submitted_at', None)
-        or getattr(form, 'submission_date', None)
+        or getattr(form, 'submitted_at', None)
     )
 
 
@@ -791,7 +782,7 @@ def is_student_form_locked(form):
     if not form:
         return False
 
-    submission_timestamp = getattr(form, 'submitted_at', None) or getattr(form, 'submission_date', None)
+    submission_timestamp = getattr(form, 'submitted_at', None)
     if not submission_timestamp:
         return False
 
@@ -801,7 +792,7 @@ def is_student_form_locked(form):
 def get_student_submission_timestamp(form):
     if not form:
         return None
-    return getattr(form, 'submitted_at', None) or getattr(form, 'submission_date', None)
+    return getattr(form, 'submitted_at', None)
 
 
 def has_student_submission_timestamp(form):
@@ -980,10 +971,11 @@ def get_workflow_stage(form_or_record):
     rec_status = _status_text(_status_value(form_or_record, 'rec_status', '') or '')
     submission_timestamp = (
         _status_value(form_or_record, 'submitted_at')
-        or _status_value(form_or_record, 'submission_date')
+        or _status_value(form_or_record, 'submitted_at')
     )
     supervisor_date = (
         _status_value(form_or_record, 'supervisor_date')
+        or _status_value(form_or_record, 'supervisor_signature_date')
         or _status_value(form_or_record, 'signature_date')
     )
 
@@ -1090,6 +1082,7 @@ def get_supervisor_dashboard_status(form):
 
     supervisor_date = (
         _status_value(form, 'supervisor_date')
+        or _status_value(form, 'supervisor_signature_date')
         or _status_value(form, 'signature_date')
     )
     if supervisor_date:
@@ -1213,6 +1206,7 @@ def reset_form_review_feedback(form):
         'recommendation',
         'supervisor_signature',
         'supervisor_date',
+        'supervisor_signature_date',
         'ethics_signature_date',
         'signature_date',
         'review_form_status',
@@ -2021,7 +2015,7 @@ def resubmit_formc(id):
             flash("You cannot resubmit Form C until at least one reviewer is assigned.", "danger")
             return redirect(url_for("student_dashboard"))
         # Update form fields from student input as needed
-        form.submission_date = get_local_time()
+        form.submitted_at = get_local_time()
         form.ethics_status = None
         form.form_supervisor_status = "Resubmitted"
         form.status = 'Resubmitted'
@@ -2039,7 +2033,6 @@ def resubmit_formc(id):
     
 
 @app.route('/student_autosave_forma', methods=['POST'])
-@csrf.exempt
 # Autosaves a logged-in student's Form A draft without submitting the form.
 def student_autosave_forma():
     user_id = session.get('id')
@@ -2190,7 +2183,6 @@ def _apply_formb_public_domain_answers(form, form_data):
 
 # Autosaves a logged-in student's Form B draft without submitting the form.
 @app.route('/student_autosave_formb', methods=['POST'])
-@csrf.exempt
 def student_autosave_formb():
     user_id = session.get('id')
     if not user_id:
@@ -2224,7 +2216,7 @@ def student_autosave_formb():
         'applicant_signature',
         'full_name',
         'declaration_date',
-        'submission_date',
+        'submitted_at',
     }
 
     data = request.form.to_dict()
@@ -2271,7 +2263,7 @@ def _get_or_create_formc_draft(user_id, form_data):
             .first()
         )
         if requested_form:
-            if requested_form.submission_date is None:
+            if requested_form.submitted_at is None:
                 session['active_formc_id'] = requested_form.form_id
                 return requested_form, None
             if is_student_correction_state(requested_form):
@@ -2287,7 +2279,7 @@ def _get_or_create_formc_draft(user_id, form_data):
 
     form = (
         db_session.query(FormC)
-        .filter(FormC.user_id == user_id, FormC.submission_date.is_(None))
+        .filter(FormC.user_id == user_id, FormC.submitted_at.is_(None))
         .order_by(FormC.created_at.desc().nullslast())
         .first()
     )
@@ -2297,8 +2289,8 @@ def _get_or_create_formc_draft(user_id, form_data):
 
     latest_submission = (
         db_session.query(FormC)
-        .filter(FormC.user_id == user_id, FormC.submission_date.isnot(None))
-        .order_by(FormC.submission_date.desc(), FormC.created_at.desc().nullslast())
+        .filter(FormC.user_id == user_id, FormC.submitted_at.isnot(None))
+        .order_by(FormC.submitted_at.desc(), FormC.created_at.desc().nullslast())
         .first()
     )
     if latest_submission and is_student_correction_state(latest_submission):
@@ -2331,7 +2323,6 @@ def _get_or_create_formc_draft(user_id, form_data):
 
 
 @app.route('/student_autosave_formc', methods=['POST'])
-@csrf.exempt
 # Autosaves a logged-in student's Form C draft without submitting the form.
 def student_autosave_formc():
     user_id = session.get('id')
@@ -2387,7 +2378,7 @@ def student_autosave_formc():
         'applicant_signature',
         'full_name',
         'declaration_date',
-        'submission_date',
+        'submitted_at',
     }
 
     data = request.form.to_dict()
@@ -2608,7 +2599,7 @@ def _get_or_create_formc_resubmission_draft(user_id, source_form):
         user_id,
         source_form,
         FormC,
-        'submission_date',
+        'submitted_at',
         {'declaration_name', 'full_name'},
         'active_formc_id',
     )
@@ -2896,7 +2887,6 @@ def _apply_forma_autosave_payload(form, form_payload, section='all', include_dec
             except (ValueError, TypeError):
                 pass
 
-@csrf.exempt
 @app.route('/form_a_sec1_autosave', methods=['POST'])
 def form_a_sec1_autosave():
     """Autosave for Form A Section 1 - Researcher's Details"""
@@ -2919,7 +2909,6 @@ def form_a_sec1_autosave():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
-@csrf.exempt
 @app.route('/form_a_sec2_autosave', methods=['POST'])
 def form_a_sec2_autosave():
     """Autosave for Form A Section 2 - Ethical Considerations"""
@@ -2942,7 +2931,6 @@ def form_a_sec2_autosave():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
-@csrf.exempt
 @app.route('/form_a_sec3_autosave', methods=['POST'])
 def form_a_sec3_autosave():
     """Autosave for Form A Section 3 - Project Information & Affiliations"""
@@ -2965,7 +2953,6 @@ def form_a_sec3_autosave():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
-@csrf.exempt
 @app.route('/form_a_sec4_autosave', methods=['POST'])
 def form_a_sec4_autosave():
     """Autosave for Form A Section 4 - Methodology"""
@@ -2995,7 +2982,6 @@ def form_a_sec4_autosave():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
-@csrf.exempt
 @app.route('/form_a_sec5_autosave', methods=['POST'])
 def form_a_sec5_autosave():
     """Autosave for Form A Section 5 - Ethical Considerations"""
@@ -3018,7 +3004,6 @@ def form_a_sec5_autosave():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
-@csrf.exempt
 @app.route('/form_a_sec6_autosave', methods=['POST'])
 @app.route('/form_a_sec7_autosave', methods=['POST'])
 def form_a_sec6_autosave():
@@ -3907,7 +3892,7 @@ def get_form_submission_timestamp(form, form_type):
         return getattr(form, 'submitted_at', None) or getattr(form, 'created_at', None)
     if form_type == 'FORM B':
         return getattr(form, 'submitted_at', None) or getattr(form, 'created_at', None)
-    return getattr(form, 'submission_date', None) or getattr(form, 'created_at', None)
+    return getattr(form, 'submitted_at', None) or getattr(form, 'created_at', None)
 
 
 def get_latest_forms_for_reviewer_reassignment():
@@ -3916,7 +3901,7 @@ def get_latest_forms_for_reviewer_reassignment():
     form_configs = [
         ('FORM A', FormA, func.coalesce(FormA.submitted_at, FormA.created_at), FormA.submitted_at),
         ('FORM B', FormB, func.coalesce(FormB.submitted_at, FormB.created_at), FormB.submitted_at),
-        ('FORM C', FormC, func.coalesce(FormC.submission_date, FormC.created_at), FormC.submission_date),
+        ('FORM C', FormC, func.coalesce(FormC.submitted_at, FormC.created_at), FormC.submitted_at),
     ]
 
     for form_type, model, order_column, submission_column in form_configs:
@@ -4660,7 +4645,7 @@ def admin_student_password_resets():
     )
 
 
-@app.route("/authenticate_student/<string:id>",methods=['POST','GET'])
+@app.route("/authenticate_student/<string:id>", methods=['POST'])
 @role_required('ADMIN', 'SUPER_ADMIN')
 def authenticate_student(id):
     if request.method=='POST':
@@ -4705,7 +4690,7 @@ def authenticate_student(id):
 
 
 
-@app.route("/diactivate_user_account/<string:id>",methods=['POST','GET'])
+@app.route("/diactivate_user_account/<string:id>", methods=['POST'])
 @role_required('ADMIN', 'SUPER_ADMIN')
 def diactivate_user_account(id):
     if request.method=='POST':
@@ -5069,7 +5054,6 @@ def edit_user(id):
 
 @app.route('/admin/upload_student_docs', methods=['GET', 'POST'])
 @app.route('/admin/upload_student_docs/<string:id>', methods=['GET', 'POST'])
-@csrf.exempt
 @role_required('ADMIN', 'SUPER_ADMIN')
 def admin_upload_student_docs(id=None):
     # Optional: fetch user info for the sidebar if needed by the layout
@@ -5278,22 +5262,6 @@ def admin_status_monitor():
             results = run_db_query_with_retry(
                 lambda: query.order_by(model.submitted_at.desc()).all()
             )
-        elif hasattr(model, 'submission_date'):
-            latest_subq = (
-                db_session.query(
-                    model.user_id,
-                    func.max(model.submission_date).label("latest_date")
-                )
-                .group_by(model.user_id)
-                .subquery()
-            )
-            query = db_session.query(model)
-            query = query.join(latest_subq,
-                (model.user_id == latest_subq.c.user_id) &
-                (model.submission_date == latest_subq.c.latest_date))
-            results = run_db_query_with_retry(
-                lambda: query.order_by(model.submission_date.desc()).all()
-            )
         else:
             query = db_session.query(model)
             results = run_db_query_with_retry(lambda: query.all())
@@ -5358,7 +5326,7 @@ def admin_status_monitor():
                 "form_type": form_type,
                 "user_id":form.user_id,
                 "applicant_name": getattr(form, 'applicant_name', None),
-                "submitted_at": normalize_datetime(getattr(form, 'submitted_at', None) or getattr(form, 'submission_date', None)),
+                "submitted_at": normalize_datetime(getattr(form, 'submitted_at', None)),
                 "submitted": getattr(form, 'submitted', None),
                 "risk_rating": getattr(form, 'risk_rating', None) or getattr(form, 'risk_level', None),
                 "supervisor": getattr(form, 'supervisor', None) if hasattr(form, 'supervisor') else getattr(form, 'supervisor_name', None),
@@ -5454,7 +5422,7 @@ def admin_status_monitor():
          has_any_bi_view_rights=has_any_bi_view_rights,
     )
 
-@app.route('/delete_user/<string:id>', methods=['GET','POST'])
+@app.route('/delete_user/<string:id>', methods=['POST'])
 @role_required('ADMIN', 'SUPER_ADMIN')
 def delete_user(id):
     if request.method != 'POST':
@@ -5860,7 +5828,7 @@ def download_student_requirement_document(field):
     return send_file(path, mimetype=mimetype, as_attachment=True, download_name=filename)
 
 
-@app.route('/student/requirements/document/<string:field>/delete', methods=['GET', 'POST'])
+@app.route('/student/requirements/document/<string:field>/delete', methods=['POST'])
 def delete_student_requirement_document(field):
     user_id = session.get('id')
     if not user_id:
@@ -5877,9 +5845,6 @@ def delete_student_requirement_document(field):
         "FORM B": "submit_form_b_requirements",
         "FORM C": "submit_form_c_requirements",
     }.get(form_type, "student_dashboard")
-    if request.method == 'GET':
-        flash("Use the Delete button and confirm the action to remove a document.", "info")
-        return redirect(url_for(endpoint))
     setattr(form, field, None)
     setattr(form, allowed[field], None)
     form.updated_at = datetime.utcnow()
@@ -6815,7 +6780,12 @@ def monitor_forms(user_id):
 
                 snapshot = {}
                 for column in form_record.__table__.columns:
-                    value = getattr(form_record, column.name)
+                    # A model attribute can differ from its database column name
+                    # (for example FormB.ethics_status maps to
+                    # ``ethics_form_status``). Resolve the mapped attribute while
+                    # retaining the database name in the portable snapshot.
+                    attribute_name = form_record.__mapper__.get_property_by_column(column).key
+                    value = getattr(form_record, attribute_name)
                     if isinstance(value, (bytes, bytearray, memoryview)):
                         raw_value = bytes(value)
                         value = {
@@ -6831,7 +6801,7 @@ def monitor_forms(user_id):
 
                 submitted_at = (
                     getattr(form_record, 'submitted_at', None)
-                    or getattr(form_record, 'submission_date', None)
+                    or getattr(form_record, 'submitted_at', None)
                 )
                 db_session.add(ArchivedEthicsForm(
                     form_type=f"Form {form_type.upper()}",
@@ -6879,7 +6849,7 @@ def monitor_forms(user_id):
                 ),
                 "submitted_at": (
                     getattr(record, 'submitted_at', None)
-                    or getattr(record, 'submission_date', None)
+                    or getattr(record, 'submitted_at', None)
                 ),
             })
 
@@ -7027,7 +6997,8 @@ def restore_archived_form(archive_id):
                         value = datetime.fromisoformat(value)
                 except (AttributeError, NotImplementedError, TypeError, ValueError):
                     pass
-            restored_values[column.name] = value
+            attribute_name = archive_model.__mapper__.get_property_by_column(column).key
+            restored_values[attribute_name] = value
 
         restored_values["user_id"] = archive.student_user_id
         restored_values["form_id"] = archive.original_form_id
@@ -7843,7 +7814,7 @@ def form_c_supervisor(form_id):
     ##
     ## check the user id and form id trace back the error
     ##
-    form = db_session.query(FormC).filter_by(form_id=form_id).order_by(FormC.submission_date.desc()).first()
+    form = db_session.query(FormC).filter_by(form_id=form_id).order_by(FormC.submitted_at.desc()).first()
     if not form:
         return "Form not found", 404
     if not can_act_as_assigned_supervisor(get_current_user(), form):
@@ -8128,7 +8099,7 @@ def reject_or_Accept_form_c(id):
         return jsonify({'error': 'Unauthorized'}), 401
     
     try:
-        formc = db_session.query(FormC).filter_by(form_id=id).order_by(FormC.submission_date.desc()).first()
+        formc = db_session.query(FormC).filter_by(form_id=id).order_by(FormC.submitted_at.desc()).first()
     except ValueError as e:
         # Handle corrupted date data in database
         app.logger.error(f"Date parsing error for form {id}: {e}")
@@ -8192,7 +8163,7 @@ def reject_or_Accept_form_c(id):
             formc.ethics_status=None
             formc.form_supervisor_status='Ready for submission'
             formc.supervisor_signature=supervisor_signature
-            formc.signature_date=signature_date
+            formc.supervisor_signature_date = signature_date
             formc.rejected_or_accepted=True
             formc.submitted_to_admin=True
             #Uncomment the code bellow for testing
@@ -8219,7 +8190,7 @@ def reject_or_Accept_form_c(id):
             formc.form_supervisor_status='Revisions required'
             formc.submitted_to_admin=False
             formc.supervisor_signature=None
-            formc.signature_date=None
+            formc.supervisor_signature_date = None
             formc.rejected_or_accepted=False
             try:
                 message=f' Form belonging to {formc.applicant_name} has been reviewed and returned back to you. Please login to view the feedback.' 
@@ -8370,7 +8341,7 @@ def form_c_sec4():
             form.declaration_name = request.form.get('declaration_name')
             form.full_name = request.form.get('full_name')
             form.submitted = True
-            form.submission_date = datetime.now()
+            form.submitted_at = datetime.now()
 
             db_session.add(form)
             db_session.commit()
@@ -10118,8 +10089,8 @@ def student_edit_formc():
 
     user = db_session.query(User).filter(User.user_id == user_id).first()
     supervisor=db_session.query(User).filter(User.user_id == user.supervisor_id).first()
-    form = _find_latest_editable_form_for_user(FormC, user_id, 'submission_date')
-    if form is not None and form.submission_date is not None and is_student_correction_state(form):
+    form = _find_latest_editable_form_for_user(FormC, user_id, 'submitted_at')
+    if form is not None and form.submitted_at is not None and is_student_correction_state(form):
         form, error_response = _get_or_create_formc_resubmission_draft(user_id, form)
         if error_response:
             return error_response
@@ -10131,8 +10102,8 @@ def student_edit_formc():
         print("[DEBUG] FormC POST request received")
         declaration_name = (request.form.get('declaration_name') or request.form.get('applicant_name')).strip()
         full_name = (request.form.get('full_name') or request.form.get('applicant_name')).strip()
-        submission_date = request.form.get('submission_date')
-        print(f"[DEBUG] declaration_name: {declaration_name}, full_name: {full_name}, submission_date: {submission_date}")
+        submitted_at = request.form.get('submitted_at')
+        print(f"[DEBUG] declaration_name: {declaration_name}, full_name: {full_name}, submitted_at: {submitted_at}")
         if not declaration_name or not full_name:
             print("[DEBUG] Declaration fields missing, redirecting.")
             flash('Declaration section must be completed to submit the form', 'warning')
@@ -10140,7 +10111,7 @@ def student_edit_formc():
         # Update existing form instance
         if not form:
             form = FormC(user_id=user_id)
-            inherit_previous_reviewers(form, FormC, user_id, FormC.submission_date)
+            inherit_previous_reviewers(form, FormC, user_id, FormC.submitted_at)
             db_session.add(form)
             print("[DEBUG] FormC instance created and added to session.")
         try:
@@ -10197,7 +10168,7 @@ def student_edit_formc():
             form.exemption_reason=request.form.get('exemption_reason')
             form.declaration_name=declaration_name
             form.full_name=full_name
-            form.submission_date=get_local_time()
+            form.submitted_at=get_local_time()
             form.submitted = True
             form.rejected_or_accepted = False
             was_in_corrections = is_student_correction_state(form)
@@ -10251,20 +10222,20 @@ def student_continue_formc():
     
     form = db_session.query(FormC).filter(
         FormC.user_id == user_id,
-        FormC.submission_date.is_(None)
+        FormC.submitted_at.is_(None)
     ).order_by(FormC.created_at.desc().nullslast()).first()
 
     if form is None:
-        form = db_session.query(FormC).filter_by(user_id=user_id).order_by(FormC.submission_date.desc().nullslast(), FormC.created_at.desc().nullslast()).first()
+        form = db_session.query(FormC).filter_by(user_id=user_id).order_by(FormC.submitted_at.desc().nullslast(), FormC.created_at.desc().nullslast()).first()
 
-    if form is not None and form.submission_date is not None and is_student_correction_state(form):
+    if form is not None and form.submitted_at is not None and is_student_correction_state(form):
         form, error_response = _get_or_create_formc_resubmission_draft(user_id, form)
         if error_response:
             return error_response
 
     if form is None:
         form = FormC(user_id=user_id)
-        inherit_previous_reviewers(form, FormC, user_id, FormC.submission_date)
+        inherit_previous_reviewers(form, FormC, user_id, FormC.submitted_at)
         db_session.add(form)
 
     locked_response = redirect_if_student_form_locked(form, 'Form C')
@@ -10382,7 +10353,7 @@ def submit_form_c(form_id):
     # Resolve the draft to submit. Never create a new row at submit time,
     # otherwise a stale/missing form_id can produce duplicate records.
     form = db_session.query(FormC).filter(FormC.user_id==user_id, FormC.form_id==form_id).first()
-    if form is not None and form.submission_date is not None and is_student_correction_state(form):
+    if form is not None and form.submitted_at is not None and is_student_correction_state(form):
         form, error_response = _get_or_create_formc_resubmission_draft(user_id, form)
         if error_response:
             return error_response
@@ -10393,7 +10364,7 @@ def submit_form_c(form_id):
         # Fallback to the latest unsubmitted draft for this user.
         form = (
             db_session.query(FormC)
-            .filter(FormC.user_id == user_id, FormC.submission_date.is_(None))
+            .filter(FormC.user_id == user_id, FormC.submitted_at.is_(None))
             .order_by(FormC.created_at.desc())
             .first()
         )
@@ -10408,7 +10379,7 @@ def submit_form_c(form_id):
     if request.method=="POST":
         declaration_name=request.form.get('declaration_name')
         full_name=request.form.get('full_name')
-        submission_date=get_local_time()
+        submitted_at=get_local_time()
         
         # Validate Section 4 (Declaration) is complete
         if not (declaration_name and full_name):
@@ -10483,7 +10454,7 @@ def submit_form_c(form_id):
             # Section 4 - Mark as submitted
             form.declaration_name = declaration_name
             form.full_name = full_name
-            form.submission_date = submission_date
+            form.submitted_at = submitted_at
             form.submitted = True
             form.rejected_or_accepted = False
             was_in_corrections = is_student_correction_state(form)
@@ -10623,7 +10594,7 @@ def chair_dashboard():
     .filter(FormB.submitted_at != None)
     .all())
     submitted_form_c = (db_session.query(FormC)
-    .filter(FormC.submission_date != None)
+    .filter(FormC.submitted_at != None)
     .all())
 
     today = date.today()
@@ -11004,13 +10975,13 @@ def chair_formc_view(id):
         .filter(
             FormC.user_id == id,
             or_(
-                FormC.submission_date.isnot(None),
+                FormC.submitted_at.isnot(None),
                 FormC.created_at.isnot(None),
             )
         )
         .order_by(
-            FormC.submission_date.is_(None).asc(),
-            FormC.submission_date.desc().nullslast(),
+            FormC.submitted_at.is_(None).asc(),
+            FormC.submitted_at.desc().nullslast(),
             FormC.created_at.desc().nullslast(),
             FormC.form_id.desc(),
         )
@@ -11051,8 +11022,8 @@ def chair_form_view_fixed(user_id):
     )
     form_c_list = (
         db_session.query(FormC)
-        .filter(FormC.user_id == user_id, FormC.submission_date.isnot(None))
-        .order_by(FormC.submission_date.desc())
+        .filter(FormC.user_id == user_id, FormC.submitted_at.isnot(None))
+        .order_by(FormC.submitted_at.desc())
         .all()
     )
 
@@ -11126,7 +11097,7 @@ def student_view_feedback(id):
 def supervisor_view_feedback(id):
     form = None
     for model in [FormA, FormB, FormC]:
-        order_field = getattr(model, "submitted_at", getattr(model, "submission_date", None))
+        order_field = getattr(model, "submitted_at", None)
         if not order_field:
             continue
         form = (
@@ -11167,7 +11138,7 @@ def ethics_view_feedback(id):
     form = None
     for model in [FormA, FormB, FormC]:
         # pick whichever timestamp column the model has
-        order_field = getattr(model, "submitted_at", getattr(model, "submission_date", None))
+        order_field = getattr(model, "submitted_at", None)
         if not order_field:
             continue  # skip if model doesn't have a timestamp field
 
@@ -11864,7 +11835,7 @@ def chair_form_view(id,form_name):
         id_of_reviewers=[]
         if formc:
             latest_formc = formc
-            if backfill_reviewer_from_previous_version(latest_formc, FormC, FormC.submission_date):
+            if backfill_reviewer_from_previous_version(latest_formc, FormC, FormC.submitted_at):
                 db_session.commit()
             Assigned_reviewer=db_session.query(User).filter(User.user_id.in_([latest_formc.reviewer_name1, latest_formc.reviewer_name2])).all()
             
@@ -12287,13 +12258,13 @@ def ethics_reviewer_committee_form_c():
     # Subquery to get latest submission per user
     latest_formC_subq = db_session.query(
         FormC.user_id,
-        func.max(FormC.submission_date).label('latest_submission_date')
+        func.max(FormC.submitted_at).label('latest_submitted_at')
     )
     if filter_applied:
-        latest_formC_subq = latest_formC_subq.filter(FormC.submission_date.isnot(None))
+        latest_formC_subq = latest_formC_subq.filter(FormC.submitted_at.isnot(None))
     else:
         latest_formC_subq = latest_formC_subq.filter(
-            FormC.submission_date.isnot(None),
+            FormC.submitted_at.isnot(None),
             or_(
                 FormC.submitted_to_admin == True,
                 FormC.submitted_to_reviewers == True,
@@ -12305,14 +12276,14 @@ def ethics_reviewer_committee_form_c():
     # Join to only get latest per user
     query = base_query.join(
         latest_formC_subq,
-        (FormC.user_id == latest_formC_subq.c.user_id) & (FormC.submission_date == latest_formC_subq.c.latest_submission_date)
+        (FormC.user_id == latest_formC_subq.c.user_id) & (FormC.submitted_at == latest_formC_subq.c.latest_submitted_at)
     )
     if role == 'REC':
         query = query.filter(FormC.submitted_to_rec == True)
     if year_param and month_param:
         query = query.filter(
-            extract('year', FormC.submission_date) == int(year_param),
-            func.to_char(FormC.submission_date, 'YYYY-MM') == month_param
+            extract('year', FormC.submitted_at) == int(year_param),
+            func.to_char(FormC.submitted_at, 'YYYY-MM') == month_param
         )
     page = request.args.get('page', default=1, type=int)
     page_size = request.args.get('page_size', default=20, type=int)
@@ -12320,7 +12291,7 @@ def ethics_reviewer_committee_form_c():
     total_pages = max(1, (total_records + page_size - 1) // page_size) if total_records else 1
     page = min(max(page, 1), total_pages)
     supervisor_formC = run_db_query_with_retry(
-        lambda: query.order_by(FormC.submission_date.desc()).offset((page - 1) * page_size).limit(page_size).all()
+        lambda: query.order_by(FormC.submitted_at.desc()).offset((page - 1) * page_size).limit(page_size).all()
     )
     today = date.today()
     return render_template(
@@ -12549,7 +12520,7 @@ def chair_landing():
     latest_formc_subq = (
         db_session.query(
             FormC.user_id.label('user_id'),
-            func.max(func.coalesce(FormC.submission_date, FormC.created_at)).label('latest_date')
+            func.max(func.coalesce(FormC.submitted_at, FormC.created_at)).label('latest_date')
         )
         .group_by(FormC.user_id)
         .subquery()
@@ -12559,7 +12530,7 @@ def chair_landing():
             latest_formc_subq,
             and_(
                 FormC.user_id == latest_formc_subq.c.user_id,
-                func.coalesce(FormC.submission_date, FormC.created_at) == latest_formc_subq.c.latest_date
+                func.coalesce(FormC.submitted_at, FormC.created_at) == latest_formc_subq.c.latest_date
             )
         ).filter(
             or_(
@@ -12569,12 +12540,12 @@ def chair_landing():
             )
         )
     if year_filter:
-        formC_query = formC_query.filter(func.extract('year', func.coalesce(FormC.submission_date, FormC.created_at)) == year_filter)
-    formCs = formC_query.order_by(FormC.user_id, func.coalesce(FormC.submission_date, FormC.created_at).desc()).all()
+        formC_query = formC_query.filter(func.extract('year', func.coalesce(FormC.submitted_at, FormC.created_at)) == year_filter)
+    formCs = formC_query.order_by(FormC.user_id, func.coalesce(FormC.submitted_at, FormC.created_at).desc()).all()
 
     forms_by_yearC = defaultdict(lambda: defaultdict(list))
     for form, count in formCs:
-        timestamp = form.submission_date if form.submission_date else form.created_at
+        timestamp = form.submitted_at if form.submitted_at else form.created_at
         year = timestamp.year
         month = timestamp.strftime("%Y-%m")
         status = 'reviewers' if getattr(form, 'submitted_to_reviewers', False) else 'admin'
@@ -13140,9 +13111,9 @@ def review_dashboard():
     latest_form_c_subq = (
         db_session.query(
             FormC.user_id.label('user_id'),
-            func.max(FormC.submission_date).label('latest_submission_date')
+            func.max(FormC.submitted_at).label('latest_submitted_at')
         )
-        .filter(FormC.submission_date.isnot(None))
+        .filter(FormC.submitted_at.isnot(None))
         .group_by(FormC.user_id)
         .subquery()
     )
@@ -13153,7 +13124,7 @@ def review_dashboard():
             latest_form_c_subq,
             and_(
                 FormC.user_id == latest_form_c_subq.c.user_id,
-                FormC.submission_date == latest_form_c_subq.c.latest_submission_date
+                FormC.submitted_at == latest_form_c_subq.c.latest_submitted_at
             )
         )
         .join(User, FormC.user_id == User.user_id)
@@ -13164,7 +13135,7 @@ def review_dashboard():
                 FormC.reviewer_name2 == user_id
             )
         )
-        .order_by(FormC.submission_date.desc())
+        .order_by(FormC.submitted_at.desc())
         .all()
     )
 
@@ -13377,8 +13348,9 @@ def rec_dashboard():
     def rec_sort_timestamp(form):
         return (
             getattr(form, 'submitted_at', None)
-            or getattr(form, 'submission_date', None)
+            or getattr(form, 'submitted_at', None)
             or getattr(form, 'review_signature_date', None)
+            or getattr(form, 'supervisor_signature_date', None)
             or getattr(form, 'signature_date', None)
             or getattr(form, 'created_at', None)
             or datetime.min
@@ -14175,7 +14147,7 @@ def ethics_reviewer_committee_forms(id,form_name):
         
         Assigned_reviewer=''
         if formc:
-            id_of_reviewers = get_reviewers_for_ethics_assignment(formc, FormC, FormC.submission_date)[:1]
+            id_of_reviewers = get_reviewers_for_ethics_assignment(formc, FormC, FormC.submitted_at)[:1]
             if id_of_reviewers:
                 Assigned_reviewer = db_session.query(User).filter(User.user_id.in_(id_of_reviewers)).all()
  
@@ -14339,7 +14311,7 @@ def supervisor_dashboard():
         proxy.declaration_date = result.declaration_date
         formB.append(proxy)
     
-    formC = db_session.query(FormC).filter(FormC.submission_date != None).order_by(FormC.submission_date.desc()).limit(5).all()
+    formC = db_session.query(FormC).filter(FormC.submitted_at != None).order_by(FormC.submitted_at.desc()).limit(5).all()
     
  
     # Query FormA and its FormARequirements for supervisor's users - SIMPLIFIED
@@ -14403,8 +14375,8 @@ def supervisor_dashboard():
         db_session.query(FormC, FormARequirements)
         .join(User, FormC.user_id == User.user_id)
         .outerjoin(FormARequirements, FormARequirements.user_id == FormC.user_id)
-        .filter(User.supervisor_id == supervisor_id, FormC.submission_date != None)
-        .order_by(FormC.user_id, FormC.submission_date.desc())
+        .filter(User.supervisor_id == supervisor_id, FormC.submitted_at != None)
+        .order_by(FormC.user_id, FormC.submitted_at.desc())
         .all()
     )
     
@@ -14537,7 +14509,7 @@ def supervisor_dashboard_previous_forms(user_id):
         db_session.query(FormC)
         .filter(FormC.user_id == user_id)
         .order_by(
-            FormC.submission_date.desc().nullslast(),
+            FormC.submitted_at.desc().nullslast(),
             FormC.created_at.desc().nullslast(),
         )
         .all()
@@ -14607,7 +14579,7 @@ def supervisor_dashboard_previous_forms(user_id):
         .outerjoin(FormARequirements, FormARequirements.user_id == FormC.user_id) \
         .filter(FormC.user_id==user_id) \
         .order_by(
-            FormC.submission_date.desc().nullslast(),
+            FormC.submitted_at.desc().nullslast(),
             FormC.created_at.desc().nullslast(),
         ) \
         .all()
@@ -14927,16 +14899,6 @@ def get_missing_documents_count():
 # =====================================================================================================
 
 
-UPLOAD_FOLDER = "/opt/render/project/src/static/uploads/form"
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-
-@app.route("/upload_to", methods=["POST"])
-def upload_to():
-    file = request.files["file"]
-    file.save(os.path.join(UPLOAD_FOLDER, file.filename))
-    return "File uploaded!"
-
-
 @app.route('/export_forms_csv', methods=['GET', 'POST'])
 def export_forms_csv():
     """
@@ -15054,10 +15016,10 @@ def export_forms_csv():
             form_b_records.append(proxy)
         
         # FormC query with optional year filter
-        form_c_query = db_session.query(FormC).filter(FormC.submission_date.isnot(None))
+        form_c_query = db_session.query(FormC).filter(FormC.submitted_at.isnot(None))
         if selected_year and selected_year != 'all':
-            form_c_query = form_c_query.filter(extract('year', FormC.submission_date) == int(selected_year))
-        form_c_records = form_c_query.order_by(FormC.submission_date.desc()).all()
+            form_c_query = form_c_query.filter(extract('year', FormC.submitted_at) == int(selected_year))
+        form_c_records = form_c_query.order_by(FormC.submitted_at.desc()).all()
         
        
         
@@ -15124,11 +15086,11 @@ def export_forms_csv():
                 'email': record.email_address or '',
                 'supervisor': record.supervisor_name or '',
                 'supervisor_email': record.supervisor_email or '',
-                'student_submission': remove_tz(record.submission_date) if record.submission_date else '',
+                'student_submission': remove_tz(record.submitted_at) if record.submitted_at else '',
                 'recommendation': record.recommendation or '',
                 'supervisor_date': remove_tz(record.supervisor_date) if record.supervisor_date else '',
                 'ethics_status': record.ethics_status or '',
-                'signature_date': remove_tz(record.signature_date) if record.signature_date else '',
+                'supervisor_signature_date': remove_tz(record.supervisor_signature_date) if record.supervisor_signature_date else '',
                 'review_supervisor_signature': record.review_supervisor_signature or '',
                 'review_recommendation': record.review_recommendation or '',
                 'review_date': record.review_date or '',
@@ -15294,9 +15256,9 @@ def export_agenda_csv():
     latest_form_c_subq = (
         db_session.query(
             FormC.user_id,
-            func.max(FormC.submission_date).label('latest_submission_date')
+            func.max(FormC.submitted_at).label('latest_submitted_at')
         )
-        .filter(FormC.submission_date.isnot(None))
+        .filter(FormC.submitted_at.isnot(None))
         .group_by(FormC.user_id)
         .subquery()
     )
@@ -15331,7 +15293,7 @@ def export_agenda_csv():
             latest_form_c_subq,
             and_(
                 FormC.user_id == latest_form_c_subq.c.user_id,
-                FormC.submission_date == latest_form_c_subq.c.latest_submission_date
+                FormC.submitted_at == latest_form_c_subq.c.latest_submitted_at
             )
         )
         .filter(FormC.certificate_issued.is_(None))
@@ -15582,9 +15544,9 @@ def export_reviewer_assignments_csv():
         latest_form_c_subq = (
             db_session.query(
                 FormC.user_id,
-                func.max(FormC.submission_date).label('latest_submission_date')
+                func.max(FormC.submitted_at).label('latest_submitted_at')
             )
-            .filter(FormC.submission_date.isnot(None))
+            .filter(FormC.submitted_at.isnot(None))
             .group_by(FormC.user_id)
             .subquery()
         )
@@ -15595,25 +15557,25 @@ def export_reviewer_assignments_csv():
                 FormC.applicant_name,
                 FormC.student_number,
                 FormC.email_address,
-                FormC.submission_date,
+                FormC.submitted_at,
                 FormC.certificate_issued
             )
             .join(
                 latest_form_c_subq,
                 and_(
                     FormC.user_id == latest_form_c_subq.c.user_id,
-                    FormC.submission_date == latest_form_c_subq.c.latest_submission_date
+                    FormC.submitted_at == latest_form_c_subq.c.latest_submitted_at
                 )
             )
-            .filter(FormC.submission_date.isnot(None))
+            .filter(FormC.submitted_at.isnot(None))
         )
         if selected_year and selected_year != 'all':
-            form_c_query = form_c_query.filter(extract('year', FormC.submission_date) == int(selected_year))
-        form_c_records = form_c_query.order_by(FormC.submission_date.desc()).all()
+            form_c_query = form_c_query.filter(extract('year', FormC.submitted_at) == int(selected_year))
+        form_c_records = form_c_query.order_by(FormC.submitted_at.desc()).all()
 
         process_records(form_a_records, 'Form A', 'applicant_name', 'student_number', 'email', 'submitted_at')
         process_records(form_b_records, 'Form B', 'applicant_name', 'student_number', 'email', 'submitted_at')
-        process_records(form_c_records, 'Form C', 'applicant_name', 'student_number', 'email_address', 'submission_date')
+        process_records(form_c_records, 'Form C', 'applicant_name', 'student_number', 'email_address', 'submitted_at')
 
         summary_rows = []
         for reviewer in reviewers:

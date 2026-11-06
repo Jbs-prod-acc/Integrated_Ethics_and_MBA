@@ -52,7 +52,7 @@
               <input type="hidden" name="signature_type" value="{{ slot.type }}">
               <input type="hidden" name="signature_data" data-signature-data>
               <label>Printed name
-                <input name="signature_printed_name" value="{{ slot.printed_name or '' }}" placeholder="Name attached to this signature" required>
+                <input type="text" name="signature_printed_name" value="{{ slot.printed_name or '' }}" placeholder="Name attached to this signature" required>
               </label>
               <div class="signature-preview-box">
                 {% if slot.preview_url %}
@@ -97,43 +97,46 @@
       {% if is_student %}
         <form action="{{ url_for('mba.profile') }}" method="post" class="profile-form">
           <label>First name
-            <input name="name" value="{{ profile.name or current_user.first_name or '' }}" required>
+            <input type="text" name="name" value="{{ profile.name or current_user.first_name or '' }}" required>
           </label>
           <label>Surname
-            <input name="surname" value="{{ profile.surname or current_user.last_name or '' }}" required>
+            <input type="text" name="surname" value="{{ profile.surname or current_user.last_name or '' }}" required>
           </label>
           <label>Title
-            <input name="title" value="{{ profile.title or '' }}" placeholder="Mr, Ms, Dr" required>
+            <select name="title" required>
+              <option value="">Select a title</option>
+              {% for title in title_choices %}<option value="{{ title }}" {% if profile.title == title %}selected{% endif %}>{{ title }}</option>{% endfor %}
+            </select>
           </label>
           <label>Contact number
-            <input name="contact" value="{{ profile.contact or '' }}" placeholder="e.g. 0720000000" required>
+            <input type="tel" inputmode="tel" name="contact" value="{{ profile.contact or '' }}" placeholder="e.g. 0720000000" required>
           </label>
           <label>Student number
-            <input name="student_number" value="{{ profile.student_number or '' }}" required>
+            <input type="text" inputmode="numeric" name="student_number" value="{{ profile.student_number or '' }}" required>
           </label>
           <label>Secondary email
             <input type="email" name="secondary_email" value="{{ profile.secondary_email or '' }}" placeholder="Optional non-UJ email">
           </label>
           <label>ID / passport number
-            <input name="id_passport_number" value="{{ profile.id_passport_number or '' }}" required>
+            <input type="text" name="id_passport_number" value="{{ profile.id_passport_number or '' }}" required>
           </label>
           <label>Module
-            <input name="module" value="{{ profile.module or '' }}" placeholder="Current MBA module" required>
+            <input type="text" name="module" value="{{ profile.module or '' }}" placeholder="Current MBA module" required>
           </label>
           <label>Block
-            <input name="block_id" value="{{ profile.block_id or '' }}" placeholder="Block or intake identifier" required>
+            <input type="text" name="block_id" value="{{ profile.block_id or '' }}" placeholder="Block or intake identifier" required>
           </label>
           <label>Degree
-            <input name="degree" value="{{ profile.degree or 'MBA' }}" required>
+            <input type="text" name="degree" value="{{ profile.degree or 'MBA' }}" required>
           </label>
           <label class="profile-form__wide">{{ 'Office address' if is_hdc_committee_profile else 'Address' }}
             <textarea name="address" rows="3" required>{{ profile.address or '' }}</textarea>
           </label>
           <label>Postal code
-            <input name="postal_code" value="{{ profile.postal_code or '' }}" required>
+            <input type="text" inputmode="numeric" name="postal_code" value="{{ profile.postal_code or '' }}" required>
           </label>
           <label>Default signing location
-            <input name="default_signing_location" value="{{ profile.default_signing_location or '' }}" placeholder="e.g. Johannesburg" required>
+            <input type="text" name="default_signing_location" value="{{ profile.default_signing_location or '' }}" placeholder="e.g. Johannesburg" required>
           </label>
           <div class="profile-form__actions">
             <button class="primary-button" type="submit">Save Profile</button>
@@ -146,49 +149,53 @@
         <form action="{{ url_for('mba.profile') }}" method="post" class="profile-form">
           {% if is_hdc_committee_profile %}
             <label>Committee name
-              <input name="name" value="{{ profile.name or 'Higher Degree Committee' }}" required>
+              <input type="text" name="name" value="{{ profile.name or 'Higher Degree Committee' }}" required>
             </label>
             <label>Committee contact number
-              <input name="contact" value="{{ profile.contact or '' }}" placeholder="e.g. 0110000000" required>
+              <input type="tel" inputmode="tel" name="contact" value="{{ profile.contact or '' }}" placeholder="e.g. 0110000000" required>
             </label>
             <label>Department / School
-              <input name="department" value="{{ profile.department or '' }}" placeholder="Johannesburg Business School" required>
+              <input type="text" name="department" value="{{ profile.department or '' }}" placeholder="Johannesburg Business School" required>
             </label>
             <label>Affiliation
-              <input name="affiliation" value="{{ profile.affiliation or '' }}" placeholder="University of Johannesburg" required>
+              <input type="text" name="affiliation" value="{{ profile.affiliation or '' }}" placeholder="University of Johannesburg" required>
             </label>
           {% else %}
             <label>First name
-              <input name="name" value="{{ profile.name or current_user.first_name or '' }}" required>
+              <input type="text" name="name" value="{{ profile.name or current_user.first_name or '' }}" required>
             </label>
             <label>Surname
-              <input name="surname" value="{{ profile.surname or current_user.last_name or '' }}" required>
+              <input type="text" name="surname" value="{{ profile.surname or current_user.last_name or '' }}" required>
             </label>
             <label>Title
-              <input name="title" value="{{ profile.title or '' }}" placeholder="Prof, Dr, Mr, Ms" required>
+              <select name="title" required>
+                <option value="">Select a title</option>
+                {% for title in title_choices %}<option value="{{ title }}" {% if profile.title == title %}selected{% endif %}>{{ title }}</option>{% endfor %}
+              </select>
             </label>
             <label>Contact number
-              <input name="contact" value="{{ profile.contact or '' }}" placeholder="e.g. 0110000000" required>
+              <input type="tel" inputmode="tel" name="contact" value="{{ profile.contact or '' }}" placeholder="e.g. 0110000000" required>
             </label>
             <label>Department
-              <input name="department" value="{{ profile.department or '' }}" required>
+              <input type="text" name="department" value="{{ profile.department or '' }}" required>
             </label>
             <label>Position
-              <input name="position" value="{{ profile.position or '' }}" placeholder="Senior Lecturer, Admin Officer" required>
+              <input type="text" name="position" value="{{ profile.position or '' }}" list="academic-position-options" placeholder="Enter or select a position" required>
+              <datalist id="academic-position-options"><option value="Professor"><option value="Associate Professor"><option value="Senior Lecturer"><option value="Lecturer"><option value="Admin Officer"></datalist>
             </label>
             <label>Affiliation
-              <input name="affiliation" value="{{ profile.affiliation or '' }}" placeholder="University or partner institution" required>
+              <input type="text" name="affiliation" value="{{ profile.affiliation or '' }}" placeholder="University or partner institution" required>
             </label>
             <label>Staff / employee number
-              <input name="staff_number" value="{{ profile.staff_number or '' }}" placeholder="Optional">
+              <input type="text" name="staff_number" value="{{ profile.staff_number or '' }}" placeholder="Optional">
             </label>
           {% endif %}
           {% if requires_academic_profile %}
             <label>Highest qualification
-              <input name="qualification" value="{{ profile.qualification or '' }}" required>
+              <input type="text" name="qualification" value="{{ profile.qualification or '' }}" required>
             </label>
             <label>ID / passport number
-              <input name="id_passport_number" value="{{ profile.id_passport_number or '' }}" required>
+              <input type="text" name="id_passport_number" value="{{ profile.id_passport_number or '' }}" required>
             </label>
             <label class="profile-form__wide">Areas of expertise
               <textarea name="skills" rows="3" required>{{ profile.skills or '' }}</textarea>
@@ -228,10 +235,10 @@
             <textarea name="address" rows="3" required>{{ profile.address or '' }}</textarea>
           </label>
           <label>Postal code
-            <input name="postal_code" value="{{ profile.postal_code or '' }}" required>
+            <input type="text" inputmode="numeric" name="postal_code" value="{{ profile.postal_code or '' }}" required>
           </label>
           <label>Default signing location
-            <input name="default_signing_location" value="{{ profile.default_signing_location or '' }}" placeholder="e.g. Johannesburg" required>
+            <input type="text" name="default_signing_location" value="{{ profile.default_signing_location or '' }}" placeholder="e.g. Johannesburg" required>
           </label>
           {% if requires_academic_profile %}
             <label class="profile-checkline">
@@ -266,7 +273,7 @@
               <input type="hidden" name="signature_type" value="{{ slot.type }}">
               <input type="hidden" name="signature_data" data-signature-data>
               <label>Printed name
-                <input name="signature_printed_name" value="{{ slot.printed_name or '' }}" placeholder="Name attached to this signature" {% if slot.required %}required{% endif %}>
+                <input type="text" name="signature_printed_name" value="{{ slot.printed_name or '' }}" placeholder="Name attached to this signature" {% if slot.required %}required{% endif %}>
               </label>
               <div class="signature-preview-box">
                 {% if slot.preview_url %}

@@ -1460,6 +1460,9 @@ def _browser_pdf_executables():
         "/opt/google/chrome/chrome",
         "/usr/bin/microsoft-edge",
         "/usr/bin/microsoft-edge-stable",
+        "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+        "/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge",
+        "/Applications/Chromium.app/Contents/MacOS/Chromium",
         r"C:\Program Files\Google\Chrome\Application\chrome.exe",
         r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe",
         r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
@@ -8038,9 +8041,11 @@ def require_profile_completion_before_workspace_access():
     missing_fields = mba_profile_missing_fields(current_user)
     if not missing_fields:
         return None
-    preview = ", ".join(missing_fields[:6])
-    suffix = "..." if len(missing_fields) > 6 else ""
-    flash(f"Complete your MBA profile before opening your dashboard: {preview}{suffix}.", "info")
+    flash(
+        f"Complete your MBA profile before opening the workspace. "
+        f"{len(missing_fields)} required field(s) remain: {', '.join(missing_fields)}.",
+        "warning",
+    )
     return redirect(url_for("mba.profile"))
 
 

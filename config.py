@@ -56,6 +56,15 @@ class Config:
     )
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     WTF_CSRF_ENABLED = os.getenv("WTF_CSRF_ENABLED", "true").lower() in {"1", "true", "yes"}
+    SESSION_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SAMESITE = "Lax"
+    SESSION_COOKIE_SECURE = os.getenv(
+        "SESSION_COOKIE_SECURE",
+        "true" if os.getenv("FLASK_ENV", "").lower() == "production" else "false",
+    ).lower() in {"1", "true", "yes"}
+    REMEMBER_COOKIE_HTTPONLY = True
+    REMEMBER_COOKIE_SAMESITE = "Lax"
+    REMEMBER_COOKIE_SECURE = SESSION_COOKIE_SECURE
 
     # Shared upload limits used by the mounted ethics application. The request
     # limit covers the complete multipart body; the file limit is per document.

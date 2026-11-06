@@ -99,7 +99,7 @@
     </div>
     <form action="{{ url_for('mba.create_project') }}" method="post" enctype="multipart/form-data" class="form-stack compact-form">
       <label>Title
-        <input name="project_title" required data-project-title-input>
+        <input type="text" name="project_title" required data-project-title-input>
         <small style="color:var(--text-muted,#666);font-weight:500;">
           Use full words only. Acronyms, abbreviations, and special characters except commas and hyphens are not allowed. Keep the title to 12 words where possible; maximum 15 words.
         </small>

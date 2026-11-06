@@ -305,7 +305,7 @@
       </div>
 
       <div class="form-group">
-        <label for="submission_date"><span class="form-answer">{{form.submission_date.strftime('%d/%m/%Y')}}</span></label>
+        <label for="submitted_at"><span class="form-answer">{{form.submitted_at.strftime('%d/%m/%Y')}}</span></label>
       </div>
 <hr>
 <h1>JBS RESEARCH ETHICS COMMITTEE<br>REVIEWER REPORT</h1>
@@ -315,7 +315,7 @@
     <span class="form-answer">{{form.declaration_name}}</span>
 
     <label>Date of Submission:</label>
-    <span class="form-answer">{% if form.submission_date%}{{form.submission_date.strftime('%d/%m/%Y')}}{% endif%}</span>
+    <span class="form-answer">{% if form.submitted_at%}{{form.submitted_at.strftime('%d/%m/%Y')}}{% endif%}</span>
 
     <label>Supervisor:</label>
     <span class="form-answer">{{form.supervisor_name}}</span>
@@ -323,9 +323,9 @@
     <label>Title of Research:</label>
     <span class="form-answer">{{form.project_title}}</span>
 
-    {% if not form.submission_date and form.signature_date %}
+    {% if not form.submitted_at and form.supervisor_signature_date %}
     <label>Date of Re-submission:</label>
-    <span class="form-answer">{{form.signature_date.strftime('%d/%m/%Y')}}</span>
+    <span class="form-answer">{{form.supervisor_signature_date.strftime('%d/%m/%Y')}}</span>
     {% endif %}
 
     <label>Date of Review:</label>

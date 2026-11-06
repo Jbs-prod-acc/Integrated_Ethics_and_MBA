@@ -40,7 +40,7 @@
               </select>
             </td>
             <td class="mba-doc-label">EMPLOYEE NUMBER</td>
-            <td><input class="mba-doc-input" name="employee_number" value="{{ prefill.get('employee_number','') }}"></td>
+            <td><input type="text" class="mba-doc-input" name="employee_number" value="{{ prefill.get('employee_number','') }}"></td>
           </tr>
           <tr>
             <td class="mba-doc-label">EMPLOYED AT UJ</td>
@@ -53,11 +53,11 @@
               </select>
             </td>
             <td class="mba-doc-label">If “Yes”, Department or Division</td>
-            <td><input class="mba-doc-input" name="uj_department_division" value="{{ prefill.get('uj_department_division','') }}"></td>
+            <td><input type="text" class="mba-doc-input" name="uj_department_division" value="{{ prefill.get('uj_department_division','') }}"></td>
           </tr>
           <tr>
             <td class="mba-doc-label">APPOINTED AS</td>
-            <td colspan="4"><input class="mba-doc-input" name="appointed_as" value="{{ prefill.get('appointed_as','External Assessor') }}" required></td>
+            <td colspan="4"><input type="text" class="mba-doc-input" name="appointed_as" value="{{ prefill.get('appointed_as','External Assessor') }}" required></td>
           </tr>
         </table>
 
@@ -67,23 +67,23 @@
           </tr>
           <tr>
             <td class="mba-doc-label">Surname</td>
-            <td><input class="mba-doc-input" name="assessor_surname" value="{{ prefill.get('assessor_surname','') }}" required></td>
+            <td><input type="text" class="mba-doc-input" name="assessor_surname" value="{{ prefill.get('assessor_surname','') }}" required></td>
             <td class="mba-doc-label">Title</td>
-            <td><input class="mba-doc-input" name="assessor_title" value="{{ prefill.get('assessor_title','') }}" required></td>
+            <td><input type="text" class="mba-doc-input" name="assessor_title" value="{{ prefill.get('assessor_title','') }}" required></td>
           </tr>
           <tr>
             <td class="mba-doc-label">First Names</td>
-            <td colspan="3"><input class="mba-doc-input" name="assessor_first_names" value="{{ prefill.get('assessor_first_names','') }}" required></td>
+            <td colspan="3"><input type="text" class="mba-doc-input" name="assessor_first_names" value="{{ prefill.get('assessor_first_names','') }}" required></td>
           </tr>
           <tr>
             <td class="mba-doc-label">Identity / Passport Number</td>
-            <td><input class="mba-doc-input" name="identity_passport_number" value="{{ prefill.get('identity_passport_number','') }}" required></td>
+            <td><input type="text" class="mba-doc-input" name="identity_passport_number" value="{{ prefill.get('identity_passport_number','') }}" required></td>
             <td class="mba-doc-label">Date of Birth</td>
             <td><input class="mba-doc-input" type="date" name="date_of_birth" value="{{ prefill.get('date_of_birth','') }}"></td>
           </tr>
           <tr>
             <td class="mba-doc-label">Work Visa Number</td>
-            <td><input class="mba-doc-input" name="work_visa_number" value="{{ prefill.get('work_visa_number','') }}"></td>
+            <td><input type="text" class="mba-doc-input" name="work_visa_number" value="{{ prefill.get('work_visa_number','') }}"></td>
             <td class="mba-doc-label">Gender</td>
             <td>
               <select class="mba-doc-select" name="gender">
@@ -116,9 +116,9 @@
           </tr>
           <tr>
             <td class="mba-doc-label">Nationality</td>
-            <td><input class="mba-doc-input" name="nationality" value="{{ prefill.get('nationality','') }}"></td>
+            <td><input type="text" class="mba-doc-input" name="nationality" value="{{ prefill.get('nationality','') }}"></td>
             <td class="mba-doc-label">Home Language</td>
-            <td><input class="mba-doc-input" name="home_language" value="{{ prefill.get('home_language','') }}"></td>
+            <td><input type="text" class="mba-doc-input" name="home_language" value="{{ prefill.get('home_language','') }}"></td>
           </tr>
           <tr>
             <td class="mba-doc-label">Employed Outside UJ</td>
@@ -131,23 +131,23 @@
               </select>
             </td>
             <td class="mba-doc-label">Income Tax Number</td>
-            <td><input class="mba-doc-input" name="income_tax_number" value="{{ prefill.get('income_tax_number','') }}"></td>
+            <td><input type="text" class="mba-doc-input" name="income_tax_number" value="{{ prefill.get('income_tax_number','') }}"></td>
           </tr>
           <tr>
             <td class="mba-doc-label">Confirm Care of Intermediary</td>
-            <td colspan="3"><input class="mba-doc-input" name="care_of_intermediary" value="{{ prefill.get('care_of_intermediary','None') }}"></td>
+            <td colspan="3"><input type="text" class="mba-doc-input" name="care_of_intermediary" value="{{ prefill.get('care_of_intermediary','None') }}"></td>
           </tr>
           <tr>
             <td class="mba-doc-label">Cell / Mobile Number</td>
-            <td><input class="mba-doc-input" name="assessor_contact" value="{{ prefill.get('assessor_contact','') }}" required></td>
+            <td><input type="text" class="mba-doc-input" name="assessor_contact" value="{{ prefill.get('assessor_contact','') }}" required></td>
             <td class="mba-doc-label">Email Address</td>
             <td><input class="mba-doc-input" type="email" name="assessor_email" value="{{ prefill.get('assessor_email','') }}" required></td>
           </tr>
           <tr>
             <td class="mba-doc-label">Home Telephone</td>
-            <td><input class="mba-doc-input" name="home_tel" value="{{ prefill.get('home_tel','') }}"></td>
+            <td><input type="text" class="mba-doc-input" name="home_tel" value="{{ prefill.get('home_tel','') }}"></td>
             <td class="mba-doc-label">Work Telephone</td>
-            <td><input class="mba-doc-input" name="work_tel" value="{{ prefill.get('work_tel','') }}"></td>
+            <td><input type="tel" inputmode="tel" class="mba-doc-input" name="work_tel" value="{{ prefill.get('work_tel','') }}"></td>
           </tr>
           <tr>
             <td class="mba-doc-label">Disability</td>
@@ -181,9 +181,9 @@
           </tr>
           <tr>
             <td class="mba-doc-label">Home Postal Code</td>
-            <td><input class="mba-doc-input" name="home_postal_code" value="{{ prefill.get('home_postal_code','') }}"></td>
+            <td><input type="text" class="mba-doc-input" name="home_postal_code" value="{{ prefill.get('home_postal_code','') }}"></td>
             <td class="mba-doc-label">Postal Code</td>
-            <td><input class="mba-doc-input" name="postal_code" value="{{ prefill.get('postal_code','') }}"></td>
+            <td><input type="text" inputmode="numeric" class="mba-doc-input" name="postal_code" value="{{ prefill.get('postal_code','') }}"></td>
           </tr>
         </table>
 
@@ -193,15 +193,15 @@
           </tr>
           <tr>
             <td class="mba-doc-label">Name of Institution</td>
-            <td><input class="mba-doc-input" name="qualification_institution" value="{{ prefill.get('qualification_institution','') }}"></td>
+            <td><input type="text" class="mba-doc-input" name="qualification_institution" value="{{ prefill.get('qualification_institution','') }}"></td>
             <td class="mba-doc-label">Highest Qualification</td>
-            <td><input class="mba-doc-input" name="highest_qualification" value="{{ prefill.get('highest_qualification','') }}" required></td>
+            <td><input type="text" class="mba-doc-input" name="highest_qualification" value="{{ prefill.get('highest_qualification','') }}" required></td>
           </tr>
           <tr>
             <td class="mba-doc-label">Awarded Date</td>
             <td><input class="mba-doc-input" type="date" name="qualification_awarded_date" value="{{ prefill.get('qualification_awarded_date','') }}"></td>
             <td class="mba-doc-label">Status</td>
-            <td><input class="mba-doc-input" name="qualification_status" value="{{ prefill.get('qualification_status','') }}"></td>
+            <td><input type="text" class="mba-doc-input" name="qualification_status" value="{{ prefill.get('qualification_status','') }}"></td>
           </tr>
           <tr>
             <td class="mba-doc-label">Banking Details Changed</td>
@@ -214,19 +214,19 @@
               </select>
             </td>
             <td class="mba-doc-label">Account Holder's Name</td>
-            <td><input class="mba-doc-input" name="bank_account_holder" value="{{ prefill.get('bank_account_holder','') }}" required></td>
+            <td><input type="text" class="mba-doc-input" name="bank_account_holder" value="{{ prefill.get('bank_account_holder','') }}" required></td>
           </tr>
           <tr>
             <td class="mba-doc-label">Bank Name</td>
-            <td><input class="mba-doc-input" name="bank_name" value="{{ prefill.get('bank_name','') }}" required></td>
+            <td><input type="text" class="mba-doc-input" name="bank_name" value="{{ prefill.get('bank_name','') }}" required></td>
             <td class="mba-doc-label">Branch Name</td>
-            <td><input class="mba-doc-input" name="bank_branch_name" value="{{ prefill.get('bank_branch_name','') }}" required></td>
+            <td><input type="text" class="mba-doc-input" name="bank_branch_name" value="{{ prefill.get('bank_branch_name','') }}" required></td>
           </tr>
           <tr>
             <td class="mba-doc-label">Branch Code</td>
-            <td><input class="mba-doc-input" name="bank_branch_code" value="{{ prefill.get('bank_branch_code','') }}" required></td>
+            <td><input type="text" class="mba-doc-input" name="bank_branch_code" value="{{ prefill.get('bank_branch_code','') }}" required></td>
             <td class="mba-doc-label">Account Number</td>
-            <td><input class="mba-doc-input" name="bank_account_number" value="{{ prefill.get('bank_account_number','') }}" required></td>
+            <td><input type="text" class="mba-doc-input" name="bank_account_number" value="{{ prefill.get('bank_account_number','') }}" required></td>
           </tr>
           <tr>
             <td class="mba-doc-label">Type of Account</td>
@@ -256,9 +256,9 @@
           </tr>
           <tr>
             <td class="mba-doc-label">Employment Group</td>
-            <td><input class="mba-doc-input" name="employment_group" value="{{ prefill.get('employment_group','Academic') }}"></td>
+            <td><input type="text" class="mba-doc-input" name="employment_group" value="{{ prefill.get('employment_group','Academic') }}"></td>
             <td class="mba-doc-label">Appointment Category</td>
-            <td><input class="mba-doc-input" name="appointment_category" value="{{ prefill.get('appointment_category','') }}" required></td>
+            <td><input type="text" class="mba-doc-input" name="appointment_category" value="{{ prefill.get('appointment_category','') }}" required></td>
           </tr>
           <tr>
             <td class="mba-doc-label">Start Date</td>
@@ -279,7 +279,7 @@
           </tr>
           <tr>
             <td class="mba-doc-label">Other Reason</td>
-            <td colspan="3"><input class="mba-doc-input" name="appointment_reason_other" value="{{ prefill.get('appointment_reason_other','') }}"></td>
+            <td colspan="3"><input type="text" class="mba-doc-input" name="appointment_reason_other" value="{{ prefill.get('appointment_reason_other','') }}"></td>
           </tr>
           <tr>
             <td class="mba-doc-label">Motivation</td>
@@ -287,27 +287,27 @@
           </tr>
           <tr>
             <td class="mba-doc-label">Rate Per Month</td>
-            <td><input class="mba-doc-input" name="rate_per_month" value="{{ prefill.get('rate_per_month','') }}"></td>
+            <td><input type="text" class="mba-doc-input" name="rate_per_month" value="{{ prefill.get('rate_per_month','') }}"></td>
             <td class="mba-doc-label">Rate Per Hour</td>
-            <td><input class="mba-doc-input" name="rate_per_hour" value="{{ prefill.get('rate_per_hour','') }}" required></td>
+            <td><input type="text" class="mba-doc-input" name="rate_per_hour" value="{{ prefill.get('rate_per_hour','') }}" required></td>
           </tr>
           <tr>
             <td class="mba-doc-label">Other Rate Basis</td>
-            <td><input class="mba-doc-input" name="other_rate_basis" value="{{ prefill.get('other_rate_basis','') }}"></td>
+            <td><input type="text" class="mba-doc-input" name="other_rate_basis" value="{{ prefill.get('other_rate_basis','') }}"></td>
             <td class="mba-doc-label">Actual Hours</td>
-            <td><input class="mba-doc-input" name="actual_hours" value="{{ prefill.get('actual_hours','') }}" required></td>
+            <td><input type="text" class="mba-doc-input" name="actual_hours" value="{{ prefill.get('actual_hours','') }}" required></td>
           </tr>
           <tr>
             <td class="mba-doc-label">Total Unit</td>
-            <td><input class="mba-doc-input" name="total_units" value="{{ prefill.get('total_units','') }}"></td>
+            <td><input type="text" class="mba-doc-input" name="total_units" value="{{ prefill.get('total_units','') }}"></td>
             <td class="mba-doc-label">Full Cost Centre String</td>
-            <td><input class="mba-doc-input" name="full_cost_centre_string" value="{{ prefill.get('full_cost_centre_string','') }}" required></td>
+            <td><input type="text" class="mba-doc-input" name="full_cost_centre_string" value="{{ prefill.get('full_cost_centre_string','') }}" required></td>
           </tr>
           <tr>
             <td class="mba-doc-label">Permanent Post Number</td>
-            <td><input class="mba-doc-input" name="permanent_post_number" value="{{ prefill.get('permanent_post_number','') }}"></td>
+            <td><input type="text" class="mba-doc-input" name="permanent_post_number" value="{{ prefill.get('permanent_post_number','') }}"></td>
             <td class="mba-doc-label">Total Budget for This Appointment</td>
-            <td><input class="mba-doc-input" name="total_budget_for_appointment" value="{{ prefill.get('total_budget_for_appointment','') }}"></td>
+            <td><input type="text" class="mba-doc-input" name="total_budget_for_appointment" value="{{ prefill.get('total_budget_for_appointment','') }}"></td>
           </tr>
           <tr>
             <td class="mba-doc-label">Conflict(s) of Interest</td>
@@ -330,10 +330,10 @@
                 {% if prefill.get('employee_signature_name_image') %}
                   <img class="mba-doc-signature-image" src="{{ prefill.get('employee_signature_name_image') }}" alt="Saved signature">
                 {% endif %}
-                <input class="mba-doc-input" name="employee_signature_name" value="{{ prefill.get('employee_signature_name','') }}" required>
+                <input type="text" class="mba-doc-input" name="employee_signature_name" value="{{ prefill.get('employee_signature_name','') }}" required>
               </div>
             </td>
-            <td><input class="mba-doc-input" value="{{ prefill.get('employee_signature_name','') }}" readonly></td>
+            <td><input type="text" class="mba-doc-input" value="{{ prefill.get('employee_signature_name','') }}" readonly></td>
             <td><input class="mba-doc-input" type="date" name="employee_signature_date" value="{{ prefill.get('employee_signature_date','') }}" required></td>
           </tr>
         </table>
@@ -362,33 +362,33 @@
           </tr>
           <tr>
             <td class="mba-doc-label">Employed at UJ</td>
-            <td><input class="mba-doc-input" value="{{ prefill.get('employed_at_uj','') }}" readonly></td>
+            <td><input type="text" class="mba-doc-input" value="{{ prefill.get('employed_at_uj','') }}" readonly></td>
             <td class="mba-doc-label">Employed Outside the UJ</td>
-            <td><input class="mba-doc-input" value="{{ prefill.get('employed_outside_uj','') }}" readonly></td>
+            <td><input type="text" class="mba-doc-input" value="{{ prefill.get('employed_outside_uj','') }}" readonly></td>
           </tr>
           <tr>
             <td class="mba-doc-label">Faculty / Division</td>
-            <td><input class="mba-doc-input" name="faculty_division" value="{{ prefill.get('faculty_division','') }}" required></td>
+            <td><input type="text" class="mba-doc-input" name="faculty_division" value="{{ prefill.get('faculty_division','') }}" required></td>
             <td class="mba-doc-label">Department / Unit / Centre</td>
-            <td><input class="mba-doc-input" name="department_unit_centre" value="{{ prefill.get('department_unit_centre','') }}" required></td>
+            <td><input type="text" class="mba-doc-input" name="department_unit_centre" value="{{ prefill.get('department_unit_centre','') }}" required></td>
           </tr>
           <tr>
             <td class="mba-doc-label">Employee Number</td>
-            <td><input class="mba-doc-input" name="employee_number" value="{{ prefill.get('employee_number','') }}"></td>
+            <td><input type="text" class="mba-doc-input" name="employee_number" value="{{ prefill.get('employee_number','') }}"></td>
             <td class="mba-doc-label">Month of Claim</td>
-            <td><input class="mba-doc-input" name="month_of_claim" value="{{ prefill.get('month_of_claim','') }}" required></td>
+            <td><input type="text" class="mba-doc-input" name="month_of_claim" value="{{ prefill.get('month_of_claim','') }}" required></td>
           </tr>
           <tr>
             <td class="mba-doc-label">Surname</td>
-            <td><input class="mba-doc-input" name="assessor_surname" value="{{ prefill.get('assessor_surname','') }}" required></td>
+            <td><input type="text" class="mba-doc-input" name="assessor_surname" value="{{ prefill.get('assessor_surname','') }}" required></td>
             <td class="mba-doc-label">Title</td>
-            <td><input class="mba-doc-input" name="assessor_title" value="{{ prefill.get('assessor_title','') }}" required></td>
+            <td><input type="text" class="mba-doc-input" name="assessor_title" value="{{ prefill.get('assessor_title','') }}" required></td>
           </tr>
           <tr>
             <td class="mba-doc-label">First Names</td>
-            <td><input class="mba-doc-input" name="assessor_first_names" value="{{ prefill.get('assessor_first_names','') }}" required></td>
+            <td><input type="text" class="mba-doc-input" name="assessor_first_names" value="{{ prefill.get('assessor_first_names','') }}" required></td>
             <td class="mba-doc-label">Cellphone / Mobile Number</td>
-            <td><input class="mba-doc-input" name="alternate_contact_number" value="{{ prefill.get('alternate_contact_number','') or prefill.get('assessor_contact','') }}"></td>
+            <td><input type="text" class="mba-doc-input" name="alternate_contact_number" value="{{ prefill.get('alternate_contact_number','') or prefill.get('assessor_contact','') }}"></td>
           </tr>
           <tr>
             <td class="mba-doc-label">Email Address</td>
@@ -398,7 +398,7 @@
           </tr>
           <tr>
             <td class="mba-doc-label">Requestor Extension</td>
-            <td><input class="mba-doc-input" name="requestor_extension" value="{{ prefill.get('requestor_extension','') }}"></td>
+            <td><input type="text" class="mba-doc-input" name="requestor_extension" value="{{ prefill.get('requestor_extension','') }}"></td>
             <td class="mba-doc-label">Appointed Against Permanent Position</td>
             <td>
               <select class="mba-doc-select" name="appointed_against_permanent_position">
@@ -411,9 +411,9 @@
           </tr>
           <tr>
             <td class="mba-doc-label">If yes, Position Number</td>
-            <td><input class="mba-doc-input" name="position_number" value="{{ prefill.get('position_number','') }}"></td>
+            <td><input type="text" class="mba-doc-input" name="position_number" value="{{ prefill.get('position_number','') }}"></td>
             <td class="mba-doc-label">Unit Basis</td>
-            <td><input class="mba-doc-input" name="claim_unit_basis" value="{{ prefill.get('claim_unit_basis','') }}"></td>
+            <td><input type="text" class="mba-doc-input" name="claim_unit_basis" value="{{ prefill.get('claim_unit_basis','') }}"></td>
           </tr>
         </table>
 
@@ -423,32 +423,32 @@
           </tr>
           <tr>
             <td class="mba-doc-label">Duration of Appointment</td>
-            <td><input class="mba-doc-input" value="START DATE: {{ prefill.get('appointment_start_date','') }}" readonly></td>
-            <td colspan="2"><input class="mba-doc-input" value="END DATE: {{ prefill.get('appointment_end_date','') }}" readonly></td>
+            <td><input type="text" class="mba-doc-input" value="START DATE: {{ prefill.get('appointment_start_date','') }}" readonly></td>
+            <td colspan="2"><input type="text" class="mba-doc-input" value="END DATE: {{ prefill.get('appointment_end_date','') }}" readonly></td>
           </tr>
           <tr>
             <td class="mba-doc-label">Appointed As</td>
-            <td colspan="3"><input class="mba-doc-input" value="{{ prefill.get('appointed_as','External Assessor') }}" readonly></td>
+            <td colspan="3"><input type="text" class="mba-doc-input" value="{{ prefill.get('appointed_as','External Assessor') }}" readonly></td>
           </tr>
           <tr>
             <td class="mba-doc-label">Unit</td>
-            <td><input class="mba-doc-input" name="claim_unit_basis" value="{{ prefill.get('claim_unit_basis','Per Hour') }}"></td>
+            <td><input type="text" class="mba-doc-input" name="claim_unit_basis" value="{{ prefill.get('claim_unit_basis','Per Hour') }}"></td>
             <td class="mba-doc-label">Other</td>
-            <td><input class="mba-doc-input" value="{{ prefill.get('other_rate_basis','') }}" readonly></td>
+            <td><input type="text" class="mba-doc-input" value="{{ prefill.get('other_rate_basis','') }}" readonly></td>
           </tr>
           <tr>
             <td class="mba-doc-label">Rate</td>
-            <td><input class="mba-doc-input" name="claim_rate" value="{{ prefill.get('claim_rate','') }}" required></td>
+            <td><input type="text" class="mba-doc-input" name="claim_rate" value="{{ prefill.get('claim_rate','') }}" required></td>
             <td class="mba-doc-label">Number of Hours Worked</td>
-            <td><input class="mba-doc-input" value="{{ prefill.get('actual_hours','') }}" readonly></td>
+            <td><input type="text" class="mba-doc-input" value="{{ prefill.get('actual_hours','') }}" readonly></td>
           </tr>
           <tr>
             <td class="mba-doc-label">Full Cost String</td>
-            <td colspan="3"><input class="mba-doc-input" value="{{ prefill.get('claim_cost_centre_number') or prefill.get('full_cost_centre_string','') }}" readonly></td>
+            <td colspan="3"><input type="text" class="mba-doc-input" value="{{ prefill.get('claim_cost_centre_number') or prefill.get('full_cost_centre_string','') }}" readonly></td>
           </tr>
           <tr>
             <td class="mba-doc-label">Total Budget for Appointment</td>
-            <td colspan="3"><input class="mba-doc-input" value="{{ prefill.get('total_budget_for_appointment','') }}" readonly></td>
+            <td colspan="3"><input type="text" class="mba-doc-input" value="{{ prefill.get('total_budget_for_appointment','') }}" readonly></td>
           </tr>
         </table>
 
@@ -458,27 +458,27 @@
           </tr>
           <tr>
             <td class="mba-doc-label">Contract EIT Number</td>
-            <td><input class="mba-doc-input" name="contract_eit_number" value="{{ prefill.get('contract_eit_number','') }}" required></td>
+            <td><input type="text" class="mba-doc-input" name="contract_eit_number" value="{{ prefill.get('contract_eit_number','') }}" required></td>
             <td class="mba-doc-label">Total Units</td>
-            <td><input class="mba-doc-input" name="claim_total_units" value="{{ prefill.get('claim_total_units','') }}" required></td>
+            <td><input type="text" class="mba-doc-input" name="claim_total_units" value="{{ prefill.get('claim_total_units','') }}" required></td>
           </tr>
           <tr>
             <td class="mba-doc-label">Rate</td>
-            <td><input class="mba-doc-input" value="{{ prefill.get('claim_rate','') }}" readonly></td>
+            <td><input type="text" class="mba-doc-input" value="{{ prefill.get('claim_rate','') }}" readonly></td>
             <td class="mba-doc-label">Currency</td>
-            <td><input class="mba-doc-input" name="claim_currency" value="{{ prefill.get('claim_currency','') }}" required></td>
+            <td><input type="text" class="mba-doc-input" name="claim_currency" value="{{ prefill.get('claim_currency','') }}" required></td>
           </tr>
           <tr>
             <td class="mba-doc-label">Amount Claimed</td>
-            <td><input class="mba-doc-input" name="amount_claimed" value="{{ prefill.get('amount_claimed','') }}" required></td>
+            <td><input type="text" class="mba-doc-input" name="amount_claimed" value="{{ prefill.get('amount_claimed','') }}" required></td>
             <td class="mba-doc-label">Claim Cost Centre Number</td>
-            <td><input class="mba-doc-input" name="claim_cost_centre_number" value="{{ prefill.get('claim_cost_centre_number','') }}" required></td>
+            <td><input type="text" class="mba-doc-input" name="claim_cost_centre_number" value="{{ prefill.get('claim_cost_centre_number','') }}" required></td>
           </tr>
           <tr>
             <td class="mba-doc-label">Total Claimed</td>
-            <td><input class="mba-doc-input" name="total_claimed" value="{{ prefill.get('total_claimed','') }}" required></td>
+            <td><input type="text" class="mba-doc-input" name="total_claimed" value="{{ prefill.get('total_claimed','') }}" required></td>
             <td class="mba-doc-label">Claim Rate Reference</td>
-            <td><input class="mba-doc-input" name="claim_rate" value="{{ prefill.get('claim_rate','') }}" readonly></td>
+            <td><input type="text" class="mba-doc-input" name="claim_rate" value="{{ prefill.get('claim_rate','') }}" readonly></td>
           </tr>
         </table>
 
@@ -488,27 +488,27 @@
           </tr>
           <tr>
             <td class="mba-doc-label">Status</td>
-            <td><input class="mba-doc-input" value="{{ prefill.get('bank_changed','') }}" readonly></td>
+            <td><input type="text" class="mba-doc-input" value="{{ prefill.get('bank_changed','') }}" readonly></td>
             <td class="mba-doc-label">Account Holder's Name</td>
-            <td><input class="mba-doc-input" value="{{ prefill.get('bank_account_holder','') }}" readonly></td>
+            <td><input type="text" class="mba-doc-input" value="{{ prefill.get('bank_account_holder','') }}" readonly></td>
           </tr>
           <tr>
             <td class="mba-doc-label">Bank Name</td>
-            <td><input class="mba-doc-input" value="{{ prefill.get('bank_name','') }}" readonly></td>
+            <td><input type="text" class="mba-doc-input" value="{{ prefill.get('bank_name','') }}" readonly></td>
             <td class="mba-doc-label">Branch Name</td>
-            <td><input class="mba-doc-input" value="{{ prefill.get('bank_branch_name','') }}" readonly></td>
+            <td><input type="text" class="mba-doc-input" value="{{ prefill.get('bank_branch_name','') }}" readonly></td>
           </tr>
           <tr>
             <td class="mba-doc-label">Branch Code</td>
-            <td><input class="mba-doc-input" value="{{ prefill.get('bank_branch_code','') }}" readonly></td>
+            <td><input type="text" class="mba-doc-input" value="{{ prefill.get('bank_branch_code','') }}" readonly></td>
             <td class="mba-doc-label">Account Number</td>
-            <td><input class="mba-doc-input" value="{{ prefill.get('bank_account_number','') }}" readonly></td>
+            <td><input type="text" class="mba-doc-input" value="{{ prefill.get('bank_account_number','') }}" readonly></td>
           </tr>
           <tr>
             <td class="mba-doc-label">Type of Account</td>
-            <td><input class="mba-doc-input" value="{{ prefill.get('bank_account_type','') }}" readonly></td>
+            <td><input type="text" class="mba-doc-input" value="{{ prefill.get('bank_account_type','') }}" readonly></td>
             <td class="mba-doc-label">Account Ownership</td>
-            <td><input class="mba-doc-input" value="{{ prefill.get('bank_account_ownership','') }}" readonly></td>
+            <td><input type="text" class="mba-doc-input" value="{{ prefill.get('bank_account_ownership','') }}" readonly></td>
           </tr>
         </table>
 
@@ -533,10 +533,10 @@
                 {% if prefill.get('claim_signature_name_image') %}
                   <img class="mba-doc-signature-image" src="{{ prefill.get('claim_signature_name_image') }}" alt="Saved signature">
                 {% endif %}
-                <input class="mba-doc-input" name="claim_signature_name" value="{{ prefill.get('claim_signature_name','') }}" required>
+                <input type="text" class="mba-doc-input" name="claim_signature_name" value="{{ prefill.get('claim_signature_name','') }}" required>
               </div>
             </td>
-            <td><input class="mba-doc-input" value="{{ prefill.get('claim_signature_name','') }}" readonly></td>
+            <td><input type="text" class="mba-doc-input" value="{{ prefill.get('claim_signature_name','') }}" readonly></td>
             <td><input class="mba-doc-input" type="date" name="claim_signature_date" value="{{ prefill.get('claim_signature_date','') }}" required></td>
           </tr>
         </table>
@@ -591,9 +591,9 @@
           </tr>
           <tr>
             <td class="mba-doc-label">Affiliation</td>
-            <td><input class="mba-doc-input" name="assessor_affiliation" value="{{ prefill.get('assessor_affiliation','') }}" required></td>
+            <td><input type="text" class="mba-doc-input" name="assessor_affiliation" value="{{ prefill.get('assessor_affiliation','') }}" required></td>
             <td class="mba-doc-label">Telephone number</td>
-            <td><input class="mba-doc-input" name="assessor_telephone_number" value="{{ prefill.get('assessor_telephone_number','') }}"></td>
+            <td><input type="tel" inputmode="tel" class="mba-doc-input" name="assessor_telephone_number" value="{{ prefill.get('assessor_telephone_number','') }}"></td>
           </tr>
           <tr>
             <td class="mba-doc-label">Street Address</td>
@@ -607,7 +607,7 @@
           </tr>
           <tr>
             <td class="mba-doc-label">Current university affiliation</td>
-            <td><input class="mba-doc-input" name="current_university_affiliation" value="{{ prefill.get('current_university_affiliation','') }}" required></td>
+            <td><input type="text" class="mba-doc-input" name="current_university_affiliation" value="{{ prefill.get('current_university_affiliation','') }}" required></td>
             <td class="mba-doc-label">International assessor</td>
             <td>
               <select class="mba-doc-select" name="international_assessor" required>

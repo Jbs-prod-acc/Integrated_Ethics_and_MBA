@@ -117,10 +117,10 @@ def export_forms_csv():
             form_b_records.append(proxy)
         
         # FormC query with optional year filter
-        form_c_query = db_session.query(FormC).filter(FormC.submission_date.isnot(None))
+        form_c_query = db_session.query(FormC).filter(FormC.submitted_at.isnot(None))
         if selected_year and selected_year != 'all':
-            form_c_query = form_c_query.filter(extract('year', FormC.submission_date) == int(selected_year))
-        form_c_records = form_c_query.order_by(FormC.submission_date.desc()).all()
+            form_c_query = form_c_query.filter(extract('year', FormC.submitted_at) == int(selected_year))
+        form_c_records = form_c_query.order_by(FormC.submitted_at.desc()).all()
         
        
         
@@ -187,11 +187,11 @@ def export_forms_csv():
                 'email': record.email_address or '',
                 'supervisor': record.supervisor_name or '',
                 'supervisor_email': record.supervisor_email or '',
-                'student_submission': remove_tz(record.submission_date) if record.submission_date else '',
+                'student_submission': remove_tz(record.submitted_at) if record.submitted_at else '',
                 'recommendation': record.recommendation or '',
                 'supervisor_date': remove_tz(record.supervisor_date) if record.supervisor_date else '',
                 'ethics_status': record.ethics_status or '',
-                'signature_date': remove_tz(record.signature_date) if record.signature_date else '',
+                'supervisor_signature_date': remove_tz(record.supervisor_signature_date) if record.supervisor_signature_date else '',
                 'review_supervisor_signature': record.review_supervisor_signature or '',
                 'review_recommendation': record.review_recommendation or '',
                 'review_date': record.review_date or '',
@@ -357,9 +357,9 @@ def export_agenda_csv():
     latest_form_c_subq = (
         db_session.query(
             FormC.user_id,
-            func.max(FormC.submission_date).label('latest_submission_date')
+            func.max(FormC.submitted_at).label('latest_submitted_at')
         )
-        .filter(FormC.submission_date.isnot(None))
+        .filter(FormC.submitted_at.isnot(None))
         .group_by(FormC.user_id)
         .subquery()
     )
@@ -394,7 +394,7 @@ def export_agenda_csv():
             latest_form_c_subq,
             and_(
                 FormC.user_id == latest_form_c_subq.c.user_id,
-                FormC.submission_date == latest_form_c_subq.c.latest_submission_date
+                FormC.submitted_at == latest_form_c_subq.c.latest_submitted_at
             )
         )
         .filter(FormC.certificate_issued.is_(None))
@@ -645,9 +645,9 @@ def export_reviewer_assignments_csv():
         latest_form_c_subq = (
             db_session.query(
                 FormC.user_id,
-                func.max(FormC.submission_date).label('latest_submission_date')
+                func.max(FormC.submitted_at).label('latest_submitted_at')
             )
-            .filter(FormC.submission_date.isnot(None))
+            .filter(FormC.submitted_at.isnot(None))
             .group_by(FormC.user_id)
             .subquery()
         )
@@ -658,25 +658,25 @@ def export_reviewer_assignments_csv():
                 FormC.applicant_name,
                 FormC.student_number,
                 FormC.email_address,
-                FormC.submission_date,
+                FormC.submitted_at,
                 FormC.certificate_issued
             )
             .join(
                 latest_form_c_subq,
                 and_(
                     FormC.user_id == latest_form_c_subq.c.user_id,
-                    FormC.submission_date == latest_form_c_subq.c.latest_submission_date
+                    FormC.submitted_at == latest_form_c_subq.c.latest_submitted_at
                 )
             )
-            .filter(FormC.submission_date.isnot(None))
+            .filter(FormC.submitted_at.isnot(None))
         )
         if selected_year and selected_year != 'all':
-            form_c_query = form_c_query.filter(extract('year', FormC.submission_date) == int(selected_year))
-        form_c_records = form_c_query.order_by(FormC.submission_date.desc()).all()
+            form_c_query = form_c_query.filter(extract('year', FormC.submitted_at) == int(selected_year))
+        form_c_records = form_c_query.order_by(FormC.submitted_at.desc()).all()
 
         process_records(form_a_records, 'Form A', 'applicant_name', 'student_number', 'email', 'submitted_at')
         process_records(form_b_records, 'Form B', 'applicant_name', 'student_number', 'email', 'submitted_at')
-        process_records(form_c_records, 'Form C', 'applicant_name', 'student_number', 'email_address', 'submission_date')
+        process_records(form_c_records, 'Form C', 'applicant_name', 'student_number', 'email_address', 'submitted_at')
 
         summary_rows = []
         for reviewer in reviewers:

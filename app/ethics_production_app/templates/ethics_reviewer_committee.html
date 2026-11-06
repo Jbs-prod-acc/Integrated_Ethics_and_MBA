@@ -616,7 +616,7 @@
             <td>{{formc.applicant_name}}</td>
             <td>{{formc.supervisor_name}}</td>
             <td>FORM C</td>
-            <td>{% if formc.declaration_date%}{{formc.declaration_date.strftime('%d/%m/%Y')}}{% elif formc.submission_date%}{{formc.submission_date.strftime('%d/%m/%Y')}}{% endif%}</td>
+            <td>{% if formc.declaration_date%}{{formc.declaration_date.strftime('%d/%m/%Y')}}{% elif formc.submitted_at%}{{formc.submitted_at.strftime('%d/%m/%Y')}}{% endif%}</td>
             <td>
               <span class="status-pill approved">{{ get_ethics_dashboard_status(formc) }}</span>
               <div hidden aria-hidden="true">

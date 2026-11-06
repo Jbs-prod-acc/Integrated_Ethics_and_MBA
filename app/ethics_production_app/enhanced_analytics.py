@@ -55,7 +55,7 @@ class AnalyticsDashboard:
         total_applications = len(df.drop_duplicates(subset=['id'])) if 'id' in df.columns else len(df)
         
         # Date column mapping based on form type
-        date_col = 'submitted_at' if form_type in ['A', 'B'] else 'submission_date'
+        date_col = 'submitted_at'
         if date_col in df.columns:
             df[date_col] = pd.to_datetime(df[date_col], errors='coerce')
             # Strip timezone to avoid comparison issues
@@ -194,7 +194,7 @@ class AnalyticsDashboard:
         if df.empty:
             return "<div>No data available</div>"
         
-        date_col = 'submitted_at' if form_type in ['A', 'B'] else 'submission_date'
+        date_col = 'submitted_at'
         
         if date_col not in df.columns:
             return "<div>Date column not found</div>"
@@ -280,7 +280,7 @@ class AnalyticsDashboard:
         
         # 2. Risk vs Processing Time Box Plot (if we have processing time data)
         if 'certificate_issued' in df.columns:
-            date_col = 'submitted_at' if form_type in ['A', 'B'] else 'submission_date'
+            date_col = 'submitted_at'
             if date_col in df.columns:
                 df[date_col] = pd.to_datetime(df[date_col], errors='coerce')
                 df['certificate_issued'] = pd.to_datetime(df['certificate_issued'], errors='coerce')
@@ -310,7 +310,7 @@ class AnalyticsDashboard:
             )
         
         # 4. Risk Trend Over Time
-        date_col = 'submitted_at' if form_type in ['A', 'B'] else 'submission_date'
+        date_col = 'submitted_at'
         if date_col in df.columns:
             df[date_col] = pd.to_datetime(df[date_col], errors='coerce')
             # Strip timezone if present
@@ -334,7 +334,7 @@ class AnalyticsDashboard:
         if df.empty:
             return "<div>No data available</div>"
 
-        submit_col = 'submitted_at' if form_type in ['A', 'B'] else 'submission_date'
+        submit_col = 'submitted_at'
         if submit_col not in df.columns and 'submitted_at' in df.columns:
             submit_col = 'submitted_at'
         if submit_col not in df.columns:
@@ -470,7 +470,7 @@ class AnalyticsDashboard:
         # Work on a copy to avoid SettingWithCopyWarning
         df_copy = df.copy()
         df_copy[date_col] = pd.to_datetime(df_copy[date_col], errors='coerce')
-        submit_col = 'submitted_at' if form_type in ['A', 'B'] else 'submission_date'
+        submit_col = 'submitted_at'
         
         if submit_col not in df_copy.columns:
             return 0

@@ -26,11 +26,11 @@
           </colgroup>
           <tr>
             <td class="mba-doc-label">Course</td>
-            <td><input class="mba-doc-input" name="course_name" value="{{ prefill.get('course_name','') }}" required></td>
+            <td><input type="text" class="mba-doc-input" name="course_name" value="{{ prefill.get('course_name','') }}" required></td>
           </tr>
           <tr>
             <td class="mba-doc-label">Module</td>
-            <td><input class="mba-doc-input" name="module_title" value="{{ prefill.get('module_title','') }}" required></td>
+            <td><input type="text" class="mba-doc-input" name="module_title" value="{{ prefill.get('module_title','') }}" required></td>
           </tr>
           <tr>
             <td class="mba-doc-label">Assessment</td>
@@ -38,7 +38,7 @@
           </tr>
           <tr>
             <td class="mba-doc-label">Lecturer</td>
-            <td><input class="mba-doc-input" name="lecturer_name" value="{{ prefill.get('lecturer_name','') }}"></td>
+            <td><input type="text" class="mba-doc-input" name="lecturer_name" value="{{ prefill.get('lecturer_name','') }}"></td>
           </tr>
           <tr>
             <td class="mba-doc-label">Due Date</td>
@@ -60,9 +60,9 @@
             <th>SIGNATURE</th>
           </tr>
           <tr>
-            <td><input class="mba-doc-input" name="full_name" value="{{ prefill.get('full_name','') }}" required></td>
-            <td><input class="mba-doc-input" name="student_number" value="{{ prefill.get('student_number','') }}" required></td>
-            <td><input class="mba-doc-input" name="signature_name" value="{{ prefill.get('signature_name','') }}" required></td>
+            <td><input type="text" class="mba-doc-input" name="full_name" value="{{ prefill.get('full_name','') }}" required></td>
+            <td><input type="text" class="mba-doc-input" name="student_number" value="{{ prefill.get('student_number','') }}" required></td>
+            <td><input type="text" class="mba-doc-input" name="signature_name" value="{{ prefill.get('signature_name','') }}" required></td>
           </tr>
         </table>
 

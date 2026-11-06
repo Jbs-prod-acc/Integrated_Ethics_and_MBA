@@ -104,7 +104,7 @@
             <td>{{form.full_name}}</td>
             <td>{{form.supervisor_name}}</td>
             <td>{{form_name}}</td>
-            <td>{% if form.declaration_date%}{{form.declaration_date.strftime('%d/%m/%Y')}}{% elif form.submission_date%}{{form.submission_date.strftime('%d/%m/%Y')}}{% endif%}</td>
+            <td>{% if form.declaration_date%}{{form.declaration_date.strftime('%d/%m/%Y')}}{% elif form.submitted_at%}{{form.submitted_at.strftime('%d/%m/%Y')}}{% endif%}</td>
             <td>
             <span class="status-pill approved">{{ get_ethics_dashboard_status(form) }}</span>
             <span hidden aria-hidden="true">

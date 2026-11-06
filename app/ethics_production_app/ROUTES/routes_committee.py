@@ -107,7 +107,7 @@ def chair_dashboard():
     .filter(FormB.submitted_at != None)
     .all())
     submitted_form_c = (db_session.query(FormC)
-    .filter(FormC.submission_date != None)
+    .filter(FormC.submitted_at != None)
     .all())
 
     today = date.today()
@@ -470,8 +470,8 @@ def chair_formb_view(id):
 def chair_formc_view(id):
     form = (
         db_session.query(FormC)
-        .filter(FormC.user_id==id and FormC.submission_date != None,FormC.submitted_to_admin==True)
-        .order_by(desc(FormC.submission_date))
+        .filter(FormC.user_id==id and FormC.submitted_at != None,FormC.submitted_to_admin==True)
+        .order_by(desc(FormC.submitted_at))
         .all())
     form_name="FORM C"
     
@@ -485,7 +485,7 @@ def chair_form_view_fixed(user_id):
     # Query all forms for the user
     form_a_list = db_session.query(FormA).filter_by(user_id=user_id).order_by(FormA.submitted_at.desc()).all()
     form_b_list = db_session.query(FormB).filter_by(user_id=user_id).order_by(FormB.submitted_at.desc()).all()
-    form_c_list = db_session.query(FormC).filter_by(user_id=user_id).order_by(FormC.submission_date.desc()).all()
+    form_c_list = db_session.query(FormC).filter_by(user_id=user_id).order_by(FormC.submitted_at.desc()).all()
 
     user = db_session.query(User).filter_by(user_id=user_id).first()
     user_name = user.full_name if user else "Unknown"
@@ -555,7 +555,7 @@ def student_view_feedback(id):
 def supervisor_view_feedback(id):
     form = None
     for model in [FormA, FormB, FormC]:
-        order_field = getattr(model, "submitted_at", getattr(model, "submission_date", None))
+        order_field = getattr(model, "submitted_at", None)
         if not order_field:
             continue
         form = (
@@ -581,7 +581,7 @@ def ethics_view_feedback(id):
     form = None
     for model in [FormA, FormB, FormC]:
         # pick whichever timestamp column the model has
-        order_field = getattr(model, "submitted_at", getattr(model, "submission_date", None))
+        order_field = getattr(model, "submitted_at", None)
         if not order_field:
             continue  # skip if model doesn't have a timestamp field
 
@@ -1144,7 +1144,7 @@ def chair_form_view(id,form_name):
         if formc:
             latest_formc = db_session.query(FormC) \
             .filter(FormC.user_id == formc.user_id) \
-            .order_by(FormC.submission_date.asc()) \
+            .order_by(FormC.submitted_at.asc()) \
             .first()
             Assigned_reviewer=db_session.query(User).filter(User.user_id.in_([latest_formc.reviewer_name1, latest_formc.reviewer_name2])).all()
             
@@ -1482,13 +1482,13 @@ def ethics_reviewer_committee_form_c():
     # Subquery to get latest submission per user
     latest_formC_subq = db_session.query(
         FormC.user_id,
-        func.max(FormC.submission_date).label('latest_submission_date')
+        func.max(FormC.submitted_at).label('latest_submitted_at')
     )
     if filter_applied:
-        latest_formC_subq = latest_formC_subq.filter(FormC.submission_date.isnot(None))
+        latest_formC_subq = latest_formC_subq.filter(FormC.submitted_at.isnot(None))
     else:
         latest_formC_subq = latest_formC_subq.filter(
-            FormC.submission_date.isnot(None),
+            FormC.submitted_at.isnot(None),
             or_(
                 FormC.submitted_to_admin == True,
                 FormC.submitted_to_reviewers == True
@@ -1496,17 +1496,17 @@ def ethics_reviewer_committee_form_c():
         )
     if year_param and month_param:
         latest_formC_subq = latest_formC_subq.filter(
-            extract('year', FormC.submission_date) == int(year_param),
-            func.to_char(FormC.submission_date, 'YYYY-MM') == month_param
+            extract('year', FormC.submitted_at) == int(year_param),
+            func.to_char(FormC.submitted_at, 'YYYY-MM') == month_param
         )
     latest_formC_subq = latest_formC_subq.group_by(FormC.user_id).subquery()
 
     # Join to only get latest per user
     query = base_query.join(
         latest_formC_subq,
-        (FormC.user_id == latest_formC_subq.c.user_id) & (FormC.submission_date == latest_formC_subq.c.latest_submission_date)
+        (FormC.user_id == latest_formC_subq.c.user_id) & (FormC.submitted_at == latest_formC_subq.c.latest_submitted_at)
     )
-    supervisor_formC = query.order_by(FormC.user_id, FormC.submission_date.desc()).all()
+    supervisor_formC = query.order_by(FormC.user_id, FormC.submitted_at.desc()).all()
     today = date.today()
     return render_template('ethics_reviewer_committee.html', today=today, submitted_form_c=supervisor_formC, filter_applied=filter_applied)
 
@@ -1681,7 +1681,7 @@ def chair_landing():
     latest_formc_subq = (
         db_session.query(
             FormC.user_id.label('user_id'),
-            func.max(func.coalesce(FormC.submission_date, FormC.created_at)).label('latest_date')
+            func.max(func.coalesce(FormC.submitted_at, FormC.created_at)).label('latest_date')
         )
         .group_by(FormC.user_id)
         .subquery()
@@ -1691,7 +1691,7 @@ def chair_landing():
             latest_formc_subq,
             and_(
                 FormC.user_id == latest_formc_subq.c.user_id,
-                func.coalesce(FormC.submission_date, FormC.created_at) == latest_formc_subq.c.latest_date
+                func.coalesce(FormC.submitted_at, FormC.created_at) == latest_formc_subq.c.latest_date
             )
         ).filter(
             or_(
@@ -1700,12 +1700,12 @@ def chair_landing():
             )
         )
     if year_filter:
-        formC_query = formC_query.filter(func.extract('year', func.coalesce(FormC.submission_date, FormC.created_at)) == year_filter)
-    formCs = formC_query.order_by(FormC.user_id, func.coalesce(FormC.submission_date, FormC.created_at).desc()).all()
+        formC_query = formC_query.filter(func.extract('year', func.coalesce(FormC.submitted_at, FormC.created_at)) == year_filter)
+    formCs = formC_query.order_by(FormC.user_id, func.coalesce(FormC.submitted_at, FormC.created_at).desc()).all()
 
     forms_by_yearC = defaultdict(lambda: defaultdict(list))
     for form, count in formCs:
-        timestamp = form.submission_date if form.submission_date else form.created_at
+        timestamp = form.submitted_at if form.submitted_at else form.created_at
         year = timestamp.year
         month = timestamp.strftime("%Y-%m")
         status = 'reviewers' if getattr(form, 'submitted_to_reviewers', False) else 'admin'
@@ -2036,8 +2036,6 @@ def review_version(user_id,form_name):
         # Pick the correct date field for ordering
         if hasattr(model, "submitted_at"):
             query = query.order_by(model.submitted_at.desc())
-        elif hasattr(model, "submission_date"):
-            query = query.order_by(model.submission_date.desc())
 
         form = query.all()
 
@@ -2143,9 +2141,9 @@ def review_dashboard():
     latest_form_c_subq = (
         db_session.query(
             FormC.user_id.label('user_id'),
-            func.max(FormC.submission_date).label('latest_submission_date')
+            func.max(FormC.submitted_at).label('latest_submitted_at')
         )
-        .filter(FormC.submission_date.isnot(None))
+        .filter(FormC.submitted_at.isnot(None))
         .group_by(FormC.user_id)
         .subquery()
     )
@@ -2156,7 +2154,7 @@ def review_dashboard():
             latest_form_c_subq,
             and_(
                 FormC.user_id == latest_form_c_subq.c.user_id,
-                FormC.submission_date == latest_form_c_subq.c.latest_submission_date
+                FormC.submitted_at == latest_form_c_subq.c.latest_submitted_at
             )
         )
         .join(User, FormC.user_id == User.user_id)
@@ -2167,7 +2165,7 @@ def review_dashboard():
                 FormC.reviewer_name2 == user_id
             )
         )
-        .order_by(FormC.submission_date.desc())
+        .order_by(FormC.submitted_at.desc())
         .all()
     )
 
@@ -2870,7 +2868,7 @@ def ethics_reviewer_committee_forms(id,form_name):
         
         Assigned_reviewer=''
         if formc:
-            id_of_reviewers = get_reviewers_for_ethics_assignment(formc, FormC, FormC.submission_date)
+            id_of_reviewers = get_reviewers_for_ethics_assignment(formc, FormC, FormC.submitted_at)
             if id_of_reviewers:
                 Assigned_reviewer = db_session.query(User).filter(User.user_id.in_(id_of_reviewers)).all()
  
@@ -3025,7 +3023,7 @@ def supervisor_dashboard():
         proxy.declaration_date = result.declaration_date
         formB.append(proxy)
     
-    formC = db_session.query(FormC).filter(FormC.submission_date != None).order_by(FormC.submission_date.desc()).limit(5).all()
+    formC = db_session.query(FormC).filter(FormC.submitted_at != None).order_by(FormC.submitted_at.desc()).limit(5).all()
     
  
     # Query FormA and its FormARequirements for supervisor's users - SIMPLIFIED
@@ -3089,8 +3087,8 @@ def supervisor_dashboard():
         db_session.query(FormC, FormARequirements)
         .join(User, FormC.user_id == User.user_id)
         .outerjoin(FormARequirements, FormARequirements.user_id == FormC.user_id)
-        .filter(User.supervisor_id == supervisor_id, FormC.submission_date != None)
-        .order_by(FormC.user_id, FormC.submission_date.desc())
+        .filter(User.supervisor_id == supervisor_id, FormC.submitted_at != None)
+        .order_by(FormC.user_id, FormC.submitted_at.desc())
         .all()
     )
     
@@ -3223,7 +3221,7 @@ def supervisor_dashboard_previous_forms(user_id):
         .join(User, FormC.user_id == User.user_id) \
         .outerjoin(FormARequirements, FormARequirements.user_id == FormC.user_id) \
         .filter(FormC.user_id==user_id) \
-        .order_by(FormC.submission_date.desc()) \
+        .order_by(FormC.submitted_at.desc()) \
         .all()
     
     return render_template("supervisor_form_version_control.html",supervisor_role=supervisor_role,formA=formA,formB=formB,formC=formC,supervisor_formA=supervisor_formA,supervisor_formB=supervisor_formB,supervisor_formC=supervisor_formC)

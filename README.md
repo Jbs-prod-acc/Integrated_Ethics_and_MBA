@@ -30,12 +30,19 @@ pip install -r requirements.txt
 
 Set `DATABASE_URL` in `.env` for the MBA app and `ETHICS_DATABASE_URL` for the mounted ethics app. For local development, SQLite paths work fine. Do not commit `.env`.
 
-Initialize or update the database:
+Initialize a fresh database from the current models, apply the idempotent
+support DDL, and record all current migration heads:
 
 ```powershell
-flask --app run.py db upgrade
+flask --app run.py init-db
 flask --app run.py sync-db
+flask --app run.py db stamp heads
 ```
+
+For an existing database that already has an Alembic version, review the
+pending revisions before running `flask --app run.py db upgrade heads`. Do not
+run `db upgrade` first against an empty database: the historical migration
+chain contains incremental revisions that assume model tables already exist.
 
 Create starter admin accounts:
 

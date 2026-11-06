@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from flask import request, url_for
+from flask import g, request, url_for
 from flask_login import current_user
 from werkzeug.routing import BuildError
 
@@ -13,6 +13,7 @@ from .mba.route_support import (
     effective_supervisor_invitation_status,
     project_has_active_corrections,
     project_corrections_status,
+    mba_profile_missing_fields,
 )
 
 
@@ -23,6 +24,20 @@ def inject_auth_flags_factory(app):
                 return url_for("mba.profile")
             except BuildError:
                 return "/mba/profile"
+
+        def mba_profile_gate_state():
+            if hasattr(g, "mba_profile_gate_state"):
+                return g.mba_profile_gate_state
+            state = {"locked": False, "missing_fields": [], "missing_count": 0}
+            if current_user.is_authenticated and getattr(current_user, "system_name", None) == "mba":
+                missing_fields = mba_profile_missing_fields(current_user)
+                state = {
+                    "locked": bool(missing_fields),
+                    "missing_fields": missing_fields,
+                    "missing_count": len(missing_fields),
+                }
+            g.mba_profile_gate_state = state
+            return state
 
         def mba_edit_project_url(project_id):
             try:
@@ -189,6 +204,7 @@ def inject_auth_flags_factory(app):
             ),
             "asset_version": asset_version,
             "mba_profile_url": mba_profile_url,
+            "mba_profile_gate_state": mba_profile_gate_state,
             "mba_edit_project_url": mba_edit_project_url,
             "mba_submit_project_title_url": mba_submit_project_title_url,
             "mba_corrections_nav": mba_corrections_nav,

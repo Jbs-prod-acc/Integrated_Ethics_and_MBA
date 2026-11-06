@@ -1219,7 +1219,7 @@ def form_c_supervisor(form_id):
     ##
     ## check the user id and form id trace back the error
     ##
-    form = db_session.query(FormC).filter_by(form_id=form_id).order_by(FormC.submission_date.desc()).first()
+    form = db_session.query(FormC).filter_by(form_id=form_id).order_by(FormC.submitted_at.desc()).first()
     if not form:
         return "Form not found", 404
     if not can_access_form(get_current_user(), form):
@@ -1444,7 +1444,7 @@ def reject_or_Accept_form_c(id):
         return jsonify({'error': 'Unauthorized'}), 401
     
     try:
-        formc = db_session.query(FormC).filter_by(form_id=id).order_by(FormC.submission_date.desc()).first()
+        formc = db_session.query(FormC).filter_by(form_id=id).order_by(FormC.submitted_at.desc()).first()
     except ValueError as e:
         # Handle corrupted date data in database
         app.logger.error(f"Date parsing error for form {id}: {e}")
@@ -1483,7 +1483,7 @@ def reject_or_Accept_form_c(id):
             formc.supervisor_feedback=supervisor_feedback
             formc.recommendation=recommendation
             formc.supervisor_signature=supervisor_signature
-            formc.signature_date=signature_date
+            formc.supervisor_signature_date = signature_date
             formc.rejected_or_accepted=True
             formc.submitted_to_admin=True
             #Uncomment the code bellow for testing
@@ -1507,7 +1507,7 @@ def reject_or_Accept_form_c(id):
             formc.form_supervisor_status=reject
             formc.recommendation=recommendation
             formc.supervisor_signature=None
-            formc.signature_date=None
+            formc.supervisor_signature_date = None
             formc.rejected_or_accepted=False
             try:
                 message=f' Form belonging to {formc.applicant_name} has been reviewed and returned back to you. Please login to view the feedback.' 
@@ -1658,7 +1658,7 @@ def form_c_sec4():
             form.declaration_name = request.form.get('declaration_name')
             form.full_name = request.form.get('full_name')
             form.submitted = True
-            form.submission_date = datetime.now()
+            form.submitted_at = datetime.now()
 
             db_session.add(form)
             db_session.commit()
@@ -3520,7 +3520,7 @@ def student_edit_formc():
 
     user = db_session.query(User).filter(User.user_id == user_id).first()
     supervisor=db_session.query(User).filter(User.user_id == user.supervisor_id).first()
-    form = db_session.query(FormC).filter_by(user_id=user_id).order_by(FormC.submission_date.desc().nullslast(), FormC.created_at.desc().nullslast()).first()
+    form = db_session.query(FormC).filter_by(user_id=user_id).order_by(FormC.submitted_at.desc().nullslast(), FormC.created_at.desc().nullslast()).first()
 
     locked_response = redirect_if_student_form_locked(form, 'Form C')
     if locked_response:
@@ -3529,8 +3529,8 @@ def student_edit_formc():
         print("[DEBUG] FormC POST request received")
         declaration_name = (request.form.get('declaration_name') or request.form.get('applicant_name')).strip()
         full_name = (request.form.get('full_name') or request.form.get('applicant_name')).strip()
-        submission_date = request.form.get('submission_date')
-        print(f"[DEBUG] declaration_name: {declaration_name}, full_name: {full_name}, submission_date: {submission_date}")
+        submitted_at = request.form.get('submitted_at')
+        print(f"[DEBUG] declaration_name: {declaration_name}, full_name: {full_name}, submitted_at: {submitted_at}")
         if not declaration_name or not full_name:
             print("[DEBUG] Declaration fields missing, redirecting.")
             flash('Declaration section must be completed to submit the form', 'warning')
@@ -3538,7 +3538,7 @@ def student_edit_formc():
         # Update existing form instance
         if not form:
             form = FormC(user_id=user_id)
-            inherit_previous_reviewers(form, FormC, user_id, FormC.submission_date)
+            inherit_previous_reviewers(form, FormC, user_id, FormC.submitted_at)
             db_session.add(form)
             print("[DEBUG] FormC instance created and added to session.")
         try:
@@ -3595,7 +3595,7 @@ def student_edit_formc():
             form.exemption_reason=request.form.get('exemption_reason')
             form.declaration_name=declaration_name
             form.full_name=full_name
-            form.submission_date=get_local_time()
+            form.submitted_at=get_local_time()
             form.submitted = True
             form.rejected_or_accepted = False
             was_in_corrections = is_student_correction_state(form)
@@ -3641,15 +3641,15 @@ def student_continue_formc():
     
     form = db_session.query(FormC).filter(
         FormC.user_id == user_id,
-        FormC.submission_date.is_(None)
+        FormC.submitted_at.is_(None)
     ).order_by(FormC.created_at.desc().nullslast()).first()
 
     if form is None:
-        form = db_session.query(FormC).filter_by(user_id=user_id).order_by(FormC.submission_date.desc().nullslast(), FormC.created_at.desc().nullslast()).first()
+        form = db_session.query(FormC).filter_by(user_id=user_id).order_by(FormC.submitted_at.desc().nullslast(), FormC.created_at.desc().nullslast()).first()
 
     if form is None:
         form = FormC(user_id=user_id)
-        inherit_previous_reviewers(form, FormC, user_id, FormC.submission_date)
+        inherit_previous_reviewers(form, FormC, user_id, FormC.submitted_at)
         db_session.add(form)
 
     locked_response = redirect_if_student_form_locked(form, 'Form C')
@@ -3765,7 +3765,7 @@ def submit_form_c(form_id):
         # Fallback to the latest unsubmitted draft for this user.
         form = (
             db_session.query(FormC)
-            .filter(FormC.user_id == user_id, FormC.submission_date.is_(None))
+            .filter(FormC.user_id == user_id, FormC.submitted_at.is_(None))
             .order_by(FormC.created_at.desc())
             .first()
         )
@@ -3780,7 +3780,7 @@ def submit_form_c(form_id):
     if request.method=="POST":
         declaration_name=request.form.get('declaration_name')
         full_name=request.form.get('full_name')
-        submission_date=get_local_time()
+        submitted_at=get_local_time()
         
         # Validate Section 4 (Declaration) is complete
         if not (declaration_name and full_name):
@@ -3855,7 +3855,7 @@ def submit_form_c(form_id):
             # Section 4 - Mark as submitted
             form.declaration_name = declaration_name
             form.full_name = full_name
-            form.submission_date = submission_date
+            form.submitted_at = submitted_at
             form.submitted = True
             form.rejected_or_accepted = False
             was_in_corrections = is_student_correction_state(form)

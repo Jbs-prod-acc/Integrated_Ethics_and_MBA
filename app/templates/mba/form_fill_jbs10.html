@@ -14,7 +14,7 @@
     {% if prefill.get(name ~ '_image') %}
       <img class="mba-doc-signature-image" src="{{ prefill.get(name ~ '_image') }}" alt="Saved signature">
     {% endif %}
-    <input class="mba-doc-input" name="{{ name }}" value="{{ value or '' }}" {% if not editable %}readonly{% endif %} {% if required %}required{% endif %}>
+    <input type="text" class="mba-doc-input" name="{{ name }}" value="{{ value or '' }}" {% if not editable %}readonly{% endif %} {% if required %}required{% endif %}>
   </div>
 {%- endmacro %}
 {% set current_study_type = prefill.get('study_type', 'Capstone Project') %}
@@ -60,15 +60,15 @@
           </tr>
           <tr>
             <td class="mba-doc-label">Surname:</td>
-            <td colspan="3"><input class="mba-doc-input" name="surname" value="{{ prefill.get('surname', '') }}" {% if content_locked %}readonly{% endif %}></td>
+            <td colspan="3"><input type="text" class="mba-doc-input" name="surname" value="{{ prefill.get('surname', '') }}" {% if content_locked %}readonly{% endif %}></td>
             <td class="mba-doc-label">Title:</td>
-            <td colspan="6"><input class="mba-doc-input" name="student_title" value="{{ prefill.get('student_title', '') }}" {% if content_locked %}readonly{% endif %}></td>
+            <td colspan="6"><input type="text" class="mba-doc-input" name="student_title" value="{{ prefill.get('student_title', '') }}" {% if content_locked %}readonly{% endif %}></td>
           </tr>
           <tr>
             <td class="mba-doc-label">Initials(s):</td>
-            <td colspan="2"><input class="mba-doc-input" name="student_initials" value="{{ prefill.get('student_initials', '') }}" {% if content_locked %}readonly{% endif %}></td>
+            <td colspan="2"><input type="text" class="mba-doc-input" name="student_initials" value="{{ prefill.get('student_initials', '') }}" {% if content_locked %}readonly{% endif %}></td>
             <td class="mba-doc-label" colspan="2">Student number:</td>
-            <td colspan="2"><input class="mba-doc-input" name="student_number" value="{{ prefill.get('student_number', '') }}" required {% if content_locked %}readonly{% endif %}></td>
+            <td colspan="2"><input type="text" class="mba-doc-input" name="student_number" value="{{ prefill.get('student_number', '') }}" required {% if content_locked %}readonly{% endif %}></td>
             <td class="mba-doc-label" colspan="3">Is this student a UJ staff member?</td>
             <td class="jbs10-doc-choice-cell">
               <label><span>Yes</span><input type="radio" name="student_is_staff_member" value="Yes" {% if current_staff == 'yes' %}checked{% endif %} {% if content_locked %}disabled{% endif %}></label>
@@ -77,11 +77,11 @@
           </tr>
           <tr>
             <td class="mba-doc-label" colspan="3">Qualification (e.g. MBA):</td>
-            <td colspan="8"><input class="mba-doc-input" name="qualification" value="{{ prefill.get('qualification', '') }}" {% if content_locked %}readonly{% endif %}></td>
+            <td colspan="8"><input type="text" class="mba-doc-input" name="qualification" value="{{ prefill.get('qualification', '') }}" {% if content_locked %}readonly{% endif %}></td>
           </tr>
           <tr>
             <td class="mba-doc-label" colspan="3">Ethical clearance number:</td>
-            <td colspan="8"><input class="mba-doc-input" name="ethical_clearance_number" value="{{ prefill.get('ethical_clearance_number', '') }}" {% if content_locked %}readonly{% endif %}></td>
+            <td colspan="8"><input type="text" class="mba-doc-input" name="ethical_clearance_number" value="{{ prefill.get('ethical_clearance_number', '') }}" {% if content_locked %}readonly{% endif %}></td>
           </tr>
           <tr>
             <td class="mba-doc-label">Capstone project</td>
@@ -145,36 +145,36 @@
           </tr>
           <tr>
             <td class="mba-doc-label">Supervisor:<br><span class="jbs10-doc-small">Title, initials, surname, affiliation</span></td>
-            <td colspan="2"><input class="mba-doc-input" name="supervisor_name" value="{{ prefill.get('supervisor_name', prefill.get('proposed_supervisor', '')) }}" {% if content_locked %}readonly{% endif %}></td>
+            <td colspan="2"><input type="text" class="mba-doc-input" name="supervisor_name" value="{{ prefill.get('supervisor_name', prefill.get('proposed_supervisor', '')) }}" {% if content_locked %}readonly{% endif %}></td>
             <td class="mba-doc-label">Staff number:</td>
-            <td colspan="2"><input class="mba-doc-input" name="supervisor_staff_number" value="{{ prefill.get('supervisor_staff_number', '') }}" {% if content_locked %}readonly{% endif %}></td>
+            <td colspan="2"><input type="text" class="mba-doc-input" name="supervisor_staff_number" value="{{ prefill.get('supervisor_staff_number', '') }}" {% if content_locked %}readonly{% endif %}></td>
           </tr>
           <tr>
             <td class="mba-doc-label">Co-supervisor I:<br><span class="jbs10-doc-small">Title, initials, surname, affiliation</span></td>
-            <td colspan="2"><input class="mba-doc-input" name="co_supervisor_1" value="{{ prefill.get('co_supervisor_1', '') }}" {% if content_locked %}readonly{% endif %}></td>
+            <td colspan="2"><input type="text" class="mba-doc-input" name="co_supervisor_1" value="{{ prefill.get('co_supervisor_1', '') }}" {% if content_locked %}readonly{% endif %}></td>
             <td class="mba-doc-label">Staff number:</td>
-            <td colspan="2"><input class="mba-doc-input" name="co_supervisor_1_staff_number" value="{{ prefill.get('co_supervisor_1_staff_number', '') }}" {% if content_locked %}readonly{% endif %}></td>
+            <td colspan="2"><input type="text" class="mba-doc-input" name="co_supervisor_1_staff_number" value="{{ prefill.get('co_supervisor_1_staff_number', '') }}" {% if content_locked %}readonly{% endif %}></td>
           </tr>
           <tr>
             <td class="mba-doc-label">Co-supervisor II:<br><span class="jbs10-doc-small">Title, initials, surname, affiliation</span></td>
-            <td colspan="2"><input class="mba-doc-input" name="co_supervisor_2" value="{{ prefill.get('co_supervisor_2', '') }}" {% if content_locked %}readonly{% endif %}></td>
+            <td colspan="2"><input type="text" class="mba-doc-input" name="co_supervisor_2" value="{{ prefill.get('co_supervisor_2', '') }}" {% if content_locked %}readonly{% endif %}></td>
             <td class="mba-doc-label">Staff number:</td>
-            <td colspan="2"><input class="mba-doc-input" name="co_supervisor_2_staff_number" value="{{ prefill.get('co_supervisor_2_staff_number', '') }}" {% if content_locked %}readonly{% endif %}></td>
+            <td colspan="2"><input type="text" class="mba-doc-input" name="co_supervisor_2_staff_number" value="{{ prefill.get('co_supervisor_2_staff_number', '') }}" {% if content_locked %}readonly{% endif %}></td>
           </tr>
           <tr>
             <th colspan="6">C2: Amendment of supervisor/s<br><span class="jbs10-doc-small">(Also complete section C1 by indicating who the approved supervisor(s) previously were)</span></th>
           </tr>
           <tr>
             <td class="mba-doc-label">Amended supervisor:<br><span class="jbs10-doc-small">Title, initials, surname, affiliation</span></td>
-            <td colspan="2"><input class="mba-doc-input" name="amended_supervisor_lineup" value="{{ prefill.get('amended_supervisor_lineup', prefill.get('amended_supervisor', '')) }}" {% if content_locked %}readonly{% endif %}></td>
+            <td colspan="2"><input type="text" class="mba-doc-input" name="amended_supervisor_lineup" value="{{ prefill.get('amended_supervisor_lineup', prefill.get('amended_supervisor', '')) }}" {% if content_locked %}readonly{% endif %}></td>
             <td class="mba-doc-label">Staff number:</td>
-            <td colspan="2"><input class="mba-doc-input" name="amended_supervisor_staff_number" value="{{ prefill.get('amended_supervisor_staff_number', '') }}" {% if content_locked %}readonly{% endif %}></td>
+            <td colspan="2"><input type="text" class="mba-doc-input" name="amended_supervisor_staff_number" value="{{ prefill.get('amended_supervisor_staff_number', '') }}" {% if content_locked %}readonly{% endif %}></td>
           </tr>
           <tr>
             <td class="mba-doc-label">Amended co-supervisor:<br><span class="jbs10-doc-small">Title, initials, surname, affiliation</span></td>
-            <td colspan="2"><input class="mba-doc-input" name="amended_co_supervisor_lineup" value="{{ prefill.get('amended_co_supervisor_lineup', prefill.get('amended_co_supervisors', '')) }}" {% if content_locked %}readonly{% endif %}></td>
+            <td colspan="2"><input type="text" class="mba-doc-input" name="amended_co_supervisor_lineup" value="{{ prefill.get('amended_co_supervisor_lineup', prefill.get('amended_co_supervisors', '')) }}" {% if content_locked %}readonly{% endif %}></td>
             <td class="mba-doc-label">Staff number:</td>
-            <td colspan="2"><input class="mba-doc-input" name="amended_co_supervisor_staff_number" value="{{ prefill.get('amended_co_supervisor_staff_number', '') }}" {% if content_locked %}readonly{% endif %}></td>
+            <td colspan="2"><input type="text" class="mba-doc-input" name="amended_co_supervisor_staff_number" value="{{ prefill.get('amended_co_supervisor_staff_number', '') }}" {% if content_locked %}readonly{% endif %}></td>
           </tr>
           <tr>
             <th class="mba-doc-section-title" colspan="6">SECTION D: Nomination/Amendment of assessors</th>
@@ -184,7 +184,7 @@
           </tr>
           <tr>
             <td class="mba-doc-label" colspan="2">Title, initials, surname:</td>
-            <td colspan="4"><input class="mba-doc-input" name="internal_assessor_name" value="{{ prefill.get('internal_assessor_name', '') }}" {% if assessor_readonly or content_locked %}readonly{% endif %}></td>
+            <td colspan="4"><input type="text" class="mba-doc-input" name="internal_assessor_name" value="{{ prefill.get('internal_assessor_name', '') }}" {% if assessor_readonly or content_locked %}readonly{% endif %}></td>
           </tr>
         </table>
 
@@ -201,15 +201,15 @@
           {% for index in range(1, 5) %}
             <tr>
               <td class="mba-doc-label">External assessor {{ index }}:<br><span class="jbs10-doc-small">Title, initials, surname, affiliation</span></td>
-              <td><input class="mba-doc-input" name="assessor_{{ index }}_name" value="{{ prefill.get('assessor_' ~ index ~ '_name', '') }}" {% if assessor_readonly or content_locked %}readonly{% endif %}></td>
+              <td><input type="text" class="mba-doc-input" name="assessor_{{ index }}_name" value="{{ prefill.get('assessor_' ~ index ~ '_name', '') }}" {% if assessor_readonly or content_locked %}readonly{% endif %}></td>
               <td class="mba-doc-label">Staff number:</td>
-              <td><input class="mba-doc-input" name="assessor_{{ index }}_staff_number" value="{{ prefill.get('assessor_' ~ index ~ '_staff_number', '') }}" {% if assessor_readonly or content_locked %}readonly{% endif %}></td>
+              <td><input type="text" class="mba-doc-input" name="assessor_{{ index }}_staff_number" value="{{ prefill.get('assessor_' ~ index ~ '_staff_number', '') }}" {% if assessor_readonly or content_locked %}readonly{% endif %}></td>
             </tr>
             <tr>
               <td class="mba-doc-label">Highest academic qualification</td>
-              <td><input class="mba-doc-input" name="assessor_{{ index }}_qualification" value="{{ prefill.get('assessor_' ~ index ~ '_qualification', '') }}" {% if assessor_readonly or content_locked %}readonly{% endif %}></td>
+              <td><input type="text" class="mba-doc-input" name="assessor_{{ index }}_qualification" value="{{ prefill.get('assessor_' ~ index ~ '_qualification', '') }}" {% if assessor_readonly or content_locked %}readonly{% endif %}></td>
               <td class="mba-doc-label">E-mail address:</td>
-              <td><input class="mba-doc-input" name="assessor_{{ index }}_email" value="{{ prefill.get('assessor_' ~ index ~ '_email', '') }}" {% if assessor_readonly or content_locked %}readonly{% endif %}></td>
+              <td><input type="text" class="mba-doc-input" name="assessor_{{ index }}_email" value="{{ prefill.get('assessor_' ~ index ~ '_email', '') }}" {% if assessor_readonly or content_locked %}readonly{% endif %}></td>
             </tr>
           {% endfor %}
           <tr>
@@ -217,13 +217,13 @@
           </tr>
           <tr>
             <td class="mba-doc-label" colspan="2">Title, initials, surname:</td>
-            <td colspan="2"><input class="mba-doc-input" name="amended_internal_assessor_name" value="{{ prefill.get('amended_internal_assessor_name', '') }}" {% if assessor_readonly or content_locked %}readonly{% endif %}></td>
+            <td colspan="2"><input type="text" class="mba-doc-input" name="amended_internal_assessor_name" value="{{ prefill.get('amended_internal_assessor_name', '') }}" {% if assessor_readonly or content_locked %}readonly{% endif %}></td>
           </tr>
           <tr>
             <td class="mba-doc-label">Highest academic qualification</td>
-            <td><input class="mba-doc-input" name="amended_internal_assessor_qualification" value="{{ prefill.get('amended_internal_assessor_qualification', '') }}" {% if assessor_readonly or content_locked %}readonly{% endif %}></td>
+            <td><input type="text" class="mba-doc-input" name="amended_internal_assessor_qualification" value="{{ prefill.get('amended_internal_assessor_qualification', '') }}" {% if assessor_readonly or content_locked %}readonly{% endif %}></td>
             <td class="mba-doc-label">Staff number:</td>
-            <td><input class="mba-doc-input" name="amended_internal_assessor_staff_number" value="{{ prefill.get('amended_internal_assessor_staff_number', '') }}" {% if assessor_readonly or content_locked %}readonly{% endif %}></td>
+            <td><input type="text" class="mba-doc-input" name="amended_internal_assessor_staff_number" value="{{ prefill.get('amended_internal_assessor_staff_number', '') }}" {% if assessor_readonly or content_locked %}readonly{% endif %}></td>
           </tr>
           <tr>
             <th colspan="4">D4: Amendment of external assessor/s</th>
@@ -231,15 +231,15 @@
           {% for index in range(1, 4) %}
             <tr>
               <td class="mba-doc-label">Amended external assessor {{ index }}:<br><span class="jbs10-doc-small">Title, initials, surname, affiliation</span></td>
-              <td><input class="mba-doc-input" name="amended_external_assessor_{{ index }}_name" value="{{ prefill.get('amended_external_assessor_' ~ index ~ '_name', '') }}" {% if assessor_readonly or content_locked %}readonly{% endif %}></td>
+              <td><input type="text" class="mba-doc-input" name="amended_external_assessor_{{ index }}_name" value="{{ prefill.get('amended_external_assessor_' ~ index ~ '_name', '') }}" {% if assessor_readonly or content_locked %}readonly{% endif %}></td>
               <td class="mba-doc-label">Staff number:</td>
-              <td><input class="mba-doc-input" name="amended_external_assessor_{{ index }}_staff_number" value="{{ prefill.get('amended_external_assessor_' ~ index ~ '_staff_number', '') }}" {% if assessor_readonly or content_locked %}readonly{% endif %}></td>
+              <td><input type="text" class="mba-doc-input" name="amended_external_assessor_{{ index }}_staff_number" value="{{ prefill.get('amended_external_assessor_' ~ index ~ '_staff_number', '') }}" {% if assessor_readonly or content_locked %}readonly{% endif %}></td>
             </tr>
             <tr>
               <td class="mba-doc-label">Highest academic qualification</td>
-              <td><input class="mba-doc-input" name="amended_external_assessor_{{ index }}_qualification" value="{{ prefill.get('amended_external_assessor_' ~ index ~ '_qualification', '') }}" {% if assessor_readonly or content_locked %}readonly{% endif %}></td>
+              <td><input type="text" class="mba-doc-input" name="amended_external_assessor_{{ index }}_qualification" value="{{ prefill.get('amended_external_assessor_' ~ index ~ '_qualification', '') }}" {% if assessor_readonly or content_locked %}readonly{% endif %}></td>
               <td class="mba-doc-label">E-mail address:</td>
-              <td><input class="mba-doc-input" name="amended_external_assessor_{{ index }}_email" value="{{ prefill.get('amended_external_assessor_' ~ index ~ '_email', '') }}" {% if assessor_readonly or content_locked %}readonly{% endif %}></td>
+              <td><input type="text" class="mba-doc-input" name="amended_external_assessor_{{ index }}_email" value="{{ prefill.get('amended_external_assessor_' ~ index ~ '_email', '') }}" {% if assessor_readonly or content_locked %}readonly{% endif %}></td>
             </tr>
           {% endfor %}
         </table>
@@ -259,7 +259,7 @@
           </tr>
           <tr>
             <td class="mba-doc-label">Signature: Co-Supervisor</td>
-            <td><input class="mba-doc-input" name="co_supervisor_signature" value="{{ '' if hide_signatures_for_student else prefill.get('co_supervisor_signature', '') }}" readonly></td>
+            <td><input type="text" class="mba-doc-input" name="co_supervisor_signature" value="{{ '' if hide_signatures_for_student else prefill.get('co_supervisor_signature', '') }}" readonly></td>
             <td class="mba-doc-label">Date</td>
             <td><input class="mba-doc-input" type="date" name="co_supervisor_signature_date" value="{{ '' if hide_signatures_for_student else prefill.get('co_supervisor_signature_date', '') }}" readonly></td>
           </tr>

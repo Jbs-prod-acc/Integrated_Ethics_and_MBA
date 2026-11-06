@@ -18,7 +18,7 @@
     {% if prefill.get(name ~ '_image') %}
       <img class="mba-doc-signature-image" src="{{ prefill.get(name ~ '_image') }}" alt="Saved signature">
     {% endif %}
-    <input class="mba-doc-input" name="{{ name }}" value="{{ value or '' }}" {% if not editable %}readonly{% endif %} {% if required %}required{% endif %}>
+    <input type="text" class="mba-doc-input" name="{{ name }}" value="{{ value or '' }}" {% if not editable %}readonly{% endif %} {% if required %}required{% endif %}>
   </div>
 {%- endmacro %}
 <!-- MBA_FORM_START -->
@@ -56,31 +56,31 @@
           </tr>
           <tr>
             <td class="jbs-template-label">Surname</td>
-            <td><input class="mba-doc-input" name="surname" value="{{ prefill.get('surname','') }}" {% if not student_editable %}readonly{% endif %} {% if student_editable %}required{% endif %}></td>
+            <td><input type="text" class="mba-doc-input" name="surname" value="{{ prefill.get('surname','') }}" {% if not student_editable %}readonly{% endif %} {% if student_editable %}required{% endif %}></td>
             <td class="jbs-template-label">Title</td>
-            <td><input class="mba-doc-input" name="student_title" value="{{ prefill.get('student_title','') }}" {% if not student_editable %}readonly{% endif %} {% if student_editable %}required{% endif %}></td>
+            <td><input type="text" class="mba-doc-input" name="student_title" value="{{ prefill.get('student_title','') }}" {% if not student_editable %}readonly{% endif %} {% if student_editable %}required{% endif %}></td>
           </tr>
           <tr>
             <td class="jbs-template-label">Initials</td>
-            <td><input class="mba-doc-input" name="student_initials" value="{{ prefill.get('student_initials','') }}" {% if not student_editable %}readonly{% endif %} {% if student_editable %}required{% endif %}></td>
+            <td><input type="text" class="mba-doc-input" name="student_initials" value="{{ prefill.get('student_initials','') }}" {% if not student_editable %}readonly{% endif %} {% if student_editable %}required{% endif %}></td>
             <td class="jbs-template-label">ID number</td>
-            <td><input class="mba-doc-input" name="student_id_number" value="{{ prefill.get('student_id_number','') }}" {% if not student_editable %}readonly{% endif %} {% if student_editable %}required{% endif %}></td>
+            <td><input type="text" class="mba-doc-input" name="student_id_number" value="{{ prefill.get('student_id_number','') }}" {% if not student_editable %}readonly{% endif %} {% if student_editable %}required{% endif %}></td>
           </tr>
           <tr>
             <td class="jbs-template-label">Student number</td>
-            <td><input class="mba-doc-input" name="student_number" value="{{ prefill.get('student_number','') }}" {% if not student_editable %}readonly{% endif %} {% if student_editable %}required{% endif %}></td>
+            <td><input type="text" class="mba-doc-input" name="student_number" value="{{ prefill.get('student_number','') }}" {% if not student_editable %}readonly{% endif %} {% if student_editable %}required{% endif %}></td>
             <td class="jbs-template-label">Ethical Clearance number</td>
-            <td><input class="mba-doc-input" name="ethical_clearance_number" value="{{ prefill.get('ethical_clearance_number','') }}" {% if not student_editable %}readonly{% endif %}></td>
+            <td><input type="text" class="mba-doc-input" name="ethical_clearance_number" value="{{ prefill.get('ethical_clearance_number','') }}" {% if not student_editable %}readonly{% endif %}></td>
           </tr>
           <tr>
             <td class="jbs-template-label">Qualification (e.g. MBA)</td>
-            <td colspan="3"><input class="mba-doc-input" name="qualification" value="{{ prefill.get('qualification','') }}" {% if not student_editable %}readonly{% endif %} {% if student_editable %}required{% endif %}></td>
+            <td colspan="3"><input type="text" class="mba-doc-input" name="qualification" value="{{ prefill.get('qualification','') }}" {% if not student_editable %}readonly{% endif %} {% if student_editable %}required{% endif %}></td>
           </tr>
           <tr>
             <td class="jbs-template-label">Email Address</td>
             <td><input class="mba-doc-input" name="email" type="email" value="{{ prefill.get('email','') }}" {% if not student_editable %}readonly{% endif %} {% if student_editable %}required{% endif %}></td>
             <td class="jbs-template-label">Cell number</td>
-            <td><input class="mba-doc-input" name="contact" value="{{ prefill.get('contact','') }}" {% if not student_editable %}readonly{% endif %} {% if student_editable %}required{% endif %}></td>
+            <td><input type="text" class="mba-doc-input" name="contact" value="{{ prefill.get('contact','') }}" {% if not student_editable %}readonly{% endif %} {% if student_editable %}required{% endif %}></td>
           </tr>
         </table>
 
@@ -158,23 +158,23 @@
         <table class="mba-doc-table jbs-template-table jbs1-office-table">
           <tr>
             <td class="jbs-template-label">Registration</td>
-            <td><input class="mba-doc-input" name="office_registration" value="{{ prefill.get('office_registration','') }}" {% if not admin_editable %}readonly{% endif %}></td>
+            <td><input type="text" class="mba-doc-input" name="office_registration" value="{{ prefill.get('office_registration','') }}" {% if not admin_editable %}readonly{% endif %}></td>
           </tr>
           <tr>
             <td class="jbs-template-label">Approved title</td>
-            <td><input class="mba-doc-input" name="office_approved_title" value="{{ prefill.get('office_approved_title','') }}" {% if not admin_editable %}readonly{% endif %}></td>
+            <td><input type="text" class="mba-doc-input" name="office_approved_title" value="{{ prefill.get('office_approved_title','') }}" {% if not admin_editable %}readonly{% endif %}></td>
           </tr>
           <tr>
             <td class="jbs-template-label">Affidavit</td>
-            <td><input class="mba-doc-input" name="office_affidavit" value="{{ prefill.get('office_affidavit','') }}" {% if not admin_editable %}readonly{% endif %}></td>
+            <td><input type="text" class="mba-doc-input" name="office_affidavit" value="{{ prefill.get('office_affidavit','') }}" {% if not admin_editable %}readonly{% endif %}></td>
           </tr>
           <tr>
             <td class="jbs-template-label">Language Edited</td>
-            <td><input class="mba-doc-input" name="office_language_edited" value="{{ prefill.get('office_language_edited','') }}" {% if not admin_editable %}readonly{% endif %}></td>
+            <td><input type="text" class="mba-doc-input" name="office_language_edited" value="{{ prefill.get('office_language_edited','') }}" {% if not admin_editable %}readonly{% endif %}></td>
           </tr>
           <tr>
             <td class="jbs-template-label">Turnitin report</td>
-            <td><input class="mba-doc-input" name="office_turnitin_report" value="{{ prefill.get('office_turnitin_report','') }}" {% if not admin_editable %}readonly{% endif %}></td>
+            <td><input type="text" class="mba-doc-input" name="office_turnitin_report" value="{{ prefill.get('office_turnitin_report','') }}" {% if not admin_editable %}readonly{% endif %}></td>
           </tr>
         </table>
 

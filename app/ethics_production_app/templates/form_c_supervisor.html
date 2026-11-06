@@ -315,7 +315,7 @@
       </div>
 
       <div class="form-group">
-        <label for="submission_date"><span class="form-answer">{% if formc.submission_date%}{{formc.submission_date.strftime('%d/%m/%Y')}}{% endif%}</span></label>
+        <label for="submitted_at"><span class="form-answer">{% if formc.submitted_at%}{{formc.submitted_at.strftime('%d/%m/%Y')}}{% endif%}</span></label>
       </div>
 <hr>
 <br>
@@ -331,8 +331,8 @@
       </div>
 
       <div class="form-group">
-        <label for="submission_date">Date of Submission:</label>
-        <span class="form-answer" id="submission_date" >{% if formc.submission_date%}{{formc.submission_date.strftime('%d/%m/%Y')}}{% endif%}</span>
+        <label for="submitted_at">Date of Submission:</label>
+        <span class="form-answer" id="submitted_at" >{% if formc.submitted_at%}{{formc.submitted_at.strftime('%d/%m/%Y')}}{% endif%}</span>
       </div>
 
       <div class="form-group">
@@ -410,8 +410,8 @@
     </div>
 
     <div class="form-group">
-      <label for="signature_date">Date:</label>
-      <input type="date" class="form-control" id="signature_date" name="signature_date" placeholder="dd/mm/yyyy">
+      <label for="supervisor_signature_date">Date:</label>
+      <input type="date" class="form-control" id="supervisor_signature_date" name="supervisor_signature_date" placeholder="dd/mm/yyyy">
       <div class="date-format-hint"></div>
     </div>
     <br>
@@ -522,7 +522,7 @@
   const rejectBtn = document.getElementById("rejectBtn");
 
   const signature = document.getElementById("supervisor_signature");
-  const date = document.getElementById("signature_date");
+  const date = document.getElementById("supervisor_signature_date");
   const feedback = document.getElementById("supervisor_feedback");
 
   if (ready) {

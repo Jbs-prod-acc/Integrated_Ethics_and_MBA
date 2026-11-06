@@ -592,8 +592,8 @@
 
     <td>
       <em>
-        {% if formC.submission_date %}
-        {{ formC.submission_date.strftime('%d/%m/%Y %H:%M') }}
+        {% if formC.submitted_at %}
+        {{ formC.submitted_at.strftime('%d/%m/%Y %H:%M') }}
         {% endif %}
       </em>
       <br>

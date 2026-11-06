@@ -284,8 +284,6 @@ def _find_latest_form_for_user(model, user_id):
     query = db_session.query(model).filter_by(user_id=user_id)
     if hasattr(model, 'submitted_at'):
         query = query.order_by(model.submitted_at.desc().nullslast(), model.created_at.desc().nullslast())
-    elif hasattr(model, 'submission_date'):
-        query = query.order_by(model.submission_date.desc().nullslast(), model.created_at.desc().nullslast())
     return query.first()
 
 
@@ -296,8 +294,6 @@ def _find_all_forms_for_user(model, user_id, *, options=None):
     query = query.filter_by(user_id=user_id)
     if hasattr(model, 'submitted_at'):
         query = query.order_by(model.submitted_at.desc().nullslast(), model.created_at.desc().nullslast())
-    elif hasattr(model, 'submission_date'):
-        query = query.order_by(model.submission_date.desc().nullslast(), model.created_at.desc().nullslast())
     else:
         query = query.order_by(model.created_at.desc().nullslast())
     return query.all()
@@ -380,8 +376,6 @@ def merge_reviewer_feedback_from_related_draft(form):
     timestamp_field_name = None
     if hasattr(type(form), 'submitted_at'):
         timestamp_field_name = 'submitted_at'
-    elif hasattr(type(form), 'submission_date'):
-        timestamp_field_name = 'submission_date'
 
     if not timestamp_field_name or getattr(form, timestamp_field_name, None) is None:
         return form
@@ -477,7 +471,7 @@ def is_student_form_locked(form):
     if not form:
         return False
 
-    submission_timestamp = getattr(form, 'submitted_at', None) or getattr(form, 'submission_date', None)
+    submission_timestamp = getattr(form, 'submitted_at', None)
     if not submission_timestamp:
         return False
 
@@ -487,7 +481,7 @@ def is_student_form_locked(form):
 def get_student_submission_timestamp(form):
     if not form:
         return None
-    return getattr(form, 'submitted_at', None) or getattr(form, 'submission_date', None)
+    return getattr(form, 'submitted_at', None)
 
 
 def get_student_dashboard_status(form):

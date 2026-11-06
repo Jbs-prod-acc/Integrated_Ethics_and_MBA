@@ -321,7 +321,7 @@
       </div>
 
       <div class="form-group">
-        <label for="submission_date"><span class="form-answer">{{formc.submission_date.strftime('%d/%m/%Y')}}</span></label>
+        <label for="submitted_at"><span class="form-answer">{{formc.submitted_at.strftime('%d/%m/%Y')}}</span></label>
       </div>
 <hr>
 <h1>JBS RESEARCH ETHICS COMMITTEE<br>REVIEWER REPORT</h1>
@@ -331,7 +331,7 @@
     <span class="form-answer">{{formc.declaration_name}}</span>
 
     <label>Date of Submission:</label>
-    <span class="form-answer">{% if formc.submission_date%}{{formc.submission_date.strftime('%d/%m/%Y')}}{% endif%}</span>
+    <span class="form-answer">{% if formc.submitted_at%}{{formc.submitted_at.strftime('%d/%m/%Y')}}{% endif%}</span>
 
     <label>Supervisor:</label>
     <span class="form-answer">{{formc.supervisor_name}}</span>
@@ -339,9 +339,9 @@
     <label>Title of Research:</label>
     <span class="form-answer">{{formc.project_title}}</span>
 
-    {% if not formc.submission_date and formc.signature_date %}
+    {% if not formc.submitted_at and formc.supervisor_signature_date %}
     <label>Date of Re-submission:</label>
-    <span class="form-answer">{{formc.signature_date.strftime('%d/%m/%Y')}}</span>
+    <span class="form-answer">{{formc.supervisor_signature_date.strftime('%d/%m/%Y')}}</span>
     {% endif %}
 
     <label>Date of Review:</label>
@@ -354,7 +354,7 @@
   <div class="section">
               <h3>Comments</h3>
               <textarea name="ethics_form_status" required class="form-control" rows="5"
-                placeholder="Provide any feedback or required revisions...">{% if formC.ethics_form_status and formC.ethics_form_status|string|lower != 'none' %}{{ formC.ethics_form_status }}{% elif formC.recommendation and formC.recommendation|string|lower != 'none' %}{{ formC.recommendation }}{% endif %}</textarea>
+                placeholder="Provide any feedback or required revisions...">{% if formc.ethics_form_status and formc.ethics_form_status|string|lower != 'none' %}{{ formc.ethics_form_status }}{% elif formc.recommendation and formc.recommendation|string|lower != 'none' %}{{ formc.recommendation }}{% endif %}</textarea>
     </div>
 
   <!-- Radio Buttons -->
@@ -397,8 +397,8 @@
     </div>
 
     <div class="form-group">
-      <label for="signature_date">Date:</label>
-      <input type="date" class="form-control" id="signature_date" name="signature_date" placeholder="dd/mm/yyyy">
+      <label for="supervisor_signature_date">Date:</label>
+      <input type="date" class="form-control" id="supervisor_signature_date" name="supervisor_signature_date" placeholder="dd/mm/yyyy">
       <div class="date-format-hint"></div>
     </div>
     <br>
@@ -463,7 +463,7 @@ function toggleFields() {
   const rejectBtn = document.getElementById("rejectBtn");
 
   const signature = document.getElementById("supervisor_signature");
-  const date = document.getElementById("signature_date");
+  const date = document.getElementById("supervisor_signature_date");
 
   if (ready) {
     acceptFields.style.display = "block";

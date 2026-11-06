@@ -24,7 +24,7 @@
           </colgroup>
           <tr>
             <td class="integrity-doc-label">MODULE</td>
-            <td><input class="mba-doc-input" name="programme" value="{{ prefill.get('programme','') }}" required></td>
+            <td><input type="text" class="mba-doc-input" name="programme" value="{{ prefill.get('programme','') }}" required></td>
           </tr>
           <tr>
             <td class="integrity-doc-label">ASSESSMENT</td>
@@ -32,7 +32,7 @@
           </tr>
           <tr>
             <td class="integrity-doc-label">MODULE LEAD</td>
-            <td><input class="mba-doc-input" name="module_lead" value="{{ prefill.get('module_lead','') }}"></td>
+            <td><input type="text" class="mba-doc-input" name="module_lead" value="{{ prefill.get('module_lead','') }}"></td>
           </tr>
           <tr>
             <td class="integrity-doc-label">DUE DATE</td>
@@ -53,14 +53,14 @@
             <th>SIGNATURE</th>
           </tr>
           <tr>
-            <td><input class="mba-doc-input" name="full_name" value="{{ prefill.get('full_name','') }}" required></td>
-            <td><input class="mba-doc-input" name="student_number" value="{{ prefill.get('student_number','') }}" required></td>
+            <td><input type="text" class="mba-doc-input" name="full_name" value="{{ prefill.get('full_name','') }}" required></td>
+            <td><input type="text" class="mba-doc-input" name="student_number" value="{{ prefill.get('student_number','') }}" required></td>
             <td>
               <div class="mba-doc-signature-field">
                 {% if prefill.get('signature_name_image') %}
                   <img class="mba-doc-signature-image" src="{{ prefill.get('signature_name_image') }}" alt="Saved signature">
                 {% endif %}
-                <input class="mba-doc-input" name="signature_name" value="{{ prefill.get('signature_name','') }}" required>
+                <input type="text" class="mba-doc-input" name="signature_name" value="{{ prefill.get('signature_name','') }}" required>
               </div>
             </td>
           </tr>
@@ -93,11 +93,11 @@
           </colgroup>
           <tr>
             <td class="integrity-doc-label">Course:</td>
-            <td><input class="mba-doc-input" name="course_name" value="{{ prefill.get('course_name','') }}" required></td>
+            <td><input type="text" class="mba-doc-input" name="course_name" value="{{ prefill.get('course_name','') }}" required></td>
           </tr>
           <tr>
             <td class="integrity-doc-label">Module:</td>
-            <td><input class="mba-doc-input" name="module_title" value="{{ prefill.get('module_title','') }}" required></td>
+            <td><input type="text" class="mba-doc-input" name="module_title" value="{{ prefill.get('module_title','') }}" required></td>
           </tr>
           <tr>
             <td class="integrity-doc-label">Assessment:</td>
@@ -105,7 +105,7 @@
           </tr>
           <tr>
             <td class="integrity-doc-label">Lecturer:</td>
-            <td><input class="mba-doc-input" name="lecturer_name" value="{{ prefill.get('lecturer_name', prefill.get('module_lead','')) }}"></td>
+            <td><input type="text" class="mba-doc-input" name="lecturer_name" value="{{ prefill.get('lecturer_name', prefill.get('module_lead','')) }}"></td>
           </tr>
           <tr>
             <td class="integrity-doc-label">Due Date:</td>
@@ -126,9 +126,9 @@
             <th>SIGNATURE</th>
           </tr>
           <tr>
-            <td><input class="mba-doc-input" value="{{ prefill.get('full_name','') }}" readonly></td>
-            <td><input class="mba-doc-input" value="{{ prefill.get('student_number','') }}" readonly></td>
-            <td><input class="mba-doc-input" value="{{ prefill.get('signature_name','') }}" readonly></td>
+            <td><input type="text" class="mba-doc-input" value="{{ prefill.get('full_name','') }}" readonly></td>
+            <td><input type="text" class="mba-doc-input" value="{{ prefill.get('student_number','') }}" readonly></td>
+            <td><input type="text" class="mba-doc-input" value="{{ prefill.get('signature_name','') }}" readonly></td>
           </tr>
         </table>
 

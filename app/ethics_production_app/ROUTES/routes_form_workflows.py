@@ -264,7 +264,7 @@ def resubmit_formc(id):
             flash("You cannot resubmit Form C until at least one reviewer is assigned.", "danger")
             return redirect(url_for("student_dashboard"))
         # Update form fields from student input as needed
-        form.submission_date = get_local_time()
+        form.submitted_at = get_local_time()
         form.ethics_status = "Resubmitted"
         form.form_supervisor_status = "Resubmitted"
         form.status = 'Resubmitted'
@@ -471,7 +471,7 @@ def student_autosave_formc():
         'uj_facilities',
         'uj_funding'
     ]
-    declaration_fields = {'declaration_name', 'full_name', 'submission_date'}
+    declaration_fields = {'declaration_name', 'full_name', 'submitted_at'}
 
     data = request.form.to_dict()
 

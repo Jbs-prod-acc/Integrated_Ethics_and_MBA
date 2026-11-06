@@ -623,7 +623,7 @@ class FormA(Base):
     recommendation= Column(Text,nullable=True)
     supervisor_signature = Column(Text,nullable=True)
     form_supervisor_status=Column(Text,nullable=True)
-    signature_date= Column(DateTime(timezone=True),nullable=True)
+    signature_date = Column(DateTime(timezone=True), nullable=True)
     submitted_to_admin=Column(Boolean,default=False)
     submitted=Column(Boolean,default=False)
     #this is working on supervisor site
@@ -998,7 +998,7 @@ class FormC(Base):
     # Section 4 - Declaration
     declaration_name = Column(Text,nullable=True)
     full_name = Column(Text,nullable=True)
-    submission_date = Column(DateTime(timezone=True),nullable=True)
+    submitted_at = Column(DateTime(timezone=True),nullable=True)
     submitted=Column(Boolean,default=False)
     
     
@@ -1016,7 +1016,7 @@ class FormC(Base):
     supervisor_signature = Column(Text,nullable=True)
     form_supervisor_status=Column(Text,nullable=True)
     submitted_to_admin=Column(Boolean,default=False)
-    signature_date= Column(DateTime(timezone=True),nullable=True)
+    supervisor_signature_date = Column(DateTime(timezone=True), nullable=True)
     
     #this is working on supervisor site
     supervisor_date=Column(DateTime(timezone=True),nullable=True)
