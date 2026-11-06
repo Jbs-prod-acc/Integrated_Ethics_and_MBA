@@ -201,6 +201,34 @@ def _ensure_ethics_postgres_columns(app):
         db.session.execute(
             text(
                 """
+                CREATE TABLE IF NOT EXISTS archived_ethics_forms (
+                    archive_id VARCHAR(255) PRIMARY KEY,
+                    form_type VARCHAR(20) NOT NULL,
+                    original_form_id VARCHAR(255) NOT NULL,
+                    student_user_id VARCHAR(255) NOT NULL,
+                    student_name VARCHAR(255),
+                    student_email VARCHAR(255),
+                    original_created_at TIMESTAMP WITH TIME ZONE,
+                    original_submitted_at TIMESTAMP WITH TIME ZONE,
+                    archived_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                    archived_by_user_id VARCHAR(255) NOT NULL,
+                    archive_reason TEXT,
+                    snapshot_json TEXT NOT NULL
+                )
+                """
+            )
+        )
+        for index_statement in (
+            "CREATE INDEX IF NOT EXISTS ix_archived_ethics_forms_form_type ON archived_ethics_forms (form_type)",
+            "CREATE INDEX IF NOT EXISTS ix_archived_ethics_forms_original_form_id ON archived_ethics_forms (original_form_id)",
+            "CREATE INDEX IF NOT EXISTS ix_archived_ethics_forms_student_user_id ON archived_ethics_forms (student_user_id)",
+            "CREATE INDEX IF NOT EXISTS ix_archived_ethics_forms_archived_at ON archived_ethics_forms (archived_at)",
+        ):
+            db.session.execute(text(index_statement))
+
+        db.session.execute(
+            text(
+                """
                 DO $$
                 BEGIN
                     IF EXISTS (
@@ -249,7 +277,7 @@ def _ensure_ethics_postgres_columns(app):
                 )
         db.session.commit()
         db.session.remove()
-        app.logger.info("Ensured required ethics workflow columns exist.")
+        app.logger.info("Ensured required ethics workflow tables and columns exist.")
 
 
 def _ensure_unified_user_columns(app):

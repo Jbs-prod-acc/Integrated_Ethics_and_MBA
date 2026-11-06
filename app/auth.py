@@ -997,7 +997,12 @@ def register():
             return render_template("auth/register.html", system=system, student_email=email)
 
         user = (
-            MbaUser(email=email)
+            MbaUser(
+                email=email,
+                ethics_access=False,
+                ethics_role=None,
+                authenticated_student=False,
+            )
             if system == "mba"
             else EthicsUser(email=email, student_number=student_number or None, authenticated_student=True)
         )
@@ -1075,6 +1080,9 @@ def microsoft_callback():
             microsoft_subject=subject,
             role=MbaRole.STUDENT.value,
             has_profile=True,
+            ethics_access=False,
+            ethics_role=None,
+            authenticated_student=False,
         )
         db.session.add(user)
         db.session.flush()
@@ -1104,13 +1112,12 @@ def microsoft_callback():
 @auth_bp.route("/switch/ethics")
 @login_required
 def switch_to_ethics():
-    if current_user.system_name == "mba" and not EthicsUser.find_by_email(current_user.email):
-        ethics_user = _ensure_ethics_access_for_mba_user(current_user)
-        if not ethics_user:
-            db.session.rollback()
-            flash("This account does not have Ethics access.", "error")
-            return redirect(url_for("mba.dashboard"))
-        db.session.commit()
+    if current_user.system_name == "mba" and (
+        not getattr(current_user, "ethics_access", False)
+        or not getattr(current_user, "ethics_role", None)
+    ):
+        flash("Ethics access has not been enabled for this account. Contact an administrator.", "warning")
+        return redirect(url_for("mba.dashboard"))
     destination = (request.args.get("destination") or "").strip()
     token = build_ethics_sso_token(current_user, destination=destination)
     return redirect(url_for("ethics_sso_bridge", token=token))

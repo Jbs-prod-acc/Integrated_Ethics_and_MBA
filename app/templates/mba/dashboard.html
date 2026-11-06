@@ -14,7 +14,11 @@
     <p>Role: {{ current_user.role.replace('_', ' ').title() }}</p>
   </div>
   <div class="banner-actions">
-    <a href="{{ url_for('auth.switch_to_ethics') }}" class="banner-button">Open Ethics</a>
+    {% if current_user.ethics_access and current_user.ethics_role %}
+      <a href="{{ url_for('auth.switch_to_ethics') }}" class="banner-button">Open Ethics</a>
+    {% else %}
+      <span class="status-pill status-pill--awaiting_admin">Ethics access requires admin approval</span>
+    {% endif %}
   </div>
 </section>
 

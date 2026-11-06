@@ -45,6 +45,32 @@ def _ensure_sqlite_compatibility(db_path: Path):
             if column_name not in existing_columns:
                 cur.execute(ddl)
 
+        cur.execute(
+            """
+            CREATE TABLE IF NOT EXISTS archived_ethics_forms (
+                archive_id VARCHAR(255) PRIMARY KEY,
+                form_type VARCHAR(20) NOT NULL,
+                original_form_id VARCHAR(255) NOT NULL,
+                student_user_id VARCHAR(255) NOT NULL,
+                student_name VARCHAR(255),
+                student_email VARCHAR(255),
+                original_created_at DATETIME,
+                original_submitted_at DATETIME,
+                archived_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                archived_by_user_id VARCHAR(255) NOT NULL,
+                archive_reason TEXT,
+                snapshot_json TEXT NOT NULL
+            )
+            """
+        )
+        for index_statement in (
+            "CREATE INDEX IF NOT EXISTS ix_archived_ethics_forms_form_type ON archived_ethics_forms (form_type)",
+            "CREATE INDEX IF NOT EXISTS ix_archived_ethics_forms_original_form_id ON archived_ethics_forms (original_form_id)",
+            "CREATE INDEX IF NOT EXISTS ix_archived_ethics_forms_student_user_id ON archived_ethics_forms (student_user_id)",
+            "CREATE INDEX IF NOT EXISTS ix_archived_ethics_forms_archived_at ON archived_ethics_forms (archived_at)",
+        ):
+            cur.execute(index_statement)
+
         conn.commit()
     finally:
         conn.close()
