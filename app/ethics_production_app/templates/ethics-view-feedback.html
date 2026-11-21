@@ -165,9 +165,10 @@
      <table class="table table-bordered mt-3">
         <thead class="thead-light">
         <tr>
-          <th style="width: 30%;">Document</th>
-          <th style="width: 20%;">Submitted (Yes or No)</th>
-          <th style="width: 50%;">Reviewer Comments</th>
+          <th style="width: 25%;">Document</th>
+          <th style="width: 15%;">Submitted (Yes or No)</th>
+          <th style="width: 30%;">Reviewer Comments</th>
+          <th style="width: 30%;">Student Comments</th>
         </tr>
       </thead>
       <tbody>
@@ -180,6 +181,7 @@
           </td>
           <td><span id="org_permission_status">{{view_form.review_org_permission_status}}</span></td>
           <td><span id="org_permission_comments">{{view_form.review_org_permission_comments}}</span></td>
+          <td>{{ student_response_form.student_org_permission_comment or 'No response required/submitted' }}</td>
         </tr>
         <tr>
           <td>
@@ -188,6 +190,7 @@
           </td>
           <td><span id="waiver_status">{{view_form.review_waiver_status}}</span></td>
           <td><span id="waiver_comments">{{view_form.review_waiver_comments}}</span></td>
+          <td>{{ student_response_form.student_waiver_comment or 'No response required/submitted' }}</td>
         </tr>
         <tr>
           <td>
@@ -197,6 +200,7 @@
           </td>
           <td><span id="form_status">{{view_form.form_status}}</span></td>
           <td><span id="form_comments">{{view_form.review_form_comments}}</span></td>
+          <td>{{ student_response_form.student_form_comment or 'No response required/submitted' }}</td>
         </tr>
         <tr>
           <td>
@@ -207,6 +211,7 @@
           </td>
           <td><span id="questions_status">{{view_form.review_questions_status}}</span></td>
           <td><span id="questions_comments">{{view_form.review_questions_comments}}</span></td>
+          <td>{{ student_response_form.student_questions_comment or 'No response required/submitted' }}</td>
         </tr>
         <tr>
           <td>
@@ -215,6 +220,7 @@
           </td>
           <td><span  id="consent_status">{{view_form.review_consent_status}}</td>
           <td><span id="consent_comments">{{view_form.review_consent_comments}}</span></td>
+          <td>{{ student_response_form.student_consent_comment or 'No response required/submitted' }}</td>
         </tr>
         <tr>
           <td>
@@ -223,6 +229,7 @@
           </td>
           <td><span id="proposal_status">{{view_form.review_proposal_status}}</td>
           <td><span id="proposal_comments">{{view_form.review_proposal_comments}}</span></td>
+          <td>{{ student_response_form.student_proposal_comment or 'No response required/submitted' }}</td>
         </tr>
       </tbody>
     </table>
@@ -252,9 +259,10 @@
      <table class="table table-bordered mt-3">
         <thead class="thead-light">
         <tr>
-          <th style="width: 30%;">Document</th>
-          <th style="width: 20%;">Submitted (Yes or No)</th>
-          <th style="width: 50%;">Reviewer Comments</th>
+          <th style="width: 25%;">Document</th>
+          <th style="width: 15%;">Submitted (Yes or No)</th>
+          <th style="width: 30%;">Reviewer Comments</th>
+          <th style="width: 30%;">Student Comments</th>
         </tr>
       </thead>
       <tbody>
@@ -267,6 +275,7 @@
           </td>
           <td><span id="org_permission_status">{{view_form.review_org_permission_status1}}</span></td>
           <td><span id="org_permission_comments">{{view_form.review_org_permission_comments1}}</span></td>
+          <td>{{ student_response_form.student_org_permission_comment or 'No response required/submitted' }}</td>
         </tr>
         <tr>
           <td>
@@ -275,6 +284,7 @@
           </td>
           <td><span id="waiver_status">{{view_form.review_waiver_status1}}</span></td>
           <td><span id="waiver_comments">{{view_form.review_waiver_comments1}}</span></td>
+          <td>{{ student_response_form.student_waiver_comment or 'No response required/submitted' }}</td>
         </tr>
         <tr>
           <td>
@@ -284,6 +294,7 @@
           </td>
           <td><span id="form_status">{{view_form.form_status1}}</span></td>
           <td><span id="form_comments">{{view_form.review_form_comments1}}</span></td>
+          <td>{{ student_response_form.student_form_comment or 'No response required/submitted' }}</td>
         </tr>
         <tr>
           <td>
@@ -294,6 +305,7 @@
           </td>
           <td><span id="questions_status">{{view_form.review_questions_status1}}</span></td>
           <td><span id="questions_comments">{{view_form.review_questions_comments1}}</span></td>
+          <td>{{ student_response_form.student_questions_comment or 'No response required/submitted' }}</td>
         </tr>
         <tr>
           <td>
@@ -302,6 +314,7 @@
           </td>
           <td><span  id="consent_status">{{view_form.review_consent_status1}}</td>
           <td><span id="consent_comments">{{view_form.review_consent_comments1}}</span></td>
+          <td>{{ student_response_form.student_consent_comment or 'No response required/submitted' }}</td>
         </tr>
         <tr>
           <td>
@@ -310,6 +323,7 @@
           </td>
           <td><span id="proposal_status">{{view_form.review_proposal_status1}}</td>
           <td><span id="proposal_comments">{{view_form.review_proposal_comments1}}</span></td>
+          <td>{{ student_response_form.student_proposal_comment or 'No response required/submitted' }}</td>
         </tr>
       </tbody>
     </table>
@@ -324,6 +338,18 @@
   </div>
 </div>
 </section>
+  {% endif %}
+
+  {% if student_response_form and (student_response_form.student_admin_comment_submitted_at or student_response_form.student_feedback_submitted_at) %}
+  <section class="admin-content">
+    <div class="section border rounded p-3 mb-4">
+      <h3>{% if student_response_form.student_admin_comment %}Student's Response to Ethics Admin{% else %}Student's Overall Response{% endif %}</h3>
+      <p>{{ student_response_form.student_admin_comment or student_response_form.student_general_comment }}</p>
+      <p class="text-muted mb-0">
+        Submitted {{ (student_response_form.student_admin_comment_submitted_at or student_response_form.student_feedback_submitted_at).strftime('%d/%m/%Y %H:%M') }}
+      </p>
+    </div>
+  </section>
   {% endif %}
 
   </main>

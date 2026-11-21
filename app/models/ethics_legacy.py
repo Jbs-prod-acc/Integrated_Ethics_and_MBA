@@ -698,6 +698,22 @@ class FormA(Base):
     form_review_comment1=Column(Text,nullable=True)
     form_reviewed_by1=Column(String,nullable=True)
 
+    # Student responses submitted after a corrected Form A is resubmitted.
+    # The per-row response is required when either reviewer marked that
+    # checklist item as "No".
+    student_org_permission_comment=Column(Text,nullable=True)
+    student_waiver_comment=Column(Text,nullable=True)
+    student_form_comment=Column(Text,nullable=True)
+    student_questions_comment=Column(Text,nullable=True)
+    student_consent_comment=Column(Text,nullable=True)
+    student_proposal_comment=Column(Text,nullable=True)
+    student_general_comment=Column(Text,nullable=True)
+    student_admin_comment=Column(Text,nullable=True)
+    student_admin_comment_submitted_at=Column(DateTime(timezone=True),nullable=True)
+    student_feedback_submitted_at=Column(DateTime(timezone=True),nullable=True)
+    student_feedback_source_form_id=Column(String(255),nullable=True)
+    ethics_decision=Column(String(80),nullable=True)
+
     rec_comments=Column(Text,nullable=True)
     rec_status=Column(String,nullable=True)
     rec_date=Column(DateTime(timezone=True))
@@ -892,6 +908,18 @@ class FormB(Base):
     form_review_comment1=Column(Text,nullable=True)
     form_reviewed_by1=Column(String,nullable=True)
 
+    student_org_permission_comment=Column(Text,nullable=True)
+    student_waiver_comment=Column(Text,nullable=True)
+    student_form_comment=Column(Text,nullable=True)
+    student_questions_comment=Column(Text,nullable=True)
+    student_consent_comment=Column(Text,nullable=True)
+    student_proposal_comment=Column(Text,nullable=True)
+    student_general_comment=Column(Text,nullable=True)
+    student_admin_comment=Column(Text,nullable=True)
+    student_admin_comment_submitted_at=Column(DateTime(timezone=True),nullable=True)
+    student_feedback_submitted_at=Column(DateTime(timezone=True),nullable=True)
+    student_feedback_source_form_id=Column(String(255),nullable=True)
+    ethics_decision=Column(String(80),nullable=True)
 
     rec_comments=Column(Text,nullable=True)
     rec_status=Column(Text,nullable=True)
@@ -1088,6 +1116,18 @@ class FormC(Base):
     form_review_comment1=Column(Text,nullable=True)
     form_reviewed_by1=Column(String,nullable=True)
 
+    student_org_permission_comment=Column(Text,nullable=True)
+    student_waiver_comment=Column(Text,nullable=True)
+    student_form_comment=Column(Text,nullable=True)
+    student_questions_comment=Column(Text,nullable=True)
+    student_consent_comment=Column(Text,nullable=True)
+    student_proposal_comment=Column(Text,nullable=True)
+    student_general_comment=Column(Text,nullable=True)
+    student_admin_comment=Column(Text,nullable=True)
+    student_admin_comment_submitted_at=Column(DateTime(timezone=True),nullable=True)
+    student_feedback_submitted_at=Column(DateTime(timezone=True),nullable=True)
+    student_feedback_source_form_id=Column(String(255),nullable=True)
+    ethics_decision=Column(String(80),nullable=True)
 
     rec_comments=Column(String,nullable=True)
     rec_status=Column(String,nullable=True)

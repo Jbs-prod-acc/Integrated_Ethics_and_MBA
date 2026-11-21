@@ -778,6 +778,146 @@ def is_student_correction_state(form):
     return any(status in {'revisions required', 'revision required'} for status in normalized_return_statuses)
 
 
+STUDENT_FEEDBACK_OUTCOMES = {
+    'approved with minor changes',
+    'resubmission required',
+    'revisions required',
+}
+
+STUDENT_FEEDBACK_ROWS = (
+    ('org_permission', 'student_org_permission_comment'),
+    ('waiver', 'student_waiver_comment'),
+    ('form', 'student_form_comment'),
+    ('questions', 'student_questions_comment'),
+    ('consent', 'student_consent_comment'),
+    ('proposal', 'student_proposal_comment'),
+)
+
+
+def requires_student_feedback_after_resubmission(form):
+    """Return True for reviewer/admin outcomes that require a student response."""
+    if not isinstance(form, (FormA, FormB, FormC)):
+        return False
+
+    outcome_fields = (
+        'review_recommendation',
+        'review_recommendation1',
+        'form_review_comment',
+        'form_review_comment1',
+        'review_form_status',
+        'review_form_status1',
+        'ethics_decision',
+    )
+    outcomes = {
+        str(getattr(form, field_name, '') or '').strip().lower()
+        for field_name in outcome_fields
+    }
+    return bool(outcomes & STUDENT_FEEDBACK_OUTCOMES)
+
+
+def requires_student_admin_comment(form):
+    """Return True when Ethics Admin, rather than a reviewer, requested changes."""
+    admin_outcome = str(
+        getattr(form, 'ethics_decision', None)
+        or getattr(form, 'ethics_status', None)
+        or ''
+    ).strip().lower()
+    return admin_outcome in {'resubmission required', 'revisions required'}
+
+
+def student_feedback_row_is_required(form, row_key):
+    status_fields = {
+        'org_permission': ('review_org_permission_status', 'review_org_permission_status1'),
+        'waiver': ('review_waiver_status', 'review_waiver_status1'),
+        'form': ('form_status', 'form_status1', 'review_form_status', 'review_form_status1'),
+        'questions': ('review_questions_status', 'review_questions_status1'),
+        'consent': ('review_consent_status', 'review_consent_status1'),
+        'proposal': ('review_proposal_status', 'review_proposal_status1'),
+    }
+    return any(
+        str(getattr(form, field_name, '') or '').strip().lower() == 'no'
+        for field_name in status_fields[row_key]
+    )
+
+
+def get_student_feedback_source_form(user_id, model=FormA, exclude_form_id=None):
+    query = db_session.query(model).filter(
+        model.user_id == user_id,
+        model.submitted_at.isnot(None),
+    )
+    if exclude_form_id:
+        query = query.filter(model.form_id != exclude_form_id)
+    candidates = query.order_by(
+        model.submitted_at.desc().nullslast(),
+        model.created_at.desc().nullslast(),
+    ).all()
+    return next(
+        (form for form in candidates if requires_student_feedback_after_resubmission(form)),
+        None,
+    )
+
+
+def get_latest_related_admin_feedback_form(form):
+    """Resolve an old feedback link to the newest record in its correction chain."""
+    if not isinstance(form, (FormA, FormB, FormC)):
+        return form
+
+    model = type(form)
+    source_id = getattr(form, 'student_feedback_source_form_id', None) or form.form_id
+    candidates = (
+        db_session.query(model)
+        .filter(
+            model.user_id == form.user_id,
+            or_(
+                model.form_id == source_id,
+                model.student_feedback_source_form_id == source_id,
+            ),
+        )
+        .order_by(
+            model.submitted_at.desc().nullslast(),
+            model.created_at.desc().nullslast(),
+        )
+        .all()
+    )
+    admin_fields = ('review_form_comments', 'ethics_status', 'ethics_decision')
+    return next(
+        (
+            candidate for candidate in candidates
+            if any(getattr(candidate, field, None) for field in admin_fields)
+        ),
+        form,
+    )
+
+
+def get_pending_student_feedback_source(form):
+    """Find feedback requiring a response across the form's correction chain."""
+    if not isinstance(form, (FormA, FormB, FormC)):
+        return None
+
+    related_form = get_latest_related_admin_feedback_form(form)
+    if requires_student_feedback_after_resubmission(related_form):
+        return related_form
+    if requires_student_feedback_after_resubmission(form):
+        return form
+
+    source_id = getattr(form, 'student_feedback_source_form_id', None)
+    if source_id:
+        source_form = db_session.query(type(form)).filter_by(
+            form_id=source_id,
+            user_id=form.user_id,
+        ).first()
+        if source_form:
+            related_source = get_latest_related_admin_feedback_form(source_form)
+            if requires_student_feedback_after_resubmission(related_source):
+                return related_source
+
+    return get_student_feedback_source_form(
+        form.user_id,
+        model=type(form),
+        exclude_form_id=form.form_id,
+    )
+
+
 def is_student_form_locked(form):
     if not form:
         return False
@@ -1253,6 +1393,7 @@ def reset_form_review_feedback(form):
         'proposal_comment',
         'org_permission_comment',
         'waiver_comment',
+        'ethics_decision',
     ]
 
     for field_name in fields_to_clear:
@@ -8703,7 +8844,8 @@ def student_edit_forma():
                 "form_id": autosave_form.form_id
             })
 
-        was_in_corrections = is_student_correction_state(source_form)
+        feedback_source = get_pending_student_feedback_source(source_form)
+        was_in_corrections = bool(feedback_source) or is_student_correction_state(source_form)
 
         form = FormA(user_id=user_id)
         inherit_previous_reviewers(form, FormA, user_id, FormA.submitted_at)
@@ -8756,6 +8898,12 @@ def student_edit_forma():
         except Exception as e:
             print("Email sending error:", str(e))
 
+        if was_in_corrections and feedback_source:
+            return redirect(url_for(
+                'student_view_feedback',
+                id=feedback_source.form_id,
+                response_form_id=form.form_id,
+            ))
         return redirect(url_for('student_dashboard'))
 
     return render_template(
@@ -9377,7 +9525,8 @@ def submit_form_a(form_id):
         declaration_name = request.form.get('declaration_name')
         applicant_signature = request.form.get('applicant_signature')
         declaration_date_raw = datetime.now()
-        was_in_corrections = is_student_correction_state(form)
+        feedback_source = get_pending_student_feedback_source(form)
+        was_in_corrections = bool(feedback_source) or is_student_correction_state(form)
         
         print(f"DEBUG submit_form_a: declaration_name={declaration_name}, applicant_signature={applicant_signature}")
         print(f"DEBUG submit_form_a: form_id={form_id}, form_exists={form_exists}")
@@ -9646,6 +9795,12 @@ def submit_form_a(form_id):
                 app.logger.error(f"Failed to send email to {form.supervisor_email}: {e}")
             
             flash("Form successfully submitted to supervisor!", "success")
+            if was_in_corrections and feedback_source:
+                return redirect(url_for(
+                    'student_view_feedback',
+                    id=feedback_source.form_id,
+                    response_form_id=form.form_id,
+                ))
             return redirect(url_for('student_dashboard'))
             
         except Exception as e:
@@ -9764,7 +9919,8 @@ def student_edit_formb():
         form.declaration_date = get_local_time()
         form.submitted = True
         form.rejected_or_accepted = False
-        was_in_corrections = is_student_correction_state(form)
+        feedback_source = get_pending_student_feedback_source(form)
+        was_in_corrections = bool(feedback_source) or is_student_correction_state(form)
         form.status = 'Resubmitted' if was_in_corrections else (form.status or 'Submitted')
         form.visible_to_student = False
         form.ethics_status = None
@@ -9787,6 +9943,12 @@ def student_edit_formb():
             flash("An error occurred while submitting Form B. Please try again.", "danger")
             return redirect(url_for('student_edit_formb'))
         flash("Form B submitted successfully.", "success")
+        if was_in_corrections and feedback_source:
+            return redirect(url_for(
+                'student_view_feedback',
+                id=feedback_source.form_id,
+                response_form_id=form.form_id,
+            ))
         return redirect(url_for('student_dashboard'))
     return render_template("student_edit_formb.html",formB=form)
 
@@ -10040,7 +10202,8 @@ def submit_form_b(form_id):
             form.submitted_at = submitted_at
             form.submitted = True
             form.rejected_or_accepted = False
-            was_in_corrections = is_student_correction_state(form)
+            feedback_source = get_pending_student_feedback_source(form)
+            was_in_corrections = bool(feedback_source) or is_student_correction_state(form)
             form.status = 'Resubmitted' if was_in_corrections else 'Submitted'
             form.ethics_status = None
             form.form_supervisor_status = 'Resubmitted' if was_in_corrections else 'Submitted'
@@ -10065,6 +10228,12 @@ def submit_form_b(form_id):
             
             print("[DEBUG] Form successfully submitted to supervisor!")
             flash("Form successfully submitted to supervisor!", "success")
+            if was_in_corrections and feedback_source:
+                return redirect(url_for(
+                    'student_view_feedback',
+                    id=feedback_source.form_id,
+                    response_form_id=form.form_id,
+                ))
             print(f"[REDIRECT] Redirecting user_id={user_id} to student_dashboard after successful submission.")
             return redirect(url_for('student_dashboard'))
             
@@ -10171,7 +10340,8 @@ def student_edit_formc():
             form.submitted_at=get_local_time()
             form.submitted = True
             form.rejected_or_accepted = False
-            was_in_corrections = is_student_correction_state(form)
+            feedback_source = get_pending_student_feedback_source(form)
+            was_in_corrections = bool(feedback_source) or is_student_correction_state(form)
             form.status = 'Resubmitted' if was_in_corrections else (form.status or 'Submitted')
             form.visible_to_student = False
             form.ethics_status = None
@@ -10180,6 +10350,12 @@ def student_edit_formc():
             db_session.commit()
             print("[DEBUG] FormC committed successfully.")
             flash("Form C submitted successfully.", "success")
+            if was_in_corrections and feedback_source:
+                return redirect(url_for(
+                    'student_view_feedback',
+                    id=feedback_source.form_id,
+                    response_form_id=form.form_id,
+                ))
             return redirect(url_for('student_dashboard'))
         except Exception as e:
             db_session.rollback()
@@ -10457,7 +10633,8 @@ def submit_form_c(form_id):
             form.submitted_at = submitted_at
             form.submitted = True
             form.rejected_or_accepted = False
-            was_in_corrections = is_student_correction_state(form)
+            feedback_source = get_pending_student_feedback_source(form)
+            was_in_corrections = bool(feedback_source) or is_student_correction_state(form)
             form.status = 'Resubmitted' if was_in_corrections else 'Submitted'
             form.visible_to_student = False
             form.ethics_status = None
@@ -10477,6 +10654,12 @@ def submit_form_c(form_id):
                 app.logger.error(f"Failed to send email to {form.supervisor_email}: {e}")
             
             flash("Form successfully submitted to supervisor!", "success")
+            if was_in_corrections and feedback_source:
+                return redirect(url_for(
+                    'student_view_feedback',
+                    id=feedback_source.form_id,
+                    response_form_id=form.form_id,
+                ))
             return redirect(url_for('student_dashboard'))
             
         except Exception as e:
@@ -11076,20 +11259,103 @@ def faq():
 
 
 
-@app.route('/student_view_feedback/<string:id>', methods=['GET'])
+@app.route('/student_view_feedback/<string:id>', methods=['GET', 'POST'])
 def student_view_feedback(id):
+    user_id = session.get('id')
+    if not user_id:
+        return redirect(url_for('login_page'))
+
     form = None
     for model in [FormA, FormB, FormC]:
         form = db_session.query(model).filter_by(form_id=id).first()
         if form:
-            break  # Stop once the form is found
-    
-    if form:
-        form = merge_reviewer_feedback_from_related_draft(form)
-        return render_template("student-view-feedback.html", view_form=form)
-    else:
-        # You can pass an error message or just load the dashboard
-        return redirect(url_for('dashboard'))
+            break
+
+    if not form or form.user_id != user_id:
+        abort(404)
+
+    form = get_latest_related_admin_feedback_form(form)
+    form = merge_reviewer_feedback_from_related_draft(form)
+    response_form = form
+    feedback_required = requires_student_feedback_after_resubmission(form)
+    feedback_ready = False
+
+    if isinstance(form, (FormA, FormB, FormC)) and feedback_required:
+        response_model = type(form)
+        response_form_id = (
+            request.form.get('response_form_id')
+            or request.args.get('response_form_id')
+        )
+        if response_form_id:
+            response_form = db_session.query(response_model).filter_by(
+                form_id=response_form_id,
+                user_id=user_id,
+            ).first()
+        else:
+            response_form = db_session.query(response_model).filter_by(
+                student_feedback_source_form_id=form.form_id,
+                user_id=user_id,
+            ).order_by(response_model.student_feedback_submitted_at.desc().nullslast()).first()
+
+        feedback_ready = bool(
+            response_form
+            and response_form.form_id != form.form_id
+            and response_form.submitted_at is not None
+            and str(response_form.status or '').strip().lower() == 'resubmitted'
+        )
+        if request.method == 'POST' and not feedback_ready:
+            flash('Submit your corrected form before submitting feedback comments.', 'warning')
+            return redirect(url_for('student_dashboard'))
+
+        if request.method == 'POST':
+            missing_fields = []
+            submitted_values = {}
+            admin_comment_required = requires_student_admin_comment(form)
+            if not admin_comment_required:
+                for row_key, response_field in STUDENT_FEEDBACK_ROWS:
+                    value = (request.form.get(response_field) or '').strip()
+                    submitted_values[response_field] = value
+                    if student_feedback_row_is_required(form, row_key) and not value:
+                        missing_fields.append(response_field)
+
+            general_comment = (request.form.get('student_general_comment') or '').strip()
+            admin_comment = (request.form.get('student_admin_comment') or '').strip()
+            if admin_comment_required:
+                if not admin_comment:
+                    missing_fields.append('student_admin_comment')
+            elif not general_comment:
+                missing_fields.append('student_general_comment')
+
+            if missing_fields:
+                flash('Complete every visible student-comment field before submitting.', 'danger')
+                return render_template(
+                    'student-view-feedback.html',
+                    view_form=form,
+                    student_response_form=response_form,
+                    student_feedback_required=True,
+                    student_feedback_ready=True,
+                ), 422
+
+            for response_field, value in submitted_values.items():
+                setattr(response_form, response_field, value or None)
+            if admin_comment_required:
+                response_form.student_admin_comment = admin_comment
+                response_form.student_admin_comment_submitted_at = get_local_time()
+            else:
+                response_form.student_general_comment = general_comment
+                response_form.student_feedback_submitted_at = get_local_time()
+            response_form.student_feedback_source_form_id = form.form_id
+            db_session.commit()
+            flash('Your feedback comments were submitted to Ethics Admin.', 'success')
+            return redirect(url_for('student_dashboard'))
+
+    return render_template(
+        'student-view-feedback.html',
+        view_form=form,
+        student_response_form=response_form or form,
+        student_feedback_required=feedback_required,
+        student_feedback_ready=feedback_ready,
+    )
 
 
 @app.route('/supervisor_view_feedback/<string:id>', methods=['GET'])
@@ -11126,7 +11392,29 @@ def supervisor_view_feedback(id):
 
     if form:
         form = merge_reviewer_feedback_from_related_draft(form)
-        return render_template("supervisor-view-feedback.html", view_form=form)
+        student_response_form = form
+        if isinstance(form, (FormA, FormB, FormC)):
+            response_model = type(form)
+            if form.student_feedback_source_form_id and not has_reviewer_feedback(form):
+                source_form = db_session.query(response_model).filter_by(
+                    form_id=form.student_feedback_source_form_id,
+                    user_id=form.user_id,
+                ).first()
+                if source_form:
+                    student_response_form = form
+                    form = source_form
+            else:
+                submitted_response = db_session.query(response_model).filter_by(
+                    student_feedback_source_form_id=form.form_id,
+                    user_id=form.user_id,
+                ).order_by(response_model.student_feedback_submitted_at.desc().nullslast()).first()
+                if submitted_response:
+                    student_response_form = submitted_response
+        return render_template(
+            "supervisor-view-feedback.html",
+            view_form=form,
+            student_response_form=student_response_form,
+        )
     else:
         # You can pass an error message or just load the dashboard
         return redirect(url_for('supervisor_dashboard'))
@@ -11156,7 +11444,29 @@ def ethics_view_feedback(id):
 
     if form:
         form = merge_reviewer_feedback_from_related_draft(form)
-        return render_template("ethics-view-feedback.html", view_form=form)
+        student_response_form = form
+        if isinstance(form, (FormA, FormB, FormC)):
+            response_model = type(form)
+            if form.student_feedback_source_form_id and not has_reviewer_feedback(form):
+                source_form = db_session.query(response_model).filter_by(
+                    form_id=form.student_feedback_source_form_id,
+                    user_id=form.user_id,
+                ).first()
+                if source_form:
+                    student_response_form = form
+                    form = source_form
+            else:
+                submitted_response = db_session.query(response_model).filter_by(
+                    student_feedback_source_form_id=form.form_id,
+                    user_id=form.user_id,
+                ).order_by(response_model.student_feedback_submitted_at.desc().nullslast()).first()
+                if submitted_response:
+                    student_response_form = submitted_response
+        return render_template(
+            "ethics-view-feedback.html",
+            view_form=form,
+            student_response_form=student_response_form,
+        )
     else:
         # You can pass an error message or just load the dashboard
         return redirect(url_for('chair_landing'))
@@ -11423,6 +11733,7 @@ def chair_form_view(id,form_name):
            
             review_date=datetime.now()
             status=request.form.get('status')
+            forma.ethics_decision=status
             review_org_permission_status=request.form.get('org_permission_status')
             review_org_permission_comments=request.form.get('org_permission_comments')
             review_waiver_status=request.form.get('waiver_status')
@@ -11640,6 +11951,7 @@ def chair_form_view(id,form_name):
         if request.method=="POST":
             review_date=datetime.now()
             status=request.form.get('status')
+            formb.ethics_decision=status
             review_org_permission_status=request.form.get('org_permission_status')
             review_org_permission_comments=request.form.get('org_permission_comments')
             review_waiver_status=request.form.get('waiver_status')
@@ -11848,6 +12160,7 @@ def chair_form_view(id,form_name):
             
             review_date=datetime.now()
             status=request.form.get('status')
+            formc.ethics_decision=status
             review_org_permission_status=request.form.get('org_permission_status')
             review_org_permission_comments=request.form.get('org_permission_comments')
             review_waiver_status=request.form.get('waiver_status')
@@ -13961,8 +14274,16 @@ def ethics_reviewer_committee_forms(id,form_name):
             forma.reviewer_name1 = effective_reviewer_ids[0] if len(effective_reviewer_ids) >= 1 else None
             forma.reviewer_name2 = None
             forma.ethics_signature_date=datetime.now()
-            forma.review_form_comments=request.form.get('additional_comments')
+            forma.review_form_comments=(
+                request.form.get('additional_comments')
+                or request.form.get('ethics_form_status')
+            )
             forma.ethics_status=request.form.get('recommendation')
+            forma.ethics_decision=(
+                request.form.get('status')
+                or request.form.get('accept')
+                or request.form.get('recommendation')
+            )
             if request.form.get('accept') in ['Accept','Approved with Minor Changes']:
                 missing_submission_redirect = redirect_if_missing_student_submission(
                     forma,
@@ -14065,8 +14386,16 @@ def ethics_reviewer_committee_forms(id,form_name):
             formb.reviewer_name1 = effective_reviewer_ids[0] if len(effective_reviewer_ids) >= 1 else None
             formb.reviewer_name2 = None
             formb.ethics_signature_date=datetime.now()
-            formb.review_form_comments=request.form.get('additional_comments')
+            formb.review_form_comments=(
+                request.form.get('additional_comments')
+                or request.form.get('ethics_form_status')
+            )
             formb.ethics_status=request.form.get('recommendation')
+            formb.ethics_decision=(
+                request.form.get('status')
+                or request.form.get('accept')
+                or request.form.get('recommendation')
+            )
             
             if request.form.get('accept') in ['Accept','Approved with Minor Changes']:
                 missing_submission_redirect = redirect_if_missing_student_submission(
@@ -14181,8 +14510,16 @@ def ethics_reviewer_committee_forms(id,form_name):
             formc.reviewer_name1 = effective_reviewer_ids[0] if len(effective_reviewer_ids) >= 1 else None
             formc.reviewer_name2 = None
             formc.ethics_signature_date=datetime.now()
-            formc.review_form_comments=request.form.get('additional_comments')
+            formc.review_form_comments=(
+                request.form.get('additional_comments')
+                or request.form.get('ethics_form_status')
+            )
             formc.ethics_status=request.form.get('recommendation')
+            formc.ethics_decision=(
+                request.form.get('status')
+                or request.form.get('accept')
+                or request.form.get('recommendation')
+            )
             
             if request.form.get('accept') in ['Accept','Approved with Minor Changes']:
                 missing_submission_redirect = redirect_if_missing_student_submission(

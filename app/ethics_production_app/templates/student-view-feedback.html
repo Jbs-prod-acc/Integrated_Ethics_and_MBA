@@ -161,12 +161,34 @@
           {% endif %}
           <br>
           <hr>
-          {% if view_form.review_form_comments%}
+          {% set admin_response_decision = (view_form.ethics_decision or view_form.ethics_status or '')|lower %}
+          {% set admin_response_required = admin_response_decision in ['resubmission required', 'revisions required'] %}
+          {% set response_submitted_at = student_response_form.student_admin_comment_submitted_at if admin_response_required else student_response_form.student_feedback_submitted_at %}
+          {% if view_form.review_form_comments or view_form.ethics_decision or view_form.ethics_status or admin_response_required %}
+          <div class="border rounded p-3 mt-3 mb-3">
           <h1>Ethics Admin Comments</h1>
-          {{view_form.review_form_comments}}
+          {% if view_form.review_form_comments %}
+          <p>{{ view_form.review_form_comments }}</p>
+          {% endif %}
+          {% if view_form.ethics_decision or view_form.ethics_status %}
+          <p><strong>Decision:</strong> {{ view_form.ethics_decision or view_form.ethics_status }}</p>
+          {% endif %}
+          {% if admin_response_required %}
+          <div class="mt-3">
+            <h4>Response to Ethics Admin</h4>
+            {% if student_response_form.student_admin_comment_submitted_at %}
+            <p><strong>Your feedback:</strong> {{ student_response_form.student_admin_comment }}</p>
+            {% elif student_feedback_ready %}
+            <label for="student_admin_comment" class="form-label"><strong>Your response to the Admin comments</strong></label>
+            <textarea id="student_admin_comment" name="student_admin_comment" class="form-control" rows="5" form="studentFeedbackForm" required placeholder="Explain how you addressed the Admin comments.">{{ student_response_form.student_admin_comment or '' }}</textarea>
+            {% else %}
+            <div class="alert alert-info mb-0">Submit your corrected form first. You will then return here to respond to the Admin comments.</div>
+            {% endif %}
+          </div>
+          {% endif %}
+          </div>
           {% endif %}
           <br>
-          <hr>
       </section>
       {% if has_reviewer_feedback(view_form) %}
       <section class="admin-content">
@@ -237,9 +259,10 @@
             <table class="table table-bordered mt-3">
               <thead class="thead-light">
                 <tr>
-                  <th style="width: 30%;">Document</th>
-                  <th style="width: 20%;">Submitted (Yes or No)</th>
-                  <th style="width: 50%;">Reviewer Comments</th>
+                  <th style="width: 25%;">Document</th>
+                  <th style="width: 15%;">Submitted (Yes or No)</th>
+                  <th style="width: 30%;">Reviewer Comments</th>
+                  <th style="width: 30%;">Student Comments</th>
                 </tr>
               </thead>
               <tbody>
@@ -252,6 +275,11 @@
                   </td>
                   <td><span id="org_permission_status">{{view_form.review_org_permission_status}}</span></td>
                   <td><span id="org_permission_comments">{{view_form.review_org_permission_comments}}</span></td>
+                  <td>
+                    {% if view_form.review_org_permission_status|lower == 'no' and student_feedback_ready %}
+                    <textarea class="form-control" name="student_org_permission_comment" form="studentFeedbackForm" rows="3" required placeholder="Explain how you addressed this item.">{{student_response_form.student_org_permission_comment or ''}}</textarea>
+                    {% else %}<span class="text-muted">Not required</span>{% endif %}
+                  </td>
                 </tr>
                 <tr>
                   <td>
@@ -260,6 +288,11 @@
                   </td>
                   <td><span id="waiver_status">{{view_form.review_waiver_status}}</span></td>
                   <td><span id="waiver_comments">{{view_form.review_waiver_comments}}</span></td>
+                  <td>
+                    {% if view_form.review_waiver_status|lower == 'no' and student_feedback_ready %}
+                    <textarea class="form-control" name="student_waiver_comment" form="studentFeedbackForm" rows="3" required placeholder="Explain how you addressed this item.">{{student_response_form.student_waiver_comment or ''}}</textarea>
+                    {% else %}<span class="text-muted">Not required</span>{% endif %}
+                  </td>
                 </tr>
                 <tr>
                   <td>
@@ -269,6 +302,11 @@
                   </td>
                   <td><span id="form_status">{{view_form.form_status}}</span></td>
                   <td><span id="form_comments">{{view_form.review_form_comments}}</span></td>
+                  <td>
+                    {% if (view_form.form_status|lower == 'no' or view_form.review_form_status|lower == 'no') and student_feedback_ready %}
+                    <textarea class="form-control" name="student_form_comment" form="studentFeedbackForm" rows="3" required placeholder="Explain how you addressed this item.">{{student_response_form.student_form_comment or ''}}</textarea>
+                    {% else %}<span class="text-muted">Not required</span>{% endif %}
+                  </td>
                 </tr>
                 <tr>
                   <td>
@@ -279,6 +317,11 @@
                   </td>
                   <td><span id="questions_status">{{view_form.review_questions_status}}</span></td>
                   <td><span id="questions_comments">{{view_form.review_questions_comments}}</span></td>
+                  <td>
+                    {% if view_form.review_questions_status|lower == 'no' and student_feedback_ready %}
+                    <textarea class="form-control" name="student_questions_comment" form="studentFeedbackForm" rows="3" required placeholder="Explain how you addressed this item.">{{student_response_form.student_questions_comment or ''}}</textarea>
+                    {% else %}<span class="text-muted">Not required</span>{% endif %}
+                  </td>
                 </tr>
                 <tr>
                   <td>
@@ -287,6 +330,11 @@
                   </td>
                   <td><span id="consent_status">{{view_form.review_consent_status}}</td>
                   <td><span id="consent_comments">{{view_form.review_consent_comments}}</span></td>
+                  <td>
+                    {% if view_form.review_consent_status|lower == 'no' and student_feedback_ready %}
+                    <textarea class="form-control" name="student_consent_comment" form="studentFeedbackForm" rows="3" required placeholder="Explain how you addressed this item.">{{student_response_form.student_consent_comment or ''}}</textarea>
+                    {% else %}<span class="text-muted">Not required</span>{% endif %}
+                  </td>
                 </tr>
                 <tr>
                   <td>
@@ -295,6 +343,11 @@
                   </td>
                   <td><span id="proposal_status">{{view_form.review_proposal_status}}</td>
                   <td><span id="proposal_comments">{{view_form.review_proposal_comments}}</span></td>
+                  <td>
+                    {% if view_form.review_proposal_status|lower == 'no' and student_feedback_ready %}
+                    <textarea class="form-control" name="student_proposal_comment" form="studentFeedbackForm" rows="3" required placeholder="Explain how you addressed this item.">{{student_response_form.student_proposal_comment or ''}}</textarea>
+                    {% else %}<span class="text-muted">Not required</span>{% endif %}
+                  </td>
                 </tr>
               </tbody>
             </table>
@@ -320,9 +373,10 @@
             <thead class="bg-dark text-white">
 
               <tr>
-                <th style="width: 30%;">Document</th>
-                <th style="width: 20%;">Submitted (Yes or No)</th>
-                <th style="width: 50%;">Reviewer Comments</th>
+                <th style="width: 25%;">Document</th>
+                <th style="width: 15%;">Submitted (Yes or No)</th>
+                <th style="width: 30%;">Reviewer Comments</th>
+                <th style="width: 30%;">Student Comments</th>
               </tr>
             </thead>
             <tbody>
@@ -335,6 +389,11 @@
                 </td>
                 <td><span id="org_permission_status">{{view_form.review_org_permission_status1}}</span></td>
                 <td><span id="org_permission_comments">{{view_form.review_org_permission_comments1}}</span></td>
+                <td>
+                  {% if view_form.review_org_permission_status1|lower == 'no' and student_feedback_ready %}
+                  <textarea class="form-control" name="student_org_permission_comment" form="studentFeedbackForm" rows="3" required placeholder="Explain how you addressed this item.">{{student_response_form.student_org_permission_comment or ''}}</textarea>
+                  {% else %}<span class="text-muted">Not required</span>{% endif %}
+                </td>
               </tr>
               <tr>
                 <td>
@@ -343,6 +402,11 @@
                 </td>
                 <td><span id="waiver_status">{{view_form.review_waiver_status1}}</span></td>
                 <td><span id="waiver_comments">{{view_form.review_waiver_comments1}}</span></td>
+                <td>
+                  {% if view_form.review_waiver_status1|lower == 'no' and student_feedback_ready %}
+                  <textarea class="form-control" name="student_waiver_comment" form="studentFeedbackForm" rows="3" required placeholder="Explain how you addressed this item.">{{student_response_form.student_waiver_comment or ''}}</textarea>
+                  {% else %}<span class="text-muted">Not required</span>{% endif %}
+                </td>
               </tr>
               <tr>
                 <td>
@@ -352,6 +416,11 @@
                 </td>
                 <td><span id="form_status">{{view_form.form_status1}}</span></td>
                 <td><span id="form_comments">{{view_form.review_form_comments1}}</span></td>
+                <td>
+                  {% if (view_form.form_status1|lower == 'no' or view_form.review_form_status1|lower == 'no') and student_feedback_ready %}
+                  <textarea class="form-control" name="student_form_comment" form="studentFeedbackForm" rows="3" required placeholder="Explain how you addressed this item.">{{student_response_form.student_form_comment or ''}}</textarea>
+                  {% else %}<span class="text-muted">Not required</span>{% endif %}
+                </td>
               </tr>
               <tr>
                 <td>
@@ -362,6 +431,11 @@
                 </td>
                 <td><span id="questions_status">{{view_form.review_questions_status1}}</span></td>
                 <td><span id="questions_comments">{{view_form.review_questions_comments1}}</span></td>
+                <td>
+                  {% if view_form.review_questions_status1|lower == 'no' and student_feedback_ready %}
+                  <textarea class="form-control" name="student_questions_comment" form="studentFeedbackForm" rows="3" required placeholder="Explain how you addressed this item.">{{student_response_form.student_questions_comment or ''}}</textarea>
+                  {% else %}<span class="text-muted">Not required</span>{% endif %}
+                </td>
               </tr>
               <tr>
                 <td>
@@ -370,6 +444,11 @@
                 </td>
                 <td><span id="consent_status">{{view_form.review_consent_status1}}</td>
                 <td><span id="consent_comments">{{view_form.review_consent_comments1}}</span></td>
+                <td>
+                  {% if view_form.review_consent_status1|lower == 'no' and student_feedback_ready %}
+                  <textarea class="form-control" name="student_consent_comment" form="studentFeedbackForm" rows="3" required placeholder="Explain how you addressed this item.">{{student_response_form.student_consent_comment or ''}}</textarea>
+                  {% else %}<span class="text-muted">Not required</span>{% endif %}
+                </td>
               </tr>
               <tr>
                 <td>
@@ -378,6 +457,11 @@
                 </td>
                 <td><span id="proposal_status">{{view_form.review_proposal_status1}}</td>
                 <td><span id="proposal_comments">{{view_form.review_proposal_comments1}}</span></td>
+                <td>
+                  {% if view_form.review_proposal_status1|lower == 'no' and student_feedback_ready %}
+                  <textarea class="form-control" name="student_proposal_comment" form="studentFeedbackForm" rows="3" required placeholder="Explain how you addressed this item.">{{student_response_form.student_proposal_comment or ''}}</textarea>
+                  {% else %}<span class="text-muted">Not required</span>{% endif %}
+                </td>
               </tr>
             </tbody>
           </table>
@@ -392,6 +476,36 @@
   </section>
   </section>
 
+  {% endif %}
+
+  {% if student_feedback_required %}
+  <section class="admin-content">
+    <div class="section border rounded p-3 mb-4">
+      <h3>Student Comments</h3>
+      {% if response_submitted_at %}
+      {% if not admin_response_required %}
+      <p>{{ student_response_form.student_general_comment }}</p>
+      {% endif %}
+      <p class="text-success mb-0">
+        <strong>Submitted:</strong>
+        {{ response_submitted_at.strftime('%d/%m/%Y %H:%M') }}
+      </p>
+      {% elif student_feedback_ready %}
+      <p class="text-muted">Confirm how you addressed the reviewers' feedback after submitting your corrected form.</p>
+      <form id="studentFeedbackForm" method="post" action="{{ url_for('student_view_feedback', id=view_form.form_id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="response_form_id" value="{{ student_response_form.form_id }}">
+        {% if not admin_response_required %}
+        <label for="student_general_comment" class="form-label"><strong>Overall response to reviewer feedback</strong></label>
+        <textarea id="student_general_comment" name="student_general_comment" class="form-control" rows="5" required placeholder="Summarise the corrections you made.">{{ student_response_form.student_general_comment or '' }}</textarea>
+        {% endif %}
+        <button type="submit" class="btn btn-primary mt-3">Submit Student Comments</button>
+      </form>
+      {% else %}
+      <div class="alert alert-info mb-0">Submit your corrected form first. You will then return here to submit your responses.</div>
+      {% endif %}
+    </div>
+  </section>
   {% endif %}
   {% endif %}
 

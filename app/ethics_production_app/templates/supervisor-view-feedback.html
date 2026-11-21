@@ -552,6 +552,49 @@
     </div>
   </section>
   {% endif %}
+
+  {% if student_response_form and (student_response_form.student_admin_comment_submitted_at or student_response_form.student_feedback_submitted_at) %}
+  <section class="admin-content">
+    <div class="section">
+      <h3>Student Responses to Reviewer Feedback</h3>
+      <table class="table table-bordered mt-3">
+        <thead class="thead-light">
+          <tr>
+            <th style="width: 35%;">Document</th>
+            <th style="width: 65%;">Student Comments</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% if student_response_form.student_org_permission_comment %}
+          <tr><td>Organisational Permission/Signed Waiver</td><td>{{ student_response_form.student_org_permission_comment }}</td></tr>
+          {% endif %}
+          {% if student_response_form.student_waiver_comment %}
+          <tr><td>Impact Assessment Form</td><td>{{ student_response_form.student_waiver_comment }}</td></tr>
+          {% endif %}
+          {% if student_response_form.student_form_comment %}
+          <tr><td>Ethics Application Form</td><td>{{ student_response_form.student_form_comment }}</td></tr>
+          {% endif %}
+          {% if student_response_form.student_questions_comment %}
+          <tr><td>Interview Questions and/or Questionnaire</td><td>{{ student_response_form.student_questions_comment }}</td></tr>
+          {% endif %}
+          {% if student_response_form.student_consent_comment %}
+          <tr><td>Participant Information Sheet &amp; Informed Consent</td><td>{{ student_response_form.student_consent_comment }}</td></tr>
+          {% endif %}
+          {% if student_response_form.student_proposal_comment %}
+          <tr><td>Refined Concept Proposal</td><td>{{ student_response_form.student_proposal_comment }}</td></tr>
+          {% endif %}
+        </tbody>
+      </table>
+      <div class="border rounded p-3 mt-3">
+        <h4>{% if student_response_form.student_admin_comment %}Student's Response to Ethics Admin{% else %}Student's Overall Response{% endif %}</h4>
+        <p>{{ student_response_form.student_admin_comment or student_response_form.student_general_comment }}</p>
+        <p class="text-muted mb-0">
+          Submitted {{ (student_response_form.student_admin_comment_submitted_at or student_response_form.student_feedback_submitted_at).strftime('%d/%m/%Y %H:%M') }}
+        </p>
+      </div>
+    </div>
+  </section>
+  {% endif %}
   </main>
   </div>
 

@@ -5,7 +5,7 @@ from flask_login import UserMixin
 from sqlalchemy import CheckConstraint, UniqueConstraint, event
 from sqlalchemy.dialects.postgresql import ENUM
 from sqlalchemy.orm import deferred
-from werkzeug.security import check_password_hash, generate_password_hash
+from werkzeug.security import check_password_hash
 import bcrypt
 
 from ..extensions import db
@@ -46,7 +46,16 @@ class UserAuthMixin(UserMixin):
         return f"{self.system_name}:{self.id}"
 
     def set_password(self, password):
-        self.password_hash = generate_password_hash(password)
+        # The unified ``users.password`` column is also read by the mounted
+        # legacy Ethics application, whose verifier accepts bcrypt hashes only.
+        # MBA authentication already accepts both Werkzeug and bcrypt hashes,
+        # so writing bcrypt here keeps new and reset passwords compatible with
+        # both applications while preserving support for existing Werkzeug
+        # hashes in ``check_password`` below.
+        self.password_hash = bcrypt.hashpw(
+            password.encode("utf-8"),
+            bcrypt.gensalt(),
+        ).decode("utf-8")
 
     def check_password(self, password):
         if not self.password_hash:

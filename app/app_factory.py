@@ -275,6 +275,39 @@ def _ensure_ethics_postgres_columns(app):
                         f'ADD COLUMN IF NOT EXISTS "{column_name}" {column_type}'
                     )
                 )
+        for table_name in ("form_a", "form_b", "form_c"):
+            for column_name, column_type in (
+                ("student_org_permission_comment", "TEXT"),
+                ("student_waiver_comment", "TEXT"),
+                ("student_form_comment", "TEXT"),
+                ("student_questions_comment", "TEXT"),
+                ("student_consent_comment", "TEXT"),
+                ("student_proposal_comment", "TEXT"),
+                ("student_general_comment", "TEXT"),
+                ("student_admin_comment", "TEXT"),
+                ("student_admin_comment_submitted_at", "TIMESTAMP WITH TIME ZONE"),
+                ("student_feedback_submitted_at", "TIMESTAMP WITH TIME ZONE"),
+                ("student_feedback_source_form_id", "VARCHAR(255)"),
+                ("ethics_decision", "VARCHAR(80)"),
+            ):
+                db.session.execute(
+                    text(
+                        f'ALTER TABLE IF EXISTS "{table_name}" '
+                        f'ADD COLUMN IF NOT EXISTS "{column_name}" {column_type}'
+                    )
+                )
+            db.session.execute(
+                text(
+                    f'''UPDATE "{table_name}"
+                        SET ethics_decision = COALESCE(
+                            NULLIF(TRIM(form_review_comment1), ''),
+                            NULLIF(TRIM(form_review_comment), ''),
+                            NULLIF(TRIM(review_recommendation1), ''),
+                            NULLIF(TRIM(review_recommendation), '')
+                        )
+                        WHERE ethics_decision IS NULL'''
+                )
+            )
         db.session.commit()
         db.session.remove()
         app.logger.info("Ensured required ethics workflow tables and columns exist.")
