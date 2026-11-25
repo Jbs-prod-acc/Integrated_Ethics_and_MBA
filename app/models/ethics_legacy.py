@@ -261,6 +261,44 @@ class User(Base):
     def __repr__(self):
         return f"<User {self.full_name} ({self.email})>"
 
+
+class Survey(Base):
+    """An ethics-service survey configured by an administrator."""
+    __tablename__ = "ethics_surveys"
+
+    survey_id = Column(String(255), primary_key=True, default=generate_uuid)
+    title = Column(String(255), nullable=False)
+    introduction = Column(Text, nullable=True)
+    questions_json = Column(Text, nullable=False)
+    audience_type = Column(String(40), nullable=False)
+    delay_days = Column(Integer, nullable=True)
+    created_by_user_id = Column(String(255), ForeignKey("users.user_id"), nullable=False)
+    created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    sent_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    is_active = Column(Boolean, nullable=False, default=True)
+
+
+class SurveyRecipient(Base):
+    """A recipient snapshot: later workflow changes do not change who received it."""
+    __tablename__ = "ethics_survey_recipients"
+
+    id = Column(String(255), primary_key=True, default=generate_uuid)
+    survey_id = Column(String(255), ForeignKey("ethics_surveys.survey_id"), nullable=False, index=True)
+    student_user_id = Column(String(255), ForeignKey("users.user_id"), nullable=False, index=True)
+    sent_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    __table_args__ = (sa.UniqueConstraint("survey_id", "student_user_id", name="uq_ethics_survey_recipient"),)
+
+
+class SurveyResponse(Base):
+    __tablename__ = "ethics_survey_responses"
+
+    response_id = Column(String(255), primary_key=True, default=generate_uuid)
+    survey_id = Column(String(255), ForeignKey("ethics_surveys.survey_id"), nullable=False, index=True)
+    student_user_id = Column(String(255), ForeignKey("users.user_id"), nullable=False, index=True)
+    answers_json = Column(Text, nullable=False)
+    submitted_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    __table_args__ = (sa.UniqueConstraint("survey_id", "student_user_id", name="uq_ethics_survey_response"),)
+
 # New model for user activity tracking
 class UserActivityLog(Base):
     __tablename__ = "user_activity_logs"

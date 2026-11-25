@@ -73,6 +73,14 @@ def register_cli(app):
     def sync_db():
         """Create new tables and add columns needed by the integrated workflow."""
         db.create_all()
+        if db.engine.dialect.name != "postgresql":
+            # The supplementary DDL below uses PostgreSQL-specific constructs
+            # (SERIAL, JSON casts, NOW(), and ALTER ... IF EXISTS). SQLAlchemy
+            # creates the mapped tables for local SQLite development.
+            seed_mba_disciplines()
+            db.session.commit()
+            print("SQLite schema synced from SQLAlchemy models.")
+            return
         statements = [
             """
             create table if not exists ethcis_form_drafts (

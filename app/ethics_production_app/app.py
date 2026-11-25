@@ -2,8 +2,8 @@
 from datetime import datetime
 from dotenv import load_dotenv
 load_dotenv()
-from app.models import ArchivedEthicsForm, db_session, User, Rec, UserRole, UserInfo, FormA, FormB, FormC, FormD, FormUploads, Documents, FormARequirements, Watched
-from app.models import db_session, User, Rec, UserRole, UserInfo, FormA, FormB, FormC, FormD, FormUploads, Documents, FormARequirements, Watched, UserActivityLog, LoginLog
+from app.models import ArchivedEthicsForm, db_session, User, Rec, UserRole, UserInfo, FormA, FormB, FormC, FormD, FormUploads, Documents, FormARequirements, Watched, Survey, SurveyRecipient, SurveyResponse
+from app.models import db_session, User, Rec, UserRole, UserInfo, FormA, FormB, FormC, FormD, FormUploads, Documents, FormARequirements, Watched, UserActivityLog, LoginLog, Survey, SurveyRecipient, SurveyResponse
 from flask import jsonify
 from flask import Flask, abort, flash, g, get_flashed_messages, make_response, render_template, request, redirect, url_for, session, jsonify, send_from_directory, send_file
 from utils.helpers import generate_reset_token, send_email, validate_password
@@ -5332,6 +5332,141 @@ def admin_upload_student_docs(id=None):
         role='super_admin',
         admin_messages=admin_messages,
     )
+
+
+def ensure_survey_tables():
+    """Create the standalone survey tables in legacy deployments on first use."""
+    bind = db_session.get_bind()
+    for table in (Survey.__table__, SurveyRecipient.__table__, SurveyResponse.__table__):
+        table.create(bind=bind, checkfirst=True)
+
+
+def survey_target_students(audience_type, delay_days=30, selected_user_ids=None):
+    """Resolve survey recipients from the current ethics workflow."""
+    students = db_session.query(User).filter(User.role == UserRole.STUDENT).all()
+    if audience_type == 'all_students':
+        return students
+    if audience_type == 'selected_students':
+        selected = set(selected_user_ids or [])
+        return [student for student in students if student.user_id in selected]
+
+    forms_by_user = defaultdict(list)
+    for model in (FormA, FormB, FormC):
+        for form in db_session.query(model).all():
+            forms_by_user[form.user_id].append(form)
+
+    if audience_type == 'certificate_received':
+        return [
+            student for student in students
+            if any(_has_issued_certificate(form) and _has_received_certificate(form)
+                   for form in forms_by_user.get(student.user_id, []))
+        ]
+
+    if audience_type == 'delayed_applications':
+        cutoff = datetime.utcnow() - timedelta(days=max(int(delay_days or 30), 1))
+        return [
+            student for student in students
+            if any(
+                (getattr(form, 'submitted_at', None) or getattr(form, 'created_at', None))
+                and (getattr(form, 'submitted_at', None) or getattr(form, 'created_at', None)) <= cutoff
+                and not _has_issued_certificate(form)
+                for form in forms_by_user.get(student.user_id, [])
+            )
+        ]
+    return []
+
+
+@app.route('/admin/survey-builder', methods=['GET', 'POST'])
+@role_required('ADMIN', 'SUPER_ADMIN')
+def survey_builder():
+    ensure_survey_tables()
+    if request.method == 'POST':
+        title = (request.form.get('title') or '').strip()
+        introduction = (request.form.get('introduction') or '').strip()
+        audience_type = request.form.get('audience_type') or 'all_students'
+        try:
+            delay_days = int(request.form.get('delay_days') or 30)
+        except ValueError:
+            delay_days = 30
+        question_texts = request.form.getlist('question_text[]')
+        question_types = request.form.getlist('question_type[]')
+        required_indexes = {int(index) for index in request.form.getlist('required_question') if index.isdigit()}
+        questions = [
+            {'text': text.strip(), 'type': question_types[index] if index < len(question_types) else 'text',
+             'required': index in required_indexes}
+            for index, text in enumerate(question_texts) if text.strip()
+        ]
+        recipients = survey_target_students(
+            audience_type, delay_days, request.form.getlist('student_ids')
+        )
+        if not title or not questions:
+            flash('Add a survey title and at least one question.', 'danger')
+        elif not recipients:
+            flash('No students match this audience. Adjust the target before sending.', 'warning')
+        else:
+            survey = Survey(
+                title=title, introduction=introduction, questions_json=json.dumps(questions),
+                audience_type=audience_type, delay_days=delay_days,
+                created_by_user_id=session['id'], is_active=True,
+            )
+            db_session.add(survey)
+            db_session.flush()
+            db_session.add_all([SurveyRecipient(survey_id=survey.survey_id, student_user_id=student.user_id)
+                                for student in recipients])
+            db_session.commit()
+            flash(f'Survey sent to {len(recipients)} student(s).', 'success')
+            return redirect(url_for('survey_builder'))
+
+    surveys = db_session.query(Survey).order_by(Survey.sent_at.desc()).all()
+    recipient_counts = dict(db_session.query(SurveyRecipient.survey_id, func.count(SurveyRecipient.id)).group_by(SurveyRecipient.survey_id).all())
+    response_counts = dict(db_session.query(SurveyResponse.survey_id, func.count(SurveyResponse.response_id)).group_by(SurveyResponse.survey_id).all())
+    students = db_session.query(User).filter(User.role == UserRole.STUDENT).order_by(User.full_name).all()
+    return render_template('survey_builder.html', surveys=surveys, students=students,
+                           recipient_counts=recipient_counts, response_counts=response_counts)
+
+
+@app.route('/surveys', methods=['GET'])
+@role_required('STUDENT')
+def student_surveys():
+    ensure_survey_tables()
+    student_id = session['id']
+    surveys = (db_session.query(Survey)
+               .join(SurveyRecipient, SurveyRecipient.survey_id == Survey.survey_id)
+               .filter(SurveyRecipient.student_user_id == student_id, Survey.is_active.is_(True))
+               .order_by(Survey.sent_at.desc()).all())
+    answered = {row[0] for row in db_session.query(SurveyResponse.survey_id)
+                .filter(SurveyResponse.student_user_id == student_id).all()}
+    return render_template('student_surveys.html', surveys=surveys, answered=answered)
+
+
+@app.route('/surveys/<string:survey_id>', methods=['GET', 'POST'])
+@role_required('STUDENT')
+def complete_survey(survey_id):
+    ensure_survey_tables()
+    student_id = session['id']
+    survey = (db_session.query(Survey).join(SurveyRecipient)
+              .filter(Survey.survey_id == survey_id, SurveyRecipient.student_user_id == student_id,
+                      Survey.is_active.is_(True)).first())
+    if not survey:
+        abort(404)
+    if db_session.query(SurveyResponse).filter_by(survey_id=survey_id, student_user_id=student_id).first():
+        flash('You have already completed this survey.', 'info')
+        return redirect(url_for('student_surveys'))
+    questions = json.loads(survey.questions_json)
+    if request.method == 'POST':
+        answers = {}
+        for index, question in enumerate(questions):
+            answer = (request.form.get(f'question_{index}') or '').strip()
+            if question.get('required') and not answer:
+                flash('Please answer all required questions.', 'danger')
+                return render_template('complete_survey.html', survey=survey, questions=questions)
+            answers[str(index)] = answer
+        db_session.add(SurveyResponse(survey_id=survey_id, student_user_id=student_id,
+                                      answers_json=json.dumps(answers)))
+        db_session.commit()
+        flash('Thank you. Your survey response has been recorded.', 'success')
+        return redirect(url_for('student_surveys'))
+    return render_template('complete_survey.html', survey=survey, questions=questions)
 
 
 @app.route('/super_admin', methods=['GET', 'POST'])

@@ -222,6 +222,7 @@
         </a>
         <a href="{{ url_for('admin_status_monitor') }}" class="sidebar-link"><i class="fas fa-filter"></i> Admin Status
           Monitor</a>
+        <a href="{{ url_for('survey_builder') }}" class="sidebar-link"><i class="fas fa-square-poll-horizontal"></i> Survey Builder</a>
 {% elif 'super_admin' == role|lower %}
         <a href="{{url_for('chair_landing')}}" class="sidebar-link">
           <i class="fas fa-clipboard-list"></i> Dashboard
@@ -246,6 +247,7 @@
         
         <a href="{{ url_for('admin_status_monitor') }}" class="sidebar-link"><i class="fas fa-filter"></i> Admin Status
           Monitor</a>
+        <a href="{{ url_for('survey_builder') }}" class="sidebar-link"><i class="fas fa-square-poll-horizontal"></i> Survey Builder</a>
 
 {% else %}
         <a href="{{url_for('review_dashboard')}}" class="sidebar-link">

@@ -83,7 +83,13 @@ class MbaUser(UserAuthMixin, db.Model):
     )
 
     system_name = "mba"
-    id = db.Column("integrated_id", db.BigInteger, primary_key=True)
+    # SQLite only auto-generates a primary key declared as exactly INTEGER.
+    # PostgreSQL retains BIGINT while local SQLite databases use INTEGER.
+    id = db.Column(
+        "integrated_id",
+        db.BigInteger().with_variant(db.Integer, "sqlite"),
+        primary_key=True,
+    )
     legacy_user_id = db.Column("user_id", db.String(255), nullable=False, unique=True, default=lambda: uuid.uuid4().hex)
     full_name = db.Column(db.String(255), nullable=False, default="")
     password_hash = db.Column("password", db.String(255), nullable=True)
@@ -788,6 +794,9 @@ from .ethics_legacy import (  # noqa: E402
     FormUploads,
     LoginLog,
     Rec,
+    Survey,
+    SurveyRecipient,
+    SurveyResponse,
     Session,
     User,
     UserActivityLog,

@@ -47,6 +47,7 @@
 
         <div class="nav-right" style="margin-left: 700px;">
           <h5>Welcome, {{full_name}}</h5>
+          <a href="{{ url_for('student_surveys') }}" class="btn-logout">My Surveys</a>
           <a href="{{ url_for('faq') }}" class="btn-logout">FAQ</a>
           <a href="{{ url_for('logout') }}" class="btn-logout">Logout</a>
 
